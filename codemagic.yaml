@@ -5,7 +5,7 @@ workflows:
 
     environment:
       groups:
-        - secrets-group   # ← CodeMagic上で作ったグループ名に置き換える
+        - secrets-group # ← CodeMagic上で作ったグループ名に置き換える
 
       node: 20.6.0
 
@@ -30,14 +30,15 @@ workflows:
       # Android ビルド
       - name: Build Android
         script: |
-          eas build --platform android --non-interactive
+          eas build --platform android --non-interactive --profile production
 
-      # iOS ビルド
-      - name: Build iOS
-        script: |
-          eas build --platform ios --non-interactive
+      # iOS ビルド（不要ならコメントアウト）
+      # - name: Build iOS
+      #   script: |
+      #     eas build --platform ios --non-interactive --profile production
 
     artifacts:
       - build/**/*.apk
       - build/**/*.aab
-      - build/**/*.ipa
+      # iOS artifacts は不要ならコメントアウト
+      # - build/**/*.ipa
