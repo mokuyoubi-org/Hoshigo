@@ -2,21 +2,37 @@ workflows:
   expo-workflow:
     name: "Expo Build Workflow"
     max_build_duration: 60
+
     environment:
       groups:
-        - secrets-group # ← CodeMagic上で作ったグループ名に置き換える
+        - secrets-group   # ← CodeMagic上で作ったグループ名に置き換える
 
       node: 20.6.0
 
     scripts:
+      # Node / npm バージョン確認
+      - name: Check Node & npm
+        script: |
+          node -v
+          npm -v
+
+      # 依存インストール
       - name: Install dependencies
         script: |
-          npm ci
+          npm install
 
+      # EAS CLI インストール
+      - name: Install EAS CLI
+        script: |
+          npm install -g eas-cli
+          eas --version
+
+      # Android ビルド
       - name: Build Android
         script: |
           npx eas build --platform android --non-interactive
 
+      # iOS ビルド
       - name: Build iOS
         script: |
           npx eas build --platform ios --non-interactive
