@@ -1,0 +1,42 @@
+workflows:
+  expo-workflow:
+    name: "Expo Build Workflow"
+    max_build_duration: 60
+    environment:
+      vars:
+        # Supabase
+        EXPO_PUBLIC_SUPABASE_URL: Encrypted(...)
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: Encrypted(...)
+
+        # Google OAuth
+        EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: Encrypted(...)
+        EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: Encrypted(...)
+        EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: Encrypted(...)
+
+      node: 20.6.0
+      expo: latest
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm ci
+
+      - name: Build Android
+        script: |
+          npx eas build --platform android --non-interactive
+
+      - name: Build iOS
+        script: |
+          npx eas build --platform ios --non-interactive
+
+    artifacts:
+      - build/**/*.apk
+      - build/**/*.aab
+      - build/**/*.ipa
+
+    publishing:
+      email:
+        recipients:
+          - mokuyoubi.co.jp@gmail.com
+        on_success: true
+        on_failure: true
