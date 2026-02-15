@@ -30,12 +30,12 @@ workflows:
       # Android ビルド
       - name: Build Android
         script: |
-          npx eas build --platform android --non-interactive
+          eas build --platform android --non-interactive
 
       # iOS ビルド
       - name: Build iOS
         script: |
-          npx eas build --platform ios --non-interactive
+          eas build --platform ios --non-interactive
 
     artifacts:
       - build/**/*.apk
