@@ -4,7 +4,7 @@ import { DisplayNameContext } from "@/src/components/UserContexts";
 import { ICONS } from "@/src/constants/icons"; // アイコン画像のインポート
 import { BOARD_SIZE_COUNT } from "@/src/lib/goLogics";
 import { Agehama, prepareBoard2d } from "@/src/lib/goUtils";
-import { SHIROGUMI_TSUMEGO, Tsumego } from "@/src/lib/TsumegoData";
+import { SHIROGUMI_TSUMEGO, Tsumego } from "@/src/lib/tsumegoData";
 import { useRouter } from "expo-router";
 import React, { useContext, useRef, useState } from "react";
 import {

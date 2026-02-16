@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { ICONS } from "../../src/constants/icons"; // アイコン画像のインポート
-import { SHIROGUMI_TSUMEGO } from "../../src/lib/TsumegoData";
+import { SHIROGUMI_TSUMEGO } from "../../src/lib/tsumegoData";
 
 import { GoBoard } from "@/src/components/GoBoard";
 import {
