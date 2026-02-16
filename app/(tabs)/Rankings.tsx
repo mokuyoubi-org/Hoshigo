@@ -179,14 +179,12 @@
 //   },
 // });
 
-
-
 // app/Rankings.tsx
 import LoadingOverlay from "@/src/components/LoadingOverlay";
+import { ICONS } from "@/src/constants/icons";
+import { useTheme } from "@/src/hooks/useTheme";
 import { GUMI_DATA } from "@/src/lib/gumiUtils";
-import { ICONS } from "@/src/lib/icons";
-import { supabase } from "@/src/lib/supabase";
-import { useTheme } from "@/src/lib/useTheme";
+import { supabase } from "@/src/services/supabase";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, Image, StyleSheet, Text, View } from "react-native";
@@ -228,7 +226,8 @@ const RankingItem = ({
               style={[
                 styles.avatarBorder,
                 {
-                  borderColor: gumiColor!=="shirogumi"?colors[gumiColor]:"white",
+                  borderColor:
+                    gumiColor !== "shirogumi" ? colors[gumiColor] : "white",
                   backgroundColor: "#f4f4f4",
                 },
               ]}

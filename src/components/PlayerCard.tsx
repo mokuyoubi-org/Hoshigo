@@ -1,12 +1,13 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { getGumiByIndex } from "../../src/lib/gumiUtils";
-import { useTheme } from "../../src/lib/useTheme";
-import { ICONS } from "../lib/icons";
+import { ICONS } from "../constants/icons";
+import { useTheme } from "../hooks/useTheme";
 
 interface PlayerCardProps {
   iconIndex: number;
-  name: string;
+  username: string;
+  displayname: string;
   color: "black" | "white";
   time?: number;
   points: number;
@@ -16,7 +17,8 @@ interface PlayerCardProps {
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
   iconIndex,
-  name,
+  username,
+  displayname,
   color,
   time,
   points,
@@ -33,12 +35,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  console.log("PlayerCard");
-  console.log("name: ", name);
-  console.log("gumiIndex: ", gumiIndex);
-  console.log("gumi:", gumi);
-  console.log("gumi.color:", gumi.color);
-  console.log("theme colors keys:", Object.keys(colors));
+  // console.log("PlayerCard");
+  // console.log("displayname: ", displayname);
+  // console.log("gumiIndex: ", gumiIndex);
+  // console.log("gumi:", gumi);
+  // console.log("gumi.color:", gumi.color);
+  // console.log("theme colors keys:", Object.keys(colors));
 
   return (
     <View
@@ -50,7 +52,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           { backgroundColor: colors.card, borderColor: gumiColor },
         ]}
       >
-        <Image source={ICONS[iconIndex]} style={styles.iconImage}   resizeMode="contain"/>
+        <Image
+          source={ICONS[iconIndex]}
+          style={styles.iconImage}
+          resizeMode="contain"
+        />
         <View
           style={[
             styles.stone,
@@ -64,8 +70,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         />
       </View>
       <View style={styles.textContainer}>
-        <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
-        {/* <Text style={[styles.points, { color: colors.subtext }]}>{points}</Text> */}
+        <Text style={[styles.displayname, { color: colors.text }]}>
+          {displayname}
+        </Text>
+        {/* <Text style={[styles.username, { color: colors.subtext }]}>
+          {username}
+        </Text> */}
+      </View>
+      <View>
         {time !== undefined && (
           <Text style={[styles.time, { color: colors.active }]}>
             {formatTime(time)}
@@ -80,6 +92,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 12,
     paddingVertical: 8,
     borderRadius: 12,
   },
@@ -107,9 +120,14 @@ const styles = StyleSheet.create({
   textContainer: {
     alignItems: "flex-start",
   },
-  name: {
+  displayname: {
     fontSize: 16,
     fontWeight: "600",
+    letterSpacing: 0.3,
+  },
+  username: {
+    fontSize: 12,
+    fontWeight: "400",
     letterSpacing: 0.3,
   },
   points: {

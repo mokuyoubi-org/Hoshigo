@@ -14,11 +14,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import GoogleSignInButton from "../src/components/GoogleSignInButton";
-import LoadingOverlay from "../src/components/LoadingOverlay";
-import { supabase } from "../src/lib/supabase";
-import { useTheme } from "../src/lib/useTheme";
-import { isValidEmail, isValidPassword } from "../src/lib/utils";
+import GoogleSignInButton from "../../src/components/GoogleSignInButton";
+import LoadingOverlay from "../../src/components/LoadingOverlay";
+import { useTheme } from "../../src/hooks/useTheme";
+import { isValidEmail, isValidPassword } from "../../src/lib/utils";
+import { supabase } from "../../src/services/supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,8 +31,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const canLogin = isValidEmail(email) && isValidPassword(password);
-
-
 
   // ← これを追加
   useEffect(() => {
@@ -81,13 +79,6 @@ export default function Login() {
     return () => subscription.remove();
   }, []);
 
-
-
-
-
-
-
-
   const onLogin = async () => {
     setLoading(true);
     setError("");
@@ -96,8 +87,6 @@ export default function Login() {
       email,
       password,
     });
-
-
 
     setLoading(false);
 

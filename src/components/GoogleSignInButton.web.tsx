@@ -5,7 +5,7 @@ import {
 } from "@react-oauth/google";
 import { SignInWithIdTokenCredentials } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../services/supabase";
 
 export default function GoogleSignInButton() {
   // Generate secure, random values for state and nonce

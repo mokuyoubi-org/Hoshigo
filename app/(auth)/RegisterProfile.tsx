@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../src/components/LoadingOverlay";
+import LoadingOverlay from "../../src/components/LoadingOverlay";
 import {
   DisplayNameContext,
   SetDisplayNameContext,
@@ -20,13 +20,13 @@ import {
   SetUserNameContext,
   UidContext,
   UserNameContext,
-} from "../src/components/UserContexts";
-import { supabase } from "../src/lib/supabase";
-import { useTheme } from "../src/lib/useTheme";
+} from "../../src/components/UserContexts";
+import { useTheme } from "../../src/hooks/useTheme";
+import { supabase } from "../../src/services/supabase";
 
 import * as hangulRomanization from "hangul-romanization";
-import * as wanakana from "wanakana";
 import { pinyin } from "pinyin-pro";
+import * as wanakana from "wanakana";
 
 export const generateUsername = (text: string, lang: string): string => {
   let username = "";

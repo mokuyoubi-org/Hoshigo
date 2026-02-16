@@ -2,6 +2,7 @@ import LoadingOverlay from "@/src/components/LoadingOverlay";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ScrollView,
   StyleSheet,
@@ -10,10 +11,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
-import { UidContext } from "../src/components/UserContexts";
-import { supabase } from "../src/lib/supabase";
-import { useTheme } from "../src/lib/useTheme";
+import { UidContext } from "../../src/components/UserContexts";
+import { useTheme } from "../../src/hooks/useTheme";
+import { supabase } from "../../src/services/supabase";
 
 export default function Delete() {
   const { colors } = useTheme();

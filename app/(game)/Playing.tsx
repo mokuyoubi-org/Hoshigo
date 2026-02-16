@@ -10,7 +10,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../src/components/LoadingOverlay";
+import LoadingOverlay from "@/src/components/LoadingOverlay";
 import {
   DailyPlayCountContext,
   DisplayNameContext,
@@ -23,7 +23,8 @@ import {
   SetGumiIndexContext,
   SetPointsContext,
   UidContext,
-} from "../src/components/UserContexts";
+  UserNameContext,
+} from "../../src/components/UserContexts";
 import {
   BOARD_SIZE_COUNT,
   Board,
@@ -36,7 +37,7 @@ import {
   isLegalMove,
   keyToGrid,
   stringifyGrid,
-} from "../src/lib/goLogics";
+} from "../../src/lib/goLogics";
 import {
   Agehama,
   gnuGridstoStringGrids,
@@ -44,8 +45,8 @@ import {
   movesToSgf,
   resultToLanguagesComment,
   sleep,
-} from "../src/lib/goUtils";
-import { supabase } from "../src/lib/supabase";
+} from "../../src/lib/goUtils";
+import { supabase } from "../../src/services/supabase";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (BOARD_SIZE_COUNT - 1);
@@ -62,9 +63,13 @@ export default function Playing() {
   const playerColor: Color = params.color;
   const opponentsIconIndex: number = Number(params.opponentsIconIndex);
   const opponentsGumiIndex: number = Number(params.opponentsGumiIndex);
+  const opponentsUserName = Array.isArray(params.opponentsUserName)
+    ? params.opponentsUserName[0]
+    : params.opponentsUserName;
+
   const opponentsDisplayName = Array.isArray(params.opponentsDisplayName)
     ? params.opponentsDisplayName[0]
-    : params.opponentsDisplayName; // tsが配列かもってびびっちゃうらしい。params
+    : params.opponentsDisplayName;
   let [opponentsPoints, setOpponentsPoints] = useState<number>(
     Number(params.opponentsPoints),
   );
@@ -75,6 +80,8 @@ export default function Playing() {
 
   const jwt = useContext(JwtContext);
   const myIconIndex = useContext(IconIndexContext);
+  const myUserName = useContext(UserNameContext);
+
   const myDisplayName = useContext(DisplayNameContext);
   const pointsGlobal = useContext(PointsContext);
   const setPoints = useContext(SetPointsContext);
@@ -338,7 +345,7 @@ export default function Playing() {
     };
   }, []);
 
-  const soundFile = require("../assets/sounds/stone.mp3");
+  const soundFile = require("../../assets/sounds/stone.mp3");
 
   // 石の音用のプレイヤーを作る
   const stonePlayer = useAudioPlayer(soundFile);
@@ -872,7 +879,8 @@ export default function Playing() {
         <PlayerCard
           gumiIndex={opponentsGumiIndex}
           iconIndex={opponentsIconIndex}
-          name={opponentsDisplayName || ""}
+          username={opponentsUserName || ""}
+          displayname={opponentsDisplayName || ""}
           points={opponentsPoints || 0}
           color={getOppositeColor(playerColor)}
           time={opponentsRemainSecondsDisplay}
@@ -897,7 +905,8 @@ export default function Playing() {
         <PlayerCard
           gumiIndex={gumiIndex ?? 0}
           iconIndex={myIconIndex ?? 0}
-          name={myDisplayName || ""}
+          username={myUserName || ""}
+          displayname={myDisplayName || ""}
           points={pointsGlobal || 0}
           color={playerColor}
           time={myRemainSecondsDisplay}

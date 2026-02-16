@@ -1,4 +1,5 @@
 import { createContext } from "react";
+import { CustomerInfo } from 'react-native-purchases';
 
 // Context: グローバルstateをしまっておくための棚
 export const EmailContext = createContext<string | null>(null);
@@ -67,3 +68,9 @@ export const GumiIndexContext = createContext<number | null>(null);
 export const SetGumiIndexContext = createContext<
   ((value: number) => void) | null
 >(null);
+
+
+export const RevenueCatCustomerInfoContext = createContext<CustomerInfo | null>(null);
+export const SetRevenueCatCustomerInfoContext = createContext<React.Dispatch<React.SetStateAction<CustomerInfo | null>> | null>(null);
+// export const RevenueCatLoadingContext = createContext<boolean>(true);
+export const RefreshRevenueCatContext = createContext<(() => Promise<void>) | null>(null);

@@ -1,5 +1,5 @@
 // src/lib/gumiutils.ts
-import i18n from "./i18n";
+import i18n from "../services/i18n";
 
 export interface GumiInfo {
   nameKey: string; // 翻訳キーを保存

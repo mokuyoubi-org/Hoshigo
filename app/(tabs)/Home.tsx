@@ -2,18 +2,18 @@ import { DailyLimitModal } from "@/src/components/DailyLimitModal";
 import { InfoModal } from "@/src/components/InfoModal";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import LoginNeededModal from "@/src/components/LoginNeededModal";
-import { supabase } from "@/src/lib/supabase";
+import { supabase } from "@/src/services/supabase";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   IsPremiumContext,
   UidContext,
 } from "../../src/components/UserContexts";
-import { useTheme } from "../../src/lib/useTheme";
-import { useTranslation } from "react-i18next";
+import { useTheme } from "../../src/hooks/useTheme";
 
 export default function Home() {
   const { t } = useTranslation();

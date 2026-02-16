@@ -2,8 +2,8 @@ import GumiInfoModal from "@/src/components/GumiInfoModal";
 import IconSelectorModal from "@/src/components/IconSelectModal";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import LoginNeededModal from "@/src/components/LoginNeededModal";
-import { ICONS } from "@/src/lib/icons";
-import { supabase } from "@/src/lib/supabase";
+import { ICONS } from "@/src/constants/icons";
+import { supabase } from "@/src/services/supabase";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -28,8 +28,8 @@ import {
   UidContext,
   UserNameContext,
 } from "../../src/components/UserContexts";
+import { useTheme } from "../../src/hooks/useTheme";
 import { calculateGumiProgress, getGumiByIndex } from "../../src/lib/gumiUtils";
-import { useTheme } from "../../src/lib/useTheme";
 
 export default function MyPage() {
   const { t } = useTranslation();

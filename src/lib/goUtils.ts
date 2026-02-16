@@ -1,3 +1,4 @@
+import i18n from "../services/i18n";
 import {
   applyMove,
   Board,
@@ -15,7 +16,6 @@ import {
   territoryScoring,
   WHITE,
 } from "./goscorer.js";
-import i18n from "./i18n";
 
 export const movesToSgf = (
   moves: string[], // ["3,7", "2,3", ...]
@@ -340,4 +340,25 @@ export type Agehama = {
 
 export const movesToOpeningIndex = (moves: string[]): number => {
   return 0;
+};
+
+// 二次元配列を受け取ったらそれを適用したBoardを返す関数
+// 0が空、1が黒、2が白
+export const prepareBoard2d = (
+  board2d: number[][],
+  boardSize: number = 9,
+): Board => {
+  let board = initializeBoard();
+  for (let i = 0; i < boardSize; i++) {
+    for (let j = 0; j < boardSize; j++) {
+      if (board2d[i][j] === 1) {
+        // 黒
+        board = applyMove({ row: i + 1, col: j + 1 }, board, "black").board;
+      } else if (board2d[i][j] === 2) {
+        // 白
+        board = applyMove({ row: i + 1, col: j + 1 }, board, "white").board;
+      }
+    }
+  }
+  return board;
 };

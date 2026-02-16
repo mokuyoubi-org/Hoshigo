@@ -1,4 +1,5 @@
 import { GoBoard } from "@/src/components/GoBoard";
+import { ICONS } from "@/src/constants/icons";
 import {
   applyMove,
   Board,
@@ -13,14 +14,13 @@ import {
   stringifyGrid,
 } from "@/src/lib/goLogics";
 import { Agehama } from "@/src/lib/goUtils";
-import { ICONS } from "@/src/lib/icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getTutorialScreens, MyScreen } from "../src/components/TutorialData";
-import { DisplayNameContext } from "../src/components/UserContexts";
-import { useTheme } from "../src/lib/useTheme";
+import { getTutorialScreens, MyScreen } from "../../src/components/TutorialData";
+import { DisplayNameContext } from "../../src/components/UserContexts";
+import { useTheme } from "../../src/hooks/useTheme";
 
 // ==================== コンポーネント ====================
 export default function Tutorial() {
@@ -462,7 +462,11 @@ export default function Tutorial() {
             {/* 説明パネル */}
             <View style={styles.explanationContainer}>
               <View style={styles.characterContainer}>
-                <Image source={ICONS[100]} style={styles.characterImage} resizeMode="contain" />
+                <Image
+                  source={ICONS[100]}
+                  style={styles.characterImage}
+                  resizeMode="contain"
+                />
               </View>
               <View style={styles.speechBubble}>
                 <View style={styles.bubbleTriangle} />

@@ -8,10 +8,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SetThemeContext } from "../src/components/UserContexts";
-import { THEME_COLORS, ThemeType } from "../src/lib/colors";
-import { themeStore } from "../src/lib/storage";
-import { useTheme } from "../src/lib/useTheme";
+import { SetThemeContext } from "../../src/components/UserContexts";
+import { THEME_COLORS, ThemeType } from "../../src/constants/colors";
+import { useTheme } from "../../src/hooks/useTheme";
+import { themeStore } from "../../src/services/storage";
 
 export default function Design() {
   const { theme, colors: currentColors } = useTheme();
@@ -131,7 +131,6 @@ export default function Design() {
           <Text style={[styles.title, { color: currentColors.text }]}>
             テーマ設定
           </Text>
- 
         </View>
 
         {/* 碁盤テーマセクション */}

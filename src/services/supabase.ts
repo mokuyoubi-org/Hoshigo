@@ -16,25 +16,22 @@ export const supabase = createClient(
   },
 );
 
-
-
-// ← この関数を追加
 export const handleAuthCallback = async (url: string) => {
   try {
-    const urlObj = new URL(url)
-    const access_token = urlObj.searchParams.get('access_token')
-    const refresh_token = urlObj.searchParams.get('refresh_token')
+    const urlObj = new URL(url);
+    const access_token = urlObj.searchParams.get("access_token");
+    const refresh_token = urlObj.searchParams.get("refresh_token");
 
     if (access_token && refresh_token) {
       const { data, error } = await supabase.auth.setSession({
         access_token,
         refresh_token,
-      })
-      return { data, error }
+      });
+      return { data, error };
     }
 
-    return { data: null, error: new Error('No tokens found in URL') }
+    return { data: null, error: new Error("No tokens found in URL") };
   } catch (err) {
-    return { data: null, error: err as Error }
+    return { data: null, error: err as Error };
   }
-}
+};

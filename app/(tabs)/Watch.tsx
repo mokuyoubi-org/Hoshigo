@@ -20,14 +20,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GoBoardWithReplay } from "../../src/components/GoBoardWithReplay";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 import { PlayerCard } from "../../src/components/PlayerCard";
+import { useTheme } from "../../src/hooks/useTheme";
 import { Board, initializeBoard } from "../../src/lib/goLogics";
-import { supabase } from "../../src/lib/supabase";
-import { useTheme } from "../../src/lib/useTheme";
+import { supabase } from "../../src/services/supabase";
 
 type Match = {
   id: string; // 対局自体のid。supabaseが設定
   black_uid: string; // 黒のuid
   white_uid: string | null; // 白のuid
+    black_username: string; // 黒の表示名
+  white_username: string | null; // 白の表示名
   black_displayname: string; // 黒の表示名
   white_displayname: string | null; // 白の表示名
   status: "waiting" | "playing" | "ended"; // 相手待ちか、対局中か、終局後か
@@ -78,6 +80,14 @@ export default function Watch() {
   }>({});
   const replayIndexesRef = useRef<{
     [key: string]: number;
+  }>({});
+    const [blackUserNames, setBlackUserNames] = useState<{
+    // {match1: "たろう", match2: "じろう"}みたいな感じ⭐️ keyはmatchのid
+    [key: string]: string;
+  }>({});
+  const [whiteUserNames, setWhiteUserNames] = useState<{
+    // {match1: "たろう", match2: "じろう"}みたいな感じ⭐️ keyはmatchのid
+    [key: string]: string;
   }>({});
   const [blackDisplayNames, setBlackDisplayNames] = useState<{
     // {match1: "たろう", match2: "じろう"}みたいな感じ⭐️ keyはmatchのid
@@ -240,6 +250,8 @@ export default function Watch() {
     const agehamaHistories_: { [key: string]: Agehama[] } = {};
     const movess_: { [key: string]: string[] } = {};
     const replayIndexes_: { [key: string]: number } = {};
+        const blackUserNames_: { [key: string]: string } = {};
+    const whiteUserNames_: { [key: string]: string } = {};
     const blackDisplayNames_: { [key: string]: string } = {};
     const whiteDisplayNames_: { [key: string]: string } = {};
     const blackPointss_: { [key: string]: number } = {};
@@ -263,6 +275,8 @@ export default function Watch() {
       agehamaHistories_[match.id] = histories.agehamaHistory;
       movess_[match.id] = newMoves;
       replayIndexes_[match.id] = newMoves.length; // 初期表示は最新局面 ⭐️
+            blackUserNames_[match.id] = match.black_username || "";
+      whiteUserNames_[match.id] = match.white_username || "";
       blackDisplayNames_[match.id] = match.black_displayname || "";
       whiteDisplayNames_[match.id] = match.white_displayname || "";
       blackPointss_[match.id] = match.black_points;
@@ -300,6 +314,8 @@ export default function Watch() {
 
     setTerritoryBoards(territoryBoards_);
     territoryBoardsRef.current = territoryBoards_;
+        setBlackUserNames(blackUserNames_);
+    setWhiteUserNames(whiteUserNames_);
     setBlackDisplayNames(blackDisplayNames_);
     setWhiteDisplayNames(whiteDisplayNames_);
     setBlackPointss(blackPointss_);
@@ -494,7 +510,9 @@ export default function Watch() {
             <PlayerCard
               gumiIndex={blackGumiIndexs[matchId]}
               iconIndex={blackIconIndexs[matchId]}
-              name={blackDisplayNames[matchId]}
+                            username={blackUserNames[matchId]}
+
+              displayname={blackDisplayNames[matchId]}
               points={blackPointss[matchId]}
               color="black"
               time={blackRemainSecondss[matchId]}
@@ -506,7 +524,9 @@ export default function Watch() {
             <PlayerCard
               gumiIndex={whiteGumiIndexs[matchId]}
               iconIndex={whiteIconIndexs[matchId]}
-              name={whiteDisplayNames[matchId]}
+                            username={whiteUserNames[matchId]}
+
+              displayname={whiteDisplayNames[matchId]}
               points={whitePointss[matchId]}
               color="white"
               time={whiteRemainSecondss[matchId]}

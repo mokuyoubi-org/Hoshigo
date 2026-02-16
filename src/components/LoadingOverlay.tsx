@@ -1,8 +1,8 @@
 // app/components/LoadingOverlay.tsx
 import React from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../lib/useTheme";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../hooks/useTheme";
 
 type LoadingOverlayProps = {
   text?: string; // 表示するテキストだけ props に

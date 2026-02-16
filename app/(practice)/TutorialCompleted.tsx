@@ -1,6 +1,6 @@
 import LoadingOverlay from "@/src/components/LoadingOverlay";
-import { ICONS } from "@/src/lib/icons";
-import { supabase } from "@/src/lib/supabase";
+import { ICONS } from "@/src/constants/icons";
+import { supabase } from "@/src/services/supabase";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -9,8 +9,8 @@ import {
   SetTutorialCompletedIndexContext,
   TutorialCompletedIndexContext,
   UidContext,
-} from "../src/components/UserContexts";
-import { useTheme } from "../src/lib/useTheme";
+} from "../../src/components/UserContexts";
+import { useTheme } from "../../src/hooks/useTheme";
 
 export default function TutorialCompleted() {
   const uid = useContext(UidContext);

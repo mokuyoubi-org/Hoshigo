@@ -15,13 +15,13 @@ import {
   IsPremiumContext,
   UidContext,
 } from "../../src/components/UserContexts";
-import { useTheme } from "../../src/lib/useTheme";
+import { useTheme } from "../hooks/useTheme";
 import {
   calculateGumiProgress,
   getGumiByIndex,
   howManyPointsLeft,
 } from "../lib/gumiUtils";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../services/supabase";
 import { DailyLimitModal } from "./DailyLimitModal";
 import LoadingOverlay from "./LoadingOverlay";
 

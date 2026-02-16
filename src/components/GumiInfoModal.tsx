@@ -10,12 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../hooks/useTheme";
 import {
   GUMI_DATA,
   calculateGumiProgress,
   getGumiByIndex,
 } from "../lib/gumiUtils";
-import { useTheme } from "../lib/useTheme";
 
 interface GumiInfoModalProps {
   visible: boolean;

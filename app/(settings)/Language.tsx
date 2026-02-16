@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../src/lib/useTheme";
+import { useTheme } from "../../src/hooks/useTheme";
 
 type LanguageOption = {
   code: string;

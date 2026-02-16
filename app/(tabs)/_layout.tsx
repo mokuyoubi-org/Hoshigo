@@ -55,7 +55,7 @@
 //           ),
 //         }}
 //       />
-// {/* 
+// {/*
 //       <Tabs.Screen
 //         name="Practice"
 //         options={{
@@ -88,15 +88,13 @@
 //   );
 // }
 
-
-
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Tabs } from "expo-router";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { ThemeContext } from "../../src/components/UserContexts";
-import { THEME_COLORS } from "../../src/lib/colors";
+import { THEME_COLORS } from "../../src/constants/colors";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -149,7 +147,7 @@ export default function TabsLayout() {
           ),
         }}
       />
-{/* 
+      
       <Tabs.Screen
         name="Practice"
         options={{
@@ -158,7 +156,7 @@ export default function TabsLayout() {
             <FontAwesome5 name="school" color={color} size={size} />
           ),
         }}
-      /> */}
+      />
       {/* <Tabs.Screen
         name="Tsumego"
         options={{

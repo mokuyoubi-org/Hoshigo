@@ -16,8 +16,8 @@ import {
   AcquiredIconIndicesContext,
   GumiIndexContext,
 } from "../../src/components/UserContexts";
-import { ICONS } from "../lib/icons";
-import { useTheme } from "../lib/useTheme";
+import { ICONS } from "../constants/icons";
+import { useTheme } from "../hooks/useTheme";
 
 interface IconSelectorModalProps {
   visible: boolean;

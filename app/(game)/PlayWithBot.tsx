@@ -10,7 +10,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../src/components/LoadingOverlay";
+import LoadingOverlay from "../../src/components/LoadingOverlay";
 
 import {
   DailyPlayCountContext,
@@ -24,7 +24,8 @@ import {
   SetGumiIndexContext,
   SetPointsContext,
   UidContext,
-} from "../src/components/UserContexts";
+  UserNameContext,
+} from "../../src/components/UserContexts";
 import {
   BOARD_SIZE_COUNT,
   Board,
@@ -37,7 +38,7 @@ import {
   isLegalMove,
   keyToGrid,
   stringifyGrid,
-} from "../src/lib/goLogics";
+} from "../../src/lib/goLogics";
 import {
   Agehama,
   gnuGridstoStringGrids,
@@ -46,8 +47,8 @@ import {
   movesToSgf,
   resultToLanguagesComment,
   sleep,
-} from "../src/lib/goUtils";
-import { supabase } from "../src/lib/supabase";
+} from "../../src/lib/goUtils";
+import { supabase } from "../../src/services/supabase";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (BOARD_SIZE_COUNT - 1);
@@ -60,6 +61,7 @@ export default function PlayWithBot() {
   const uid = useContext(UidContext);
 
   const jwt = useContext(JwtContext);
+  const myUserName = useContext(UserNameContext);
   const myDisplayName = useContext(DisplayNameContext);
   const point = useContext(PointsContext);
   const setPoints = useContext(SetPointsContext);
@@ -76,6 +78,7 @@ export default function PlayWithBot() {
   const [playerColor, setPlayerColor] = useState<Color>("black");
 
   // ボット情報
+  const [botUserName, setBotUserName] = useState<string | null>(null);
   const [botDisplayName, setBotDisplayName] = useState<string | null>(null);
   const [botPoints, setBotPoints] = useState<number | null>(null);
   const [botUid, setBotUid] = useState<string | null>(null);
@@ -331,7 +334,7 @@ export default function PlayWithBot() {
     };
   }, []);
 
-  const soundFile = require("../assets/sounds/stone.mp3");
+  const soundFile = require("../../assets/sounds/stone.mp3");
 
   // 石の音用のプレイヤーを作る
   const stonePlayer = useAudioPlayer(soundFile);
@@ -357,6 +360,7 @@ export default function PlayWithBot() {
 
       const { data, error } = await supabase.rpc("match_with_bot", {
         p_black_uid: uid,
+        p_black_username: myUserName,
         p_black_displayname: myDisplayName,
         p_black_points: point,
         p_black_icon_index: iconIndex,
@@ -389,6 +393,7 @@ export default function PlayWithBot() {
 
       setMatchId(res.match_id);
       setBotUid(res.bot_uid);
+      setBotUserName(res.bot_username);
       setBotDisplayName(res.bot_displayname);
       setBotPoints(res.bot_points);
       setBotIconIndex(res.bot_icon_index);
@@ -878,7 +883,8 @@ export default function PlayWithBot() {
         <PlayerCard
           gumiIndex={botGumiIndex ?? 0}
           iconIndex={botIconIndex ?? 0}
-          name={botDisplayName || "AI"}
+          username={botUserName || ""}
+          displayname={botDisplayName || ""}
           points={botPoints || 0}
           color={getOppositeColor(playerColor)}
           time={opponentsRemainSecondsDisplay}
@@ -903,7 +909,8 @@ export default function PlayWithBot() {
         <PlayerCard
           gumiIndex={gumiIndex ?? 0}
           iconIndex={myIconIndex ?? 0}
-          name={myDisplayName || ""}
+          username={myUserName || ""}
+          displayname={myDisplayName || ""}
           points={point || 0}
           color={playerColor}
           time={myRemainSecondsDisplay}

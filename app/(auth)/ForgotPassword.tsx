@@ -12,9 +12,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../src/components/LoadingOverlay";
-import { supabase } from "../src/lib/supabase";
-import { isValidEmail } from "../src/lib/utils";
+import LoadingOverlay from "../../src/components/LoadingOverlay";
+import { isValidEmail } from "../../src/lib/utils";
+import { supabase } from "../../src/services/supabase";
 
 export default function ForgotPassword() {
   const { t } = useTranslation();

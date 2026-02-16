@@ -68,6 +68,7 @@ export const GoBoardWithReplay: React.FC<GoBoardWithReplayProps> = ({
     <View style={styles.container}>
       {/* 碁盤 */}
       <GoBoard
+      topBar={true}
         currentIndex={currentIndex} // 🌟
         board={displayBoard} // 🌟
         onPutStone={onPutStone} // 🌟

@@ -1,7 +1,7 @@
-import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import Slider from "@react-native-community/slider";
-import { useTheme } from "../lib/useTheme";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from "../hooks/useTheme";
 
 interface ReplayControlsProps {
   currentIndex: number;
@@ -21,7 +21,12 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.borderColor }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.card, borderColor: colors.borderColor },
+      ]}
+    >
       <TouchableOpacity
         style={[
           styles.button,
@@ -87,7 +92,7 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingHorizontal: 24,
     paddingTop: 0,
-    paddingBottom:16,
+    paddingBottom: 16,
     borderRadius: 16,
     borderWidth: 1,
     width: "100%",

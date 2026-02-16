@@ -4,16 +4,17 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../src/components/LoadingOverlay";
+import LoadingOverlay from "../../src/components/LoadingOverlay";
 import {
+  UserNameContext,
   DisplayNameContext,
   GamesContext,
   GumiIndexContext,
   IconIndexContext,
   PointsContext,
   UidContext,
-} from "../src/components/UserContexts";
-import { supabase } from "../src/lib/supabase";
+} from "../../src/components/UserContexts";
+import { supabase } from "../../src/services/supabase";
 
 // カラム数23
 type Match = {
@@ -27,6 +28,8 @@ type Match = {
   black_points: number; // 黒のレート。int2。RPCが使う
   white_points: number; // 白のレート。int2。RPCが使う
   result: string | null; // 結果
+  black_username: string; // 黒の表示名
+  white_username: string | null; // 白の表示名
   black_displayname: string; // 黒の表示名
   white_displayname: string | null; // 白の表示名
   moves: number[]; // 一連の手
@@ -49,6 +52,8 @@ type MatchArchive = {
   created_at: string; // supabaseが設定
   black_points: number; // 黒のレート。対局とかのランキングで使う可能性あり。△
   white_points: number; // 白のレート。対局とかのランキングで使う可能性あり。△
+  black_username: string; // 黒の表示名
+  white_username: string | null; // 白の表示名
   black_displayname: string; // 黒の表示名
   white_displayname: string | null; // 白の表示名
   black_icon_index: number; // 黒のアイコン。int2。△
@@ -110,6 +115,7 @@ const boardSequence = [
 export default function Matching() {
   const { t } = useTranslation();
   const uid = useContext(UidContext);
+  const username = useContext(UserNameContext);
   const displayname = useContext(DisplayNameContext);
   const points = useContext(PointsContext);
   const iconIndex = useContext(IconIndexContext);
@@ -255,6 +261,7 @@ export default function Matching() {
     try {
       const { data, error } = await supabase.rpc("try_match", {
         p_uid: uid,
+        p_username: username,
         p_displayname: displayname,
         p_points: points,
         p_points_diff: pointsDiffRef.current,
@@ -281,6 +288,7 @@ export default function Matching() {
         goToPlaying(
           res.match_idr,
           res.roler === "white" ? "white" : "black",
+          res.opponents_usernamer,
           res.opponents_displaynamer,
           res.opponents_pointsr,
           res.opponents_icon_indexr,
@@ -295,6 +303,7 @@ export default function Matching() {
         goToPlaying(
           res.match_idr,
           res.roler === "white" ? "white" : "black",
+          res.opponents_usernamer,
           res.opponents_displaynamer,
           res.opponents_pointsr,
           res.opponents_icon_indexr,
@@ -341,6 +350,7 @@ export default function Matching() {
   const goToPlaying = (
     id: string,
     color: "black" | "white",
+    opponentsUserName: string,
     opponentsDisplayName: string,
     opponentsPoints: string,
     opponentsIconIndex: number,
@@ -357,6 +367,7 @@ export default function Matching() {
       params: {
         matchId: id,
         color,
+        opponentsUserName,
         opponentsDisplayName,
         opponentsPoints,
         opponentsIconIndex,
@@ -383,6 +394,7 @@ export default function Matching() {
             goToPlaying(
               id,
               "black",
+              payload.new.white_username,
               payload.new.white_displayname,
               payload.new.white_points,
               payload.new.white_icon_index,

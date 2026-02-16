@@ -9,8 +9,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IsPremiumContext } from "../src/components/UserContexts";
-import { useTheme } from "../src/lib/useTheme";
+import { IsPremiumContext } from "../../src/components/UserContexts";
+import { useTheme } from "../../src/hooks/useTheme";
 
 export default function Premium() {
   const isPremium = useContext(IsPremiumContext);
