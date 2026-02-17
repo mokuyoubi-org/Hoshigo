@@ -23,11 +23,11 @@
 
 ## 🛠 仕組み
 
-- Expo / React Native: アプリ本体
-- Supabase: データベース。ユーザ、対局の管理
-- Fly: GnuGoのデプロイ先
-- RevenueCat: 課金処理
-- Resend: メールの送信
+- ⛰️ Expo: アプリ本体
+- ⚡️ Supabase: データベース。ユーザ、対局の管理
+- 🪽 Fly: GnuGoのデプロイ先
+- 🐱 RevenueCat: 課金処理
+- ✉️ Resend: メールの送信
 
 ---
 
