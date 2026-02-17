@@ -1,4 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -21,7 +22,7 @@ export default function LoginNeededModal({
 
   const handleLogin = () => {
     onClose();
-    navigation.navigate("Login" as never);
+    router.push("/Login");
   };
 
   return (

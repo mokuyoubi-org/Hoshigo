@@ -362,3 +362,71 @@ export const prepareBoard2d = (
   }
   return board;
 };
+
+export const prepareOkigoBoard = (matchType: number): Board => {
+  let board = initializeBoard();
+  switch (matchType) {
+    case 2: // 2子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      break;
+    case 3: // 3子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 5, col: 5 }, board, "black").board;
+      break;
+    case 4: // 4子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+
+      break;
+    case 5: // 5子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove({ row: 5, col: 5 }, board, "black").board;
+      break;
+    case 6: // 6子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove({ row: 5, col: 3 }, board, "black").board;
+      board = applyMove({ row: 5, col: 7 }, board, "black").board;
+      break;
+    case 7: // 7子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove({ row: 5, col: 5 }, board, "black").board;
+      board = applyMove({ row: 5, col: 3 }, board, "black").board;
+      board = applyMove({ row: 5, col: 7 }, board, "black").board;
+      break;
+    case 8: // 8子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove({ row: 5, col: 3 }, board, "black").board;
+      board = applyMove({ row: 5, col: 7 }, board, "black").board;
+      board = applyMove({ row: 3, col: 5 }, board, "black").board;
+      board = applyMove({ row: 7, col: 5 }, board, "black").board;
+      break;
+    case 9: // 9子局
+      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove({ row: 5, col: 5 }, board, "black").board;
+      board = applyMove({ row: 5, col: 3 }, board, "black").board;
+      board = applyMove({ row: 5, col: 7 }, board, "black").board;
+      board = applyMove({ row: 3, col: 5 }, board, "black").board;
+      board = applyMove({ row: 7, col: 5 }, board, "black").board;
+      break;
+  }
+  return board;
+};

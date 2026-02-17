@@ -1,8 +1,16 @@
 // src/screens/CustomPaywallScreen.tsx
+import { useRevenueCat } from "@/src/hooks/useRevenueCat";
+import { useTheme } from "@/src/hooks/useTheme";
+import {
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+} from "@/src/services/RevenueCat";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,16 +20,13 @@ import type {
   PurchasesOffering,
   PurchasesPackage,
 } from "react-native-purchases";
-import { useRevenueCat } from "../../src/hooks/useRevenueCat";
-import {
-  getOfferings,
-  purchasePackage,
-  restorePurchases,
-} from "../../src/services/RevenueCat";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface CustomPaywallScreenProps {
   onDismiss?: () => void;
 }
+
+type PlanType = "monthly" | "yearly" | null;
 
 export default function CustomPaywallScreen({
   onDismiss,
@@ -29,23 +34,17 @@ export default function CustomPaywallScreen({
   const [offerings, setOfferings] = useState<PurchasesOffering | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [purchasing, setPurchasing] = useState<boolean>(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>("yearly"); // デフォルトで年額を選択
   const { refreshStatus } = useRevenueCat();
+  const { colors } = useTheme();
 
   useEffect(() => {
     loadOfferings();
   }, []);
 
-  // const loadOfferings = async (): Promise<void> => {
-  //   const offering = await getOfferings();
-  //   setOfferings(offering);
-  //   setLoading(false);
-  // };
-
   const loadOfferings = async (): Promise<void> => {
     console.log("🔍 Loading offerings...");
     const offering = await getOfferings();
-
-    console.log("📦 Raw offering:", JSON.stringify(offering, null, 2));
 
     if (!offering) {
       console.log("❌ Offering is null!");
@@ -75,8 +74,21 @@ export default function CustomPaywallScreen({
     setLoading(false);
   };
 
-  const handlePurchase = async (pkg: PurchasesPackage): Promise<void> => {
+  const handlePurchase = async (): Promise<void> => {
+    if (!selectedPlan) {
+      Alert.alert(
+        "プランを選択してください",
+        "月額または年額プランを選択してください",
+      );
+      return;
+    }
+
+    const pkg = selectedPlan === "monthly" ? monthly : yearly;
+    if (!pkg) return;
+
     setPurchasing(true);
+    console.log("💰 Purchasing product:", pkg.product.identifier);
+
     const result = await purchasePackage(pkg);
     setPurchasing(false);
 
@@ -107,194 +119,364 @@ export default function CustomPaywallScreen({
     }
   };
 
+  // 割引率を計算（小数点切り捨て）
+  const calculateSavings = (
+    monthlyPkg: PurchasesPackage | undefined,
+    yearlyPkg: PurchasesPackage | undefined,
+  ): number => {
+    if (!monthlyPkg || !yearlyPkg) return 0;
+
+    const monthlyPrice = monthlyPkg.product.price;
+    const yearlyPrice = yearlyPkg.product.price;
+
+    // 月額 × 12 と年額の差額
+    const monthlyTotal = monthlyPrice * 12;
+    const savings = ((monthlyTotal - yearlyPrice) / monthlyTotal) * 100;
+
+    // 小数点切り捨て
+    return Math.floor(savings);
+  };
+
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.active} />
       </View>
     );
   }
 
   if (!offerings) {
     return (
-      <View style={styles.container}>
-        <Text>商品情報を読み込めませんでした</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.text }]}>
+          商品情報を読み込めませんでした
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.closeButtonCard,
+            { backgroundColor: colors.card, borderColor: colors.borderColor },
+          ]}
+          onPress={onDismiss}
+        >
+          <Text style={[styles.closeButtonText, { color: colors.text }]}>
+            閉じる
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  // monthly, yearly, lifetimeのパッケージを取得
-  // const packages = offerings.availablePackages;
-  // const monthly = packages.find(p => p.identifier === 'monthly');
-  // const yearly = packages.find(p => p.identifier === 'yearly');
-  // const lifetime = packages.find(p => p.identifier === 'lifetime');
-
-  // パッケージ取得（修正版）
+  // パッケージ取得
   const packages = offerings.availablePackages;
+  const monthly = packages.find((p) =>
+    p.product.identifier.startsWith("premium_monthly"),
+  );
+  const yearly = packages.find((p) =>
+    p.product.identifier.startsWith("premium_yearly"),
+  );
 
-  // product.identifierで検索（package.identifierではなく）
-  const monthly = packages.find((p) => p.product.identifier === "monthly");
-  const yearly = packages.find((p) => p.product.identifier === "yearly");
-  const lifetime = packages.find((p) => p.product.identifier === "lifetime");
+  const savingsPercent = calculateSavings(monthly, yearly);
 
   console.log("📦 Found:", {
-    monthly: monthly?.identifier,
-    yearly: yearly?.identifier,
-    lifetime: lifetime?.identifier,
+    monthly: !!monthly,
+    yearly: !!yearly,
+    savingsPercent,
   });
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Hoshigo Pro</Text>
-      <Text style={styles.subtitle}>すべての機能をアンロック</Text>
-
-      <View style={styles.packagesContainer}>
-        {/* 月額プラン */}
-        {monthly && (
-          <TouchableOpacity
-            style={styles.packageButton}
-            onPress={() => handlePurchase(monthly)}
-            disabled={purchasing}
-          >
-            <Text style={styles.packageTitle}>月額プラン</Text>
-            <Text style={styles.packagePrice}>
-              {monthly.product.priceString}/月
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* 年額プラン */}
-        {yearly && (
-          <TouchableOpacity
-            style={[styles.packageButton, styles.recommendedPackage]}
-            onPress={() => handlePurchase(yearly)}
-            disabled={purchasing}
-          >
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>おすすめ</Text>
-            </View>
-            <Text style={styles.packageTitle}>年額プラン</Text>
-            <Text style={styles.packagePrice}>
-              {yearly.product.priceString}/年
-            </Text>
-            <Text style={styles.savingsText}>月額より20%お得！</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* 買い切りプラン */}
-        {lifetime && (
-          <TouchableOpacity
-            style={styles.packageButton}
-            onPress={() => handlePurchase(lifetime)}
-            disabled={purchasing}
-          >
-            <Text style={styles.packageTitle}>買い切りプラン</Text>
-            <Text style={styles.packagePrice}>
-              {lifetime.product.priceString}
-            </Text>
-            <Text style={styles.savingsText}>一度だけのお支払い</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {purchasing && <ActivityIndicator size="large" style={styles.loader} />}
-
-      <TouchableOpacity
-        style={styles.restoreButton}
-        onPress={handleRestore}
-        disabled={purchasing}
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.restoreText}>購入を復元</Text>
-      </TouchableOpacity>
+        {/* ヘッダー */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={onDismiss}>
+            <Text style={[styles.backButtonText, { color: colors.active }]}>
+              ‹ 戻る
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity style={styles.closeButton} onPress={onDismiss}>
-        <Text style={styles.closeText}>閉じる</Text>
-      </TouchableOpacity>
-    </View>
+        {/* タイトル */}
+        <Text style={[styles.title, { color: colors.text }]}>Hoshigo Pro</Text>
+        <Text style={[styles.subtitle, { color: colors.subtext }]}>
+          すべての機能をアンロック
+        </Text>
+
+        {/* プラン選択 */}
+        <View style={styles.plansContainer}>
+          {/* 月額プラン */}
+          {monthly && (
+            <TouchableOpacity
+              style={[
+                styles.planCard,
+                {
+                  backgroundColor: colors.card,
+                  borderColor:
+                    selectedPlan === "monthly"
+                      ? colors.active
+                      : colors.borderColor,
+                },
+                selectedPlan === "monthly" && styles.planCardSelected,
+              ]}
+              onPress={() => setSelectedPlan("monthly")}
+              disabled={purchasing}
+            >
+              <View style={styles.planHeader}>
+                <View style={styles.radioOuter}>
+                  {selectedPlan === "monthly" && (
+                    <View
+                      style={[
+                        styles.radioInner,
+                        { backgroundColor: colors.active },
+                      ]}
+                    />
+                  )}
+                </View>
+                <Text style={[styles.planTitle, { color: colors.text }]}>
+                  月額プラン
+                </Text>
+              </View>
+              <Text style={[styles.planPrice, { color: colors.active }]}>
+                {monthly.product.priceString}/月
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* 年額プラン */}
+          {yearly && (
+            <TouchableOpacity
+              style={[
+                styles.planCard,
+                {
+                  backgroundColor: colors.card,
+                  borderColor:
+                    selectedPlan === "yearly"
+                      ? colors.active
+                      : colors.borderColor,
+                },
+                selectedPlan === "yearly" && styles.planCardSelected,
+              ]}
+              onPress={() => setSelectedPlan("yearly")}
+              disabled={purchasing}
+            >
+              {savingsPercent > 0 && (
+                <View
+                  style={[styles.badge, { backgroundColor: colors.active }]}
+                >
+                  <Text style={styles.badgeText}>{savingsPercent}%お得</Text>
+                </View>
+              )}
+              <View style={styles.planHeader}>
+                <View style={styles.radioOuter}>
+                  {selectedPlan === "yearly" && (
+                    <View
+                      style={[
+                        styles.radioInner,
+                        { backgroundColor: colors.active },
+                      ]}
+                    />
+                  )}
+                </View>
+                <Text style={[styles.planTitle, { color: colors.text }]}>
+                  年額プラン
+                </Text>
+              </View>
+              <Text style={[styles.planPrice, { color: colors.active }]}>
+                {yearly.product.priceString}/年
+              </Text>
+              {savingsPercent > 0 && (
+                <Text style={[styles.savingsText, { color: colors.subtext }]}>
+                  月額より約{savingsPercent}%お得
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* 購入ボタン */}
+        <TouchableOpacity
+          style={[
+            styles.purchaseButton,
+            { backgroundColor: colors.active },
+            purchasing && styles.purchaseButtonDisabled,
+          ]}
+          onPress={handlePurchase}
+          disabled={purchasing || !selectedPlan}
+        >
+          {purchasing ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.purchaseButtonText}>
+              {selectedPlan === "monthly"
+                ? "月額プランを購入"
+                : "年額プランを購入"}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        {/* 購入を復元 */}
+        <TouchableOpacity
+          style={[
+            styles.restoreButton,
+            { backgroundColor: colors.card, borderColor: colors.borderColor },
+          ]}
+          onPress={handleRestore}
+          disabled={purchasing}
+        >
+          <Text style={[styles.restoreButtonText, { color: colors.text }]}>
+            購入を復元
+          </Text>
+        </TouchableOpacity>
+
+        {/* 注意事項 */}
+        <Text style={[styles.noticeText, { color: colors.subtext }]}>
+          • 購入後、即座にすべての機能が利用可能になります{"\n"}•
+          サブスクリプションは自動更新されます{"\n"}• いつでもGoogle
+          Playから解約できます
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
+  },
+  scrollContent: {
+    padding: 24,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  backButton: {
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
   },
   title: {
     fontSize: 32,
-    fontWeight: "bold",
+    fontWeight: "700",
     textAlign: "center",
-    marginTop: 40,
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
     textAlign: "center",
-    color: "#666",
-    marginTop: 8,
-    marginBottom: 40,
+    marginBottom: 32,
   },
-  packagesContainer: {
+  plansContainer: {
     gap: 16,
+    marginBottom: 24,
   },
-  packageButton: {
+  planCard: {
     padding: 20,
+    borderRadius: 16,
+    borderWidth: 2,
+    position: "relative",
+  },
+  planCardSelected: {
+    borderWidth: 3,
+  },
+  planHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 12,
+  },
+  radioOuter: {
+    width: 24,
+    height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#ddd",
-    backgroundColor: "#f9f9f9",
+    borderColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  recommendedPackage: {
-    borderColor: "#007AFF",
-    backgroundColor: "#f0f7ff",
+  radioInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
-  badge: {
-    position: "absolute",
-    top: -10,
-    right: 20,
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  packageTitle: {
+  planTitle: {
     fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontWeight: "700",
   },
-  packagePrice: {
-    fontSize: 24,
-    color: "#007AFF",
-    fontWeight: "bold",
+  planPrice: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 4,
   },
   savingsText: {
     fontSize: 14,
-    color: "#666",
     marginTop: 4,
   },
-  loader: {
-    marginTop: 20,
+  badge: {
+    position: "absolute",
+    top: -12,
+    right: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    zIndex: 1,
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  purchaseButton: {
+    padding: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  purchaseButtonDisabled: {
+    opacity: 0.6,
+  },
+  purchaseButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
   },
   restoreButton: {
-    marginTop: 30,
-    padding: 16,
+    padding: 18,
+    borderRadius: 16,
     alignItems: "center",
+    borderWidth: 1,
+    marginBottom: 24,
   },
-  restoreText: {
-    color: "#007AFF",
+  restoreButtonText: {
     fontSize: 16,
+    fontWeight: "600",
   },
-  closeButton: {
-    marginTop: 10,
-    padding: 16,
+  closeButtonCard: {
+    padding: 18,
+    borderRadius: 16,
     alignItems: "center",
+    borderWidth: 1,
+    marginTop: 20,
   },
-  closeText: {
-    color: "#666",
+  closeButtonText: {
     fontSize: 16,
+    fontWeight: "600",
+  },
+  noticeText: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
   },
 });

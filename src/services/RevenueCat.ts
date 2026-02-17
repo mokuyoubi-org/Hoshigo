@@ -10,7 +10,7 @@ import type {
   SubscriptionStatus,
 } from "../types/purchases";
 
-const API_KEY = "test_lXRHbAVUITcofriWpTIXaznmsBU";
+const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY!;
 const ENTITLEMENT_ID = "Hoshigo Pro";
 
 export const initializePurchases = async (): Promise<void> => {
@@ -87,5 +87,29 @@ export const restorePurchases = async (): Promise<RestoreResult> => {
   } catch (error: any) {
     console.error("❌ Restore error:", error);
     return { success: false, error: error.message };
+  }
+};
+
+// ユーザーをRevenueCatにログイン（SupabaseのUIDと紐付け）
+export const loginRevenueCat = async (uid: string): Promise<void> => {
+  try {
+    const { customerInfo } = await Purchases.logIn(uid);
+    console.log("✅ RevenueCat logged in with uid:", uid);
+    console.log(
+      "📊 isPro after login:",
+      customerInfo.entitlements.active["Hoshigo Pro"] != null,
+    );
+  } catch (error) {
+    console.error("❌ RevenueCat login failed:", error);
+  }
+};
+
+// ログアウト
+export const logoutRevenueCat = async (): Promise<void> => {
+  try {
+    await Purchases.logOut();
+    console.log("✅ RevenueCat logged out");
+  } catch (error) {
+    console.error("❌ RevenueCat logout failed:", error);
   }
 };

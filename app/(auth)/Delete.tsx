@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { UidContext } from "../../src/components/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
+import { logoutRevenueCat } from "@/src/services/RevenueCat";
 
 export default function Delete() {
   const { colors } = useTheme();
@@ -33,6 +34,8 @@ export default function Delete() {
 
     if (data) {
       await supabase.auth.signOut();
+        await logoutRevenueCat(); // ← これを追加
+
       setLoading(false);
 
       router.replace("/Login");
