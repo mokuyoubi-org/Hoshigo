@@ -25,211 +25,252 @@ import { Board, initializeBoard } from "../../src/lib/goLogics";
 import { supabase } from "../../src/services/supabase";
 
 type Match = {
-  id: string; // 対局自体のid。supabaseが設定
-  black_uid: string; // 黒のuid
-  white_uid: string | null; // 白のuid
-    black_username: string; // 黒の表示名
-  white_username: string | null; // 白の表示名
-  black_displayname: string; // 黒の表示名
-  white_displayname: string | null; // 白の表示名
-  status: "waiting" | "playing" | "ended"; // 相手待ちか、対局中か、終局後か
-  moves: number[]; // 一連の手
-  created_at: string; // supabaseが設定
-  result: string | null; // 結果
-  dead_stones: number[]; // 死に石
-  black_last_seen: string | null; // 黒の最後のハートビート
-  white_last_seen: string | null; // 白の最後のハートビート
-  turn: "black" | "white"; // 今黒番か白番か
-  turn_switched_at: string | null; // 最後に手番が交代した時刻。
-  black_remain_seconds: number; // 0~180。黒の残り時間
-  white_remain_seconds: number; // 0~180。白の残り時間
-  black_points: number; // 黒のポイント
-  white_points: number; // 白のポイント
-  black_gumi_index: number; // 黒のぐみindex
-  white_gumi_index: number; // 白のぐみindex
+  id: string;
+  black_uid: string;
+  white_uid: string | null;
+  black_username: string;
+  white_username: string | null;
+  black_displayname: string;
+  white_displayname: string | null;
+  status: "waiting" | "playing" | "ended";
+  moves: number[];
+  created_at: string;
+  result: string | null;
+  dead_stones: number[];
+  black_last_seen: string | null;
+  white_last_seen: string | null;
+  turn: "black" | "white";
+  turn_switched_at: string | null;
+  black_remain_seconds: number;
+  white_remain_seconds: number;
+  black_points: number;
+  white_points: number;
+  black_gumi_index: number;
+  white_gumi_index: number;
   black_icon_index: number;
   white_icon_index: number;
 };
 
+// ① カードが持つ「計算済みデータ」をまとめた型
+type MatchCardData = {
+  id: string;
+  // プレイヤー情報
+  blackUsername: string;
+  whiteUsername: string;
+  blackDisplayname: string;
+  whiteDisplayname: string;
+  blackPoints: number;
+  whitePoints: number;
+  blackGumiIndex: number;
+  whiteGumiIndex: number;
+  blackIconIndex: number;
+  whiteIconIndex: number;
+  // ゲーム状態
+  blackRemainSeconds: number;
+  whiteRemainSeconds: number;
+  turn: "black" | "white";
+  status: "waiting" | "playing" | "ended";
+  result: string;
+  // 盤面
+  moves: string[];
+  boardHistory: Board[];
+  agehamaHistory: Agehama[];
+  territoryBoard: number[][];
+};
+
+// ② MatchCardコンポーネント: replayIndexを自己管理 + React.memo
+const MatchCard = React.memo(
+  ({ data, colors, t }: { data: MatchCardData; colors: any; t: any }) => {
+    const [replayIndex, setReplayIndex] = useState(data.moves.length);
+
+    // ③ リアルタイムで新しい手が来たとき、最新手を見ていたら自動追従
+    const prevMovesLengthRef = useRef(data.moves.length);
+    useEffect(() => {
+      const newLength = data.moves.length;
+      const wasAtLatest = replayIndex === prevMovesLengthRef.current;
+      if (wasAtLatest && newLength > prevMovesLengthRef.current) {
+        setReplayIndex(newLength); // 最新手に追従
+      }
+      prevMovesLengthRef.current = newLength;
+    }, [data.moves.length]);
+
+    const board = data.boardHistory[replayIndex] ?? initializeBoard();
+    const isAtLatest = replayIndex === data.boardHistory.length - 1;
+
+    return (
+      <View
+        style={[
+          styles.matchCard,
+          { backgroundColor: colors.card, borderColor: colors.borderColor },
+        ]}
+      >
+        <View style={styles.matchHeader}>
+          <View style={styles.playerRow}>
+            <PlayerCard
+              gumiIndex={data.blackGumiIndex}
+              iconIndex={data.blackIconIndex}
+              username={data.blackUsername}
+              displayname={data.blackDisplayname}
+              points={data.blackPoints}
+              color="black"
+              time={data.blackRemainSeconds}
+              isActive={data.turn === "black" && isAtLatest}
+            />
+          </View>
+          <View style={styles.playerRow}>
+            <PlayerCard
+              gumiIndex={data.whiteGumiIndex}
+              iconIndex={data.whiteIconIndex}
+              username={data.whiteUsername}
+              displayname={data.whiteDisplayname}
+              points={data.whitePoints}
+              color="white"
+              time={data.whiteRemainSeconds}
+              isActive={data.turn === "white" && isAtLatest}
+            />
+          </View>
+          <View>
+            {data.status === "ended" && data.result && (
+              <View
+                style={[
+                  styles.resultContainer,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.borderColor,
+                  },
+                ]}
+              >
+                <Text style={[styles.resultText, { color: colors.text }]}>
+                  {resultToLanguages(data.result)}
+                </Text>
+              </View>
+            )}
+            {data.status === "playing" && (
+              <View style={styles.statusContainer}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>{t("Watch.playing")}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <GoBoardWithReplay
+          agehamaHistory={data.agehamaHistory}
+          board={board}
+          onPutStone={() => {}}
+          moveHistory={data.moves}
+          disabled={true}
+          territoryBoard={data.territoryBoard}
+          isGameEnded={true}
+          boardHistory={data.boardHistory}
+          currentIndex={replayIndex}
+          onCurrentIndexChange={setReplayIndex}
+        />
+      </View>
+    );
+  },
+);
+
+// ④ Match → MatchCardData の変換関数（レンダリング外で定義）
+function buildCardData(match: Match): MatchCardData {
+  const newMoves = moveNumbersToStrings(match.moves);
+  const { boardHistory, agehamaHistory } = movesToBoardHistory(newMoves);
+  const territoryBoard = Array.from({ length: 9 }, () =>
+    Array.from({ length: 9 }, () => 0),
+  );
+  return {
+    id: match.id,
+    blackUsername: match.black_username || "",
+    whiteUsername: match.white_username || "",
+    blackDisplayname: match.black_displayname || "",
+    whiteDisplayname: match.white_displayname || "",
+    blackPoints: match.black_points,
+    whitePoints: match.white_points,
+    blackGumiIndex: match.black_gumi_index,
+    whiteGumiIndex: match.white_gumi_index,
+    blackIconIndex: match.black_icon_index,
+    whiteIconIndex: match.white_icon_index,
+    blackRemainSeconds: match.black_remain_seconds,
+    whiteRemainSeconds: match.white_remain_seconds,
+    turn: match.turn,
+    status: match.status,
+    result: match.result ?? "",
+    moves: newMoves,
+    boardHistory,
+    agehamaHistory,
+    territoryBoard,
+  };
+}
+
 export default function Watch() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const matchIdsRef = useRef<string[]>([]);
 
-  const [boardHistories, setBoardHistories] = useState<{
-    // 3局のboardHistory。{match1: [,,,], match2: [,,,]}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: Board[];
-  }>({});
-  const boardHistoriesRef = useRef<{
-    [key: string]: Board[];
-  }>({});
-  const [agehamaHistories, setAgehamaHistories] = useState<{
-    [key: string]: Agehama[];
-  }>({});
+  // ⑤ stateをmatchCardsData一本に集約（バラバラのstateを廃止）
+  const [matchCardsData, setMatchCardsData] = useState<MatchCardData[]>([]);
+  const matchCardsDataRef = useRef<{ [id: string]: MatchCardData }>({});
 
-  const [movess, setMovess] = useState<{
-    // 3局のmoveHistory。{match1: [,,,], match2: [,,,]}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: string[];
-  }>({});
-  const movessRef = useRef<{
-    [key: string]: string[];
-  }>({});
-  const [replayIndexes, setReplayIndexes] = useState<{
-    // 3局の今何手目を表示してるかのリスト。{match1: 20, match2: 30}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number;
-  }>({});
-  const replayIndexesRef = useRef<{
-    [key: string]: number;
-  }>({});
-    const [blackUserNames, setBlackUserNames] = useState<{
-    // {match1: "たろう", match2: "じろう"}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: string;
-  }>({});
-  const [whiteUserNames, setWhiteUserNames] = useState<{
-    // {match1: "たろう", match2: "じろう"}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: string;
-  }>({});
-  const [blackDisplayNames, setBlackDisplayNames] = useState<{
-    // {match1: "たろう", match2: "じろう"}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: string;
-  }>({});
-  const [whiteDisplayNames, setWhiteDisplayNames] = useState<{
-    // {match1: "たろう", match2: "じろう"}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: string;
-  }>({});
-  const [blackPointss, setBlackPointss] = useState<{
-    // {match1: 1150, match2: 950}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number;
-  }>({});
-  const [whitePointss, setWhitePointss] = useState<{
-    // {match1: 1150, match2: 950}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number;
-  }>({});
-
-  const [blackGumiIndexs, setBlackGumiIndexs] = useState<{
-    [key: string]: number;
-  }>({});
-  const [whiteGumiIndexs, setWhiteGumiIndexs] = useState<{
-    [key: string]: number;
-  }>({});
-
-  const [blackIconIndexs, setBlackIconIndexs] = useState<{
-    // {match1: 1150, match2: 950}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number;
-  }>({});
-  const [whiteIconIndexs, setWhiteIconIndexs] = useState<{
-    // {match1: 1150, match2: 950}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number;
-  }>({});
-  const [blackRemainSecondss, setBlackRemainSecondss] = useState<{
-    // {match1: 157, match2: 180}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number;
-  }>({});
-  const blackRemainSecondssRef = useRef<{
-    [key: string]: number;
-  }>({});
-  const [whiteRemainSecondss, setWhiteRemainSecondss] = useState<{
-    // {match1: 127, match2: 134}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number;
-  }>({});
-  const whiteRemainSecondssRef = useRef<{
-    [key: string]: number;
-  }>({});
-  const [turns, setTurns] = useState<{
-    // {match1: "black", match2: "white"}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: string;
-  }>({});
-  const turnsRef = useRef<{
-    // {match1: "black", match2: "white"}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: string;
-  }>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null); // タイマーのidが入ってる。
-  const [statuss, setStatuss] = useState<{
-    [key: string]: string;
-  }>({}); // 今は使っていないが、そのうち使う。終局とか対局中、とかの表示で⭐️
-  const statussRef = useRef<{
-    [key: string]: string;
-  }>({});
-  const [results, setResults] = useState<{
-    [key: string]: string;
-  }>({}); // 今は使っていないが、そのうち使う。終局とか対局中、とかの表示で⭐️
-  const resultsRef = useRef<{
-    [key: string]: string;
-  }>({});
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [territoryBoards, setTerritoryBoards] = useState<{
-    // {match1: "black", match2: "white"}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number[][];
-  }>({});
-  const territoryBoardsRef = useRef<{
-    // {match1: [[0,0,..],[]..], match2: [[0,0,..],[]..]}みたいな感じ⭐️ keyはmatchのid
-    [key: string]: number[][];
-  }>({});
-
-  // 初回ロード
   useEffect(() => {
     const init = async () => {
-      const data = await fetchMatches();
-      if (data) {
-        const ids = data.map((m) => m.id);
-        matchIdsRef.current = ids;
-        setupSubscription(ids);
-      }
+      const ids = await fetchMatches();
+      if (ids) setupSubscription(ids);
     };
-
     init();
-
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, []);
 
-  // 時間の処理
+  // ⑥ タイマー: refを直接いじってからsetStateで差分更新
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      matchIdsRef.current.forEach((matchId) => {
-        if (statussRef.current[matchId] === "playing") {
-          if (turnsRef.current[matchId] === "black") {
-            blackRemainSecondssRef.current[matchId] = Math.max(
-              0,
-              blackRemainSecondssRef.current[matchId] - 1,
-            );
-            setBlackRemainSecondss((prev) => ({
-              ...prev,
-              [matchId]: Math.ceil(blackRemainSecondssRef.current[matchId]),
-            }));
-          } else {
-            whiteRemainSecondssRef.current[matchId] = Math.max(
-              0,
-              whiteRemainSecondssRef.current[matchId] - 1,
-            );
+      const updates: { id: string; black: number; white: number }[] = [];
 
-            setWhiteRemainSecondss((prev) => ({
-              ...prev,
-              [matchId]: Math.ceil(whiteRemainSecondssRef.current[matchId]),
-            }));
-          }
+      Object.values(matchCardsDataRef.current).forEach((card) => {
+        if (card.status !== "playing") return;
+        let black = card.blackRemainSeconds;
+        let white = card.whiteRemainSeconds;
+        if (card.turn === "black") {
+          black = Math.max(0, black - 1);
+        } else {
+          white = Math.max(0, white - 1);
         }
+        matchCardsDataRef.current[card.id] = {
+          ...card,
+          blackRemainSeconds: black,
+          whiteRemainSeconds: white,
+        };
+        updates.push({ id: card.id, black, white });
       });
+
+      if (updates.length > 0) {
+        setMatchCardsData((prev) =>
+          prev.map((card) => {
+            const u = updates.find((u) => u.id === card.id);
+            return u
+              ? {
+                  ...card,
+                  blackRemainSeconds: u.black,
+                  whiteRemainSeconds: u.white,
+                }
+              : card;
+          }),
+        );
+      }
     }, 1000);
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  // まず取ってくる
   const fetchMatches = async () => {
-    if (!refreshing) {
-      setLoading(true);
-    }
+    if (!refreshing) setLoading(true);
 
     const { data, error } = await supabase
       .from("matches")
@@ -245,106 +286,25 @@ export default function Watch() {
       return;
     }
 
-    // 取ってきて、そしてやること
-    const boardHistories_: { [key: string]: Board[] } = {};
-    const agehamaHistories_: { [key: string]: Agehama[] } = {};
-    const movess_: { [key: string]: string[] } = {};
-    const replayIndexes_: { [key: string]: number } = {};
-        const blackUserNames_: { [key: string]: string } = {};
-    const whiteUserNames_: { [key: string]: string } = {};
-    const blackDisplayNames_: { [key: string]: string } = {};
-    const whiteDisplayNames_: { [key: string]: string } = {};
-    const blackPointss_: { [key: string]: number } = {};
-    const whitePointss_: { [key: string]: number } = {};
-    const blackGumiIndexs_: { [key: string]: number } = {};
-    const whiteGumiIndexs_: { [key: string]: number } = {};
-    const blackIconIndexs_: { [key: string]: number } = {};
-    const whiteIconIndexs_: { [key: string]: number } = {};
-    const blackRemainSecondss_: { [key: string]: number } = {};
-    const whiteRemainSecondss_: { [key: string]: number } = {};
-    const turns_: { [key: string]: string } = {};
-    const statuss_: { [key: string]: string } = {};
-    const results_: { [key: string]: string } = {};
-
-    const territoryBoards_: { [key: string]: number[][] } = {};
-
-    data.forEach((match: Match) => {
-      const newMoves = moveNumbersToStrings(match.moves);
-      const histories = movesToBoardHistory(newMoves);
-      boardHistories_[match.id] = histories.boardHistory;
-      agehamaHistories_[match.id] = histories.agehamaHistory;
-      movess_[match.id] = newMoves;
-      replayIndexes_[match.id] = newMoves.length; // 初期表示は最新局面 ⭐️
-            blackUserNames_[match.id] = match.black_username || "";
-      whiteUserNames_[match.id] = match.white_username || "";
-      blackDisplayNames_[match.id] = match.black_displayname || "";
-      whiteDisplayNames_[match.id] = match.white_displayname || "";
-      blackPointss_[match.id] = match.black_points;
-      whitePointss_[match.id] = match.white_points;
-      blackGumiIndexs_[match.id] = match.black_gumi_index;
-      whiteGumiIndexs_[match.id] = match.white_gumi_index;
-      blackIconIndexs_[match.id] = match.black_icon_index;
-      whiteIconIndexs_[match.id] = match.white_icon_index;
-      blackRemainSecondss_[match.id] = match.black_remain_seconds;
-      whiteRemainSecondss_[match.id] = match.white_remain_seconds;
-      turns_[match.id] = match.turn;
-      statuss_[match.id] = match.status;
-      results_[match.id] = match.result ?? "";
-
-      territoryBoards_[match.id] = Array.from({ length: 9 }, () =>
-        Array.from({ length: 9 }, () => 0),
-      );
+    const cards = data.map((match: Match) => buildCardData(match));
+    const cardMap: { [id: string]: MatchCardData } = {};
+    cards.forEach((c: MatchCardData) => {
+      cardMap[c.id] = c;
     });
 
-    // 3局まとめて追加
-    setBoardHistories(boardHistories_); // ⭐️
-    boardHistoriesRef.current = boardHistories_;
-    setAgehamaHistories(agehamaHistories_); // ⭐️
-
-    setReplayIndexes(replayIndexes_); // ⭐️
-    replayIndexesRef.current = replayIndexes_;
-    setMovess(movess_);
-    movessRef.current = movess_;
-    setTurns(turns_);
-    turnsRef.current = turns_;
-    setStatuss(statuss_);
-    statussRef.current = statuss_;
-    setResults(results_);
-    resultsRef.current = results_;
-
-    setTerritoryBoards(territoryBoards_);
-    territoryBoardsRef.current = territoryBoards_;
-        setBlackUserNames(blackUserNames_);
-    setWhiteUserNames(whiteUserNames_);
-    setBlackDisplayNames(blackDisplayNames_);
-    setWhiteDisplayNames(whiteDisplayNames_);
-    setBlackPointss(blackPointss_);
-    setWhitePointss(whitePointss_);
-    setBlackGumiIndexs(blackGumiIndexs_);
-    setWhiteGumiIndexs(whiteGumiIndexs_);
-    setBlackIconIndexs(blackIconIndexs_);
-    setWhiteIconIndexs(whiteIconIndexs_);
-    setBlackRemainSecondss(blackRemainSecondss_);
-    blackRemainSecondssRef.current = blackRemainSecondss_;
-    setWhiteRemainSecondss(whiteRemainSecondss_);
-    whiteRemainSecondssRef.current = whiteRemainSecondss_;
+    matchCardsDataRef.current = cardMap;
+    setMatchCardsData(cards);
     setLoading(false);
     setRefreshing(false);
-    matchIdsRef.current = data.map((m) => m.id); // ← ★これ！！
-    return data;
+
+    return data.map((m: Match) => m.id);
   };
 
-  // サブスクリプションをセットアップ
   const setupSubscription = (matchIds: string[]) => {
-    // 既存のチャンネルがあれば削除
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-    }
+    if (channelRef.current) supabase.removeChannel(channelRef.current);
 
-    // 新しいチャンネルを作成
     const channel = supabase.channel("matches-watch");
 
-    // 各対局IDに対してフィルターを設定
     matchIds.forEach((matchId) => {
       channel.on(
         "postgres_changes",
@@ -355,98 +315,52 @@ export default function Watch() {
           filter: `id=eq.${matchId}`,
         },
         (payload) => {
-          const oldMoves = movessRef.current[payload.new.id];
+          const current = matchCardsDataRef.current[payload.new.id];
+          if (!current) return;
+
           const newMoves = moveNumbersToStrings(payload.new.moves);
-          if (!oldMoves || !newMoves) return;
-          const oldLength = oldMoves.length;
+          const oldLength = current.moves.length;
           const newLength = newMoves.length;
 
+          let updated: MatchCardData = { ...current };
+
           if (oldLength < newLength) {
-            // 新しい手が来たということなので、更新
-            setMovess((prev) => ({
-              ...prev,
-              [payload.new.id]: newMoves,
-            }));
-            movessRef.current[payload.new.id] = newMoves;
+            // 新しい手が来た
+            const { boardHistory, agehamaHistory } =
+              movesToBoardHistory(newMoves);
+            updated = {
+              ...updated,
+              moves: newMoves,
+              boardHistory,
+              agehamaHistory,
+              turn: payload.new.turn,
+              blackRemainSeconds: payload.new.black_remain_seconds,
+              whiteRemainSeconds: payload.new.white_remain_seconds,
+            };
+          }
 
-            const histories = movesToBoardHistory(newMoves);
-            // 新しい手が来たということなので、更新
-            setBoardHistories((prev) => ({
-              ...prev,
-              [payload.new.id]: histories.boardHistory,
-            }));
-            boardHistoriesRef.current[payload.new.id] = histories.boardHistory;
+          if (payload.new.status) {
+            updated.status = payload.new.status;
+            updated.result = payload.new.result ?? "";
 
-            setAgehamaHistories((prev) => ({
-              ...prev,
-              [payload.new.id]: histories.agehamaHistory,
-            }));
-
-            // turnの更新
-            setTurns((prev) => ({
-              ...prev,
-              [payload.new.id]: payload.new.turn,
-            }));
-            turnsRef.current[payload.new.id] = payload.new.turn;
-
-            // blackRemainSecondsの更新
-            setBlackRemainSecondss((prev) => ({
-              ...prev,
-              [payload.new.id]: payload.new.black_remain_seconds,
-            }));
-
-            // whiteRemainSecondsの更新
-            setWhiteRemainSecondss((prev) => ({
-              ...prev,
-              [payload.new.id]: payload.new.white_remain_seconds,
-            }));
-
-            // また、もし観戦者が最新の手を見ていたら、更新
-            if (replayIndexesRef.current[payload.new.id] === oldLength) {
-              setReplayIndexes((prev) => ({
-                ...prev,
-                // [payload.new.id]: newLength - 1,
-                [payload.new.id]: newLength,
-              }));
-              replayIndexesRef.current[payload.new.id] = newLength;
-            }
-          } else if (payload.new.status) {
-            // statusの更新
-            setStatuss((prev) => ({
-              ...prev,
-              [payload.new.id]: payload.new.status,
-            }));
-            statussRef.current[payload.new.id] = payload.new.status;
-
-            setResults((prev) => ({
-              ...prev,
-              [payload.new.id]: payload.new.result ?? "",
-            }));
-            resultsRef.current[payload.new.id] = payload.new.result ?? "";
-
-            // resultが存在し、かつR/T/Cでない場合のみterritoryBoardを作成
             if (
               payload.new.result &&
               payload.new.result.length > 2 &&
-              payload.new.result[2] !== "R" &&
-              payload.new.result[2] !== "T" &&
-              payload.new.result[2] !== "C" &&
-              boardHistoriesRef.current[payload.new.id] &&
-              boardHistoriesRef.current[payload.new.id].length > 0
+              !["R", "T", "C"].includes(payload.new.result[2]) &&
+              updated.boardHistory.length > 0
             ) {
-              const territoryBoard = makeTerritoryBoard(
-                boardHistoriesRef.current[payload.new.id][
-                  boardHistoriesRef.current[payload.new.id].length - 1
-                ],
+              updated.territoryBoard = makeTerritoryBoard(
+                updated.boardHistory[updated.boardHistory.length - 1],
                 moveNumbersToStrings(payload.new.dead_stones),
               ).territoryBoard;
-              setTerritoryBoards((prev) => ({
-                ...prev,
-                [payload.new.id]: territoryBoard,
-              }));
-              territoryBoardsRef.current[payload.new.id] = territoryBoard;
             }
           }
+
+          matchCardsDataRef.current[payload.new.id] = updated;
+          // ⑦ 変更があったカードだけ差分更新
+          setMatchCardsData((prev) =>
+            prev.map((c) => (c.id === payload.new.id ? updated : c)),
+          );
         },
       );
     });
@@ -455,128 +369,10 @@ export default function Watch() {
     channelRef.current = channel;
   };
 
-  // Pull-to-Refresh
   const onRefresh = async () => {
     setRefreshing(true);
-    const data = await fetchMatches();
-    if (data) {
-      const ids = data.map((m) => m.id);
-      matchIdsRef.current = ids;
-      setupSubscription(ids);
-    }
-  };
-
-  // 今何手目見てるかをstateとrefに記録する関数
-  const handleReplayIndexChange = (matchId: string, newIndex: number) => {
-    setReplayIndexes((prev) => ({
-      ...prev,
-      [matchId]: newIndex,
-    }));
-    replayIndexesRef.current[matchId] = newIndex;
-  };
-
-  const renderMatch = (matchId: string) => {
-    const boardHistory = boardHistories[matchId] || [initializeBoard()];
-    const agehamaHistory = agehamaHistories[matchId] || [
-      { black: 0, white: 0 },
-    ];
-    const territoryBoard =
-      territoryBoards[matchId] ||
-      Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => 0));
-
-    const replayIndex = replayIndexes[matchId];
-    const board = boardHistory[replayIndex] ?? initializeBoard();
-    console.log("replayIndex: ", replayIndex);
-    console.log("board: ", board);
-    const isAtLatest = replayIndex === boardHistory.length - 1;
-
-    const status = statuss[matchId] || "playing";
-    const result = results[matchId] || "";
-
-    // 手数履歴を作成（最新手の表示用）
-    // const moveHistory = match.moves?.slice(0, replayIndex + 1) || [];
-
-    return (
-      <View
-        style={[
-          styles.matchCard,
-          { backgroundColor: colors.card, borderColor: colors.borderColor },
-        ]}
-        key={matchId}
-      >
-        {/* 対局情報 */}
-        <View style={styles.matchHeader}>
-          <View style={styles.playerRow}>
-            <PlayerCard
-              gumiIndex={blackGumiIndexs[matchId]}
-              iconIndex={blackIconIndexs[matchId]}
-                            username={blackUserNames[matchId]}
-
-              displayname={blackDisplayNames[matchId]}
-              points={blackPointss[matchId]}
-              color="black"
-              time={blackRemainSecondss[matchId]}
-              isActive={turns[matchId] === "black" && isAtLatest}
-            />
-          </View>
-
-          <View style={styles.playerRow}>
-            <PlayerCard
-              gumiIndex={whiteGumiIndexs[matchId]}
-              iconIndex={whiteIconIndexs[matchId]}
-                            username={whiteUserNames[matchId]}
-
-              displayname={whiteDisplayNames[matchId]}
-              points={whitePointss[matchId]}
-              color="white"
-              time={whiteRemainSecondss[matchId]}
-              isActive={turns[matchId] === "white" && isAtLatest}
-            />
-          </View>
-
-          <View>
-            {/* ステータスと結果の表示 */}
-            {status === "ended" && result && (
-              <View
-                style={[
-                  styles.resultContainer,
-                  {
-                    backgroundColor: colors.background,
-                    borderColor: colors.borderColor,
-                  },
-                ]}
-              >
-                <Text style={[styles.resultText, { color: colors.text }]}>
-                  {resultToLanguages(result)}
-                </Text>
-              </View>
-            )}
-            {status === "playing" && (
-              <View style={styles.statusContainer}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusText}>{t("Watch.playing")}</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* 碁盤 + リプレイコントロール */}
-        <GoBoardWithReplay
-          agehamaHistory={agehamaHistory}
-          board={board}
-          onPutStone={() => {}} // 観戦モードなので着手不可
-          moveHistory={movess[matchId] ?? []}
-          disabled={true}
-          territoryBoard={territoryBoard}
-          isGameEnded={true} // 常にリプレイモード
-          boardHistory={boardHistory}
-          currentIndex={replayIndex}
-          onCurrentIndexChange={(newIndex) =>
-            handleReplayIndexChange(matchId, newIndex)
-          }
-        />
-      </View>
-    );
+    const ids = await fetchMatches();
+    if (ids) setupSubscription(ids);
   };
 
   return (
@@ -584,7 +380,6 @@ export default function Watch() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <StatusBar style="dark" />
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -600,7 +395,7 @@ export default function Watch() {
           />
         }
       >
-        {Object.keys(boardHistories).length === 0 ? (
+        {matchCardsData.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.subtext }]}>
               {t("Watch.noMatches")}
@@ -610,39 +405,24 @@ export default function Watch() {
             </Text>
           </View>
         ) : (
-          matchIdsRef.current.map((matchId) => renderMatch(matchId))
+          matchCardsData.map((data) => (
+            <MatchCard key={data.id} data={data} colors={colors} t={t} />
+          ))
         )}
       </ScrollView>
-      {/* ローディングオーバーレイ */}
       {loading && <LoadingOverlay text={t("Watch.loading")} />}
     </SafeAreaView>
   );
 }
 
+// stylesは元のまま
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingVertical: 16,
-  },
-  emptyContainer: {
-    padding: 40,
-    alignItems: "center",
-  },
-  emptyText: {
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  pullToRefreshHint: {
-    fontSize: 14,
-    fontWeight: "500",
-    opacity: 0.7,
-  },
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingVertical: 16 },
+  emptyContainer: { padding: 40, alignItems: "center" },
+  emptyText: { fontSize: 16, marginBottom: 12 },
+  pullToRefreshHint: { fontSize: 14, fontWeight: "500", opacity: 0.7 },
   matchCard: {
     marginHorizontal: 8,
     marginBottom: 24,
@@ -660,11 +440,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  playerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  // 結果表示のスタイル
+  playerRow: { flexDirection: "row", alignItems: "center" },
   resultContainer: {
     borderRadius: 12,
     marginVertical: 12,
@@ -672,12 +448,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
   },
-  resultText: {
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: 0.3,
-  },
-  // ステータス表示のスタイル
+  resultText: { fontSize: 16, fontWeight: "600", letterSpacing: 0.3 },
   statusContainer: {
     flexDirection: "row",
     alignItems: "center",

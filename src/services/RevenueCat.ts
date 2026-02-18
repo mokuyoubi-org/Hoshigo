@@ -107,6 +107,10 @@ export const loginRevenueCat = async (uid: string): Promise<void> => {
 // ログアウト
 export const logoutRevenueCat = async (): Promise<void> => {
   try {
+    if (await Purchases.isAnonymous()) {
+      console.log("⏭️ RevenueCat: anonymous user, skipping logout");
+      return;
+    }
     await Purchases.logOut();
     console.log("✅ RevenueCat logged out");
   } catch (error) {

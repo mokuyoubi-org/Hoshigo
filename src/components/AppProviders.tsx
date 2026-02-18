@@ -269,14 +269,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
   // 🆕 uidが変わったらRevenueCatにログイン
   // ================================
   useEffect(() => {
-    if (!rcInitialized) return; // ← RC初期化待ち
+    if (!rcInitialized) return;
 
     if (uid) {
       console.log("🔑 Logging in to RevenueCat with uid:", uid);
       loginRevenueCat(uid);
     } else {
-      console.log("🔑 Logging out from RevenueCat");
-      logoutRevenueCat();
+      // RevenueCatにログイン済みの場合のみlogoutを呼ぶ
+      logoutRevenueCat().catch(() => {
+        // 未ログイン状態でのlogoutは無視
+      });
     }
   }, [uid, rcInitialized]);
 

@@ -128,7 +128,7 @@ export default function Settings() {
             </View>
           </View>
 
-          {/* 🆕 プランセクション（コメントアウト解除 & 修正） */}
+          {/* プランセクション */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.subtext }]}>
               {t("Settings.plan")}

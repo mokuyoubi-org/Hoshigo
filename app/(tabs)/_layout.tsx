@@ -148,7 +148,7 @@ export default function TabsLayout() {
         }}
       />
       
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="Practice"
         options={{
           title: "練習",
@@ -156,7 +156,7 @@ export default function TabsLayout() {
             <FontAwesome5 name="school" color={color} size={size} />
           ),
         }}
-      />
+      /> */}
       {/* <Tabs.Screen
         name="Tsumego"
         options={{
