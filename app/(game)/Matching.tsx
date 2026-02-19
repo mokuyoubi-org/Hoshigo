@@ -141,6 +141,8 @@ export default function Matching() {
   const isCancelingRef = useRef<boolean>(false);
 
   useEffect(() => {
+              // router.replace({ pathname: "/PlayWithBot" });
+
     startMatching();
     startBoardAnimation();
     return () => {
