@@ -1,9 +1,343 @@
+// import LoadingOverlay from "@/src/components/LoadingOverlay";
+// import { logoutRevenueCat } from "@/src/services/RevenueCat";
+// import { router } from "expo-router";
+// import { StatusBar } from "expo-status-bar";
+// import React, { useContext, useState } from "react";
+// import { useTranslation } from "react-i18next";
+// import {
+//   StatusBar as RNStatusBar,
+//   ScrollView,
+//   StyleSheet,
+//   Text,
+//   TouchableOpacity,
+//   View,
+// } from "react-native";
+// import { SafeAreaView } from "react-native-safe-area-context";
+// import { UidContext } from "../../src/components/UserContexts";
+// import { useTheme } from "../../src/hooks/useTheme";
+// import { supabase } from "../../src/services/supabase";
+
+// // ─── 定数 ─────────────────────────────────────────────
+// const GOLD = "#c9a84c";
+// const BG = "#08080e";
+// const DANGER = "#e05c5c";
+
+// export default function Delete() {
+//   const { colors } = useTheme();
+//   const { t } = useTranslation();
+
+//   // ── ロジック（変更なし） ──
+//   const uid = useContext(UidContext);
+//   const [loading, setLoading] = useState(false);
+
+//   const onDelete = async () => {
+//     setLoading(true);
+//     if (!uid) return;
+//     const { data, error } = await supabase
+//       .from("profiles")
+//       .delete()
+//       .eq("uid", uid)
+//       .select();
+//     if (data) {
+//       await supabase.auth.signOut();
+//       await logoutRevenueCat();
+//       setLoading(false);
+//       router.replace("/Login");
+//     }
+//     if (error) {
+//       setLoading(false);
+//       console.log("error: ", error);
+//     }
+//   };
+
+//   // ── UI ──
+//   return (
+//     <SafeAreaView style={styles.container}>
+//       <RNStatusBar barStyle="light-content" backgroundColor={BG} />
+//       <StatusBar style="light" />
+
+//       {/* 背景グリッド */}
+//       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+//         {Array.from({ length: 5 }).map((_, i) => (
+//           <View
+//             key={`v${i}`}
+//             style={[styles.bgLineV, { left: `${(i + 1) * (100 / 6)}%` as any }]}
+//           />
+//         ))}
+//         {Array.from({ length: 7 }).map((_, i) => (
+//           <View
+//             key={`h${i}`}
+//             style={[styles.bgLineH, { top: `${(i + 1) * (100 / 8)}%` as any }]}
+//           />
+//         ))}
+//       </View>
+
+//       <ScrollView
+//         contentContainerStyle={styles.scrollView}
+//         showsVerticalScrollIndicator={false}
+//       >
+//         <View style={styles.content}>
+//           {/* 戻るボタン */}
+//           <TouchableOpacity
+//             onPress={() => router.back()}
+//             style={styles.backButton}
+//             activeOpacity={0.7}
+//           >
+//             <Text style={styles.backButtonText}>‹ {t("Delete.back")}</Text>
+//           </TouchableOpacity>
+
+//           {/* 警告アイコンエリア */}
+//           <View style={styles.iconArea}>
+//             <View style={styles.iconRingOuter} />
+//             <View style={styles.iconRingInner} />
+//             <View style={styles.iconCircle}>
+//               <Text style={styles.iconText}>!</Text>
+//             </View>
+//           </View>
+
+//           {/* タイトル・説明 */}
+//           <View style={styles.textArea}>
+//             <Text style={styles.title}>{t("Delete.title")}</Text>
+//             <View style={styles.titleDivider}>
+//               <View style={styles.dividerLine} />
+//               <View style={styles.dividerDiamond} />
+//               <View style={styles.dividerLine} />
+//             </View>
+//             <Text style={styles.subtitle}>{t("Delete.subtitle")}</Text>
+//           </View>
+
+//           {/* 注意書きカード */}
+//           <View style={styles.warningCard}>
+//             <View style={styles.warningCardAccent} />
+//             <Text style={styles.warningText}>{t("Delete.warning")}</Text>
+//           </View>
+
+//           {/* ボタン */}
+//           <View style={styles.buttons}>
+//             <TouchableOpacity
+//               style={styles.deleteButton}
+//               activeOpacity={0.8}
+//               onPress={onDelete}
+//             >
+//               <Text style={styles.deleteButtonText}>
+//                 {t("Delete.deleteButton")}
+//               </Text>
+//             </TouchableOpacity>
+
+//             <TouchableOpacity
+//               style={styles.cancelButton}
+//               activeOpacity={0.8}
+//               onPress={() => router.back()}
+//             >
+//               <Text style={styles.cancelButtonText}>{t("Delete.cancel")}</Text>
+//             </TouchableOpacity>
+//           </View>
+//         </View>
+//       </ScrollView>
+
+//       {loading && <LoadingOverlay text={t("Delete.loading")} />}
+//     </SafeAreaView>
+//   );
+// }
+
+// // ─── スタイル ──────────────────────────────────────────
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: BG,
+//   },
+
+//   // 背景グリッド
+//   bgLineV: {
+//     position: "absolute",
+//     top: 0,
+//     width: 1,
+//     height: "100%",
+//     backgroundColor: "rgba(201,168,76,0.05)",
+//   },
+//   bgLineH: {
+//     position: "absolute",
+//     left: 0,
+//     width: "100%",
+//     height: 1,
+//     backgroundColor: "rgba(201,168,76,0.05)",
+//   },
+
+//   scrollView: {
+//     flexGrow: 1,
+//   },
+//   content: {
+//     paddingHorizontal: 24,
+//     paddingTop: 20,
+//     paddingBottom: 48,
+//     flex: 1,
+//   },
+
+//   // 戻るボタン
+//   backButton: {
+//     alignSelf: "flex-start",
+//     marginBottom: 40,
+//   },
+//   backButtonText: {
+//     fontSize: 16,
+//     fontWeight: "600",
+//     color: GOLD,
+//     letterSpacing: 0.3,
+//   },
+
+//   // 警告アイコン
+//   iconArea: {
+//     alignItems: "center",
+//     justifyContent: "center",
+//     marginBottom: 32,
+//     height: 120,
+//   },
+//   iconRingOuter: {
+//     position: "absolute",
+//     width: 112,
+//     height: 112,
+//     borderRadius: 56,
+//     borderWidth: 1,
+//     borderColor: "rgba(224,92,92,0.2)",
+//   },
+//   iconRingInner: {
+//     position: "absolute",
+//     width: 96,
+//     height: 96,
+//     borderRadius: 48,
+//     borderWidth: 1,
+//     borderColor: "rgba(224,92,92,0.12)",
+//   },
+//   iconCircle: {
+//     width: 80,
+//     height: 80,
+//     borderRadius: 40,
+//     backgroundColor: "rgba(224,92,92,0.08)",
+//     borderWidth: 1.5,
+//     borderColor: "rgba(224,92,92,0.4)",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     shadowColor: DANGER,
+//     shadowOpacity: 0.3,
+//     shadowRadius: 16,
+//   },
+//   iconText: {
+//     fontSize: 40,
+//     fontWeight: "800",
+//     color: DANGER,
+//     lineHeight: 48,
+//   },
+
+//   // タイトル・説明
+//   textArea: {
+//     alignItems: "center",
+//     marginBottom: 32,
+//   },
+//   title: {
+//     fontSize: 26,
+//     fontWeight: "800",
+//     color: "#f0ebe3",
+//     letterSpacing: 1,
+//     marginBottom: 16,
+//   },
+//   titleDivider: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     width: 160,
+//     marginBottom: 16,
+//   },
+//   dividerLine: {
+//     flex: 1,
+//     height: 1,
+//     backgroundColor: "rgba(224,92,92,0.25)",
+//   },
+//   dividerDiamond: {
+//     width: 5,
+//     height: 5,
+//     backgroundColor: DANGER,
+//     transform: [{ rotate: "45deg" }],
+//     marginHorizontal: 8,
+//     opacity: 0.6,
+//   },
+//   subtitle: {
+//     fontSize: 14,
+//     color: "rgba(240,235,227,0.45)",
+//     textAlign: "center",
+//     lineHeight: 22,
+//     letterSpacing: 0.3,
+//   },
+
+//   // 注意書きカード
+//   warningCard: {
+//     backgroundColor: "rgba(224,92,92,0.05)",
+//     borderRadius: 14,
+//     borderWidth: 1,
+//     borderColor: "rgba(224,92,92,0.2)",
+//     overflow: "hidden",
+//     marginBottom: 36,
+//   },
+//   warningCardAccent: {
+//     height: 2,
+//     backgroundColor: DANGER,
+//     opacity: 0.5,
+//   },
+//   warningText: {
+//     fontSize: 13,
+//     color: "rgba(224,92,92,0.7)",
+//     lineHeight: 20,
+//     letterSpacing: 0.3,
+//     padding: 16,
+//   },
+
+//   // ボタン
+//   buttons: {
+//     gap: 12,
+//   },
+//   deleteButton: {
+//     height: 54,
+//     borderRadius: 14,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     backgroundColor: "rgba(224,92,92,0.1)",
+//     borderWidth: 1.5,
+//     borderColor: "rgba(224,92,92,0.5)",
+//     shadowColor: DANGER,
+//     shadowOpacity: 0.2,
+//     shadowRadius: 8,
+//   },
+//   deleteButtonText: {
+//     fontSize: 15,
+//     fontWeight: "700",
+//     color: DANGER,
+//     letterSpacing: 0.5,
+//   },
+//   cancelButton: {
+//     height: 54,
+//     borderRadius: 14,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     backgroundColor: "#0d0d16",
+//     borderWidth: 1,
+//     borderColor: "rgba(201,168,76,0.2)",
+//   },
+//   cancelButtonText: {
+//     fontSize: 15,
+//     fontWeight: "600",
+//     color: GOLD,
+//     letterSpacing: 0.5,
+//   },
+// });
+
+
 import LoadingOverlay from "@/src/components/LoadingOverlay";
+import { logoutRevenueCat } from "@/src/services/RevenueCat";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  Animated,
+  StatusBar as RNStatusBar,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,71 +348,133 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { UidContext } from "../../src/components/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
-import { logoutRevenueCat } from "@/src/services/RevenueCat";
+
+// ─── Homeページに合わせたカラー ───────────────────────
+const STRAWBERRY = "#c8d6e6";
+const BACKGROUND = "#f9fafb";
+const CHOCOLATE = "#5a3a4a";
+const CHOCOLATE_SUB = "#c09aa8";
+const DANGER = "#e05c5c";
 
 export default function Delete() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+
+  // ── ロジック（変更なし） ──
   const uid = useContext(UidContext);
   const [loading, setLoading] = useState(false);
+  const fadeIn = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeIn, {
+        toValue: 1,
+        duration: 700,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const onDelete = async () => {
     setLoading(true);
-
     if (!uid) return;
     const { data, error } = await supabase
       .from("profiles")
       .delete()
       .eq("uid", uid)
       .select();
-
     if (data) {
       await supabase.auth.signOut();
-        await logoutRevenueCat(); // ← これを追加
-
+      await logoutRevenueCat();
       setLoading(false);
-
       router.replace("/Login");
     }
     if (error) {
       setLoading(false);
-
       console.log("error: ", error);
     }
   };
 
+  // ── UI ──
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <SafeAreaView style={styles.container}>
+      <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        <View style={styles.content}>
-          {/* ヘッダー */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <Text style={[styles.backButtonText, { color: colors.button }]}>
-                ‹ {t("Delete.back")}
-              </Text>
-            </TouchableOpacity>
-            <Text style={[styles.title, { color: colors.text }]}>
-              {t("Delete.title")}
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.subtext }]}>
-              {t("Delete.subtitle")}
-            </Text>
+
+      {/* 背景グリッド（優しい色に） */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <View
+            key={`v${i}`}
+            style={[styles.bgLineV, { left: `${(i + 1) * (100 / 6)}%` as any }]}
+          />
+        ))}
+        {Array.from({ length: 7 }).map((_, i) => (
+          <View
+            key={`h${i}`}
+            style={[styles.bgLineH, { top: `${(i + 1) * (100 / 8)}%` as any }]}
+          />
+        ))}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={[styles.content, { opacity: fadeIn }]}>
+          {/* 戻るボタン */}
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backButtonText}>‹ {t("Delete.back")}</Text>
+          </TouchableOpacity>
+
+          {/* 警告アイコンエリア */}
+          <Animated.View
+            style={[
+              styles.iconArea,
+              {
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
+            <View style={styles.iconRingOuter} />
+            <View style={styles.iconRingInner} />
+            <View style={styles.iconCircle}>
+              <Text style={styles.iconText}>!</Text>
+            </View>
+          </Animated.View>
+
+          {/* タイトル・説明 */}
+          <View style={styles.textArea}>
+            <Text style={styles.title}>{t("Delete.title")}</Text>
+            <View style={styles.titleDivider}>
+              <View style={styles.dividerLine} />
+              <View style={styles.dividerDiamond} />
+              <View style={styles.dividerLine} />
+            </View>
+            <Text style={styles.subtitle}>{t("Delete.subtitle")}</Text>
+          </View>
+
+          {/* 注意書きカード */}
+          <View style={styles.warningCard}>
+            <View style={styles.warningCardAccent} />
+            <Text style={styles.warningText}>{t("Delete.warning")}</Text>
           </View>
 
           {/* ボタン */}
           <View style={styles.buttons}>
             <TouchableOpacity
-              style={[
-                styles.deleteButton,
-                { backgroundColor: colors.card, borderColor: "#e53e3e" },
-              ]}
+              style={styles.deleteButton}
               activeOpacity={0.8}
               onPress={onDelete}
             >
@@ -88,93 +484,216 @@ export default function Delete() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.cancelButton,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.borderColor,
-                },
-              ]}
+              style={styles.cancelButton}
               activeOpacity={0.8}
               onPress={() => router.back()}
             >
-              <Text style={[styles.cancelButtonText, { color: colors.button }]}>
-                {t("Delete.cancel")}
-              </Text>
+              <Text style={styles.cancelButtonText}>{t("Delete.cancel")}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
 
-      {/* ← ここがLoadingオーバーレイ */}
       {loading && <LoadingOverlay text={t("Delete.loading")} />}
     </SafeAreaView>
   );
 }
+
+// ─── スタイル ──────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: BACKGROUND,
   },
+
+  // 背景グリッド（優しい色に）
+  bgLineV: {
+    position: "absolute",
+    top: 0,
+    width: 1,
+    height: "100%",
+    backgroundColor: "rgba(200,214,230,0.08)",
+  },
+  bgLineH: {
+    position: "absolute",
+    left: 0,
+    width: "100%",
+    height: 1,
+    backgroundColor: "rgba(200,214,230,0.08)",
+  },
+
   scrollView: {
     flexGrow: 1,
   },
   content: {
     paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 40,
-    justifyContent: "center",
+    paddingTop: 20,
+    paddingBottom: 48,
+    flex: 1,
   },
-  header: {
-    marginBottom: 48,
-    alignItems: "center",
-  },
+
+  // 戻るボタン
   backButton: {
     alignSelf: "flex-start",
-    marginBottom: 16,
+    marginBottom: 40,
   },
   backButtonText: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
+    color: STRAWBERRY,
+    letterSpacing: 0.3,
+  },
+
+  // 警告アイコン
+  iconArea: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+    height: 120,
+  },
+  iconRingOuter: {
+    position: "absolute",
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    borderWidth: 1.5,
+    borderColor: "rgba(224,92,92,0.2)",
+  },
+  iconRingInner: {
+    position: "absolute",
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1.5,
+    borderColor: "rgba(224,92,92,0.15)",
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#ffffff",
+    borderWidth: 2.5,
+    borderColor: "rgba(224,92,92,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: DANGER,
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  iconText: {
+    fontSize: 40,
+    fontWeight: "800",
+    color: DANGER,
+    lineHeight: 48,
+  },
+
+  // タイトル・説明
+  textArea: {
+    alignItems: "center",
+    marginBottom: 32,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "700",
-    marginBottom: 8,
-    letterSpacing: 0.5,
+    fontSize: 28,
+    fontWeight: "800",
+    color: CHOCOLATE,
+    letterSpacing: 1,
+    marginBottom: 16,
+  },
+  titleDivider: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: 160,
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1.5,
+    backgroundColor: "rgba(224,92,92,0.25)",
+  },
+  dividerDiamond: {
+    width: 5,
+    height: 5,
+    backgroundColor: DANGER,
+    transform: [{ rotate: "45deg" }],
+    marginHorizontal: 8,
+    opacity: 0.7,
   },
   subtitle: {
-    fontSize: 16,
-    fontWeight: "400",
+    fontSize: 14,
+    color: CHOCOLATE_SUB,
     textAlign: "center",
     lineHeight: 22,
+    letterSpacing: 0.3,
   },
+
+  // 注意書きカード
+  warningCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "rgba(224,92,92,0.3)",
+    overflow: "hidden",
+    marginBottom: 36,
+    shadowColor: DANGER,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
+  warningCardAccent: {
+    height: 2.5,
+    backgroundColor: DANGER,
+    opacity: 0.6,
+  },
+  warningText: {
+    fontSize: 13,
+    color: DANGER,
+    lineHeight: 20,
+    letterSpacing: 0.3,
+    padding: 18,
+    fontWeight: "600",
+  },
+
+  // ボタン
   buttons: {
-    width: "100%",
+    gap: 12,
   },
   deleteButton: {
-    height: 56,
-    borderRadius: 16,
+    height: 54,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
-    borderWidth: 1,
+    backgroundColor: "rgba(224,92,92,0.1)",
+    borderWidth: 2,
+    borderColor: "rgba(224,92,92,0.5)",
+    shadowColor: DANGER,
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
   },
   deleteButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#e53e3e",
-    letterSpacing: 0.3,
+    fontSize: 15,
+    fontWeight: "800",
+    color: DANGER,
+    letterSpacing: 0.5,
   },
   cancelButton: {
-    height: 56,
-    borderRadius: 16,
+    height: 54,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+    shadowColor: STRAWBERRY,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: 0.3,
+    fontSize: 15,
+    fontWeight: "700",
+    color: CHOCOLATE,
+    letterSpacing: 0.5,
   },
 });

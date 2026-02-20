@@ -6,6 +6,7 @@ import { ReplayControls } from "./ReplayControls";
 import { Agehama } from "../lib/goUtils";
 
 interface GoBoardWithReplayProps {
+  matchType: number;
   // 盤面関連
   board: Board;
   onPutStone: (grid: Grid) => void;
@@ -29,6 +30,7 @@ interface GoBoardWithReplayProps {
 }
 
 export const GoBoardWithReplay: React.FC<GoBoardWithReplayProps> = ({
+  matchType,
   board,
   onPutStone,
   moveHistory = [],
@@ -68,6 +70,7 @@ export const GoBoardWithReplay: React.FC<GoBoardWithReplayProps> = ({
     <View style={styles.container}>
       {/* 碁盤 */}
       <GoBoard
+      matchType={matchType}
       topBar={true}
         currentIndex={currentIndex} // 🌟
         board={displayBoard} // 🌟

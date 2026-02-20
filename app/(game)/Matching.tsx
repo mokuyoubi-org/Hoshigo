@@ -6,13 +6,13 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 import {
-  UserNameContext,
   DisplayNameContext,
   GamesContext,
   GumiIndexContext,
   IconIndexContext,
   PointsContext,
   UidContext,
+  UserNameContext,
 } from "../../src/components/UserContexts";
 import { supabase } from "../../src/services/supabase";
 
@@ -141,7 +141,7 @@ export default function Matching() {
   const isCancelingRef = useRef<boolean>(false);
 
   useEffect(() => {
-              // router.replace({ pathname: "/PlayWithBot" });
+    // router.replace({ pathname: "/PlayWithBot" });
 
     startMatching();
     startBoardAnimation();
@@ -166,7 +166,31 @@ export default function Matching() {
     return () => clearInterval(boardInterval);
   };
 
-  const fallbackCancel = async () => {
+  // const fallbackCancel = async () => {
+  //   if (channelRef.current) {
+  //     await supabase.removeChannel(channelRef.current);
+  //     channelRef.current = null;
+  //   }
+
+  //   const { data, error } = await supabase.rpc("cancel_match", {
+  //     p_uid: uid,
+  //   });
+
+  //   if (error) {
+  //     console.error("cancel_match RPCエラー", error);
+  //     throw error; // ← これ必須!
+  //   }
+
+  //   if (data) {
+  //     console.log("キャンセル成功");
+  //   } else {
+  //     console.log("キャンセル対象なし");
+  //   }
+
+  //   matchIdRef.current = null;
+  // };
+
+  const fallbackCancel = async (): Promise<boolean> => {
     if (channelRef.current) {
       await supabase.removeChannel(channelRef.current);
       channelRef.current = null;
@@ -178,18 +202,38 @@ export default function Matching() {
 
     if (error) {
       console.error("cancel_match RPCエラー", error);
-      throw error; // ← これ必須!
+      throw error;
     }
 
     if (data) {
       console.log("キャンセル成功");
     } else {
-      console.log("キャンセル対象なし");
+      console.log("すでにマッチ済みのためキャンセル不可"); // ← 状態がplaying
     }
 
     matchIdRef.current = null;
+
+    return data === true; // ★ ここ重要
   };
 
+  // const onCancel = async () => {
+  //   if (isCancelingRef.current) return;
+
+  //   isCancelingRef.current = true;
+
+  //   try {
+  //     setLoading(true);
+
+  //     await fallbackCancel();
+
+  //     router.replace({ pathname: "/Home" });
+  //   } finally {
+  //     stopMatchingLoop();
+
+  //     setLoading(false);
+  //     isCancelingRef.current = false;
+  //   }
+  // };
   const onCancel = async () => {
     if (isCancelingRef.current) return;
 
@@ -198,12 +242,16 @@ export default function Matching() {
     try {
       setLoading(true);
 
-      await fallbackCancel();
+      const canceled = await fallbackCancel(); // ★ 結果を受け取る
 
-      router.replace({ pathname: "/Home" });
+      if (canceled) {
+        router.replace({ pathname: "/Home" }); // ★ true のときだけ遷移
+      } else {
+        console.log("対局が成立しているため遷移しません");
+        return; // ★ falseならその場に留まる
+      }
     } finally {
       stopMatchingLoop();
-
       setLoading(false);
       isCancelingRef.current = false;
     }
@@ -246,12 +294,6 @@ export default function Matching() {
     // タイマーをrefに保存
     matchingTimersRef.current = timers;
   };
-
-  // const a = 0;
-  // // デバッグ用
-  // const startMatching = () => {
-  //   router.replace({ pathname: "/PlayWithBot" });
-  // };
 
   const tryMatch = async () => {
     console.log("pointsDiffRef.current: ", pointsDiffRef.current);
@@ -471,6 +513,7 @@ export default function Matching() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

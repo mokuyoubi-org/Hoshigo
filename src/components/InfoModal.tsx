@@ -1,5 +1,5 @@
-// InfoModal.tsx
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Modal,
   ScrollView,
@@ -8,17 +8,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useTranslation } from "react-i18next";
 
-/**
- * 情報モーダルのProps定義
- */
+/* ─── LoadingOverlayと同じカラー ─────────────────────── */
+const STRAWBERRY = "#c8d6e6";
+const BACKGROUND = "#f9fafb";
+const CHOCOLATE = "#5a3a4a";
+const CHOCOLATE_SUB = "#c09aa8";
+
 type InfoModalProps = {
-  /** モーダルの表示・非表示 */
   visible: boolean;
-  /** モーダルを閉じる処理 */
   onClose: () => void;
-  /** テーマカラー(useTheme などから渡す想定) */
   colors: {
     card: string;
     text: string;
@@ -27,14 +26,7 @@ type InfoModalProps = {
   };
 };
 
-/**
- * ルール説明用の情報モーダル
- */
-export const InfoModal: React.FC<InfoModalProps> = ({
-  visible,
-  onClose,
-  colors,
-}) => {
+export const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
   const { t } = useTranslation();
 
   const RuleItem = ({
@@ -45,14 +37,10 @@ export const InfoModal: React.FC<InfoModalProps> = ({
     description: string;
   }) => (
     <View style={styles.ruleItem}>
-      <View
-        style={[styles.ruleBullet, { backgroundColor: colors.background }]}
-      />
+      <View style={styles.ruleBullet} />
       <View style={styles.ruleContent}>
-        <Text style={[styles.ruleTitle, { color: colors.text }]}>{title}</Text>
-        <Text style={[styles.ruleDescription, { color: colors.subtext }]}>
-          {description}
-        </Text>
+        <Text style={styles.ruleTitle}>{title}</Text>
+        <Text style={styles.ruleDescription}>{description}</Text>
       </View>
     </View>
   );
@@ -60,40 +48,34 @@ export const InfoModal: React.FC<InfoModalProps> = ({
   return (
     <Modal
       visible={visible}
-      transparent={true}
+      transparent
       animationType="fade"
       onRequestClose={onClose}
-      statusBarTranslucent={true}
+      statusBarTranslucent
     >
-      {/* 背景オーバーレイ(タップで閉じる) */}
       <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
         onPress={onClose}
       >
-        {/* モーダル本体 */}
         <View
-          style={[styles.modalContent, { backgroundColor: colors.card }]}
+          style={styles.modalContent}
           onStartShouldSetResponder={() => true}
         >
-          {/* ヘッダー */}
+          {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {t("InfoModal.title")}
-            </Text>
+            <Text style={styles.modalTitle}>{t("InfoModal.title")}</Text>
 
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={[styles.closeButtonText, { color: colors.subtext }]}>
-                ×
-              </Text>
+              <Text style={styles.closeButtonText}>×</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 本文スクロール */}
+          {/* Scroll Area */}
           <ScrollView
             style={styles.modalScroll}
             contentContainerStyle={styles.modalScrollContent}
-            showsVerticalScrollIndicator={true}
+            showsVerticalScrollIndicator
           >
             <RuleItem
               title={t("InfoModal.ruleTitle")}
@@ -122,80 +104,93 @@ export const InfoModal: React.FC<InfoModalProps> = ({
   );
 };
 
-/**
- * スタイル定義
- */
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: `${BACKGROUND}E6`, // 90%透明
   },
+
   modalContent: {
-    borderRadius: 20,
+    borderRadius: 24,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+    shadowColor: STRAWBERRY,
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
+
   modalHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
   },
+
   modalTitle: {
     fontSize: 20,
     fontWeight: "700",
+    color: CHOCOLATE,
+    letterSpacing: 0.5,
   },
+
   closeButton: {
-    padding: 8,
     width: 36,
     height: 36,
     justifyContent: "center",
     alignItems: "center",
   },
+
   closeButtonText: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "300",
-    lineHeight: 28,
+    color: CHOCOLATE_SUB,
   },
+
   modalScroll: {
     maxHeight: 500,
   },
+
   modalScrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 28,
   },
+
   ruleItem: {
     flexDirection: "row",
-    marginBottom: 20,
+    marginBottom: 22,
     alignItems: "flex-start",
   },
+
   ruleBullet: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     marginTop: 6,
-    marginRight: 12,
+    marginRight: 14,
+    backgroundColor: STRAWBERRY,
   },
+
   ruleContent: {
     flex: 1,
   },
+
   ruleTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
+    fontWeight: "700",
+    marginBottom: 6,
+    color: CHOCOLATE,
   },
+
   ruleDescription: {
     fontSize: 15,
     lineHeight: 22,
+    color: CHOCOLATE_SUB,
   },
 });

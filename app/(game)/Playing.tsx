@@ -12,16 +12,13 @@ import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  DailyPlayCountContext,
   DisplayNameContext,
   GumiIndexContext,
   IconIndexContext,
   JwtContext,
   PointsContext,
-  SetDailyPlayCountContext,
   SetGumiIndexContext,
   SetPointsContext,
-  UidContext,
   UserNameContext,
 } from "../../src/components/UserContexts";
 import {
@@ -81,15 +78,12 @@ export default function Playing() {
   const opponentsGames: number = Number(params.opponentsGames);
 
   // ── Context ──────────────────────────────────────
-  const uid = useContext(UidContext);
   const jwt = useContext(JwtContext);
   const myIconIndex = useContext(IconIndexContext);
   const myUserName = useContext(UserNameContext);
   const myDisplayName = useContext(DisplayNameContext);
   const pointsGlobal = useContext(PointsContext);
   const setPoints = useContext(SetPointsContext);
-  const dailyPlayCount = useContext<number | null>(DailyPlayCountContext);
-  const setDailyPlayCount = useContext(SetDailyPlayCountContext);
   const gumiIndex = useContext(GumiIndexContext);
   const setGumiIndex = useContext(SetGumiIndexContext);
 
@@ -120,6 +114,14 @@ export default function Playing() {
   const [myRemainSecondsDisplay, setMyRemainingSecondsDisplay] = useState(180);
   const [opponentsRemainSecondsDisplay, setOpponentsRemainingSecondsDisplay] =
     useState(180);
+
+  // 時間切れ負けデバッグ用
+  // const myRemainSecondsRef = useRef(10);
+  // const opponentsRemainSecondsRef = useRef(10);
+  // const [myRemainSecondsDisplay, setMyRemainingSecondsDisplay] = useState(10);
+  // const [opponentsRemainSecondsDisplay, setOpponentsRemainingSecondsDisplay] =
+  //   useState(10);
+
   const meLastSeenRef = useRef(Date.now());
   const opponentLastSeenRef = useRef(Date.now());
 
@@ -130,14 +132,11 @@ export default function Playing() {
   const currentIndexRef = useRef<number>(0);
   const subscriptionRef = useRef<any>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingConnection, setLoadingConnection] = useState(false);
   const pointsBeforeRef = useRef<number | null>(null);
   const pointsAfterRef = useRef<number | null>(null);
   const gumiIndexBeforeRef = useRef<number | null>(null);
   const gumiIndexAfterRef = useRef<number | null>(null);
-
-  // ── 二重操作ガード ────────────────────────────────
-  // pass/resign/handlePutStone が連打・競合しないようにするフラグ
-  // const isActionInProgressRef = useRef(false);
 
   // ── ハートビート送信中フラグ ──────────────────────
   // payloadで確認できるまでは「送信済み」とみなさない設計のため、
@@ -162,6 +161,7 @@ export default function Playing() {
   };
 
   // ── ポイント更新 ──────────────────────────────────
+  // この中でsetShowResultは行う
   const updateMyPoints = (result: string) => {
     if (
       pointsGlobal === null ||
@@ -209,6 +209,8 @@ export default function Playing() {
       gumiIndexAfterRef.current = gumiIndex;
       setGumiIndex(gumiIndex);
     }
+
+    setShowResult(true);
   };
 
   // ── Supabase: matches テーブル更新（リトライ付き） ─────
@@ -234,32 +236,16 @@ export default function Playing() {
     return false;
   };
 
-  // ── デイリープレイカウント更新 ────────────────────
-  const updateDailyPlayCount = async () => {
-    const plusOne = (dailyPlayCount ?? 0) + 1;
-    if (!matchId) return;
-    const { error } = await supabase
-      .from("profiles")
-      .update({ daily_play_count: plusOne })
-      .eq("id", uid)
-      .select();
-    if (error) {
-      console.log("updateDailyPlayCount/エラー", error);
-    } else {
-      if (setDailyPlayCount) setDailyPlayCount(plusOne);
-    }
-  };
-
   // ── 対局終了処理 ──────────────────────────────────
   const endGame = () => {
     console.log("endGame: moves =", movesRef.current);
     isGameEndedRef.current = true;
     setIsGameEnded(true);
-    // isActionInProgressRef.current = false; // ガードをリセット
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+
     if (subscriptionRef.current) {
       supabase.removeChannel(subscriptionRef.current);
       subscriptionRef.current = null;
@@ -318,6 +304,8 @@ export default function Playing() {
             payload.new.turn === getOppositeColor(playerColor);
           const isConnectionWin = hasResult && payload.new.result[2] === "C";
 
+          if (isConnectionWin) console.log("isConnectionWinはtrue");
+
           if (hasResult && (isSentByOpponent || isConnectionWin)) {
             console.log("結果を受信:", payload.new.result);
             setLoading(false);
@@ -334,15 +322,19 @@ export default function Playing() {
               const territoryBoard = makeTerritoryBoard(
                 boardRef.current,
                 stringDeadStones,
+                0, // matchType
               ).territoryBoard;
               teritoryBoardRef.current = territoryBoard;
+
               setResultComment(
                 resultToLanguagesComment(result, playerColor) ??
                   t("Playing.matchComplete"),
               );
             }
+            setLoading(false);
+            setLoadingConnection(false);
 
-            setShowResult(true);
+            // setShowResult(true);
             endGame();
 
             (async () => {
@@ -521,7 +513,7 @@ export default function Playing() {
         resultToLanguagesComment(result, playerColor) ??
           t("Playing.matchComplete"),
       );
-      setShowResult(true);
+      // setShowResult(true);
       endGame();
       updateMyPoints(result);
     };
@@ -565,9 +557,10 @@ export default function Playing() {
           resultToLanguagesComment(result, playerColor) ??
             t("Playing.matchComplete"),
         );
-        setShowResult(true);
-        endGame(); // ★ setIsGameEnded + タイマー停止を一括で行う
-        updateMyPoints(result);
+        setLoadingConnection(true);
+        // setShowResult(true);
+        // endGame();
+        // updateMyPoints(result);
         return;
       }
 
@@ -651,10 +644,7 @@ export default function Playing() {
 
   // ── パス ──────────────────────────────────────────
   const pass = async () => {
-    if (!isMyTurn || isGameEnded 
-      // || isActionInProgressRef.current
-    ) return;
-    // isActionInProgressRef.current = true;
+    if (!isMyTurn || isGameEnded) return;
 
     try {
       movesRef.current = [...movesRef.current, "p"];
@@ -713,6 +703,7 @@ export default function Playing() {
           const { territoryBoard, result } = makeTerritoryBoard(
             boardRef.current,
             [],
+            0,
           );
           teritoryBoardRef.current = territoryBoard;
           const success = await updateSupabaseMatchesTable({
@@ -726,13 +717,14 @@ export default function Playing() {
             resultToLanguagesComment(result, playerColor) ??
               t("Playing.matchComplete"),
           );
-          setShowResult(true);
+          // setShowResult(true);
           updateMyPoints(result);
         } else {
           console.log("死に石:", stringDeadStones);
           const { territoryBoard, result } = makeTerritoryBoard(
             boardRef.current,
             stringDeadStones,
+            0,
           );
           teritoryBoardRef.current = territoryBoard;
           const success = await updateSupabaseMatchesTable({
@@ -746,25 +738,17 @@ export default function Playing() {
             resultToLanguagesComment(result, playerColor) ??
               t("Playing.matchComplete"),
           );
-          setShowResult(true);
+          // setShowResult(true);
           updateMyPoints(result);
         }
       }
-    } 
-    finally {
-      // 1回目のパスはサーバーの応答を待って次の操作を受け付ける
-      // if (!isGameEndedRef.current) {
-      //   isActionInProgressRef.current = false;
-      // }
+    } finally {
     }
   };
 
   // ── 投了 ──────────────────────────────────────────
   const resign = async () => {
-    if (!isMyTurn || isGameEnded
-      //  || isActionInProgressRef.current
-      ) return;
-    // isActionInProgressRef.current = true;
+    if (!isMyTurn || isGameEnded) return;
 
     try {
       setIsMyTurn(false);
@@ -782,7 +766,6 @@ export default function Playing() {
         console.error("投了送信失敗: 操作を戻します");
         setIsMyTurn(true);
         turn.current = playerColor;
-        // isActionInProgressRef.current = false;
         return;
       }
 
@@ -790,21 +773,18 @@ export default function Playing() {
         resultToLanguagesComment(result, playerColor) ??
           t("Playing.matchComplete"),
       );
-      setShowResult(true);
+      // setShowResult(true);
       endGame();
       updateMyPoints(result);
     } finally {
       if (!isGameEndedRef.current) {
-        // isActionInProgressRef.current = false;
       }
     }
   };
 
   // ── 着手 ──────────────────────────────────────────
   const handlePutStone = async (grid: Grid) => {
-    if (!isMyTurn || isGameEnded 
-      // || isActionInProgressRef.current
-    ) return;
+    if (!isMyTurn || isGameEnded) return;
 
     if (
       !isLegalMove(
@@ -817,8 +797,6 @@ export default function Playing() {
       )
     )
       return;
-
-    // isActionInProgressRef.current = true;
 
     try {
       playStoneSound();
@@ -884,16 +862,13 @@ export default function Playing() {
         turn.current = playerColor;
       }
     } finally {
-      // if (!isGameEndedRef.current) {
-      //   isActionInProgressRef.current = false;
-      // }
     }
   };
 
   // ── 結果OKボタン ──────────────────────────────────
   const onPressOK = () => {
     console.log("OK pressed");
-    setShowResult(false);
+    setShowResult(false); // これはok
     const finalIndex = boardHistoryRef.current.length - 1;
     currentIndexRef.current = finalIndex;
     setBoard(boardHistoryRef.current[finalIndex]);
@@ -941,6 +916,7 @@ export default function Playing() {
         />
 
         <GoBoardWithReplay
+          matchType={0}
           agehamaHistory={agehamaHistory}
           board={board}
           onPutStone={handlePutStone}
@@ -1016,22 +992,10 @@ export default function Playing() {
       />
 
       {loading && <LoadingOverlay text={t("Playing.calculating")} />}
+      {loadingConnection && <LoadingOverlay />}
     </SafeAreaView>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const styles = StyleSheet.create({
   container: {

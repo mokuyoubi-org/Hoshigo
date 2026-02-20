@@ -240,10 +240,17 @@ export default function GumiInfoModal({
   );
 }
 
+/* ─── LoadingOverlayと同じカラー ─────────────────────── */
+const STRAWBERRY = "#c8d6e6";
+const BACKGROUND = "#f9fafb";
+const CHOCOLATE = "#5a3a4a";
+const CHOCOLATE_SUB = "#c09aa8";
+
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: `${BACKGROUND}E6`,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -253,140 +260,154 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     maxHeight: Dimensions.get("window").height * 0.8,
     height: 600,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+    shadowColor: STRAWBERRY,
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
+
   title: {
     fontSize: 20,
     fontWeight: "700",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  currentKumiCard: {
-    borderRadius: 16,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  currentKumiLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 8,
-    textTransform: "uppercase",
+    color: CHOCOLATE,
     letterSpacing: 0.5,
   },
-  currentKumiName: {
-    fontSize: 32,
+
+  closeButton: {
+    padding: 6,
+  },
+
+  currentKumiCard: {
+    borderRadius: 20,
+    padding: 22,
+    alignItems: "center",
+    marginBottom: 24,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+  },
+
+  currentKumiLabel: {
+    fontSize: 12,
     fontWeight: "700",
-    marginBottom: 4,
+    marginBottom: 10,
+    letterSpacing: 1,
+    color: CHOCOLATE_SUB,
   },
-  pointsText: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 8,
+
+  currentKumiName: {
+    fontSize: 34,
+    fontWeight: "800",
+    marginBottom: 6,
   },
+
   nextKumiText: {
     fontSize: 14,
     fontWeight: "600",
+    color: CHOCOLATE_SUB,
   },
+
   scrollView: {
     marginBottom: 16,
     flex: 1,
   },
+
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 8,
+    letterSpacing: 1.2,
+    marginBottom: 10,
+    color: CHOCOLATE_SUB,
   },
-  scaleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  scaleText: {
-    fontSize: 10,
-    fontWeight: "600",
-  },
+
   kumiBarContainer: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
+
   kumiBarHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 8,
   },
+
   kumiBarLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     flex: 1,
   },
+
   kumiBarName: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
+
   kumiBarRange: {
     fontSize: 11,
-    fontWeight: "500",
+    fontWeight: "600",
+    color: CHOCOLATE_SUB,
   },
+
   currentBadgeSmall: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
+
   currentBadgeTextSmall: {
     color: "#fff",
     fontSize: 9,
     fontWeight: "700",
   },
+
   barContainer: {
-    height: 24,
+    height: 20,
     width: "100%",
+    backgroundColor: "rgba(200,214,230,0.15)",
+    borderRadius: 10,
+    overflow: "hidden",
   },
+
   barFill: {
-    height: 24,
-    borderRadius: 8,
-    position: "relative",
+    height: 20,
+    borderRadius: 10,
   },
+
   barFillCurrent: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowColor: STRAWBERRY,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
+
   infoBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+    padding: 18,
+    borderRadius: 18,
+    marginTop: 12,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
   },
+
   infoText: {
-    flex: 1,
     fontSize: 13,
-    fontWeight: "500",
-    lineHeight: 18,
+    fontWeight: "600",
+    lineHeight: 20,
+    color: CHOCOLATE_SUB,
   },
 });

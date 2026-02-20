@@ -13,13 +13,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 
 import {
-  DailyPlayCountContext,
   DisplayNameContext,
   GumiIndexContext,
   IconIndexContext,
   JwtContext,
   PointsContext,
-  SetDailyPlayCountContext,
   SetGumiIndexContext,
   SetPointsContext,
   UidContext,
@@ -28,7 +26,6 @@ import {
 import {
   BOARD_SIZE_COUNT,
   Board,
-  Color,
   Grid,
   applyMove,
   cloneBoard,
@@ -44,6 +41,7 @@ import {
   gnuGridtoStringGrid,
   makeTerritoryBoard,
   movesToSgf,
+  prepareOkigoBoard,
   resultToLanguagesComment,
   sleep,
 } from "../../src/lib/goUtils";
@@ -70,19 +68,17 @@ export default function PlayWithBot() {
   const iconIndex = useContext(IconIndexContext);
   const gumiIndex = useContext(GumiIndexContext);
   const setGumiIndex = useContext(SetGumiIndexContext);
-  const dailyPlayCount = useContext<number | null>(DailyPlayCountContext);
-  const setDailyPlayCount = useContext(SetDailyPlayCountContext);
   const myIconIndex = useContext(IconIndexContext);
 
   // ── State: マッチ・ボット情報 ─────────────────────
   const [matchId, setMatchId] = useState<string | null>(null);
-  const [playerColor, setPlayerColor] = useState<Color>("black");
+  const playerColor = "black";
   const [botUserName, setBotUserName] = useState<string | null>(null);
   const [botDisplayName, setBotDisplayName] = useState<string | null>(null);
   const [botPoints, setBotPoints] = useState<number | null>(null);
-  const [botUid, setBotUid] = useState<string | null>(null);
   const [botIconIndex, setBotIconIndex] = useState<number | null>(null);
   const [botGumiIndex, setBotGumiIndex] = useState<number | null>(null);
+  const [matchType, setMatchType] = useState<number | null>(null);
   const isTryingRef = useRef<boolean>(false);
 
   // ── State: 盤面 ──────────────────────────────────
@@ -129,9 +125,6 @@ export default function PlayWithBot() {
   const gumiIndexBeforeRef = useRef<number | null>(null);
   const gumiIndexAfterRef = useRef<number | null>(null);
 
-  // ── 二重操作ガード ────────────────────────────────
-  // const isActionInProgressRef = useRef(false);
-
   // ── リプレイ: インデックス変更ハンドラ ───────────────
   const handleCurrentIndexChange = (newIndex: number) => {
     currentIndexRef.current = newIndex;
@@ -157,14 +150,11 @@ export default function PlayWithBot() {
     console.log("元々のレート: ", point);
 
     const isBlackWin = result.startsWith("B+");
-    const isWhiteWin = result.startsWith("W+");
-    const isMeBlack = playerColor === "black";
-    const isMeWhite = playerColor === "white";
-    const isWin = (isBlackWin && isMeBlack) || (isWhiteWin && isMeWhite);
+    //  const isWin = (isBlackWin )
     const diff = point - botPoints;
 
     let delta: number;
-    if (isWin) {
+    if (isBlackWin) {
       delta = Math.max(0, Math.min(10, 5 - Math.trunc(diff / 50)));
     } else {
       // 格上のボットに負けてもポイントは減らない
@@ -175,7 +165,7 @@ export default function PlayWithBot() {
       }
     }
 
-    if (isWin) {
+    if (isBlackWin) {
       newPoint += delta;
       setBotPoints(Math.max(0, botPoints - delta));
     } else {
@@ -197,6 +187,7 @@ export default function PlayWithBot() {
       setGumiIndex(gumiIndex);
     }
     console.log("新しいgumiIndex: ", gumiIndexAfterRef.current);
+    setShowResult(true);
   };
 
   // ── Supabase: matches テーブル更新（リトライ付き） ─────
@@ -240,7 +231,6 @@ export default function PlayWithBot() {
   const endGameStopTimerCallRpc = async () => {
     isGameEndedRef.current = true;
     setIsGameEnded(true);
-    // isActionInProgressRef.current = false; // ガードをリセット
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -260,7 +250,6 @@ export default function PlayWithBot() {
         resultToLanguagesComment(result, playerColor) ??
           t("Playing.matchComplete"),
       );
-      setShowResult(true);
       endGameStopTimerCallRpc();
       updateLocalPoints(result);
     };
@@ -353,16 +342,90 @@ export default function PlayWithBot() {
       console.log("✅ ボットとのマッチ作成成功:", res.match_id);
 
       setMatchId(res.match_id);
-      setBotUid(res.bot_uid);
       setBotUserName(res.bot_username);
       setBotDisplayName(res.bot_displayname);
       setBotPoints(res.bot_points);
       setBotIconIndex(res.bot_icon_index);
       setBotGumiIndex(res.bot_gumi_index);
+      setMatchType(res.match_type);
+
+      if (res.match_type === 0) {
+        // 互先
+      } else if (res.match_type === 1) {
+        // 定先
+      } else if (res.match_type >= 2 && res.match_type <= 9) {
+        handleHandicapGame(res.match_type);
+      }
     } finally {
       isTryingRef.current = false;
     }
   };
+
+  function handleHandicapGame(stones: number) {
+    // まず初期盤面を用意
+    const newB = prepareOkigoBoard(stones);
+    setBoard(newB);
+    boardRef.current = newB;
+    boardHistoryRef.current = [newB];
+
+    // 白が打つ
+    let arr: Grid[] = [];
+
+    if (stones === 2) {
+      arr = [
+        { row: 3, col: 3 },
+        { row: 3, col: 4 },
+        { row: 4, col: 3 },
+        { row: 4, col: 4 },
+        { row: 7, col: 7 },
+        { row: 7, col: 6 },
+        { row: 6, col: 7 },
+        { row: 6, col: 6 },
+        { row: 5, col: 5 },
+      ];
+    } else if (stones === 3) {
+      arr = [
+        { row: 7, col: 7 },
+        { row: 7, col: 6 },
+        { row: 6, col: 7 },
+        { row: 6, col: 6 },
+      ];
+    } else if (stones === 4) {
+      arr = [
+        { row: 5, col: 3 },
+        { row: 5, col: 7 },
+        { row: 3, col: 5 },
+        { row: 7, col: 5 },
+      ];
+    }
+
+    const randomGrid = arr[Math.floor(Math.random() * arr.length)];
+
+    const { board: newBoard, agehama } = applyMove(
+      randomGrid,
+      cloneBoard(boardRef.current),
+      "white",
+    );
+
+    setBoard(newBoard);
+    boardRef.current = newBoard;
+    boardHistoryRef.current = [...boardHistoryRef.current, newBoard];
+
+    const lastAgehama =
+      agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
+
+    agehamaHistoryRef.current.push(
+      playerColor === "black"
+        ? { ...lastAgehama, black: lastAgehama.black + agehama }
+        : { ...lastAgehama, white: lastAgehama.white + agehama },
+    );
+
+    setAgehamaHistory([...agehamaHistoryRef.current]);
+    setLastMove(randomGrid);
+
+    movesRef.current = [...movesRef.current, stringifyGrid(randomGrid)];
+    currentIndexRef.current++;
+  }
 
   // ── GNUGo API 共通fetch（タイムアウト付き）────────────
   const fetchGnuGoApi = async (
@@ -401,7 +464,7 @@ export default function PlayWithBot() {
 
   // ── 地計算（フォールバック付き）──────────────────────
   const calcTerritoryAndFinish = async () => {
-    const sgf = movesToSgf(movesRef.current);
+    const sgf = movesToSgf(movesRef.current, matchType ?? 0);
     console.log("送ったsgf: ", sgf);
 
     const gnuDeadStones = await fetchGnuGoApi("score", sgf);
@@ -419,10 +482,10 @@ export default function PlayWithBot() {
     const { territoryBoard, result } = makeTerritoryBoard(
       boardRef.current,
       stringDeadStones,
+      matchType ?? 0,
     );
     teritoryBoardRef.current = territoryBoard;
 
-    updateLocalPoints(result);
     await updateSupabaseMatchesTable({
       result,
       status: "ended",
@@ -434,13 +497,13 @@ export default function PlayWithBot() {
       resultToLanguagesComment(result, playerColor) ??
         t("Playing.matchComplete"),
     );
-    setShowResult(true);
+    updateLocalPoints(result);
     endGameStopTimerCallRpc();
   };
 
   // ── GNUGoに手を送り、応答を処理する ──────────────────
   const sendSgfToGnuGo = async () => {
-    const sgf = movesToSgf(movesRef.current);
+    const sgf = movesToSgf(movesRef.current, matchType ?? 0);
     console.log("送ったsgf: ", sgf);
 
     const botMove = await fetchGnuGoApi("play", sgf);
@@ -453,7 +516,6 @@ export default function PlayWithBot() {
         resultToLanguagesComment(result, playerColor) ??
           t("Playing.matchComplete"),
       );
-      setShowResult(true);
       await updateSupabaseMatchesTable({ result, status: "ended" });
       endGameStopTimerCallRpc();
       updateLocalPoints(result);
@@ -539,7 +601,6 @@ export default function PlayWithBot() {
         resultToLanguagesComment(result, playerColor) ??
           t("Playing.matchComplete"),
       );
-      setShowResult(true);
       await updateSupabaseMatchesTable({ result, status: "ended" });
       endGameStopTimerCallRpc();
       updateLocalPoints(result);
@@ -595,17 +656,13 @@ export default function PlayWithBot() {
       });
       setLoading(false);
     }
-
-    // ボットの応答処理が終わったのでガードを解除
-    // if (!isGameEndedRef.current) {
-    //   isActionInProgressRef.current = false;
-    // }
   };
 
   // ── 最初にやること ────────────────────────────────
   useEffect(() => {
     console.log("🔄 PlayWithBot マウント:", new Date().toISOString());
     makeMatchWithBot();
+
     setIsMyTurn(playerColor === "black");
     meLastSeenRef.current = Date.now();
     return () => {
@@ -615,13 +672,7 @@ export default function PlayWithBot() {
 
   // ── パス ──────────────────────────────────────────
   const pass = async () => {
-    if (
-      !isMyTurn ||
-      isGameEnded
-      //  || isActionInProgressRef.current
-    )
-      return;
-    // isActionInProgressRef.current = true;
+    if (!isMyTurn || isGameEnded) return;
 
     movesRef.current = [...movesRef.current, "p"];
     currentIndexRef.current++;
@@ -679,13 +730,7 @@ export default function PlayWithBot() {
 
   // ── 投了 ──────────────────────────────────────────
   const resign = async () => {
-    if (
-      !isMyTurn ||
-      isGameEnded
-      //  || isActionInProgressRef.current
-    )
-      return;
-    // isActionInProgressRef.current = true;
+    if (!isMyTurn || isGameEnded) return;
 
     setIsMyTurn(false);
     turn.current = getOppositeColor(playerColor);
@@ -702,7 +747,6 @@ export default function PlayWithBot() {
       console.error("投了送信失敗: 操作を戻します");
       setIsMyTurn(true);
       turn.current = playerColor;
-      // isActionInProgressRef.current = false;
       return;
     }
 
@@ -710,19 +754,13 @@ export default function PlayWithBot() {
       resultToLanguagesComment(result, playerColor) ??
         t("Playing.matchComplete"),
     );
-    setShowResult(true);
     endGameStopTimerCallRpc();
     updateLocalPoints(result);
   };
 
   // ── 着手 ──────────────────────────────────────────
   const handlePutStone = async (grid: Grid) => {
-    if (
-      !isMyTurn ||
-      isGameEnded
-      //  || isActionInProgressRef.current
-    )
-      return;
+    if (!isMyTurn || isGameEnded) return;
 
     if (
       !isLegalMove(
@@ -736,19 +774,16 @@ export default function PlayWithBot() {
     )
       return;
 
-    // isActionInProgressRef.current = true;
-
     playStoneSound();
+
     const { board: newBoard, agehama } = applyMove(
       grid,
       cloneBoard(boardRef.current),
       playerColor,
     );
-
     setBoard(newBoard);
     boardRef.current = newBoard;
     boardHistoryRef.current = [...boardHistoryRef.current, newBoard];
-
     const lastAgehama =
       agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
     if (playerColor === "black") {
@@ -763,7 +798,6 @@ export default function PlayWithBot() {
       });
     }
     setAgehamaHistory([...agehamaHistoryRef.current]);
-
     setLastMove(grid);
     movesRef.current = [...movesRef.current, stringifyGrid(grid)];
     currentIndexRef.current++;
@@ -839,6 +873,7 @@ export default function PlayWithBot() {
         />
 
         <GoBoardWithReplay
+          matchType={matchType ?? 0}
           agehamaHistory={agehamaHistory}
           board={board}
           onPutStone={handlePutStone}

@@ -1,8 +1,14 @@
 // app/components/LoadingOverlay.tsx
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, StyleSheet, Text } from "react-native";
 import { useTheme } from "../hooks/useTheme";
+
+// ─── Homeページに合わせたカラー ───────────────────────
+const STRAWBERRY = "#c8d6e6";
+const BACKGROUND = "#f9fafb";
+const CHOCOLATE = "#5a3a4a";
+const CHOCOLATE_SUB = "#c09aa8";
 
 type LoadingOverlayProps = {
   text?: string; // 表示するテキストだけ props に
@@ -11,21 +17,49 @@ type LoadingOverlayProps = {
 export default function LoadingOverlay({ text }: LoadingOverlayProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const fadeIn = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeIn, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.loadingOverlay,
-        { backgroundColor: `${colors.background}B3` },
+        {
+          backgroundColor: `${BACKGROUND}E6`, // 90%の不透明度
+          opacity: fadeIn,
+        },
       ]}
     >
-      <View style={[styles.loadingBox, { backgroundColor: colors.card }]}>
-        <ActivityIndicator size="large" color={colors.button} />
-        <Text style={[styles.loadingText, { color: colors.text }]}>
+      <Animated.View
+        style={[
+          styles.loadingBox,
+          {
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <ActivityIndicator size="large" color={STRAWBERRY} />
+        <Text style={styles.loadingText}>
           {text || t("LoadingOverlay.loading")}
         </Text>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -40,21 +74,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingBox: {
-    width: 180,
-    height: 120,
-    borderRadius: 16,
+    width: 200,
+    height: 140,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 5,
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+    shadowColor: STRAWBERRY,
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    fontWeight: "600",
+    marginTop: 16,
+    fontSize: 15,
+    fontWeight: "700",
     textAlign: "center",
+    color: CHOCOLATE,
+    letterSpacing: 0.5,
   },
 });

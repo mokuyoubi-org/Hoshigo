@@ -18,13 +18,26 @@ import {
 } from "./goscorer.js";
 
 export const movesToSgf = (
-  moves: string[], // ["3,7", "2,3", ...]
+  moves: string[],
+  matchType: number = 0,
   startingColor: "B" | "W" = "B",
   boardSize: number = BOARD_SIZE_COUNT,
 ): string => {
   const alphabet = "0abcdefghijklmnopqrstuvwxyz";
-  let sgf = `(;SZ[${boardSize}]RU[Japanese]KM[6.5]\n`;
-  let color: "B" | "W" = startingColor;
+  // 🎯 コミ決定
+  const komi = matchType === 0 ? 6.5 : 0;
+
+  // 🎯 2子局以上なら白スタート
+  let color: "B" | "W" = matchType >= 2 ? "W" : startingColor;
+
+  let sgf = `(;GM[1]FF[4]SZ[${boardSize}]RU[Japanese]KM[${komi}]`;
+
+  // 🎯 HA追加（2子局以上）
+  if (matchType >= 2) {
+    sgf += `HA[${matchType}]`;
+  }
+
+  sgf += "\n";
 
   for (const move of moves) {
     // パスなら
@@ -195,14 +208,20 @@ export const gnuGridstoStringGrids = (sgfStyleGrids: string[]): string[] => {
 };
 
 export const movesToBoardHistory = (
+  matchType: number,
   moves: string[],
 ): { boardHistory: Board[]; agehamaHistory: Agehama[] } => {
   let boardHistory: Board[] = [];
+
   let board: Board = initializeBoard();
+  let color: Color = "black";
+  if (matchType !== 0 && matchType !== 1) {
+    board = prepareOkigoBoard(matchType);
+    color = "white";
+  }
   boardHistory = [board]; // 初期盤面
   let agehamaCount;
   let agehamaHistory: Agehama[] = [{ black: 0, white: 0 }];
-  let color: Color = "black";
 
   for (const move of moves) {
     console.log("move: ", move);
@@ -262,7 +281,12 @@ export const movesToBoardHistory = (
 export const makeTerritoryBoard = (
   board: Board,
   deadStones: string[],
+  matchType: number,
 ): { territoryBoard: number[][]; result: string } => {
+  let KM: number = 6.5
+  if(matchType!==0 && matchType!==1){
+    KM =0 
+  }
   const stones: number[][] = boardToStones(board);
   const markedDead: boolean[][] = Array.from({ length: 9 }, () =>
     Array.from({ length: 9 }, () => false),
@@ -281,7 +305,7 @@ export const makeTerritoryBoard = (
     markedDead,
     0,
     0,
-    6.5,
+    KM,
   );
   console.log("finalScore: ", finalScore);
   // detailed territory map
@@ -367,65 +391,19 @@ export const prepareOkigoBoard = (matchType: number): Board => {
   let board = initializeBoard();
   switch (matchType) {
     case 2: // 2子局
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
       break;
     case 3: // 3子局
+      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove({ row: 7, col: 3 }, board, "black").board;
       board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
-      board = applyMove({ row: 5, col: 5 }, board, "black").board;
       break;
     case 4: // 4子局
       board = applyMove({ row: 3, col: 3 }, board, "black").board;
       board = applyMove({ row: 7, col: 7 }, board, "black").board;
       board = applyMove({ row: 7, col: 3 }, board, "black").board;
       board = applyMove({ row: 3, col: 7 }, board, "black").board;
-
-      break;
-    case 5: // 5子局
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
-      board = applyMove({ row: 5, col: 5 }, board, "black").board;
-      break;
-    case 6: // 6子局
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
-      board = applyMove({ row: 5, col: 3 }, board, "black").board;
-      board = applyMove({ row: 5, col: 7 }, board, "black").board;
-      break;
-    case 7: // 7子局
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
-      board = applyMove({ row: 5, col: 5 }, board, "black").board;
-      board = applyMove({ row: 5, col: 3 }, board, "black").board;
-      board = applyMove({ row: 5, col: 7 }, board, "black").board;
-      break;
-    case 8: // 8子局
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
-      board = applyMove({ row: 5, col: 3 }, board, "black").board;
-      board = applyMove({ row: 5, col: 7 }, board, "black").board;
-      board = applyMove({ row: 3, col: 5 }, board, "black").board;
-      board = applyMove({ row: 7, col: 5 }, board, "black").board;
-      break;
-    case 9: // 9子局
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
-      board = applyMove({ row: 5, col: 5 }, board, "black").board;
-      board = applyMove({ row: 5, col: 3 }, board, "black").board;
-      board = applyMove({ row: 5, col: 7 }, board, "black").board;
-      board = applyMove({ row: 3, col: 5 }, board, "black").board;
-      board = applyMove({ row: 7, col: 5 }, board, "black").board;
       break;
   }
   return board;

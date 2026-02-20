@@ -3,11 +3,21 @@ import { InfoModal } from "@/src/components/InfoModal";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import LoginNeededModal from "@/src/components/LoginNeededModal";
 import { supabase } from "@/src/services/supabase";
+import { Octicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  StatusBar as RNStatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   IsPremiumContext,
@@ -15,8 +25,120 @@ import {
 } from "../../src/components/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 
+const { width, height } = Dimensions.get("window");
+
+// ─── カラー ───────────────────────────────────────────
+const STRAWBERRY = "#c8d6e6";
+const BACKGROUND = "#f9fafb";
+const CHOCOLATE = "#5a3a4a";
+const CHOCOLATE_SUB = "#c09aa8";
+
+// seed ベースの擬似乱数で星ごとに個性を持たせる（毎回同じ形）。
+function pseudoRandom(seed: number): number {
+  const x = Math.sin(seed + 1) * 43758.5453;
+  return x - Math.floor(x); // 0〜1
+}
+
+const STAR_COLS = width / 80;
+const STAR_ROWS = height / 80;
+const STAR_SIZE = Math.floor((width / STAR_COLS) * 0.2);
+
+type StarData = {
+  col: number;
+  row: number;
+  color: "dark" | "light";
+  rotation: number; // 星ごとに微小な傾き
+};
+
+const STARS: StarData[] = [];
+for (let r = 0; r < STAR_ROWS; r++) {
+  for (let c = 0; c < STAR_COLS; c++) {
+    const seed = r * 100 + c;
+    STARS.push({
+      col: c,
+      row: r,
+      color: (r + c) % 2 === 0 ? "dark" : "light",
+      rotation: (pseudoRandom(seed * 7) - 0.5) * 18, // ±9度の傾き
+    });
+  }
+}
+
+// ─── 星グリッドコンポーネント（アニメーション付き） ────
+const ANIM_DURATION = 2800;
+
+const StarGrid = () => {
+  const cellW = width / STAR_COLS;
+  const cellH = height / STAR_ROWS;
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: ANIM_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0,
+          duration: ANIM_DURATION,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  const darkScale = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.88, 1.08],
+  });
+  const darkOpacity = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.14, 0.07],
+  });
+  const lightScale = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1.08, 0.88],
+  });
+  const lightOpacity = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.42, 0.58],
+  });
+
+  return (
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      {STARS.map(({ col, row, color, rotation }, i) => {
+        const scale = color === "dark" ? darkScale : lightScale;
+        const opacity = color === "dark" ? darkOpacity : lightOpacity;
+
+        return (
+          <Animated.View
+            key={i}
+            style={{
+              position: "absolute",
+              width: STAR_SIZE,
+              height: STAR_SIZE,
+              left: col * cellW + cellW / 2 - STAR_SIZE / 2,
+              top: row * cellH + cellH / 2 - STAR_SIZE / 2,
+              opacity,
+              transform: [{ scale }, { rotate: `${rotation}deg` }],
+            }}
+          >
+            <Octicons
+              name="star-fill"
+              size={color === "dark" ? STAR_SIZE * 1.6 : STAR_SIZE}
+              color={color === "dark" ? "#8a6a75" : STRAWBERRY}
+            />
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
+};
+
+// ─── メイン ───────────────────────────────────────────
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isInfoModalVisible, setIsModalVisible] = useState(false);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
   const uid = useContext(UidContext);
@@ -25,297 +147,340 @@ export default function Home() {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
 
+  const fadeIn = useRef(new Animated.Value(0)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  // ボタンのふわふわ
+
+  const floating = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floating, {
+          toValue: -2,
+          duration: 2400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floating, {
+          toValue: 0,
+          duration: 2400,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  useEffect(() => {
+    Animated.timing(fadeIn, {
+      toValue: 1,
+      duration: 700,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
   const startMatching = async () => {
     if (!uid) {
       setIsLoginModalVisible(true);
       return;
     }
-
     try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("daily_play_count")
-        .eq("uid", uid)
-        .single();
-      setLoading(false);
-
-      if (error) {
-        console.error("Error fetching daily play count:", error);
-        return;
+      if (!isPremium) {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("daily_play_count")
+          .eq("uid", uid)
+          .single();
+        setLoading(false);
+        if (error) {
+          console.error(error);
+          return;
+        }
+        if (data.daily_play_count >= 10) {
+          setIsDailyLimitReached(true);
+          return;
+        }
       }
-
-      if (data.daily_play_count >= 10 && !isPremium) {
-        setIsDailyLimitReached(true);
-        return;
-      }
-
       router.replace("/Matching");
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error(err);
     }
   };
 
-  const openInfoModal = () => {
-    setIsModalVisible(true);
-  };
-
-  const closeInfoModal = () => {
-    setIsModalVisible(false);
-  };
+  const handlePressIn = () =>
+    Animated.spring(pressScale, {
+      toValue: 0.94,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  const handlePressOut = () =>
+    Animated.spring(pressScale, {
+      toValue: 1,
+      friction: 6,
+      useNativeDriver: true,
+    }).start();
 
   return (
-    <>
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-      >
-        <StatusBar style="auto" />
+    <SafeAreaView style={styles.container}>
+      <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
+      <StatusBar style="dark" />
 
-        <View style={styles.content}>
-          <View style={styles.top}>
-            {/* はてなマークボタン */}
-            <TouchableOpacity
-              style={[styles.infoButton, { backgroundColor: colors.button }]}
-              onPress={openInfoModal}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[styles.infoButtonText, { color: colors.background }]}
-              >
-                ?
-              </Text>
-            </TouchableOpacity>
-          </View>
+      {/* 星の背景 */}
+      <StarGrid />
 
-          {/* メインコンテンツ */}
-          <View style={styles.mainContent}>
-            {/* 対局するボタン */}
+      {/* ② 全面ブラー */}
+      <BlurView
+        intensity={8}
+        tint="light" // 明るめなら light、暗めなら dark
+        style={StyleSheet.absoluteFillObject}
+      />
 
-            <View style={styles.matchingButtonContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.matchingButton,
-                  { backgroundColor: colors.button },
-                ]}
-                activeOpacity={0.8}
-                onPress={startMatching}
-              >
-                <Text
-                  style={[
-                    styles.matchingButtonText,
-                    { color: colors.background },
-                  ]}
-                >
-                  {t("Home.startMatch")}
-                </Text>
-              </TouchableOpacity>
-            </View>
+      <Animated.View style={[styles.content, { opacity: fadeIn }]}>
+        {/* ヘッダー */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.infoButton}
+            onPress={() => setIsModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.infoButtonText}>?</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* タイトル */}
+        <View style={styles.titleArea}>
+          <Text style={styles.tagline}>{t("Home.tagline")}</Text>
+          <Text style={styles.appTitle}>{t("Home.titleMain")}</Text>
+          <Text
+            style={i18n.language === "en" ? styles.appMotto : styles.appRomaji}
+          >
+            {t("Home.titleReading")}
+          </Text>
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <View style={styles.dividerDot} />
+            <View style={styles.dividerLine} />
           </View>
         </View>
-        {/* ローディングオーバーレイ */}
-        {loading && <LoadingOverlay text={t("Home.loading")} />}
-      </SafeAreaView>
 
-      {/* ログインモーダル */}
+        {/* メインボタン */}
+        <View style={styles.buttonArea}>
+          <TouchableOpacity
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={startMatching}
+            activeOpacity={1}
+          >
+            <View style={styles.glowWrapper}>
+              <Animated.View
+                style={[
+                  styles.matchButton,
+                  {
+                    transform: [
+                      { scale: pressScale },
+                      { translateY: floating },
+                    ],
+                  },
+                ]}
+              >
+                <Text style={styles.btnLabel}>{t("Home.tap")}</Text>
+                <Text style={styles.btnText}>{t("Home.startMatch")}</Text>
+              </Animated.View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* 統計 */}
+        {/* <View style={styles.statsArea}>
+          {[
+            { num: "-", label: t("Home.online") },
+            { num: "-", label: t("Home.plan") },
+            { num: "-", label: t("Home.remaining") },
+          ].map((item, i, arr) => (
+            <React.Fragment key={i}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{item.num}</Text>
+                <Text style={styles.statLabel}>{item.label}</Text>
+              </View>
+              {i < arr.length - 1 && <View style={styles.statDivider} />}
+            </React.Fragment>
+          ))}
+        </View> */}
+      </Animated.View>
+
+      {loading && <LoadingOverlay text={t("Home.loading")} />}
       <LoginNeededModal
         visible={isLoginModalVisible}
         onClose={() => setIsLoginModalVisible(false)}
         message={t("Home.loginRequired")}
       />
-
-      {/* 情報モーダル */}
       <InfoModal
         visible={isInfoModalVisible}
-        onClose={closeInfoModal}
+        onClose={() => setIsModalVisible(false)}
         colors={colors}
       />
-
-      {/* 対局制限モーダル */}
       <DailyLimitModal
         visible={isDailyLimitReached}
         onClose={() => setIsDailyLimitReached(false)}
         colors={colors}
         dailyLimit={10}
       />
-    </>
+    </SafeAreaView>
   );
 }
 
+// ─── スタイル ──────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  top: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignContent: "flex-start",
-    paddingTop: 36,
+    backgroundColor: BACKGROUND,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: "center",
+    paddingHorizontal: 28,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "400",
-  },
-  mainContent: {
-    height: "100%",
 
-    width: "100%",
-    alignItems: "center",
-    flexDirection: "column",
-  },
-  matchingButtonContainer: {
-    flexDirection: "column",
-    justifyContent: "center",
-
-    flex: 2,
-  },
-  matchingButton: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-  matchingButtonText: {
-    fontSize: 24,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+  header: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingTop: 8,
   },
   infoButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: STRAWBERRY,
+    backgroundColor: "rgba(232,164,184,0.08)",
     justifyContent: "center",
     alignItems: "center",
   },
   infoButtonText: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 17,
+    color: STRAWBERRY,
   },
-  modalOverlay: {
+
+  titleArea: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
   },
-  modalContent: {
-    borderRadius: 16,
-    width: "100%",
-    maxHeight: "80%",
-    overflow: "hidden",
+  tagline: {
+    fontSize: 10,
+    letterSpacing: 5,
+    color: CHOCOLATE_SUB,
+    marginBottom: 14,
   },
-  modalHeader: {
+  appTitle: {
+    fontSize: 68,
+    fontWeight: "800",
+    color: CHOCOLATE,
+    letterSpacing: 10,
+  },
+  appRomaji: {
+    fontSize: 11,
+    letterSpacing: 6,
+    color: CHOCOLATE_SUB,
+    marginTop: 8,
+  },
+  appMotto: {
+    fontSize: 11,
+    letterSpacing: 4,
+    color: CHOCOLATE_SUB,
+    marginTop: 8,
+  },
+  divider: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    width: 160,
+    marginTop: 24,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(232,164,184,0.35)",
   },
-  closeButton: {
-    width: 32,
-    height: 32,
+  dividerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: STRAWBERRY,
+    marginHorizontal: 10,
+    opacity: 0.7,
+  },
+
+  buttonArea: {
+    flex: 1.2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  matchButton: {
+    width: 158,
+    height: 158,
+    borderRadius: 79,
+    backgroundColor: "#fff8fa",
+    borderWidth: 8,
+    borderColor: STRAWBERRY,
     justifyContent: "center",
     alignItems: "center",
+
+    // ここが浮遊ポイント
+    shadowColor: STRAWBERRY,
+    shadowOffset: { width: 0, height: 8 }, // 下にドーン
+    shadowOpacity: 0.45,
+    shadowRadius: 25,
+    elevation: 20, // Androidはこれ大きく
   },
-  closeButtonText: {
-    fontSize: 32,
-    fontWeight: "300",
-    lineHeight: 32,
+
+  glowWrapper: {
+    borderRadius: 100,
+    shadowColor: "white",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 40,
+    elevation: 30,
   },
-  modalScroll: {
-    maxHeight: 500,
+  btnLabel: {
+    fontSize: 9,
+    letterSpacing: 4,
+    color: CHOCOLATE_SUB,
+    marginBottom: 6,
   },
-  modalScrollContent: {
-    padding: 20,
+  btnText: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: CHOCOLATE,
+    letterSpacing: 2,
   },
-  modalText: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  limitModalContent: {
-    borderRadius: 20,
-    width: "100%",
-    maxWidth: 360,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  limitModalIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+
+  statsArea: {
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
-  },
-  limitModalIconText: {
-    fontSize: 40,
-  },
-  limitModalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
+    paddingVertical: 18,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(232,164,184,0.2)",
     marginBottom: 12,
-    letterSpacing: 0.3,
   },
-  limitModalMessage: {
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 28,
-  },
-  limitModalButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 48,
-    borderRadius: 12,
-    width: "100%",
+  statItem: {
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
+    paddingHorizontal: 22,
   },
-  limitModalButtonText: {
+  statNumber: {
     fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    color: CHOCOLATE,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: CHOCOLATE_SUB,
+    marginTop: 4,
+    letterSpacing: 0.8,
+  },
+  statDivider: {
+    width: 1,
+    height: 26,
+    backgroundColor: "rgba(232,164,184,0.3)",
   },
 });
