@@ -397,6 +397,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { AntDesign } from "@expo/vector-icons";
+import { StarBackground } from "@/src/components/StarBackGround";
 
 // ─── Homeページに合わせたカラー ───────────────────────
 const STRAWBERRY = "#c8d6e6";
@@ -451,11 +452,9 @@ const RankingItem = ({
 
   return (
     <Animated.View style={[styles.itemContainer, { opacity: fadeIn }]}>
-      <View style={[styles.card, isTop3 && { borderColor: `${rankMeta.color}50` }]}>
-        {/* 上位3位はカード上部にカラーアクセントライン */}
-        {isTop3 && (
-          <View style={[styles.cardAccentLine, { backgroundColor: rankMeta.color }]} />
-        )}
+      <View style={[styles.card, 
+        // isTop3 && { borderColor: `${rankMeta.color}50` }
+        ]}>
 
         <View style={styles.cardContent}>
           {/* 順位 */}
@@ -463,14 +462,12 @@ const RankingItem = ({
             <View style={[
               styles.topRankBadge,
               {
-                borderColor: `${rankMeta.color}60`,
-                backgroundColor: `${rankMeta.color}15`,
-                shadowColor: rankMeta.color,
+                // borderColor: `${rankMeta.color}60`,
+                // backgroundColor: `${rankMeta.color}15`,
+                // shadowColor: rankMeta.color,
               }
             ]}>
-              {/* <Text style={[styles.topRankText, { color: rankMeta.color }]}>
-                // 👑
-              </Text> */}
+
 
 <AntDesign name="crown" size={24} color={rankMeta.color} />
             </View>
@@ -487,12 +484,9 @@ const RankingItem = ({
                 styles.avatarBorder,
                 {
                   borderColor: 
-                  // isTop3
-                  //   ? rankMeta.color
-                  //   : 
                     gumiColor !== "shirogumi"
                     ? colors[gumiColor]
-                    : CHOCOLATE_SUB,
+                    : "transparent",
                   backgroundColor: "#ffffff",
                   shadowColor: isTop3 ? rankMeta.color : STRAWBERRY,
                   shadowOpacity: isTop3 ? 0.4 : 0.15,
@@ -516,19 +510,8 @@ const RankingItem = ({
             >
               {item.displayname}
             </Text>
-            <Text style={styles.pointsText}>{item.points.toLocaleString()} pt</Text>
+            {/* <Text style={styles.pointsText}>{item.points.toLocaleString()} pt</Text> */}
           </View>
-
-          {/* 右端の装飾ライン（上位3のみ） */}
-          {isTop3 && (
-            <View style={[
-              styles.rankGlowLine,
-              {
-                backgroundColor: rankMeta.color,
-                shadowColor: rankMeta.color,
-              }
-            ]} />
-          )}
         </View>
       </View>
     </Animated.View>
@@ -578,31 +561,10 @@ export default function Rankings() {
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
 
-      {/* 背景グリッド（優しい色に） */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <View
-            key={`v${i}`}
-            style={[styles.bgLineV, { left: `${(i + 1) * (100 / 6)}%` as any }]}
-          />
-        ))}
-        {Array.from({ length: 7 }).map((_, i) => (
-          <View
-            key={`h${i}`}
-            style={[styles.bgLineH, { top: `${(i + 1) * (100 / 8)}%` as any }]}
-          />
-        ))}
-      </View>
+             <StarBackground />   
+      
 
       <Animated.View style={[styles.content, { opacity: fadeIn }]}>
-        {/* ページタイトル */}
-        <View style={styles.pageHeader}>
-          <View style={styles.pageTitleRow}>
-            <View style={styles.pageTitleAccent} />
-            <Text style={styles.pageTitle}>{t("Rankings.title")}</Text>
-          </View>
-          <Text style={styles.pageSubtitle}>{t("Rankings.subtitle")}</Text>
-        </View>
 
         {/* リスト */}
         <FlatList
@@ -726,14 +688,14 @@ const styles = StyleSheet.create({
   topRankBadge: {
     width: 42,
     height: 42,
-    borderRadius: 12,
-    borderWidth: 1.5,
+    // borderRadius: 12,
+    // borderWidth: 1.5,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 14,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.3,
+    // shadowRadius: 6,
   },
   topRankText: {
     fontSize: 14,

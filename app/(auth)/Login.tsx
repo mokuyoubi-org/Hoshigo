@@ -19,6 +19,7 @@ import LoadingOverlay from "../../src/components/LoadingOverlay";
 import { useTheme } from "../../src/hooks/useTheme";
 import { isValidEmail, isValidPassword } from "../../src/lib/utils";
 import { supabase } from "../../src/services/supabase";
+import { StarBackground } from "@/src/components/StarBackGround";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -111,6 +112,8 @@ export default function Login() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <StatusBar style="dark" />
+             <StarBackground />   
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}

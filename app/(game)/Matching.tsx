@@ -1,3 +1,4 @@
+import { StarBackground } from "@/src/components/StarBackGround";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -464,6 +465,8 @@ export default function Matching() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
+      <StarBackground />
+
       <View style={styles.content}>
         {/* 囲碁盤 */}
         {/* <View style={styles.boardContainer}> */}
@@ -567,11 +570,10 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: "#2d3748",
-    zIndex: 10,
+    zIndex: 1,
     shadowColor: "#000",
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.12,
-    // shadowRadius: 2,
     elevation: 1,
   },
   whiteStone: {
@@ -579,17 +581,16 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: "#ffffff",
-    zIndex: 10,
+    zIndex: 1,
     shadowColor: "#000",
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.15,
-    // shadowRadius: 2,
     elevation: 1,
   },
   emptyPoint: {
     width: 0,
     height: 0,
-    zIndex: 10,
+    zIndex: 1,
   },
   messageContainer: {
     alignItems: "center",

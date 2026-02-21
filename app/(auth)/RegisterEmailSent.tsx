@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../src/hooks/useTheme";
+import { StarBackground } from "@/src/components/StarBackGround";
 
 export default function RegisterEmailSent() {
   const { colors } = useTheme();
@@ -17,6 +18,8 @@ export default function RegisterEmailSent() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <StatusBar style="dark" />
+             <StarBackground />   
+      
       <View style={styles.content}>
         <View style={styles.successIconContainer}>
           <Text style={styles.successIcon}>✓</Text>

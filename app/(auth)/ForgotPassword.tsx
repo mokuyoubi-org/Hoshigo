@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 import { isValidEmail } from "../../src/lib/utils";
 import { supabase } from "../../src/services/supabase";
+import { StarBackground } from "@/src/components/StarBackGround";
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
@@ -50,6 +51,8 @@ export default function ForgotPassword() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
+             <StarBackground />   
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}

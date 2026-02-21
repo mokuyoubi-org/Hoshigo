@@ -2,12 +2,10 @@
 //        　　　　  　定　　義　　部　　　              //
 // // // // // // // // // // // // // // // // // //
 
-const BOARD_SIZE_COUNT = 9;
-
 // // // // 座 標 // // // //
 type Grid = {
-  row: number; // 1〜9
-  col: number; // 1〜9
+  row: number;
+  col: number;
 };
 
 // Grid → "row,col" に変換（Board の key 用）
@@ -51,12 +49,11 @@ const getNeighbors = (grid: Grid): Grid[] => [
   { row: grid.row, col: grid.col + 1 },
 ];
 
-// 盤内判定（1〜9）
-const isInsideBoard = (grid: Grid): boolean =>
+const isInsideBoard = (grid: Grid, boardSize: number): boolean =>
   grid.row >= 1 &&
-  grid.row <= BOARD_SIZE_COUNT &&
+  grid.row <= boardSize &&
   grid.col >= 1 &&
-  grid.col <= BOARD_SIZE_COUNT;
+  grid.col <= boardSize;
 
 // // // // 石 // // // //
 type Color = "black" | "white";
@@ -73,19 +70,18 @@ type GoString = {
 };
 
 // // // // 盤 面 // // // //
-// "1,1" ~ "9,9"
 type Board = Record<string, GoString | null>;
 
 // // // // // // // // // // // // // // // // // //
 //        　初　　期　　化　・　コ　　ピ　　ー           //
 // // // // // // // // // // // // // // // // // //
 
-// 空の盤を作る（1,1〜9,9）
-const initializeBoard = (): Board => {
+// 空の盤を作る
+const initializeBoard = (boardSize: number): Board => {
   const board: Board = {};
 
-  for (let row = 1; row <= BOARD_SIZE_COUNT; row++) {
-    for (let col = 1; col <= BOARD_SIZE_COUNT; col++) {
+  for (let row = 1; row <= boardSize; row++) {
+    for (let col = 1; col <= boardSize; col++) {
       board[`${row},${col}`] = null;
     }
   }
@@ -133,6 +129,7 @@ const isEmptyGrid = (grid: Grid, board: Board): boolean =>
 // 2. 構成石1, 呼吸点1の石が一つだけあって、
 // 3. それがlastMoveと一致しているならコウで着手禁止
 const isKoViolation = (
+  boardSize: number,
   grid: Grid,
   board: Board,
   lastMove: Grid,
@@ -142,7 +139,7 @@ const isKoViolation = (
   const opponentStrings = new Set<GoString>();
 
   for (const neighbor of getNeighbors(grid)) {
-    if (!isInsideBoard(neighbor)) continue; // 隣接点が盤外
+    if (!isInsideBoard(neighbor, boardSize)) continue; // 隣接点が盤外
 
     const neighborString = board[stringifyGrid(neighbor)];
     if (neighborString === null) return false; // 隣接点に空点があればコウではない
@@ -181,6 +178,7 @@ const isKoViolation = (
 
 // 自殺手判定
 const isSelfCapture = (
+  boardSize: number,
   grid: Grid,
   board: Board,
   currentColor: Color,
@@ -189,7 +187,7 @@ const isSelfCapture = (
   const opponentStrings = new Set<GoString>();
 
   for (const neighbor of getNeighbors(grid)) {
-    if (!isInsideBoard(neighbor)) continue;
+    if (!isInsideBoard(neighbor, boardSize)) continue;
 
     const neighborString = board[stringifyGrid(neighbor)];
     if (neighborString === null) return false;
@@ -214,6 +212,7 @@ const isSelfCapture = (
 
 // 合法手判定
 const isLegalMove = (
+  boardSize: number,
   grid: Grid,
   board: Board,
   lastMove: Grid | null,
@@ -231,14 +230,14 @@ const isLegalMove = (
   }
 
   // 2. 自殺手になっていないか
-  if (isSelfCapture(grid, board, currentColor)) {
+  if (isSelfCapture(boardSize, grid, board, currentColor)) {
     return false;
   }
 
   // 3. 劫（コウ）違反チェック（初手は無視）
   if (
     lastMove !== null &&
-    isKoViolation(grid, board, lastMove, currentColor, lastBoard)
+    isKoViolation(boardSize, grid, board, lastMove, currentColor, lastBoard)
   ) {
     return false;
   }
@@ -258,12 +257,16 @@ const mergeStringSets = (
 ): Set<string> => new Set([...first, ...second]);
 
 // 連を盤から取り除く
-const removeGoString = (goString: GoString, board: Board) => {
+const removeGoString = (
+  goString: GoString,
+  board: Board,
+  boardSize: number,
+) => {
   for (const stoneKey of goString.stones) {
     const stoneGrid = keyToGrid(stoneKey);
 
     for (const neighbor of getNeighbors(stoneGrid)) {
-      if (!isInsideBoard(neighbor)) continue;
+      if (!isInsideBoard(neighbor, boardSize)) continue;
 
       const neighborString = board[stringifyGrid(neighbor)];
       if (neighborString && neighborString.color !== goString.color) {
@@ -276,12 +279,17 @@ const removeGoString = (goString: GoString, board: Board) => {
 };
 
 // 呼吸点を減らす
-const reduceLiberty = (goString: GoString, board: Board, playedGrid: Grid) => {
+const reduceLiberty = (
+  goString: GoString,
+  board: Board,
+  playedGrid: Grid,
+  boardSize: number,
+) => {
   goString.liberties.delete(stringifyGrid(playedGrid));
 
   if (goString.liberties.size === 0) {
     let agehamaCount = goString.stones.size;
-    removeGoString(goString, board);
+    removeGoString(goString, board, boardSize);
     console.log("agehamaCount: ", agehamaCount);
     return agehamaCount;
   }
@@ -325,6 +333,7 @@ const mergeGoStrings = (
 
 // とにかく、手を適用するだけ。
 const applyMove = (
+  boardSize: number,
   grid: Grid,
   board: Board,
   currentColor: Color,
@@ -339,7 +348,7 @@ const applyMove = (
   const initialLiberties: string[] = [];
 
   for (const neighbor of getNeighbors(grid)) {
-    if (!isInsideBoard(neighbor)) continue;
+    if (!isInsideBoard(neighbor, boardSize)) continue;
 
     const neighborString = board[stringifyGrid(neighbor)];
 
@@ -370,7 +379,7 @@ const applyMove = (
   // 連を食べてしまった場合、その数を記録しておき、returnする
   let agehama = 0;
   for (const enemy of adjacentOpponentStrings) {
-    agehama += reduceLiberty(enemy, board, grid) || 0;
+    agehama += reduceLiberty(enemy, board, grid, boardSize) || 0;
   }
 
   return { board: board, agehama: agehama };
@@ -383,7 +392,6 @@ const applyMove = (
 export {
   applyMove,
   Board,
-  BOARD_SIZE_COUNT,
   cloneBoard,
   Color,
   getNeighbors,

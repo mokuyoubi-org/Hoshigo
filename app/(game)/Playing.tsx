@@ -22,7 +22,6 @@ import {
   UserNameContext,
 } from "../../src/components/UserContexts";
 import {
-  BOARD_SIZE_COUNT,
   Board,
   Color,
   Grid,
@@ -43,9 +42,10 @@ import {
   sleep,
 } from "../../src/lib/goUtils";
 import { supabase } from "../../src/services/supabase";
+import { StarBackground } from "@/src/components/StarBackGround";
 
 const BOARD_PIXEL_SIZE = 300;
-const CELL_SIZE = BOARD_PIXEL_SIZE / (BOARD_SIZE_COUNT - 1);
+const CELL_SIZE = BOARD_PIXEL_SIZE / (9 - 1);
 const STONE_PIXEL_SIZE = 36;
 
 // ── 定数 ──────────────────────────────────────────
@@ -88,12 +88,12 @@ export default function Playing() {
   const setGumiIndex = useContext(SetGumiIndexContext);
 
   // ── State: 盤面 ──────────────────────────────────
-  const [board, setBoard] = useState<Board>(initializeBoard());
-  const boardRef = useRef<Board>(initializeBoard());
-  const boardHistoryRef = useRef<Board[]>([initializeBoard()]);
+  const [board, setBoard] = useState<Board>(initializeBoard(9));
+  const boardRef = useRef<Board>(initializeBoard(9));
+  const boardHistoryRef = useRef<Board[]>([initializeBoard(9)]);
   const teritoryBoardRef = useRef<number[][]>(
-    Array.from({ length: BOARD_SIZE_COUNT }, () =>
-      Array.from({ length: BOARD_SIZE_COUNT }, () => 0),
+    Array.from({ length: 9 }, () =>
+      Array.from({ length: 9 }, () => 0),
     ),
   );
   const [agehamaHistory, setAgehamaHistory] = useState<Agehama[]>([
@@ -319,7 +319,7 @@ export default function Playing() {
               );
             } else {
               // 地計算結果
-              const territoryBoard = makeTerritoryBoard(
+              const territoryBoard = makeTerritoryBoard(9,
                 boardRef.current,
                 stringDeadStones,
                 0, // matchType
@@ -392,7 +392,7 @@ export default function Playing() {
               setAgehamaHistory([...agehamaHistoryRef.current]);
             } else {
               // 着手受信
-              const { board: newBoard, agehama } = applyMove(
+              const { board: newBoard, agehama } = applyMove(9,
                 keyToGrid(move),
                 cloneBoard(boardRef.current),
                 getOppositeColor(playerColor),
@@ -673,7 +673,7 @@ export default function Playing() {
         isHeartbeatInFlightRef.current = true; // パス送信中フラグを立てる
         await updateSupabaseMatchesTable({
           turn: getOppositeColor(playerColor),
-          moves: moveStringsToNumbers(movesRef.current, BOARD_SIZE_COUNT),
+          moves: moveStringsToNumbers(movesRef.current, 9),
           turn_switched_at: now,
           [`${playerColor}_remain_seconds`]: myRemainSecondsRef.current,
           [`${playerColor}_last_seen`]: now,
@@ -700,7 +700,7 @@ export default function Playing() {
         if (stringDeadStones === null) {
           // API失敗: 死に石なしで計算（フォールバック）
           console.warn("GNUGo API失敗: 死に石なしでフォールバック");
-          const { territoryBoard, result } = makeTerritoryBoard(
+          const { territoryBoard, result } = makeTerritoryBoard(9,
             boardRef.current,
             [],
             0,
@@ -721,7 +721,7 @@ export default function Playing() {
           updateMyPoints(result);
         } else {
           console.log("死に石:", stringDeadStones);
-          const { territoryBoard, result } = makeTerritoryBoard(
+          const { territoryBoard, result } = makeTerritoryBoard(9,
             boardRef.current,
             stringDeadStones,
             0,
@@ -787,20 +787,20 @@ export default function Playing() {
     if (!isMyTurn || isGameEnded) return;
 
     if (
-      !isLegalMove(
+      !isLegalMove(9,
         grid,
         boardRef.current,
         lastMove,
         playerColor,
         boardHistoryRef.current[boardHistoryRef.current.length - 2] ||
-          initializeBoard(),
+          initializeBoard(9),
       )
     )
       return;
 
     try {
       playStoneSound();
-      const { board: newBoard, agehama } = applyMove(
+      const { board: newBoard, agehama } = applyMove(9,
         grid,
         cloneBoard(boardRef.current),
         playerColor,
@@ -840,7 +840,7 @@ export default function Playing() {
 
       const success = await updateSupabaseMatchesTable({
         turn: getOppositeColor(playerColor),
-        moves: moveStringsToNumbers(movesRef.current, BOARD_SIZE_COUNT),
+        moves: moveStringsToNumbers(movesRef.current, 9),
         turn_switched_at: now,
         [`${playerColor}_remain_seconds`]: myRemainSecondsRef.current,
         [`${playerColor}_last_seen`]: now,
@@ -879,6 +879,12 @@ export default function Playing() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
+
+
+
+       <StarBackground />   
+
+
       <View style={styles.content}>
         {isGameEnded && (
           <View style={styles.backButtonContainer}>

@@ -2,7 +2,6 @@ import i18n from "../services/i18n";
 import {
   applyMove,
   Board,
-  BOARD_SIZE_COUNT,
   cloneBoard,
   Color,
   initializeBoard,
@@ -21,7 +20,7 @@ export const movesToSgf = (
   moves: string[],
   matchType: number = 0,
   startingColor: "B" | "W" = "B",
-  boardSize: number = BOARD_SIZE_COUNT,
+  boardSize: number = 9,
 ): string => {
   const alphabet = "0abcdefghijklmnopqrstuvwxyz";
   // 🎯 コミ決定
@@ -78,35 +77,32 @@ export function formatResult(result: string): string {
 //        　　　　 デ　　バ　　ッ　　グ　　              //
 // // // // // // // // // // // // // // // // // //
 
-export const printBoard = (board: Board) => {
-  console.log("=== 連のサイズ ===");
-  for (let row = 1; row <= BOARD_SIZE_COUNT; row++) {
-    let line = "";
-    for (let col = 1; col <= BOARD_SIZE_COUNT; col++) {
-      const cell = board[`${row},${col}`];
-      line += cell ? `${cell.stones.size} ` : "0 ";
-    }
-    console.log(`${row}: ${line}`);
-  }
+// export const printBoard = (board: Board) => {
+//   console.log("=== 連のサイズ ===");
+//   for (let row = 1; row <= BOARD_SIZE_COUNT; row++) {
+//     let line = "";
+//     for (let col = 1; col <= BOARD_SIZE_COUNT; col++) {
+//       const cell = board[`${row},${col}`];
+//       line += cell ? `${cell.stones.size} ` : "0 ";
+//     }
+//     console.log(`${row}: ${line}`);
+//   }
 
-  console.log("=== 呼吸点の数 ===");
-  for (let row = 1; row <= BOARD_SIZE_COUNT; row++) {
-    let line = "";
-    for (let col = 1; col <= BOARD_SIZE_COUNT; col++) {
-      const cell = board[`${row},${col}`];
-      line += cell ? `${cell.liberties.size} ` : "0 ";
-    }
-    console.log(`${row}: ${line}`);
-  }
-};
+//   console.log("=== 呼吸点の数 ===");
+//   for (let row = 1; row <= BOARD_SIZE_COUNT; row++) {
+//     let line = "";
+//     for (let col = 1; col <= BOARD_SIZE_COUNT; col++) {
+//       const cell = board[`${row},${col}`];
+//       line += cell ? `${cell.liberties.size} ` : "0 ";
+//     }
+//     console.log(`${row}: ${line}`);
+//   }
+// };
 
 // 要はシンプルな二次元配列にしている。012のみの。
-export function boardToStones(
-  board: Board,
-  size: number = BOARD_SIZE_COUNT,
-): number[][] {
-  const stones: number[][] = Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => 0),
+export function boardToStones(board: Board, boardSize: number): number[][] {
+  const stones: number[][] = Array.from({ length: boardSize }, () =>
+    Array.from({ length: boardSize }, () => 0),
   );
 
   for (const key in board) {
@@ -208,15 +204,16 @@ export const gnuGridstoStringGrids = (sgfStyleGrids: string[]): string[] => {
 };
 
 export const movesToBoardHistory = (
+  boardSize: number,
   matchType: number,
   moves: string[],
 ): { boardHistory: Board[]; agehamaHistory: Agehama[] } => {
   let boardHistory: Board[] = [];
 
-  let board: Board = initializeBoard();
+  let board: Board = initializeBoard(boardSize);
   let color: Color = "black";
   if (matchType !== 0 && matchType !== 1) {
-    board = prepareOkigoBoard(matchType);
+    board = prepareOkigoBoard(matchType, boardSize);
     color = "white";
   }
   boardHistory = [board]; // 初期盤面
@@ -241,7 +238,12 @@ export const movesToBoardHistory = (
       break;
     } else {
       // 通常の着手
-      const result = applyMove(keyToGrid(move), cloneBoard(board), color);
+      const result = applyMove(
+        boardSize,
+        keyToGrid(move),
+        cloneBoard(board),
+        color,
+      );
 
       board = result.board;
       agehamaCount = result.agehama;
@@ -279,15 +281,16 @@ export const movesToBoardHistory = (
 
 // BoardおよびdeadStones(str)を受け取ったら、territoryBoardと結果を返す関数
 export const makeTerritoryBoard = (
+  boardSize: number,
   board: Board,
   deadStones: string[],
   matchType: number,
 ): { territoryBoard: number[][]; result: string } => {
-  let KM: number = 6.5
-  if(matchType!==0 && matchType!==1){
-    KM =0 
+  let KM: number = 6.5;
+  if (matchType !== 0 && matchType !== 1) {
+    KM = 0;
   }
-  const stones: number[][] = boardToStones(board);
+  const stones: number[][] = boardToStones(board, boardSize);
   const markedDead: boolean[][] = Array.from({ length: 9 }, () =>
     Array.from({ length: 9 }, () => false),
   );
@@ -372,38 +375,51 @@ export const prepareBoard2d = (
   board2d: number[][],
   boardSize: number = 9,
 ): Board => {
-  let board = initializeBoard();
+  let board = initializeBoard(boardSize);
   for (let i = 0; i < boardSize; i++) {
     for (let j = 0; j < boardSize; j++) {
       if (board2d[i][j] === 1) {
         // 黒
-        board = applyMove({ row: i + 1, col: j + 1 }, board, "black").board;
+        board = applyMove(
+          boardSize,
+          { row: i + 1, col: j + 1 },
+          board,
+          "black",
+        ).board;
       } else if (board2d[i][j] === 2) {
         // 白
-        board = applyMove({ row: i + 1, col: j + 1 }, board, "white").board;
+        board = applyMove(
+          boardSize,
+          { row: i + 1, col: j + 1 },
+          board,
+          "white",
+        ).board;
       }
     }
   }
   return board;
 };
 
-export const prepareOkigoBoard = (matchType: number): Board => {
-  let board = initializeBoard();
+export const prepareOkigoBoard = (
+  matchType: number,
+  boardSize: number,
+): Board => {
+  let board = initializeBoard(boardSize);
   switch (matchType) {
     case 2: // 2子局
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
+      board = applyMove(boardSize, { row: 3, col: 7 }, board, "black").board;
+      board = applyMove(boardSize, { row: 7, col: 3 }, board, "black").board;
       break;
     case 3: // 3子局
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
+      board = applyMove(boardSize, { row: 3, col: 7 }, board, "black").board;
+      board = applyMove(boardSize, { row: 7, col: 3 }, board, "black").board;
+      board = applyMove(boardSize, { row: 3, col: 3 }, board, "black").board;
       break;
     case 4: // 4子局
-      board = applyMove({ row: 3, col: 3 }, board, "black").board;
-      board = applyMove({ row: 7, col: 7 }, board, "black").board;
-      board = applyMove({ row: 7, col: 3 }, board, "black").board;
-      board = applyMove({ row: 3, col: 7 }, board, "black").board;
+      board = applyMove(boardSize, { row: 3, col: 3 }, board, "black").board;
+      board = applyMove(boardSize, { row: 7, col: 7 }, board, "black").board;
+      board = applyMove(boardSize, { row: 7, col: 3 }, board, "black").board;
+      board = applyMove(boardSize, { row: 3, col: 7 }, board, "black").board;
       break;
   }
   return board;

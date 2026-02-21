@@ -640,6 +640,7 @@ import { PlayerCard } from "../../src/components/PlayerCard";
 import { useTheme } from "../../src/hooks/useTheme";
 import { Board, initializeBoard } from "../../src/lib/goLogics";
 import { supabase } from "../../src/services/supabase";
+import { StarBackground } from "@/src/components/StarBackGround";
 
 // ─── Homeページに合わせたカラー ───────────────────────
 const STRAWBERRY = "#c8d6e6";
@@ -725,7 +726,7 @@ const MatchCard = React.memo(
       prevMovesLengthRef.current = newLength;
     }, [data.moves.length]);
 
-    const board = data.boardHistory[replayIndex] ?? initializeBoard();
+    const board = data.boardHistory[replayIndex] ?? initializeBoard(9);
     const isAtLatest = replayIndex === data.boardHistory.length - 1;
 
     // ── UI ──
@@ -806,7 +807,7 @@ const MatchCard = React.memo(
 function buildCardData(match: Match): MatchCardData {
   const newMoves = moveNumbersToStrings(match.moves);
   console.log("match.match_type: ", match.match_type);
-  const { boardHistory, agehamaHistory } = movesToBoardHistory(
+  const { boardHistory, agehamaHistory } = movesToBoardHistory(9,
     match.match_type,
     newMoves,
   );
@@ -945,7 +946,7 @@ export default function Watch() {
           const newLength = newMoves.length;
           let updated: MatchCardData = { ...current };
           if (oldLength < newLength) {
-            const { boardHistory, agehamaHistory } = movesToBoardHistory(
+            const { boardHistory, agehamaHistory } = movesToBoardHistory(9,
               payload.new.match_type, newMoves,
             );
             updated = {
@@ -967,7 +968,7 @@ export default function Watch() {
               !["R", "T", "C"].includes(payload.new.result[2]) &&
               updated.boardHistory.length > 0
             ) {
-              updated.territoryBoard = makeTerritoryBoard(
+              updated.territoryBoard = makeTerritoryBoard(9,
                 updated.boardHistory[updated.boardHistory.length - 1],
                 moveNumbersToStrings(payload.new.dead_stones),
                 current.matchType,
@@ -997,7 +998,7 @@ export default function Watch() {
       <StatusBar style="dark" />
 
       {/* 背景の優しいグリッド */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      {/* <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
         {Array.from({ length: 5 }).map((_, i) => (
           <View
             key={`v${i}`}
@@ -1010,7 +1011,10 @@ export default function Watch() {
             style={[styles.bgLineH, { top: `${(i + 1) * (100 / 8)}%` as any }]}
           />
         ))}
-      </View>
+      </View> */}
+
+             <StarBackground />   
+      
 
       <Animated.View style={[styles.content, { opacity: fadeIn }]}>
         {/* ページタイトル */}

@@ -24,6 +24,7 @@ import {
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
 
+import { StarBackground } from "@/src/components/StarBackGround";
 import * as hangulRomanization from "hangul-romanization";
 import { pinyin } from "pinyin-pro";
 import * as wanakana from "wanakana";
@@ -195,6 +196,8 @@ export default function RegisterProfile() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <StatusBar style="dark" />
+      <StarBackground />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}

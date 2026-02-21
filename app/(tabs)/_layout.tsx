@@ -180,7 +180,7 @@
 // });
 
 
-import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Tabs } from "expo-router";
 import React, { useEffect, useRef } from "react";
@@ -351,6 +351,23 @@ export default function TabsLayout() {
           ),
         }}
       />
+
+      
+      <Tabs.Screen
+        name="TsumegoList"
+        options={{
+          title: t("Tabs.practice"),
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              focused={focused}
+              color={color}
+              icon={<FontAwesome5 name="school" size={24} color={color}  />}
+            />
+          ),
+        }}
+      />
+
+      
       <Tabs.Screen
         name="MyPage"
         options={{

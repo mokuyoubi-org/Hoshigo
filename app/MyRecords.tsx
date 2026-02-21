@@ -577,6 +577,7 @@ import {
   resultToLanguages,
 } from "../src/lib/goUtils";
 import { supabase } from "../src/services/supabase";
+import { StarBackground } from "@/src/components/StarBackGround";
 
 // ─── Homeページに合わせたカラー ───────────────────────
 const STRAWBERRY = "#c8d6e6";
@@ -674,6 +675,7 @@ export default function MyRecords() {
           const newMoves = moveNumbersToStrings(record.moves);
           const newDeadStones = moveNumbersToStrings(record.dead_stones);
           const { boardHistory, agehamaHistory } = movesToBoardHistory(
+            9,
             record.match_type,
             newMoves || [],
           );
@@ -682,6 +684,7 @@ export default function MyRecords() {
                 Array.from({ length: 9 }, () => 0),
               )
             : makeTerritoryBoard(
+                9,
                 boardHistory[boardHistory.length - 1],
                 newDeadStones,
                 record.match_type,
@@ -869,21 +872,7 @@ export default function MyRecords() {
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
 
-      {/* 背景グリッド（優しい色に） */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <View
-            key={`v${i}`}
-            style={[styles.bgLineV, { left: `${(i + 1) * (100 / 6)}%` as any }]}
-          />
-        ))}
-        {Array.from({ length: 7 }).map((_, i) => (
-          <View
-            key={`h${i}`}
-            style={[styles.bgLineH, { top: `${(i + 1) * (100 / 8)}%` as any }]}
-          />
-        ))}
-      </View>
+<StarBackground/>
 
       <Animated.View style={[styles.content, { opacity: fadeIn }]}>
         {/* ページヘッダー */}
@@ -895,11 +884,7 @@ export default function MyRecords() {
           >
             <Text style={styles.backButtonText}>‹ {t("MyRecords.back")}</Text>
           </TouchableOpacity>
-          <View style={styles.pageTitleRow}>
-            <View style={styles.pageTitleAccent} />
-            <Text style={styles.pageTitle}>{t("MyRecords.title")}</Text>
-          </View>
-          <View style={styles.headerSpacer} />
+
         </View>
 
         {/* リスト */}
@@ -962,8 +947,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(200,214,230,0.2)",
   },
   backButton: {
     paddingVertical: 4,
