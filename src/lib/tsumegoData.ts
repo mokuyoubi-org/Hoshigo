@@ -398,7 +398,7 @@ export const ORANGEGUMI_TSUMEGO: Tsumego[] = [
   {
     title: "両アタリで○をとろう",
     nextMoveColor: "black",
-    description: "タダでとれる○があるよ",
+    description: "両アタリで○をとろう",
     board: [
       [0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0],
@@ -414,7 +414,7 @@ export const ORANGEGUMI_TSUMEGO: Tsumego[] = [
         status: undefined,
         nexts: [
           {
-            move: "4,2",
+            move: "6,3",
             comment: "",
             status: undefined,
             nexts: [
