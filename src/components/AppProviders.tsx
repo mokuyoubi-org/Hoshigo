@@ -57,13 +57,15 @@ import {
 } from "./UserContexts";
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [fontsLoaded] = Font.useFonts({
+  const [fontsLoaded, fontError] = Font.useFonts({
     ...AntDesign.font,
     ...FontAwesome5.font,
     ...FontAwesome6.font,
     ...MaterialIcons.font,
     ...Octicons.font,
   });
+
+  console.log("fontsLoaded:", fontsLoaded, "fontError:", fontError);
   const [rcInitialized, setRcInitialized] = useState<boolean>(false); // ← 追加
 
   const [email, setEmail] = useState<string | null>(null);
