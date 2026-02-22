@@ -159,34 +159,6 @@ export default function CustomPaywallScreen({
     }
   };
 
-  // const calculateSavings = (
-  //   monthlyPkg: PurchasesPackage | undefined,
-  //   yearlyPkg: PurchasesPackage | undefined,
-  // ): number => {
-  //   if (!monthlyPkg || !yearlyPkg) return 0;
-  //   const monthlyTotal = monthlyPkg.product.price * 12;
-  //   const yearlyPrice = yearlyPkg.product.price;
-  //   return Math.floor(((monthlyTotal - yearlyPrice) / monthlyTotal) * 100);
-  // };
-
-  // const calculateSavings = (monthlyPkg: any, yearlyPkg: any): number => {
-  //   if (!monthlyPkg || !yearlyPkg) return 0;
-
-  //   const monthlyPrice =
-  //     Platform.OS === "web"
-  //       ? monthlyPkg.rcBillingProduct?.currentPrice?.amountMicros / 1_000_000
-  //       : monthlyPkg.product.price;
-
-  //   const yearlyPrice =
-  //     Platform.OS === "web"
-  //       ? yearlyPkg.rcBillingProduct?.currentPrice?.amountMicros / 1_000_000
-  //       : yearlyPkg.product.price;
-
-  //   if (!monthlyPrice || !yearlyPrice) return 0;
-  //   const monthlyTotal = monthlyPrice * 12;
-  //   return Math.floor(((monthlyTotal - yearlyPrice) / monthlyTotal) * 100);
-  // };
-
   const calculateSavings = (monthlyPkg: any, yearlyPkg: any): number => {
     if (!monthlyPkg || !yearlyPkg) return 0;
     const monthlyPrice =
@@ -233,13 +205,6 @@ export default function CustomPaywallScreen({
   const packages = offerings.availablePackages;
   console.log("packages: ", packages);
   console.log("monthly pkg:", JSON.stringify(packages[0], null, 2));
-
-  // const monthly = packages.find((p) =>
-  //   p.product.identifier.startsWith("premium_monthly"),
-  // );
-  // const yearly = packages.find((p) =>
-  //   p.product.identifier.startsWith("premium_yearly"),
-  // );
 
   const monthly = packages.find((p) =>
     Platform.OS === "web"

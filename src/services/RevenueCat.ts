@@ -118,7 +118,6 @@
 // //   }
 // // };
 
-
 // export const logoutRevenueCat = async (): Promise<void> => {
 //   try {
 //     const isAnon = await Purchases.isAnonymous();
@@ -137,9 +136,6 @@
 //     console.error("❌ RevenueCat logout failed:", error);
 //   }
 // };
-
-
-
 
 import { Platform } from "react-native";
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
@@ -185,38 +181,29 @@ export const loginRevenueCat = async (uid: string): Promise<void> => {
   }
 };
 
-export const checkSubscriptionStatus = async (): Promise<SubscriptionStatus> => {
-  try {
-    // if (Platform.OS === "web") {
-    //   const RC = await getWebSDK();
-    //   const instance = RC.getSharedInstance();
-    //   const customerInfo = await instance.getCustomerInfo();
-    //   const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
-    //   return { isPro, customerInfo };
-    // }
-
-
-    if (Platform.OS === "web") {
-      const RC = await getWebSDK();
-      // インスタンスがなければスキップ
-      if (!RC.isConfigured()) {
-        return { isPro: false, customerInfo: null };
+export const checkSubscriptionStatus =
+  async (): Promise<SubscriptionStatus> => {
+    try {
+      if (Platform.OS === "web") {
+        const RC = await getWebSDK();
+        // インスタンスがなければスキップ
+        if (!RC.isConfigured()) {
+          return { isPro: false, customerInfo: null };
+        }
+        const instance = RC.getSharedInstance();
+        const customerInfo = await instance.getCustomerInfo();
+        const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
+        return { isPro, customerInfo };
       }
-      const instance = RC.getSharedInstance();
-      const customerInfo = await instance.getCustomerInfo();
+
+      const customerInfo = await Purchases.getCustomerInfo();
       const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
       return { isPro, customerInfo };
+    } catch (error) {
+      console.error("❌ Error checking subscription:", error);
+      return { isPro: false, customerInfo: null };
     }
-
-
-    const customerInfo = await Purchases.getCustomerInfo();
-    const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
-    return { isPro, customerInfo };
-  } catch (error) {
-    console.error("❌ Error checking subscription:", error);
-    return { isPro: false, customerInfo: null };
-  }
-};
+  };
 
 export const logoutRevenueCat = async (): Promise<void> => {
   if (Platform.OS === "web") {
@@ -231,7 +218,6 @@ export const logoutRevenueCat = async (): Promise<void> => {
     console.error("❌ RevenueCat logout failed:", error);
   }
 };
-
 
 // オファリング（商品一覧）を取得
 export const getOfferings = async (): Promise<any> => {

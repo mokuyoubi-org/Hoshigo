@@ -359,6 +359,78 @@ export const ORANGEGUMI_TSUMEGO: Tsumego[] = [
     ],
     boardSize: 6,
   },
+  {
+    title: "○をとろう",
+    nextMoveColor: "black",
+    description: "タダでとれる○があるよ",
+    board: [
+      [0, 0, 2, 1, 0, 0],
+      [0, 0, 2, 1, 0, 0],
+      [0, 0, 2, 1, 0, 0],
+      [0, 0, 2, 1, 0, 0],
+      [0, 0, 0, 2, 1, 0],
+      [0, 0, 0, 0, 0, 0],
+    ],
+    nexts: [
+      {
+        move: "5,3",
+        comment: "",
+        status: undefined,
+        nexts: [
+          {
+            move: "5,2",
+            comment: "",
+            status: undefined,
+            nexts: [
+              {
+                move: "6,4",
+                comment: "せいかい！",
+                status: "correct",
+                nexts: [],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    boardSize: 6,
+  },
+  {
+    title: "両アタリで○をとろう",
+    nextMoveColor: "black",
+    description: "タダでとれる○があるよ",
+    board: [
+      [0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 2, 1, 0],
+      [0, 0, 2, 1, 1, 0],
+      [0, 2, 1, 2, 0, 0],
+      [0, 0, 0, 0, 0, 0],
+    ],
+    nexts: [
+      {
+        move: "3,3",
+        comment: "",
+        status: undefined,
+        nexts: [
+          {
+            move: "4,2",
+            comment: "",
+            status: undefined,
+            nexts: [
+              {
+                move: "2,4",
+                comment: "せいかい！",
+                status: "correct",
+                nexts: [],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    boardSize: 6,
+  },
 ];
 
 export type TsumegoGroup = {
