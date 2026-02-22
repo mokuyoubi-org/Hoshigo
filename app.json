@@ -38,16 +38,14 @@
               "scheme": "exp"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/hoshigo-favicon.png"
+      "favicon": "./assets/images/hoshigo-favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       [
@@ -89,8 +87,6 @@
         "projectId": "0c034fcf-9b3f-4ae4-be56-052d71e47d52"
       }
     },
-    "assetBundlePatterns": [
-      "assets/images/*"
-    ]
+    "assetBundlePatterns": ["assets/images/*"]
   }
 }
