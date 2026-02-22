@@ -200,6 +200,7 @@ export default function CustomPaywallScreen({
   }
 
   const packages = offerings.availablePackages;
+  console.log("packages: ", packages);
   const monthly = packages.find((p) =>
     p.product.identifier.startsWith("premium_monthly"),
   );

@@ -187,13 +187,28 @@ export const loginRevenueCat = async (uid: string): Promise<void> => {
 
 export const checkSubscriptionStatus = async (): Promise<SubscriptionStatus> => {
   try {
+    // if (Platform.OS === "web") {
+    //   const RC = await getWebSDK();
+    //   const instance = RC.getSharedInstance();
+    //   const customerInfo = await instance.getCustomerInfo();
+    //   const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
+    //   return { isPro, customerInfo };
+    // }
+
+
     if (Platform.OS === "web") {
       const RC = await getWebSDK();
+      // インスタンスがなければスキップ
+      if (!RC.isConfigured()) {
+        return { isPro: false, customerInfo: null };
+      }
       const instance = RC.getSharedInstance();
       const customerInfo = await instance.getCustomerInfo();
       const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
       return { isPro, customerInfo };
     }
+
+
     const customerInfo = await Purchases.getCustomerInfo();
     const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
     return { isPro, customerInfo };
