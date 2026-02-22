@@ -12,13 +12,6 @@ import {
 import { themeStore } from "../services/storage";
 import { supabase } from "../services/supabase";
 
-import {
-  AntDesign,
-  FontAwesome5,
-  FontAwesome6,
-  MaterialIcons,
-  Octicons,
-} from "@expo/vector-icons";
 import * as Font from "expo-font";
 import {
   AcquiredIconIndicesContext,
@@ -66,12 +59,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
   // });
 
   const [fontsLoaded] = Font.useFonts({
-  "FontAwesome5_Regular": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.ttf"),
-  "FontAwesome6_Regular": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.ttf"),
-  "AntDesign": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf"),
-  "MaterialIcons": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"),
-  "Octicons": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.ttf"),
-});
+    FontAwesome5_Regular: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.ttf"),
+    FontAwesome6_Regular: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.ttf"),
+    AntDesign: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf"),
+    MaterialIcons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"),
+    Octicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.ttf"),
+  });
   const [rcInitialized, setRcInitialized] = useState<boolean>(false); // ← 追加
 
   const [email, setEmail] = useState<string | null>(null);
@@ -379,7 +372,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     };
     loadTheme();
   }, []);
-  // if (!fontsLoaded) return null;
+  if (!fontsLoaded) return null;
   return (
     <UidContext.Provider value={uid}>
       <EmailContext.Provider value={email}>
