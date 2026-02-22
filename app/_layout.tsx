@@ -1,3 +1,4 @@
+// @/app/_layout.tsx
 import { Slot } from "expo-router";
 import React from "react";
 import { AppProviders } from "../src/components/AppProviders";

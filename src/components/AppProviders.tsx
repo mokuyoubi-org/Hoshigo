@@ -13,6 +13,14 @@ import { themeStore } from "../services/storage";
 import { supabase } from "../services/supabase";
 
 import {
+  AntDesign,
+  FontAwesome5,
+  FontAwesome6,
+  MaterialIcons,
+  Octicons,
+} from "@expo/vector-icons";
+import * as Font from "expo-font";
+import {
   AcquiredIconIndicesContext,
   DailyPlayCountContext,
   DisplayNameContext,
@@ -49,6 +57,13 @@ import {
 } from "./UserContexts";
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  const [fontsLoaded] = Font.useFonts({
+    ...AntDesign.font,
+    ...FontAwesome5.font,
+    ...FontAwesome6.font,
+    ...MaterialIcons.font,
+    ...Octicons.font,
+  });
   const [rcInitialized, setRcInitialized] = useState<boolean>(false); // ← 追加
 
   const [email, setEmail] = useState<string | null>(null);
@@ -356,7 +371,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     };
     loadTheme();
   }, []);
-
+  if (!fontsLoaded) return null;
   return (
     <UidContext.Provider value={uid}>
       <EmailContext.Provider value={email}>
