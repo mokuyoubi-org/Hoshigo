@@ -16,26 +16,6 @@ export const supabase = createClient(
   },
 );
 
-// // supabase.ts
-// import { createClient } from "@supabase/supabase-js";
-// import Constants from "expo-constants";
-// import { Platform } from "react-native";
-// import "react-native-url-polyfill/auto";
-// import { storage } from "./storage";
-
-// const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
-// const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey;
-
-// if (!supabaseUrl) throw new Error("supabaseUrl is required");
-
-// export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-//   auth: {
-//     storage,
-//     persistSession: true,
-//     autoRefreshToken: true,
-//     detectSessionInUrl: Platform.OS === "web",
-//   },
-// });
 
 export const handleAuthCallback = async (url: string) => {
   try {

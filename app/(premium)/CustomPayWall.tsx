@@ -213,8 +213,7 @@ export default function CustomPaywallScreen({
     <SafeAreaView style={styles.container}>
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
 
-       <StarBackground />   
-
+      <StarBackground />
 
       <ScrollView
         style={styles.scroll}
