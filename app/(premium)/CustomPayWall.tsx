@@ -169,19 +169,34 @@ export default function CustomPaywallScreen({
   //   return Math.floor(((monthlyTotal - yearlyPrice) / monthlyTotal) * 100);
   // };
 
+  // const calculateSavings = (monthlyPkg: any, yearlyPkg: any): number => {
+  //   if (!monthlyPkg || !yearlyPkg) return 0;
+
+  //   const monthlyPrice =
+  //     Platform.OS === "web"
+  //       ? monthlyPkg.rcBillingProduct?.currentPrice?.amountMicros / 1_000_000
+  //       : monthlyPkg.product.price;
+
+  //   const yearlyPrice =
+  //     Platform.OS === "web"
+  //       ? yearlyPkg.rcBillingProduct?.currentPrice?.amountMicros / 1_000_000
+  //       : yearlyPkg.product.price;
+
+  //   if (!monthlyPrice || !yearlyPrice) return 0;
+  //   const monthlyTotal = monthlyPrice * 12;
+  //   return Math.floor(((monthlyTotal - yearlyPrice) / monthlyTotal) * 100);
+  // };
+
   const calculateSavings = (monthlyPkg: any, yearlyPkg: any): number => {
     if (!monthlyPkg || !yearlyPkg) return 0;
-
     const monthlyPrice =
       Platform.OS === "web"
-        ? monthlyPkg.rcBillingProduct?.currentPrice?.amountMicros / 1_000_000
+        ? monthlyPkg.rcBillingProduct?.currentPrice?.amount / 100
         : monthlyPkg.product.price;
-
     const yearlyPrice =
       Platform.OS === "web"
-        ? yearlyPkg.rcBillingProduct?.currentPrice?.amountMicros / 1_000_000
+        ? yearlyPkg.rcBillingProduct?.currentPrice?.amount / 100
         : yearlyPkg.product.price;
-
     if (!monthlyPrice || !yearlyPrice) return 0;
     const monthlyTotal = monthlyPrice * 12;
     return Math.floor(((monthlyTotal - yearlyPrice) / monthlyTotal) * 100);
@@ -230,12 +245,12 @@ export default function CustomPaywallScreen({
     Platform.OS === "web"
       ? p.identifier === "$rc_monthly"
       : p.product.identifier.startsWith("premium_monthly"),
-  );
+  ) as any;
   const yearly = packages.find((p) =>
     Platform.OS === "web"
       ? p.identifier === "$rc_annual"
       : p.product.identifier.startsWith("premium_yearly"),
-  );
+  ) as any;
 
   const savingsPercent = calculateSavings(monthly, yearly);
   const isProSelected = selectedTier === "pro";
@@ -473,7 +488,7 @@ export default function CustomPaywallScreen({
                           ? t("Paywall.UpgradeYearly")
                           : t("Paywall.UpgradeMonthly")}
                       </Text>
-                      {billingCycle === "yearly" && yearly ? (
+                      {/* {billingCycle === "yearly" && yearly ? (
                         <Text style={styles.purchaseButtonPrice}>
                           {t("Paywall.PricePerYear", {
                             price: yearly.product.priceString,
@@ -483,6 +498,28 @@ export default function CustomPaywallScreen({
                         <Text style={styles.purchaseButtonPrice}>
                           {t("Paywall.PricePerMonth", {
                             price: monthly.product.priceString,
+                          })}
+                        </Text>
+                      ) : null} */}
+
+                      {billingCycle === "yearly" && yearly ? (
+                        <Text style={styles.purchaseButtonPrice}>
+                          {t("Paywall.PricePerYear", {
+                            price:
+                              Platform.OS === "web"
+                                ? yearly.rcBillingProduct?.currentPrice
+                                    ?.formattedPrice
+                                : yearly.product.priceString,
+                          })}
+                        </Text>
+                      ) : billingCycle === "monthly" && monthly ? (
+                        <Text style={styles.purchaseButtonPrice}>
+                          {t("Paywall.PricePerMonth", {
+                            price:
+                              Platform.OS === "web"
+                                ? monthly.rcBillingProduct?.currentPrice
+                                    ?.formattedPrice
+                                : monthly.product.priceString,
                           })}
                         </Text>
                       ) : null}
