@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Animated,
+  Platform,
   StatusBar as RNStatusBar,
   ScrollView,
   StyleSheet,
@@ -201,12 +202,24 @@ export default function CustomPaywallScreen({
 
   const packages = offerings.availablePackages;
   console.log("packages: ", packages);
+  // const monthly = packages.find((p) =>
+  //   p.product.identifier.startsWith("premium_monthly"),
+  // );
+  // const yearly = packages.find((p) =>
+  //   p.product.identifier.startsWith("premium_yearly"),
+  // );
+
   const monthly = packages.find((p) =>
-    p.product.identifier.startsWith("premium_monthly"),
+    Platform.OS === "web"
+      ? p.identifier === "$rc_monthly"
+      : p.product.identifier.startsWith("premium_monthly"),
   );
   const yearly = packages.find((p) =>
-    p.product.identifier.startsWith("premium_yearly"),
+    Platform.OS === "web"
+      ? p.identifier === "$rc_annual"
+      : p.product.identifier.startsWith("premium_yearly"),
   );
+
   const savingsPercent = calculateSavings(monthly, yearly);
   const isProSelected = selectedTier === "pro";
 
