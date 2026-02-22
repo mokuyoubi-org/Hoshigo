@@ -18,13 +18,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CustomCustomerCenterScreen from "../(premium)/CustomCustomerCenter";
 import CustomPaywallScreen from "../(premium)/CustomPayWall";
 
+import { StarBackground } from "@/src/components/StarBackGround";
 import { logoutRevenueCat } from "@/src/services/RevenueCat";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 import { EmailContext, UidContext } from "../../src/components/UserContexts";
 import { useRevenueCat } from "../../src/hooks/useRevenueCat";
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
-import { StarBackground } from "@/src/components/StarBackGround";
 
 // ─── Homeページに合わせたカラー ───────────────────────
 const STRAWBERRY = "#c8d6e6";
@@ -58,8 +58,8 @@ export default function Settings() {
 
   const onLogout = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
     await logoutRevenueCat();
+    await supabase.auth.signOut();
     setLoading(false);
   };
 
@@ -106,7 +106,7 @@ export default function Settings() {
     <SafeAreaView style={styles.container}>
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
-       <StarBackground />   
+      <StarBackground />
 
       <ScrollView
         style={styles.scrollView}
@@ -154,16 +154,16 @@ export default function Settings() {
               )}
               <View style={styles.menuItemInner}>
                 <View style={styles.menuItemLeft}>
-                  <View
-                    style={[
-                      styles.menuIconWrapper,
-                      isPro && styles.menuIconWrapperPro,
-                    ]}
-                  >
-                    <Text style={styles.menuIconEmoji}>
-                      {isPro ? "✨" : "🎮"}
-                    </Text>
-                  </View>
+                  {isPro && (
+                    <View
+                      style={[
+                        styles.menuIconWrapper,
+                        isPro && styles.menuIconWrapperPro,
+                      ]}
+                    >
+                      <Text style={styles.menuIconEmoji}>✨</Text>
+                    </View>
+                  )}
                   <View>
                     <Text style={styles.infoLabel}>
                       {t("Settings.currentPlan")}

@@ -1,20 +1,42 @@
+// import { createClient } from "@supabase/supabase-js";
+// import { Platform } from "react-native";
+// import "react-native-url-polyfill/auto";
+// import { storage } from "./storage";
+
+// export const supabase = createClient(
+//   process.env.EXPO_PUBLIC_SUPABASE_URL!,
+//   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+//   {
+//     auth: {
+//       storage, // スマホならスマホの、webならwebの。
+//       persistSession: true,
+//       autoRefreshToken: true,
+//       detectSessionInUrl: Platform.OS === "web", // Webの場合のみtrue
+//     },
+//   },
+// );
+
+
+
 import { createClient } from "@supabase/supabase-js";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import "react-native-url-polyfill/auto";
 import { storage } from "./storage";
 
-export const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL!,
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      storage, // スマホならスマホの、webならwebの。
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: Platform.OS === "web", // Webの場合のみtrue
-    },
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl;
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey;
+
+if (!supabaseUrl) throw new Error("supabaseUrl is required");
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: Platform.OS === "web",
   },
-);
+});
 
 export const handleAuthCallback = async (url: string) => {
   try {

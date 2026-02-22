@@ -105,15 +105,35 @@ export const loginRevenueCat = async (uid: string): Promise<void> => {
 };
 
 // ログアウト
+// export const logoutRevenueCat = async (): Promise<void> => {
+//   try {
+//     if (await Purchases.isAnonymous()) {
+//       console.log("⏭️ RevenueCat: anonymous user, skipping logout");
+//       return;
+//     }
+//     await Purchases.logOut();
+//     console.log("✅ RevenueCat logged out");
+//   } catch (error) {
+//     console.error("❌ RevenueCat logout failed:", error);
+//   }
+// };
+
+
 export const logoutRevenueCat = async (): Promise<void> => {
   try {
-    if (await Purchases.isAnonymous()) {
+    const isAnon = await Purchases.isAnonymous();
+    if (isAnon) {
       console.log("⏭️ RevenueCat: anonymous user, skipping logout");
       return;
     }
     await Purchases.logOut();
     console.log("✅ RevenueCat logged out");
-  } catch (error) {
+  } catch (error: any) {
+    // 匿名ユーザーのlogoutエラーは無視
+    if (error?.message?.includes("anonymous")) {
+      console.log("⏭️ RevenueCat: already anonymous, skipping");
+      return;
+    }
     console.error("❌ RevenueCat logout failed:", error);
   }
 };
