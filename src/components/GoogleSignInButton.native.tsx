@@ -1,3 +1,5 @@
+// src/components/GoogleSignInButton.native.tsx
+
 import { expo } from "@/app.json";
 import { Text } from "@react-navigation/elements";
 import * as WebBrowser from "expo-web-browser";

@@ -1,3 +1,5 @@
+// src/components/GoogleSignInButton.web.tsx
+
 import {
   CredentialResponse,
   GoogleLogin,

@@ -38,7 +38,10 @@
               "scheme": "exp"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -75,7 +78,8 @@
         }
       ],
       "expo-asset",
-      "expo-localization"
+      "expo-localization",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -87,6 +91,8 @@
         "projectId": "0c034fcf-9b3f-4ae4-be56-052d71e47d52"
       }
     },
-    "assetBundlePatterns": ["assets/images/*"]
+    "assetBundlePatterns": [
+      "assets/images/*"
+    ]
   }
 }
