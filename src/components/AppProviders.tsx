@@ -57,13 +57,21 @@ import {
 } from "./UserContexts";
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  // const [fontsLoaded] = Font.useFonts({
+  //   ...AntDesign.font,
+  //   ...FontAwesome5.font,
+  //   ...FontAwesome6.font,
+  //   ...MaterialIcons.font,
+  //   ...Octicons.font,
+  // });
+
   const [fontsLoaded] = Font.useFonts({
-    ...AntDesign.font,
-    ...FontAwesome5.font,
-    ...FontAwesome6.font,
-    ...MaterialIcons.font,
-    ...Octicons.font,
-  });
+  "FontAwesome5_Regular": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.ttf"),
+  "FontAwesome6_Regular": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.ttf"),
+  "AntDesign": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.ttf"),
+  "MaterialIcons": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"),
+  "Octicons": require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.ttf"),
+});
   const [rcInitialized, setRcInitialized] = useState<boolean>(false); // ← 追加
 
   const [email, setEmail] = useState<string | null>(null);
@@ -371,7 +379,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     };
     loadTheme();
   }, []);
-  if (!fontsLoaded) return null;
+  // if (!fontsLoaded) return null;
   return (
     <UidContext.Provider value={uid}>
       <EmailContext.Provider value={email}>
