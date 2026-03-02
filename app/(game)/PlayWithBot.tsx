@@ -35,7 +35,6 @@ import {
   stringifyGrid,
 } from "../../src/lib/goLogics";
 import {
-  Agehama,
   gnuGridstoStringGrids,
   gnuGridtoStringGrid,
   makeTerritoryBoard,
@@ -46,6 +45,7 @@ import {
 } from "../../src/lib/goUtils";
 import { supabase } from "../../src/services/supabase";
 import { StarBackground } from "@/src/components/StarBackGround";
+import { Agehama } from "@/src/constants/goConstants";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (9 - 1);
@@ -482,7 +482,9 @@ export default function PlayWithBot() {
     const { territoryBoard, result } = makeTerritoryBoard(9,
       boardRef.current,
       stringDeadStones,
-      matchType ?? 0,
+      matchType ?? 0, // matchType
+                      agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
+                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
     );
     teritoryBoardRef.current = territoryBoard;
 

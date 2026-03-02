@@ -1,40 +1,3 @@
-// // CPUMassage.tsx
-// import React from "react";
-// import { Animated, Image, StyleSheet, Text, View } from "react-native";
-// import { ICONS } from "../../src/constants/icons";
-
-// type Props = {
-//   text: string;
-//   fadeAnim: Animated.Value;
-// };
-
-// const CPUMessageComponent = ({ text, fadeAnim }: Props) => {
-//   return (
-//     <Animated.View style={[styles.explanationContainer, { opacity: fadeAnim }]}>
-//       <View style={styles.characterContainer}>
-//         <Image
-//           source={ICONS[100]}
-//           style={styles.characterImage}
-//           resizeMode="contain"
-//         />
-//       </View>
-
-//       <View style={styles.speechBubble}>
-//         <View style={styles.bubbleTriangle} />
-//         <Text style={styles.explanationText}>{text}</Text>
-//       </View>
-//     </Animated.View>
-//   );
-// };
-
-// // ★ ここが超重要
-// export const CPUMessage = React.memo(CPUMessageComponent);
-
-
-
-
-
-
 // CPUMessage.tsx
 
 import React from "react";
@@ -51,36 +14,13 @@ type Props = {
   fadeAnim: Animated.Value;
 };
 
-// const CPUMessageComponent = ({ text, fadeAnim }: Props) => {
-//   return (
-//     <Animated.View style={[styles.explanationContainer, { opacity: fadeAnim }]}>
-//       {/* アイコンは text と無関係なので再描画されなくなる */}
-//       <View style={styles.characterContainer}>
-//         <Image
-//           source={ICONS[100]}
-//           style={styles.characterImage}
-//           resizeMode="contain"
-//         />
-//       </View>
-
-//       <View style={styles.speechBubble}>
-//         <View style={styles.bubbleTriangle} />
-//         {/* テキストだけが更新される */}
-//         <CPUMessageText text={text} />
-//       </View>
-//     </Animated.View>
-//   );
-// };
-
-
-
 const CPUMessageComponent = ({ text, fadeAnim }: Props) => {
   return (
     // ← ここはアニメなしの普通のView
     <View style={styles.explanationContainer}>
       <View style={styles.characterContainer}>
         <Image
-          source={ICONS[100]}
+          source={{ uri: ICONS[90] }}
           style={styles.characterImage}
           resizeMode="contain"
         />
@@ -98,9 +38,6 @@ const CPUMessageComponent = ({ text, fadeAnim }: Props) => {
 };
 
 export const CPUMessage = React.memo(CPUMessageComponent);
-
-
-
 
 const styles = StyleSheet.create({
   explanationContainer: {

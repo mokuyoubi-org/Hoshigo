@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { Board, Grid } from "../lib/goLogics";
 import { GoBoard } from "./GoBoard";
 import { ReplayControls } from "./ReplayControls";
-import { Agehama } from "../lib/goUtils";
+import { Agehama } from "../constants/goConstants";
 
 interface GoBoardWithReplayProps {
   matchType: number;

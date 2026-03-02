@@ -53,7 +53,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         ]}
       >
         <Image
-          source={ICONS[iconIndex]}
+          source={{uri: ICONS[iconIndex]}}
           style={styles.iconImage}
           resizeMode="contain"
         />

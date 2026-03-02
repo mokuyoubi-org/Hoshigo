@@ -1,3 +1,4 @@
+import { Agehama } from "../constants/goConstants";
 import i18n from "../services/i18n";
 import {
   applyMove,
@@ -285,6 +286,8 @@ export const makeTerritoryBoard = (
   board: Board,
   deadStones: string[],
   matchType: number,
+  blackAgehama: number,
+  whiteAgehama: number,
 ): { territoryBoard: number[][]; result: string } => {
   let KM: number = 6.5;
   if (matchType !== 0 && matchType !== 1) {
@@ -306,8 +309,8 @@ export const makeTerritoryBoard = (
   const finalScore: { black: number; white: number } = finalTerritoryScore(
     stones,
     markedDead,
-    0,
-    0,
+    blackAgehama,
+    whiteAgehama,
     KM,
   );
   console.log("finalScore: ", finalScore);
@@ -360,10 +363,7 @@ export const resultToLanguages = (result: string) => {
   } else return;
 };
 
-export type Agehama = {
-  black: number;
-  white: number;
-};
+
 
 export const movesToOpeningIndex = (moves: string[]): number => {
   return 0;

@@ -72,5 +72,4 @@ export const SetGumiIndexContext = createContext<
 
 export const RevenueCatCustomerInfoContext = createContext<CustomerInfo | null>(null);
 export const SetRevenueCatCustomerInfoContext = createContext<React.Dispatch<React.SetStateAction<CustomerInfo | null>> | null>(null);
-// export const RevenueCatLoadingContext = createContext<boolean>(true);
 export const RefreshRevenueCatContext = createContext<(() => Promise<void>) | null>(null);

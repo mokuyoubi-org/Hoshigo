@@ -79,33 +79,6 @@ export default function IconSelectorModal({
           {/* アイコングリッド */}
           <ScrollView style={styles.scrollView}>
             <View style={styles.iconGrid}>
-              {/* {ICONS.map((icon, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.iconItem,
-                    { backgroundColor: colors.card },
-                    currentIconIndex === index && styles.selectedIconItem,
-                    currentIconIndex === index && {
-                      borderColor: colors.background,
-                    },
-                  ]}
-                  onPress={() => handleSelectIcon(index)}
-                  activeOpacity={0.7}
-                >
-                  <Image source={icon} style={styles.iconImage} />
-                  {currentIconIndex === index && (
-                    <View
-                      style={[
-                        styles.checkmark,
-                        { backgroundColor: colors.background },
-                      ]}
-                    >
-                      <MaterialIcons name="check" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))} */}
 
               {[
                 ...(acquiredIconIndices ?? []),
@@ -128,7 +101,7 @@ export default function IconSelectorModal({
                     activeOpacity={0.7}
                   >
                     <Image
-                      source={icon}
+                      source={{uri: icon}}
                       style={styles.iconImage}
                       resizeMode="contain"
                     />

@@ -187,7 +187,7 @@ export default function MyPage() {
                   ]}
                 >
                   <Image
-                    source={ICONS[iconIndex ?? 0]}
+                    source={{uri : ICONS[iconIndex ?? 0]}}
                     style={styles.avatarImage}
                     resizeMode="contain"
                   />

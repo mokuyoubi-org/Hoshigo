@@ -495,7 +495,7 @@ const RankingItem = ({
               ]}
             >
               <Image
-                source={ICONS[item.icon_index]}
+                source={{uri : ICONS[item.icon_index]}}
                 style={styles.avatarIcon}
                 resizeMode="contain"
               />

@@ -2,6 +2,8 @@ import { GoBoardWithReplay } from "@/src/components/GoBoardWithReplay";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import { PlayerCard } from "@/src/components/PlayerCard";
 import { ResultModal } from "@/src/components/ResultModal";
+import { StarBackground } from "@/src/components/StarBackGround";
+import { Agehama } from "@/src/constants/goConstants";
 import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
 import { moveNumbersToStrings, moveStringsToNumbers } from "@/src/lib/utils";
 import { useAudioPlayer } from "expo-audio";
@@ -34,7 +36,6 @@ import {
   stringifyGrid,
 } from "../../src/lib/goLogics";
 import {
-  Agehama,
   gnuGridstoStringGrids,
   makeTerritoryBoard,
   movesToSgf,
@@ -42,7 +43,6 @@ import {
   sleep,
 } from "../../src/lib/goUtils";
 import { supabase } from "../../src/services/supabase";
-import { StarBackground } from "@/src/components/StarBackGround";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (9 - 1);
@@ -92,9 +92,7 @@ export default function Playing() {
   const boardRef = useRef<Board>(initializeBoard(9));
   const boardHistoryRef = useRef<Board[]>([initializeBoard(9)]);
   const teritoryBoardRef = useRef<number[][]>(
-    Array.from({ length: 9 }, () =>
-      Array.from({ length: 9 }, () => 0),
-    ),
+    Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => 0)),
   );
   const [agehamaHistory, setAgehamaHistory] = useState<Agehama[]>([
     { black: 0, white: 0 },
@@ -319,10 +317,13 @@ export default function Playing() {
               );
             } else {
               // 地計算結果
-              const territoryBoard = makeTerritoryBoard(9,
+              const territoryBoard = makeTerritoryBoard(
+                9,
                 boardRef.current,
                 stringDeadStones,
                 0, // matchType
+                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
+                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
               ).territoryBoard;
               teritoryBoardRef.current = territoryBoard;
 
@@ -392,7 +393,8 @@ export default function Playing() {
               setAgehamaHistory([...agehamaHistoryRef.current]);
             } else {
               // 着手受信
-              const { board: newBoard, agehama } = applyMove(9,
+              const { board: newBoard, agehama } = applyMove(
+                9,
                 keyToGrid(move),
                 cloneBoard(boardRef.current),
                 getOppositeColor(playerColor),
@@ -700,10 +702,13 @@ export default function Playing() {
         if (stringDeadStones === null) {
           // API失敗: 死に石なしで計算（フォールバック）
           console.warn("GNUGo API失敗: 死に石なしでフォールバック");
-          const { territoryBoard, result } = makeTerritoryBoard(9,
+          const { territoryBoard, result } = makeTerritoryBoard(
+            9,
             boardRef.current,
             [],
-            0,
+            0, // matchType
+                            agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
+                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
           );
           teritoryBoardRef.current = territoryBoard;
           const success = await updateSupabaseMatchesTable({
@@ -721,10 +726,13 @@ export default function Playing() {
           updateMyPoints(result);
         } else {
           console.log("死に石:", stringDeadStones);
-          const { territoryBoard, result } = makeTerritoryBoard(9,
+          const { territoryBoard, result } = makeTerritoryBoard(
+            9,
             boardRef.current,
             stringDeadStones,
-            0,
+            0, // matchType
+                            agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
+                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
           );
           teritoryBoardRef.current = territoryBoard;
           const success = await updateSupabaseMatchesTable({
@@ -787,7 +795,8 @@ export default function Playing() {
     if (!isMyTurn || isGameEnded) return;
 
     if (
-      !isLegalMove(9,
+      !isLegalMove(
+        9,
         grid,
         boardRef.current,
         lastMove,
@@ -800,7 +809,8 @@ export default function Playing() {
 
     try {
       playStoneSound();
-      const { board: newBoard, agehama } = applyMove(9,
+      const { board: newBoard, agehama } = applyMove(
+        9,
         grid,
         cloneBoard(boardRef.current),
         playerColor,
@@ -880,10 +890,7 @@ export default function Playing() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-
-
-       <StarBackground />   
-
+      <StarBackground />
 
       <View style={styles.content}>
         {isGameEnded && (

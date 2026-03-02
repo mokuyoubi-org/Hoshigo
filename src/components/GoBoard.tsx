@@ -1,9 +1,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Agehama } from "../constants/goConstants";
+import { ICONS } from "../constants/icons";
 import { useTheme } from "../hooks/useTheme";
 import { Board, GoString, Grid } from "../lib/goLogics";
-import { Agehama } from "../lib/goUtils";
 
 // ─── AgehamaDisplay（UIのみ変更） ────────────────────
 const AgehamaDisplay: React.FC<{ count: number; isBlack: boolean }> = ({
@@ -67,6 +68,7 @@ interface GoBoardProps {
   stoneShadow?: boolean;
   agehamaHistory: Agehama[];
   boardPixelSize?: number;
+  pinPoint?: string;
 }
 
 // ─── GoBoard（ロジック変更なし、UIのみ変更） ──────────
@@ -84,6 +86,7 @@ export const GoBoard: React.FC<GoBoardProps> = ({
   stoneShadow = true,
   agehamaHistory,
   boardPixelSize = 300,
+  pinPoint,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -149,7 +152,9 @@ export const GoBoard: React.FC<GoBoardProps> = ({
     ((currentIndex % 2 === 0 && (matchType === 0 || matchType === 1)) ||
       (currentIndex % 2 === 1 && matchType !== 0 && matchType !== 1));
   const dynamicPadding = boardPixelSize * 0.16;
-  const dynamicRadius  = boardPixelSize * 0.06;
+  const dynamicRadius = boardPixelSize * 0.06;
+  const icon = ICONS[80];
+
   // ── UI ──
   return (
     <View style={styles.container}>
@@ -284,7 +289,7 @@ export const GoBoard: React.FC<GoBoardProps> = ({
                 disabled={disabled}
               >
                 {goString && (
-                  <>
+                  <View>
                     <View
                       style={[
                         styles.stone,
@@ -314,7 +319,7 @@ export const GoBoard: React.FC<GoBoardProps> = ({
                         ]}
                       />
                     )}
-                  </>
+                  </View>
                 )}
 
                 {!goString && showTerritory && territoryBoard && (
@@ -336,6 +341,14 @@ export const GoBoard: React.FC<GoBoardProps> = ({
                     ]}
                   />
                 )}
+
+                {key === pinPoint && (
+                  <Image
+                    source={{ uri: icon }}
+                    style={styles.iconImage}
+                    resizeMode="contain"
+                  />
+                )}
               </Pressable>
             );
           })}
@@ -345,7 +358,7 @@ export const GoBoard: React.FC<GoBoardProps> = ({
   );
 };
 
-// ─── StarPoint（変更なし） ────────────────────────────
+// ─── StarPoint ────────────────────────────
 const StarPoint: React.FC<{
   row: number;
   col: number;
@@ -378,7 +391,10 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
   },
-
+  iconImage: {
+    width: 80,
+    height: 80,
+  },
   // ── トップバー ──
   topInfoContainer: {
     flexDirection: "row",

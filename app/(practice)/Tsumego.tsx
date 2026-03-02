@@ -1,18 +1,8 @@
 // Tsumego.tsx
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Animated,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { GoNode, Tsumego, TSUMEGO_GROUPS } from "../../src/lib/tsumegoData";
-
 import { CPUMessage } from "@/src/components/CPUMessage";
 import { GoBoard } from "@/src/components/GoBoard";
 import { StarBackground } from "@/src/components/StarBackGround";
+import { Agehama } from "@/src/constants/goConstants";
 import {
   applyMove,
   Board,
@@ -26,8 +16,18 @@ import {
   keyToGrid,
   stringifyGrid,
 } from "@/src/lib/goLogics";
-import { Agehama, prepareBoard2d, sleep } from "@/src/lib/goUtils";
+import { prepareBoard2d, sleep } from "@/src/lib/goUtils";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GoNode, Tsumego, TSUMEGO_GROUPS } from "../../src/lib/tsumegoData";
 
 export default function TsumegoPage() {
   const router = useRouter();
@@ -40,8 +40,8 @@ export default function TsumegoPage() {
     Array.isArray(params.index) ? params.index[0] : params.index,
   );
   const groupId = Array.isArray(params.groupId)
-    ? params.groupId[0]
-    : params.groupId;
+    ? Number(params.groupId[0])
+    : Number(params.groupId);
 
   const [tsumegoId, setTsumegoId] = useState(tsumegoIndex);
   const group =
@@ -59,34 +59,39 @@ export default function TsumegoPage() {
   // Board state
   const currentColorRef = useRef<Color>("black");
   const [currentBoard, setBoard] = useState<Board>(
-    prepareBoard2d(tsumego?.board ?? [], tsumego?.boardSize ?? 9),
+    prepareBoard2d(tsumego?.board ?? [], tsumego?.board.length ?? 9),
   );
   const currentBoardRef = useRef<Board>(
-    prepareBoard2d(tsumego?.board ?? [], tsumego?.boardSize ?? 9),
+    prepareBoard2d(tsumego?.board ?? [], tsumego?.board.length ?? 9),
   );
-  const boardHistoryRef = useRef<Board[]>([initializeBoard(tsumego.boardSize)]);
+  const boardHistoryRef = useRef<Board[]>([
+    initializeBoard(tsumego.board.length),
+  ]);
   const [agehamaHistory, setAgehamaHistory] = useState<Agehama[]>([
     { black: 0, white: 0 },
   ]);
   const agehamaHistoryRef = useRef<Agehama[]>([{ black: 0, white: 0 }]);
   const teritoryBoardRef = useRef<number[][]>( // 黒の陣地(1), 白の陣地(2), 死んでる石(3)。そのほかは(0)
-    Array.from({ length: tsumego.boardSize }, () =>
-      Array.from({ length: tsumego.boardSize }, () => 0),
+    Array.from({ length: tsumego.board.length }, () =>
+      Array.from({ length: tsumego.board.length }, () => 0),
     ),
   );
   // Move state
   const [lastMove, setLastMove] = useState<Grid | null>(null);
   const movesRef = useRef<string[]>([]);
   const currentIndexRef = useRef<number>(0);
-  // const canPutStonesRef = useRef<string[]>([]);
 
   // ノード
   const currentGoNodeRef = useRef<GoNode | Tsumego>(tsumego);
+  function getRandomItem<T>(arr: T[]): T | undefined {
+    if (arr.length === 0) return undefined; // 空配列は安全に対応
+    const randomIndex = Math.floor(Math.random() * arr.length);
+    return arr[randomIndex];
+  }
+  const [showQuiz, setShowQuiz] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!tsumego) return;
     handleReset();
-    animateText(tsumego.description || "がんばって！");
   }, [tsumegoId]);
 
   const animateText = (text: string) => {
@@ -128,7 +133,7 @@ export default function TsumegoPage() {
     }
 
     const { board: newBoard, agehama } = applyMove(
-      tsumego.boardSize,
+      tsumego.board.length,
       grid,
       cloneBoard(currentBoardRef.current),
       currentColorRef.current,
@@ -162,8 +167,7 @@ export default function TsumegoPage() {
   };
 
   const handlePutStone = async (grid: Grid, boardSize: number) => {
-    const currentTsumego = tsumego;
-    if (!currentTsumego || gameOver || disabled) return;
+    if (gameOver || disabled) return;
 
     // 合法でなければ何もしない
     if (
@@ -181,36 +185,52 @@ export default function TsumegoPage() {
       return false;
     }
 
-    // 石を配置
+    // 合法手なので石を配置
     applyMoveCommon(grid, boardSize);
 
     // 手を探す
-    const nextNode = currentGoNodeRef.current.nexts.find(
+    const nextNode = currentGoNodeRef.current.nexts?.find(
       (node) => node.move === stringifyGrid(grid),
     );
 
     if (nextNode) {
-      // コメントをアニメーション表示
-      animateText(nextNode.comment);
-
-      if (nextNode.status === "correct") {
+      if (nextNode.isCorrect) {
+        // コメントをアニメーション表示
+        animateText(nextNode.comment ?? "せいかい！");
         // 登録されている正解の手
+        setDisabled(true);
         setGameOver(true);
         setIsCorrect(true);
-      } else if (nextNode.status === "wrong") {
+      } else if (nextNode.isCorrect === false) {
+        // コメントをアニメーション表示
+        animateText(nextNode.comment ?? "おしい！ふせいかい");
         // 登録されている間違いの手
         setGameOver(true);
         setDisabled(true);
       } else {
+        // コメントをアニメーション表示
+        animateText(nextNode.comment ?? "");
         setDisabled(true);
         await sleep(400);
         // 登録されている道中の手は相手が打ち返してくる
-        const nextNextNode: GoNode =
-          nextNode.nexts[Math.floor(Math.random() * nextNode.nexts.length)];
+        const nextNextNode: GoNode = nextNode.nexts?.[
+          Math.floor(Math.random() * nextNode.nexts.length)
+        ] || { move: "" };
         applyMoveCommon(keyToGrid(nextNextNode.move), boardSize);
         currentGoNodeRef.current = nextNextNode;
-        animateText(nextNextNode.comment);
-        setDisabled(false);
+        if (currentGoNodeRef.current.isCorrect === undefined) {
+          animateText(nextNextNode.comment ?? "");
+          setDisabled(false);
+        } else if (currentGoNodeRef.current.isCorrect) {
+          animateText(nextNextNode.comment ?? "せいかい！");
+          setIsCorrect(true);
+          setDisabled(true);
+          setGameOver(true);
+        } else {
+          animateText(nextNextNode.comment ?? "おしい！ふせいかい");
+          setDisabled(true);
+          setGameOver(true);
+        }
       }
     } else {
       // 登録されていない手
@@ -219,33 +239,62 @@ export default function TsumegoPage() {
     }
   };
 
-  const handleReset = () => {
-    if (!tsumego) return;
+  const handleReset = async () => {
+    // 初期準備編
+    setShowQuiz(false);
     currentGoNodeRef.current = tsumego;
-    currentColorRef.current = "black";
-    setBoard(prepareBoard2d(tsumego?.board ?? [], tsumego?.boardSize ?? 9));
+    if (tsumego.isNextBlack === false) {
+      currentColorRef.current = "white";
+    } else {
+      currentColorRef.current = "black";
+    }
+    setBoard(prepareBoard2d(tsumego?.board ?? [], tsumego?.board.length ?? 9));
     currentBoardRef.current = prepareBoard2d(
       tsumego?.board ?? [],
-      tsumego?.boardSize ?? 9,
+      tsumego?.board.length ?? 9,
     );
     boardHistoryRef.current = [
-      prepareBoard2d(tsumego?.board ?? [], tsumego?.boardSize ?? 9),
+      prepareBoard2d(tsumego?.board ?? [], tsumego?.board.length ?? 9),
     ];
     setAgehamaHistory([{ black: 0, white: 0 }]);
     agehamaHistoryRef.current = [{ black: 0, white: 0 }];
     teritoryBoardRef.current = // 黒の陣地(1), 白の陣地(2), 死んでる石(3)。そのほかは(0)
-      Array.from({ length: tsumego.boardSize }, () =>
-        Array.from({ length: tsumego.boardSize }, () => 0),
+      Array.from({ length: tsumego.board.length }, () =>
+        Array.from({ length: tsumego.board.length }, () => 0),
       );
     // Move state
     setLastMove(null);
     movesRef.current = [];
     currentIndexRef.current = 0;
 
+    setDisabled(true);
+    animateText(tsumego.comment || "");
+
+    // もしautoPlayなら、autoPlayする
+
+    let node = currentGoNodeRef.current as Tsumego | GoNode;
+    while (node && "nexts" in node && node.nexts && node.nexts.length > 0) {
+      const nextNode = getRandomItem(node.nexts);
+      if (!nextNode || !("autoPlay" in nextNode)) break;
+
+      const goNode = nextNode as GoNode;
+      if (!goNode.autoPlay) break;
+
+      currentGoNodeRef.current = goNode;
+
+      await sleep(1000);
+      applyMoveCommon(keyToGrid(goNode.move), tsumego.board.length);
+      animateText(currentGoNodeRef.current.comment || "");
+      node = goNode; // 次ループ用
+    }
+
+    // クイズならクイズを表示
+    if (currentGoNodeRef.current.quizChoice !== undefined) {
+      setShowQuiz(true);
+    }
     setGameOver(false);
     setIsCorrect(false);
     setDisabled(false);
-    animateText(tsumego.description || "がんばって！");
   };
 
   const handleNext = () => {
@@ -253,6 +302,30 @@ export default function TsumegoPage() {
       if (prev >= group.data.length - 1) return prev;
       return prev + 1;
     });
+  };
+
+  const handleQuizChoice = (choice: string) => {
+    setShowQuiz(false);
+    // 手を探す
+    const nextNode = currentGoNodeRef.current.nexts?.find(
+      (node) => node.move === choice,
+    );
+
+    if (!nextNode) return;
+    if (nextNode.isCorrect) {
+      // コメントをアニメーション表示
+      animateText(nextNode.comment ?? "せいかい！");
+      // 登録されている正解の手
+      setDisabled(true);
+      setGameOver(true);
+      setIsCorrect(true);
+    } else if (nextNode.isCorrect === false) {
+      // コメントをアニメーション表示
+      animateText(nextNode.comment ?? "おしい！ふせいかい");
+      // 登録されている間違いの手
+      setGameOver(true);
+      setDisabled(true);
+    }
   };
 
   return (
@@ -271,12 +344,11 @@ export default function TsumegoPage() {
         </View>
 
         <View style={styles.lessonCard}>
-          {/* <Text>{tsumego.title}</Text> */}
           {/* 碁盤 */}
           <View style={styles.boardWrapper}>
             <View style={styles.boardWrapper}>
               <GoBoard
-                boardSize={tsumego.boardSize}
+                boardSize={tsumego.board.length}
                 territoryBoard={teritoryBoardRef.current}
                 showTerritory={true}
                 disabled={false}
@@ -285,6 +357,7 @@ export default function TsumegoPage() {
                 board={currentBoard}
                 onPutStone={handlePutStone}
                 agehamaHistory={agehamaHistory}
+                pinPoint="3,3"
               />
             </View>
           </View>
@@ -314,6 +387,22 @@ export default function TsumegoPage() {
                   <Text style={styles.navButtonText}>次の問題へ →</Text>
                 </TouchableOpacity>
               )}
+
+            {/* クイズボタン（クイズの時のみ） */}
+            {isAnimationComplete &&
+              showQuiz &&
+              currentGoNodeRef.current.quizChoice !== undefined &&
+              currentGoNodeRef.current.quizChoice
+                .filter((choice) => !/^\d{1,2},\d{1,2}$/.test(choice))
+                .map((choice, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.navButton, styles.buttonComplete]}
+                    onPress={() => handleQuizChoice(choice)}
+                  >
+                    <Text style={styles.navButtonText}>{choice}</Text>
+                  </TouchableOpacity>
+                ))}
           </View>
         </View>
       </View>

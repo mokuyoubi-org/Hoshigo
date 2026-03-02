@@ -17,53 +17,6 @@ import {
 } from "../../src/components/UserContexts";
 import { supabase } from "../../src/services/supabase";
 
-// カラム数23
-type Match = {
-  id: string; // 対局自体のid。supabaseが設定
-  black_uid: string; // 黒のuid
-  white_uid: string | null; // 白のuid
-  created_at: string; // supabaseが設定
-  status: "waiting" | "playing" | "ended"; // 相手待ちか、対局中か、終局後か
-  black_last_seen: string | null; // 黒の最後のハートビート。RPCが使う
-  white_last_seen: string | null; // 白の最後のハートビート。RPCが使う
-  black_points: number; // 黒のレート。int2。RPCが使う
-  white_points: number; // 白のレート。int2。RPCが使う
-  result: string | null; // 結果
-  black_username: string; // 黒の表示名
-  white_username: string | null; // 白の表示名
-  black_displayname: string; // 黒の表示名
-  white_displayname: string | null; // 白の表示名
-  moves: number[]; // 一連の手
-  dead_stones: number[]; // 死に石
-  turn: "black" | "white"; // 今黒番か白番か
-  turn_switched_at: string | null; // 最後に手番が交代した時刻。
-  black_remain_seconds: number; // 0~180。黒の残り時間
-  white_remain_seconds: number; // 0~180。白の残り時間
-  black_icon_index: number; // 黒のアイコン。int2
-  white_icon_index: number; // 黒のアイコン。int2
-  black_games: number; // 黒のアイコン。int2
-  white_games: number; // 黒のアイコン。int2
-};
-
-// カラム数15(圧縮せず14/圧縮済み1)
-type MatchArchive = {
-  id: string; // 対局自体のid。supabaseが設定。Matchと同じものを使う
-  black_uid: string; // 黒のuid
-  white_uid: string | null; // 白のuid
-  created_at: string; // supabaseが設定
-  black_points: number; // 黒のレート。対局とかのランキングで使う可能性あり。△
-  white_points: number; // 白のレート。対局とかのランキングで使う可能性あり。△
-  black_username: string; // 黒の表示名
-  white_username: string | null; // 白の表示名
-  black_displayname: string; // 黒の表示名
-  white_displayname: string | null; // 白の表示名
-  black_icon_index: number; // 黒のアイコン。int2。△
-  white_icon_index: number; // 黒のアイコン。int2。△
-  result: string | null; // 結果。△
-  moves: number[];
-  dead_stones: number[]; // 一連の手。検索に使うことはない
-};
-
 // 囲碁のシーケンス(黒スタート)
 const boardSequence = [
   [
@@ -128,7 +81,6 @@ export default function Matching() {
   const spreadPointsRef = useRef<boolean>(false);
   const matchingTimersRef = useRef<number[]>([]);
 
-  // const [dots, setDots] = useState("");
   const [boardState, setBoardState] = useState<string[][]>([
     [".", ".", "."],
     [".", ".", "."],
@@ -167,30 +119,6 @@ export default function Matching() {
     return () => clearInterval(boardInterval);
   };
 
-  // const fallbackCancel = async () => {
-  //   if (channelRef.current) {
-  //     await supabase.removeChannel(channelRef.current);
-  //     channelRef.current = null;
-  //   }
-
-  //   const { data, error } = await supabase.rpc("cancel_match", {
-  //     p_uid: uid,
-  //   });
-
-  //   if (error) {
-  //     console.error("cancel_match RPCエラー", error);
-  //     throw error; // ← これ必須!
-  //   }
-
-  //   if (data) {
-  //     console.log("キャンセル成功");
-  //   } else {
-  //     console.log("キャンセル対象なし");
-  //   }
-
-  //   matchIdRef.current = null;
-  // };
-
   const fallbackCancel = async (): Promise<boolean> => {
     if (channelRef.current) {
       await supabase.removeChannel(channelRef.current);
@@ -217,24 +145,6 @@ export default function Matching() {
     return data === true; // ★ ここ重要
   };
 
-  // const onCancel = async () => {
-  //   if (isCancelingRef.current) return;
-
-  //   isCancelingRef.current = true;
-
-  //   try {
-  //     setLoading(true);
-
-  //     await fallbackCancel();
-
-  //     router.replace({ pathname: "/Home" });
-  //   } finally {
-  //     stopMatchingLoop();
-
-  //     setLoading(false);
-  //     isCancelingRef.current = false;
-  //   }
-  // };
   const onCancel = async () => {
     if (isCancelingRef.current) return;
 
@@ -487,9 +397,6 @@ export default function Matching() {
         {/* メッセージ */}
         <View style={styles.messageContainer}>
           <Text style={styles.title}>{t("Matching.title")}</Text>
-          {/* <View style={styles.dotsContainer}>
-            <Text style={styles.dots}>{dots}</Text>
-          </View> */}
         </View>
 
         {/* キャンセルボタン */}
@@ -538,7 +445,6 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 4, height: 4 },
     shadowOpacity: 0.08,
-    // shadowRadius: 8,
     elevation: 2,
   },
   boardRow: {

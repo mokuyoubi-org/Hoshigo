@@ -1,38 +1,80 @@
 // TsumegoData.ts
 // 詰碁のデータ定義とサンプルデータ
 
-export type Color = "black" | "white";
-
 export type GoNode = {
   move: string; // "p" とか "3,2", "1,1" etc.
-  nexts: GoNode[];
-  status?: "correct" | "wrong"; // 終端ノードでなければundefined
-  // color: Color; // 'black' | 'white'
-  comment: string; // 「せいかい！」とか、「こう打たれたらどうする？」とか
+  nexts?: GoNode[];
+  isAnimationMove?: boolean; // 拡張用
+  quizChoice?: string[]; // 拡張用
+  isCorrect?: boolean; // 終端ノードでなければundefined
+  comment?: string; // 「せいかい！」とか、「こう打たれたらどうする？」とか
+  autoPlay?: boolean;
 };
 export type Tsumego = {
-  title: string; // タイトル。「簡単そうだけど。。。」とか
-  board: number[][];
-  nextMoveColor: Color; // 黒先の問題か白先の問題かが決まる
-  nexts: GoNode[];
-  description?: string; // 「黒先白死だよ！」とか。
-  boardSize: number;
+  title?: string; // タイトル。「簡単そうだけど。。。」とか
+  board: number[][]; // 問題図。必須
+  isNextBlack?: boolean; // 黒先の問題か白先の問題かが決まる。
+  nexts?: GoNode[];
+  comment?: string; // 「黒先白死だよ！」とか。
+  quizChoice?: string[]; // 拡張用
 };
-
-/*
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-*/
 
 // ももぐみを目指す詰碁
 export const MOMOGUMI_TSUMEGO: Tsumego[] = [
   {
+    title: "コウがわかるかな",
+    isNextBlack: false,
+    board: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0],
+      [0, 1, 0, 1, 0],
+      [0, 2, 1, 2, 0],
+      [0, 0, 2, 0, 0],
+    ],
+    nexts: [
+      {
+        autoPlay: true,
+        move: "3,3",
+        comment: "●は次の手で○を取り返せる？",
+        quizChoice: ["4,3", "打てない"],
+        nexts: [
+          { move: "4,3", isCorrect: false, comment: "ふせいかい！" },
+          {
+            move: "打てない",
+            isCorrect: true,
+            comment:
+              "せいかい！コウの時はすぐに取り返すことはできないんだったね",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "ここに打てる？",
+    comment: "ここに打っていい？",
+    board: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 2, 0, 0],
+      [0, 2, 0, 2, 0],
+      [0, 0, 2, 0, 0],
+      [0, 0, 0, 0, 0],
+    ],
+    quizChoice: ["3,3", "打てない"],
+    nexts: [
+      {
+        move: "3,3",
+        isCorrect: false,
+      },
+      {
+        move: "打てない",
+        comment: "せいかい！上下左右を囲まれちゃう所には打てないよ",
+        isCorrect: true,
+      },
+    ],
+  },
+  {
     title: "石をとろう",
-    nextMoveColor: "black",
-    description: "○をとれるかな？",
+    comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
       [0, 0, 1, 0, 0],
@@ -43,17 +85,13 @@ export const MOMOGUMI_TSUMEGO: Tsumego[] = [
     nexts: [
       {
         move: "4,3",
-        comment: "せいかい！\n上手に○をとれたね",
-        status: "correct",
-        nexts: [],
+        isCorrect: true,
       },
     ],
-    boardSize: 5,
   },
   {
     title: "はしっこの石をとろう",
-    nextMoveColor: "black",
-    description: "○をとれるかな？",
+    comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
       [0, 0, 0, 0, 1],
@@ -64,17 +102,13 @@ export const MOMOGUMI_TSUMEGO: Tsumego[] = [
     nexts: [
       {
         move: "4,5",
-        comment: "せいかい！\n上手に○をとれたね",
-        status: "correct",
-        nexts: [],
+        isCorrect: true,
       },
     ],
-    boardSize: 5,
   },
   {
     title: "すみっこの石をとろう",
-    nextMoveColor: "black",
-    description: "○をとれるかな？",
+    comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0],
@@ -85,190 +119,141 @@ export const MOMOGUMI_TSUMEGO: Tsumego[] = [
     nexts: [
       {
         move: "5,4",
-        comment: "せいかい！\n上手に○をとれたね",
-        status: "correct",
-        nexts: [],
+        isCorrect: true,
       },
     ],
-    boardSize: 5,
   },
   {
     title: "相手の石をとろう",
-    nextMoveColor: "black",
-    description: "○をとれるかな？",
+    comment: "○をとれるかな？",
     board: [
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
-      [0, 1, 1, 2, 2],
-      [0, 1, 2, 1, 2],
-      [0, 1, 2, 0, 2],
-    ],
-    nexts: [
-      {
-        move: "5,4",
-        comment: "せいかい！\n上手に○をとれたね",
-        status: "correct",
-        nexts: [],
-      },
-    ],
-    boardSize: 5,
-  },
-  {
-    title: "相手の石をとろう",
-    nextMoveColor: "black",
-    description: "○をとれるかな？",
-    board: [
-      [1, 1, 1, 1, 1],
-      [1, 2, 2, 2, 1],
+      [0, 1, 1, 1, 0],
+      [1, 1, 2, 1, 1],
       [1, 2, 0, 2, 1],
-      [1, 2, 2, 2, 1],
-      [1, 1, 1, 1, 0],
+      [1, 1, 2, 1, 1],
+      [0, 1, 1, 1, 0],
     ],
     nexts: [
       {
         move: "3,3",
-        comment: "せいかい！\nきもちいいね",
-        status: "correct",
-        nexts: [],
+        isCorrect: true,
       },
     ],
-    boardSize: 5,
   },
   {
-    title: "アタリをにげよう",
-    nextMoveColor: "black",
-    description: "アタリになっている●をにがせるかな？",
+    title: "相手の石をとろう",
+    comment: "○をとれるかな？",
     board: [
-      [0, 0, 0, 0, 0],
-      [0, 0, 2, 0, 0],
-      [0, 2, 1, 2, 0],
-      [0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0],
+      [2, 2, 2, 2, 2],
+      [2, 1, 0, 1, 2],
+      [2, 1, 0, 1, 2],
+      [2, 1, 1, 1, 2],
+      [2, 2, 2, 2, 2],
     ],
     nexts: [
       {
-        move: "4,3",
-        comment: "せいかい！上手ににがせたね",
-        status: "correct",
-        nexts: [],
+        move: "2,3",
+        isCorrect: true,
+      },
+      {
+        move: "3,3",
+        nexts: [
+          {
+            move: "2,3",
+            comment: "しっぱい！逆に取られちゃうよ",
+            isCorrect: false,
+          },
+        ],
       },
     ],
-    boardSize: 5,
   },
-  // {
-  //   title: "○をとろう",
-  //   nextMoveColor: "black",
-  //   description: "タダでとれる○があるよ",
-  //   board: [
-  //     [0, 1, 2, 0, 0, 0, 0],
-  //     [0, 1, 2, 0, 0, 0, 0],
-  //     [0, 1, 2, 0, 0, 0, 0],
-  //     [0, 1, 2, 0, 0, 0, 0],
-  //     [0, 1, 2, 0, 0, 0, 0],
-  //     [0, 1, 2, 0, 0, 0, 0],
-  //     [0, 1, 1, 2, 0, 0, 0],
-  //   ],
-  //   nexts: [
-  //     {
-  //       move: "6,4",
-  //       color: "black",
-  //       comment: "いいね",
-  //       status: undefined,
-  //       nexts: [
-  //         {
-  //           move: "7,5",
-  //           color: "white",
-  //           comment: "にげるよ",
-  //           status: undefined,
-  //           nexts: [
-  //             {
-  //               move: "6,5",
-  //               color: "white",
-  //               comment: "いいね",
-  //               status: undefined,
-  //               nexts: [
-  //                 {
-  //                   move: "7,6",
-  //                   color: "white",
-  //                   comment: "にげるよ",
-  //                   status: undefined,
-  //                   nexts: [
-  //                     {
-  //                       move: "6,6",
-  //                       color: "white",
-  //                       comment: "いいね",
-  //                       status: undefined,
-  //                       nexts: [
-  //                         {
-  //                           move: "7,7",
-  //                           color: "white",
-  //                           comment: "にげるよ",
-  //                           status: undefined,
-  //                           nexts: [
-  //                             {
-  //                               move: "6,7",
-  //                               color: "white",
-  //                               comment: "せいかい！上手にとれたね",
-  //                               status: "correct",
-  //                               nexts: [],
-  //                             },
-  //                           ],
-  //                         },
-  //                       ],
-  //                     },
-  //                   ],
-  //                 },
-  //               ],
-  //             },
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //   ],
-  //   boardSize: 7,
-  // },
+  {
+    title: "相手の石をとろう",
+    comment: "○をとれるかな？",
+    board: [
+      [0, 1, 2, 0, 0],
+      [0, 1, 2, 0, 0],
+      [1, 1, 2, 2, 0],
+      [1, 2, 1, 2, 0],
+      [1, 2, 0, 0, 0],
+    ],
+    nexts: [
+      {
+        move: "5,4",
+        nexts: [
+          {
+            move: "5,3",
+            nexts: [
+              {
+                move: "4,3",
+                nexts: [
+                  {
+                    move: "2,5",
+                    isCorrect: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        move: "5,3",
+        nexts: [
+          {
+            move: "5,4",
+            comment: "せいかい！\n実は他にも答えがあるよ",
+            isCorrect: true,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 // おれんじぐみを目指す詰碁
 export const ORANGEGUMI_TSUMEGO: Tsumego[] = [
   {
     title: "○をとろう",
-    nextMoveColor: "black",
-    description: "タダでとれる○があるよ",
+    comment: "タダでとれる○があるよ",
     board: [
-      [0, 1, 2, 0, 0, 0],
-      [0, 1, 2, 0, 0, 0],
-      [0, 1, 2, 0, 0, 0],
-      [0, 1, 2, 0, 0, 0],
-      [0, 1, 2, 0, 0, 0],
-      [0, 1, 1, 2, 0, 0],
+      [0, 1, 2, 0, 0],
+      [0, 1, 2, 0, 2],
+      [0, 1, 2, 0, 0],
+      [0, 1, 2, 0, 0],
+      [0, 1, 1, 2, 0],
     ],
     nexts: [
       {
-        move: "5,4",
-        comment: "",
-        status: undefined,
+        move: "4,4",
         nexts: [
           {
-            move: "6,5",
-            comment: "",
-            status: undefined,
+            move: "3,4",
             nexts: [
               {
                 move: "5,5",
-                comment: "",
-                status: undefined,
                 nexts: [
                   {
-                    move: "6,6",
-                    comment: "",
-                    status: undefined,
+                    move: "1,4",
+                    isCorrect: true,
+                  },
+                ],
+              },
+
+              {
+                move: "4,5",
+                nexts: [
+                  {
+                    move: "3,5",
                     nexts: [
                       {
-                        move: "5,6",
-                        comment: "せいかい！上手にとれたね",
-                        status: "correct",
-                        nexts: [],
+                        move: "5,5",
+                        nexts: [
+                          {
+                            move: "5,4",
+                            isCorrect: false,
+                          },
+                        ],
                       },
                     ],
                   },
@@ -278,67 +263,141 @@ export const ORANGEGUMI_TSUMEGO: Tsumego[] = [
           },
         ],
       },
+      {
+        move: "4,5",
+        nexts: [
+          {
+            move: "4,4",
+            isCorrect: false,
+          },
+        ],
+      },
+      {
+        move: "3,4",
+        nexts: [
+          {
+            move: "4,4",
+            isCorrect: false,
+          },
+        ],
+      },
     ],
-    boardSize: 6,
   },
   {
-    title: "○をとろう",
-    nextMoveColor: "black",
-    description: "にげる右下の○をとろう！",
+    title: "○をしとめよう",
+    comment: "右下の○をしとめられるかな？",
     board: [
-      [0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 1],
-      [0, 0, 0, 0, 2, 2],
+      [0, 0, 0, 0, 0],
+      [0, 1, 0, 1, 0],
+      [0, 1, 0, 1, 0],
+      [1, 2, 2, 2, 2],
+      [0, 2, 0, 0, 0],
     ],
     nexts: [
       {
-        move: "5,5",
-        comment: "",
-        status: undefined,
+        move: "5,4",
+        isCorrect: true,
+      },
+    ],
+  },
+  {
+    title: "○をとろう",
+    comment: "タダでとれる○があるよ",
+    board: [
+      [0, 0, 2, 1, 0],
+      [0, 0, 2, 1, 0],
+      [0, 0, 2, 1, 0],
+      [0, 0, 0, 2, 1],
+      [0, 0, 0, 0, 0],
+    ],
+    nexts: [
+      {
+        move: "4,3",
         nexts: [
           {
-            move: "6,4",
-            comment: "",
-            status: undefined,
+            move: "4,2",
             nexts: [
               {
                 move: "5,4",
-                comment: "",
-                status: undefined,
+                isCorrect: true,
+              },
+              {
+                move: "5,3",
                 nexts: [
                   {
-                    move: "6,3",
-                    comment: "",
-                    status: undefined,
+                    move: "5,2",
                     nexts: [
                       {
-                        move: "5,3",
-                        comment: "",
-                        status: undefined,
+                        move: "5,4",
+                        isCorrect: true,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                move: "5,2",
+                nexts: [
+                  {
+                    move: "5,3",
+                    isCorrect: false,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "両アタリで○をとろう",
+    comment: "両アタリで○をとろう",
+    board: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 2, 1, 1],
+      [0, 2, 1, 1, 0],
+      [2, 1, 2, 2, 1],
+      [0, 0, 0, 2, 0],
+    ],
+    nexts: [
+      {
+        move: "5,2",
+        nexts: [
+          {
+            move: "2,2",
+            isCorrect: false,
+          },
+        ],
+      },
+      {
+        move: "2,2",
+        nexts: [
+          {
+            move: "5,2",
+
+            nexts: [
+              {
+                move: "1,1",
+                nexts: [
+                  {
+                    move: "2,1",
+                    nexts: [
+                      {
+                        move: "3,1",
                         nexts: [
                           {
-                            move: "6,2",
-                            comment: "",
-                            status: undefined,
+                            move: "4,2",
                             nexts: [
                               {
-                                move: "5,2",
-                                comment: "",
-                                status: undefined,
+                                move: "1,3",
                                 nexts: [
                                   {
-                                    move: "6,1",
-                                    comment: "",
-                                    status: undefined,
+                                    move: "2,1",
                                     nexts: [
                                       {
-                                        move: "5,1",
-                                        comment: "せいかい！上手にとれたね",
-                                        status: "correct",
-                                        nexts: [],
+                                        move: "1,2",
+                                        isCorrect: true,
                                       },
                                     ],
                                   },
@@ -352,89 +411,60 @@ export const ORANGEGUMI_TSUMEGO: Tsumego[] = [
                   },
                 ],
               },
-            ],
-          },
-        ],
-      },
-    ],
-    boardSize: 6,
-  },
-  {
-    title: "○をとろう",
-    nextMoveColor: "black",
-    description: "タダでとれる○があるよ",
-    board: [
-      [0, 0, 2, 1, 0, 0],
-      [0, 0, 2, 1, 0, 0],
-      [0, 0, 2, 1, 0, 0],
-      [0, 0, 2, 1, 0, 0],
-      [0, 0, 0, 2, 1, 0],
-      [0, 0, 0, 0, 0, 0],
-    ],
-    nexts: [
-      {
-        move: "5,3",
-        comment: "",
-        status: undefined,
-        nexts: [
-          {
-            move: "5,2",
-            comment: "",
-            status: undefined,
-            nexts: [
               {
-                move: "6,4",
-                comment: "せいかい！",
-                status: "correct",
-                nexts: [],
+                move: "1,2",
+                isCorrect: true,
+              },
+              {
+                move: "1,3",
+                isCorrect: true,
+              },
+              {
+                move: "1,4",
+                isCorrect: true,
+              },
+              {
+                move: "1,5",
+                nexts: [
+                  {
+                    move: "1,3",
+                    nexts: [
+                      {
+                        move: "1,2",
+                        nexts: [
+                          {
+                            move: "2,1",
+                            isCorrect: false,
+                          },
+                        ],
+                      },
+                      {
+                        move: "2,1",
+                        nexts: [
+                          {
+                            move: "1,2",
+                            isCorrect: false,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                move: "2,1",
+                isCorrect: true,
               },
             ],
           },
         ],
       },
     ],
-    boardSize: 6,
-  },
-  {
-    title: "両アタリで○をとろう",
-    nextMoveColor: "black",
-    description: "両アタリで○をとろう",
-    board: [
-      [0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 2, 1, 0],
-      [0, 0, 2, 1, 1, 0],
-      [0, 2, 1, 2, 0, 0],
-      [0, 0, 0, 0, 0, 0],
-    ],
-    nexts: [
-      {
-        move: "3,3",
-        comment: "",
-        status: undefined,
-        nexts: [
-          {
-            move: "6,3",
-            comment: "",
-            status: undefined,
-            nexts: [
-              {
-                move: "2,4",
-                comment: "せいかい！",
-                status: "correct",
-                nexts: [],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    boardSize: 6,
   },
 ];
 
 export type TsumegoGroup = {
-  id: string;
+  id: number;
   title: string; // "ももぐみを目指す" など
   color: string; // グループのテーマカラー
   data: Tsumego[];
@@ -442,13 +472,13 @@ export type TsumegoGroup = {
 
 export const TSUMEGO_GROUPS: TsumegoGroup[] = [
   {
-    id: "momo",
+    id: 0,
     title: `ももぐみを目指す${MOMOGUMI_TSUMEGO.length}問`,
     color: "#FFB7C5",
     data: MOMOGUMI_TSUMEGO,
   },
   {
-    id: "orange",
+    id: 1,
     title: `おれんじぐみを目指す${ORANGEGUMI_TSUMEGO.length}問`,
     color: "#FFA07A",
     data: ORANGEGUMI_TSUMEGO,

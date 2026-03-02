@@ -1,9 +1,10 @@
 import { GoBoard } from "@/src/components/GoBoard";
 import { StarBackground } from "@/src/components/StarBackGround";
 import { DisplayNameContext } from "@/src/components/UserContexts";
+import { Agehama } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
-import { Agehama, prepareBoard2d } from "@/src/lib/goUtils";
-import { TSUMEGO_GROUPS, Tsumego, TsumegoGroup } from "@/src/lib/tsumegoData";
+import { prepareBoard2d } from "@/src/lib/goUtils";
+import { Tsumego, TSUMEGO_GROUPS, TsumegoGroup } from "@/src/lib/tsumegoData";
 import { useRouter } from "expo-router";
 import React, { useContext, useRef, useState } from "react";
 import {
@@ -15,8 +16,8 @@ import {
   Text,
   TouchableOpacity,
   UIManager,
-  View,
   useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,13 +38,13 @@ const TsumegoCard: React.FC<{ tsumego: Tsumego; onPress: () => void }> = ({
 }) => {
   const { width } = useWindowDimensions();
   const boardWidth = width / 4;
-  const board = prepareBoard2d(tsumego.board, tsumego.boardSize);
+  const board = prepareBoard2d(tsumego.board, tsumego.board.length);
   const [agehamaHistory, setAgehamaHistory] = useState<Agehama[]>([
     { black: 0, white: 0 },
   ]);
   const teritoryBoardRef = useRef<number[][]>(
-    Array.from({ length: tsumego.boardSize }, () =>
-      Array.from({ length: tsumego.boardSize }, () => 0),
+    Array.from({ length: tsumego.board.length }, () =>
+      Array.from({ length: tsumego.board.length }, () => 0),
     ),
   );
   const movesRef = useRef<string[]>([]);
@@ -59,7 +60,7 @@ const TsumegoCard: React.FC<{ tsumego: Tsumego; onPress: () => void }> = ({
           <GoBoard
             boardPixelSize={boardWidth}
             topBar={false}
-            boardSize={tsumego.boardSize}
+            boardSize={tsumego.board.length}
             territoryBoard={teritoryBoardRef.current}
             showTerritory={true}
             disabled={true}
@@ -78,7 +79,7 @@ const TsumegoCard: React.FC<{ tsumego: Tsumego; onPress: () => void }> = ({
 // アコーディオンセクション
 const TsumegoSection: React.FC<{
   group: TsumegoGroup;
-  onSelect: (groupId: string, index: number) => void;
+  onSelect: (groupId: number, index: number) => void;
 }> = ({ group, onSelect }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -139,7 +140,7 @@ export default function TsumegoList() {
   const router = useRouter();
   const displayName = useContext(DisplayNameContext);
 
-  const handleSelectTsumego = (groupId: string, index: number) => {
+  const handleSelectTsumego = (groupId: number, index: number) => {
     router.push({ pathname: "/Tsumego", params: { groupId, index } });
   };
 
@@ -155,7 +156,7 @@ export default function TsumegoList() {
           <View style={styles.kumakuSection}>
             <View style={styles.characterContainer}>
               <Image
-                source={ICONS[100]}
+                source={{uri : ICONS[90]}}
                 style={styles.characterImage}
                 resizeMode="contain"
               />

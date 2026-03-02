@@ -3,7 +3,6 @@ import { ICONS } from "@/src/constants/icons";
 import {
   applyMove,
   Board,
-  BOARD_SIZE_COUNT,
   cloneBoard,
   Color,
   getOppositeColor,
@@ -13,7 +12,6 @@ import {
   keyToGrid,
   stringifyGrid,
 } from "@/src/lib/goLogics";
-import { Agehama } from "@/src/lib/goUtils";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -463,7 +461,7 @@ export default function Tutorial() {
             <View style={styles.explanationContainer}>
               <View style={styles.characterContainer}>
                 <Image
-                  source={ICONS[100]}
+                 source={{ uri: ICONS[100] }}
                   style={styles.characterImage}
                   resizeMode="contain"
                 />
