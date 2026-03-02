@@ -52,6 +52,9 @@ Issue・Pull Request歓迎です！
 
 MIT License
 
+This project uses icons from Font Awesome Free.
+Icons are licensed under CC BY 4.0.
+
 ---
 
 ## 👤 Author

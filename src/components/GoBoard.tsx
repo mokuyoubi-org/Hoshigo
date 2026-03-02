@@ -1,6 +1,13 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Agehama } from "../constants/goConstants";
 import { ICONS } from "../constants/icons";
 import { useTheme } from "../hooks/useTheme";
@@ -154,7 +161,25 @@ export const GoBoard: React.FC<GoBoardProps> = ({
   const dynamicPadding = boardPixelSize * 0.16;
   const dynamicRadius = boardPixelSize * 0.06;
   const icon = ICONS[80];
-
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1, // 大きくなる
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // 元に戻る
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
   // ── UI ──
   return (
     <View style={styles.container}>
@@ -343,9 +368,15 @@ export const GoBoard: React.FC<GoBoardProps> = ({
                 )}
 
                 {key === pinPoint && (
-                  <Image
+                  <Animated.Image
                     source={{ uri: icon }}
-                    style={styles.iconImage}
+                    style={[
+                      styles.iconImage,
+                      {
+                        transform: [{ scale: scaleAnim }],
+                        zIndex: 10,
+                      },
+                    ]}
                     resizeMode="contain"
                   />
                 )}
@@ -392,10 +423,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   iconImage: {
+    position: "absolute",
     width: 80,
     height: 80,
-  },
-  // ── トップバー ──
+    top: -40,
+    left: -10,
+    zIndex: 10, // ← 石より上にする
+  }, // ── トップバー ──
   topInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
