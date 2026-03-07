@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -28,6 +29,7 @@ type InfoModalProps = {
 
 export const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
   const { t } = useTranslation();
+  const {height} = useWindowDimensions();
 
   const RuleItem = ({
     title,

@@ -19,10 +19,11 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GoBoardWithReplay } from "../src/components/GoBoardWithReplay";
+import { GoBoard } from "../src/components/GoBoard";
 import { PlayerCard } from "../src/components/PlayerCard";
 import { UidContext } from "../src/components/UserContexts";
 import { useTheme } from "../src/hooks/useTheme";
@@ -33,14 +34,9 @@ import {
   resultToLanguages,
 } from "../src/lib/goUtils";
 import { supabase } from "../src/services/supabase";
+import { BACKGROUND, CHOCOLATE, CHOCOLATE_SUB, STRAWBERRY } from "@/src/constants/colors";
 
-// ─── Homeページに合わせたカラー ───────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
 
-// ─── 型定義（変更なし） ───────────────────────────────
 
 export default function MyRecords() {
   const { t, i18n } = useTranslation();
@@ -123,12 +119,8 @@ export default function MyRecords() {
                 boardHistory[boardHistory.length - 1],
                 newDeadStones,
                 record.match_type,
-                agehamaHistories[record.id][
-                  agehamaHistories[record.id].length - 1
-                ].black,
-                agehamaHistories[record.id][
-                  agehamaHistories[record.id].length - 1
-                ].white,
+                0,
+                0,
               ).territoryBoard;
 
           setBoardHistories((prev) => ({ ...prev, [record.id]: boardHistory }));
@@ -180,6 +172,7 @@ export default function MyRecords() {
     }) => {
       const [replayIndex, setReplayIndex] = useState(0);
       const cardFade = useRef(new Animated.Value(0)).current;
+      const { height } = useWindowDimensions();
 
       useEffect(() => {
         Animated.timing(cardFade, {
@@ -260,7 +253,8 @@ export default function MyRecords() {
 
           {/* 碁盤 */}
           <View style={styles.boardWrapper}>
-            <GoBoardWithReplay
+            <GoBoard
+              boardWidth={(height * 36) / 100}
               matchType={matchType}
               agehamaHistory={agehamaHistory}
               board={board}
@@ -329,6 +323,9 @@ export default function MyRecords() {
 
         {/* リスト */}
         <FlatList
+          pagingEnabled={true}       // ← これで一枚ずつスクロールになるにゃん
+  snapToAlignment="start"    // スクロール位置をぴったり合わせる
+  decelerationRate="fast"    // スワイプの止まり方を自然に
           data={records}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
@@ -353,6 +350,12 @@ export default function MyRecords() {
     </SafeAreaView>
   );
 }
+
+
+
+
+
+
 
 // ─── スタイル ──────────────────────────────────────────
 const styles = StyleSheet.create({

@@ -1,4 +1,4 @@
-import { GoBoardWithReplay } from "@/src/components/GoBoardWithReplay";
+import { GoBoard } from "@/src/components/GoBoard";
 import { PlayerCard } from "@/src/components/PlayerCard";
 import { ResultModal } from "@/src/components/ResultModal";
 import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
@@ -8,10 +8,18 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 
+import { StarBackground } from "@/src/components/StarBackGround";
+import { Agehama } from "@/src/constants/goConstants";
 import {
   DisplayNameContext,
   GumiIndexContext,
@@ -24,11 +32,11 @@ import {
   UserNameContext,
 } from "../../src/components/UserContexts";
 import {
-  Board,
-  Grid,
   applyMove,
+  Board,
   cloneBoard,
   getOppositeColor,
+  Grid,
   initializeBoard,
   isLegalMove,
   keyToGrid,
@@ -44,8 +52,6 @@ import {
   sleep,
 } from "../../src/lib/goUtils";
 import { supabase } from "../../src/services/supabase";
-import { StarBackground } from "@/src/components/StarBackGround";
-import { Agehama } from "@/src/constants/goConstants";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (9 - 1);
@@ -56,6 +62,8 @@ const HEARTBEAT_INTERVAL_MS = 10_000; // ハートビート送信間隔
 const GNU_API_TIMEOUT_MS = 30_000; // GNUGo APIのタイムアウト
 
 export default function PlayWithBot() {
+  const { height } = useWindowDimensions();
+
   const { t } = useTranslation();
 
   // ── Context ──────────────────────────────────────
@@ -86,9 +94,7 @@ export default function PlayWithBot() {
   const boardRef = useRef<Board>(initializeBoard(9));
   const boardHistoryRef = useRef<Board[]>([initializeBoard(9)]);
   const teritoryBoardRef = useRef<number[][]>(
-    Array.from({ length: 9 }, () =>
-      Array.from({ length: 9 }, () => 0),
-    ),
+    Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => 0)),
   );
   const [agehamaHistory, setAgehamaHistory] = useState<Agehama[]>([
     { black: 0, white: 0 },
@@ -155,13 +161,13 @@ export default function PlayWithBot() {
 
     let delta: number;
     if (isBlackWin) {
-      delta = Math.max(0, Math.min(10, 5 - Math.trunc(diff / 50)));
+      delta = Math.trunc(Math.max(1, Math.min(19, 10 - Math.trunc((diff+50) / 100)))/2);
     } else {
-      // 格上のボットに負けてもポイントは減らない
-      if (botPoints > pointsBeforeRef.current) {
-        delta = 0;
+      // 
+      if (point< 420) {
+        delta = 5;
       } else {
-        delta = Math.max(0, Math.min(10, 5 + Math.trunc(diff / 50)));
+        delta = Math.trunc(Math.max(1, Math.min(19, 10 + Math.trunc((diff-50) / 100)))/2);
       }
     }
 
@@ -390,7 +396,7 @@ export default function PlayWithBot() {
         { row: 6, col: 7 },
         { row: 6, col: 6 },
       ];
-    } else if (stones === 4) {
+    } else if (stones === 4 || stones === 5 ) {
       arr = [
         { row: 5, col: 3 },
         { row: 5, col: 7 },
@@ -401,7 +407,8 @@ export default function PlayWithBot() {
 
     const randomGrid = arr[Math.floor(Math.random() * arr.length)];
 
-    const { board: newBoard, agehama } = applyMove(9,
+    const { board: newBoard, agehama } = applyMove(
+      9,
       randomGrid,
       cloneBoard(boardRef.current),
       "white",
@@ -479,12 +486,13 @@ export default function PlayWithBot() {
       console.log("死に石の配列: ", stringDeadStones);
     }
 
-    const { territoryBoard, result } = makeTerritoryBoard(9,
+    const { territoryBoard, result } = makeTerritoryBoard(
+      9,
       boardRef.current,
       stringDeadStones,
       matchType ?? 0, // matchType
-                      agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
-                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
+      agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1].black,
+      agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1].white,
     );
     teritoryBoardRef.current = territoryBoard;
 
@@ -614,7 +622,8 @@ export default function PlayWithBot() {
       playStoneSound();
 
       const grid: Grid = keyToGrid(gnuGridtoStringGrid(botMove));
-      const { board: newBoard, agehama } = applyMove(9,
+      const { board: newBoard, agehama } = applyMove(
+        9,
         grid,
         cloneBoard(boardRef.current),
         getOppositeColor(playerColor),
@@ -765,7 +774,8 @@ export default function PlayWithBot() {
     if (!isMyTurn || isGameEnded) return;
 
     if (
-      !isLegalMove(9,
+      !isLegalMove(
+        9,
         grid,
         boardRef.current,
         lastMove,
@@ -778,7 +788,8 @@ export default function PlayWithBot() {
 
     playStoneSound();
 
-    const { board: newBoard, agehama } = applyMove(9,
+    const { board: newBoard, agehama } = applyMove(
+      9,
       grid,
       cloneBoard(boardRef.current),
       playerColor,
@@ -838,8 +849,8 @@ export default function PlayWithBot() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-             <StarBackground />   
-      
+      <StarBackground />
+
       <View style={styles.content}>
         {isGameEnded && (
           <View style={styles.backButtonContainer}>
@@ -876,7 +887,7 @@ export default function PlayWithBot() {
           isActive={true}
         />
 
-        <GoBoardWithReplay
+        <GoBoard
           matchType={matchType ?? 0}
           agehamaHistory={agehamaHistory}
           board={board}
@@ -888,6 +899,7 @@ export default function PlayWithBot() {
           boardHistory={boardHistoryRef.current}
           currentIndex={currentIndexRef.current}
           onCurrentIndexChange={handleCurrentIndexChange}
+          boardWidth={height * (44 / 100)}
         />
 
         <PlayerCard
@@ -901,45 +913,47 @@ export default function PlayWithBot() {
           isActive={true}
         />
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              (!isMyTurn || isGameEnded) && styles.actionButtonDisabled,
-            ]}
-            onPress={pass}
-            disabled={!isMyTurn || isGameEnded}
-            activeOpacity={0.7}
-          >
-            <Text
+        {!isGameEnded && (
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
               style={[
-                styles.actionButtonText,
-                (!isMyTurn || isGameEnded) && styles.actionButtonTextDisabled,
+                styles.actionButton,
+                (!isMyTurn || isGameEnded) && styles.actionButtonDisabled,
               ]}
+              onPress={pass}
+              disabled={!isMyTurn || isGameEnded}
+              activeOpacity={0.7}
             >
-              {t("Playing.pass")}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.actionButtonText,
+                  (!isMyTurn || isGameEnded) && styles.actionButtonTextDisabled,
+                ]}
+              >
+                {t("Playing.pass")}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.resignButton,
-              (!isMyTurn || isGameEnded) && styles.resignButtonDisabled,
-            ]}
-            onPress={resign}
-            disabled={!isMyTurn || isGameEnded}
-            activeOpacity={0.7}
-          >
-            <Text
+            <TouchableOpacity
               style={[
-                styles.resignButtonText,
-                (!isMyTurn || isGameEnded) && styles.resignButtonTextDisabled,
+                styles.resignButton,
+                (!isMyTurn || isGameEnded) && styles.resignButtonDisabled,
               ]}
+              onPress={resign}
+              disabled={!isMyTurn || isGameEnded}
+              activeOpacity={0.7}
             >
-              {t("Playing.resign")}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <Text
+                style={[
+                  styles.resignButtonText,
+                  (!isMyTurn || isGameEnded) && styles.resignButtonTextDisabled,
+                ]}
+              >
+                {t("Playing.resign")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <ResultModal

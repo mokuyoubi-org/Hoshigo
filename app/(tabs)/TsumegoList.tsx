@@ -1,74 +1,60 @@
 import { GoBoard } from "@/src/components/GoBoard";
 import { StarBackground } from "@/src/components/StarBackGround";
 import { DisplayNameContext } from "@/src/components/UserContexts";
-import { Agehama } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
 import { prepareBoard2d } from "@/src/lib/goUtils";
 import { Tsumego, TSUMEGO_GROUPS, TsumegoGroup } from "@/src/lib/tsumegoData";
 import { useRouter } from "expo-router";
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   Image,
   LayoutAnimation,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  UIManager,
   useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Androidでアニメーション有効化
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const PREVIEW_COUNT = 2; // 最初に見せる問題数
-
-// 詰碁カード（変更なし）
-const TsumegoCard: React.FC<{ tsumego: Tsumego; onPress: () => void }> = ({
-  tsumego,
-  onPress,
-}) => {
-  const { width } = useWindowDimensions();
-  const boardWidth = width / 4;
+// 詰碁カード(子)
+const TsumegoCard: React.FC<{
+  tsumego: Tsumego;
+  cardWidth: number;
+  boardWidth: number;
+  onPress: () => void;
+}> = ({ tsumego, cardWidth, boardWidth, onPress }) => {
   const board = prepareBoard2d(tsumego.board, tsumego.board.length);
-  const [agehamaHistory, setAgehamaHistory] = useState<Agehama[]>([
-    { black: 0, white: 0 },
-  ]);
-  const teritoryBoardRef = useRef<number[][]>(
-    Array.from({ length: tsumego.board.length }, () =>
-      Array.from({ length: tsumego.board.length }, () => 0),
-    ),
-  );
-  const movesRef = useRef<string[]>([]);
-  const currentIndexRef = useRef<number>(0);
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, { width: cardWidth }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{tsumego.title}</Text>
       </View>
       <View style={styles.cardContent}>
         <View style={styles.boardWrapper}>
           <GoBoard
-            boardPixelSize={boardWidth}
+            boardWidth={boardWidth}
             topBar={false}
-            boardSize={tsumego.board.length}
-            territoryBoard={teritoryBoardRef.current}
-            showTerritory={true}
+            intersections={tsumego.board.length}
+            territoryBoard={[]}
             disabled={true}
-            moveHistory={movesRef.current}
-            currentIndex={currentIndexRef.current}
+            moveHistory={[]}
+            currentIndex={0}
             board={board}
             onPutStone={() => {}}
-            agehamaHistory={agehamaHistory}
+            agehamaHistory={[]}
+            matchType={0}
+            isGameEnded={false}
+            boardHistory={[]}
+            onCurrentIndexChange={function (newIndex: number): void {
+              throw new Error("Function not implemented.");
+            }}
           />
         </View>
       </View>
@@ -76,11 +62,17 @@ const TsumegoCard: React.FC<{ tsumego: Tsumego; onPress: () => void }> = ({
   );
 };
 
-// アコーディオンセクション
+// セクション(親)
 const TsumegoSection: React.FC<{
+  groupIndex: number;
+
   group: TsumegoGroup;
   onSelect: (groupId: number, index: number) => void;
-}> = ({ group, onSelect }) => {
+}> = ({ groupIndex, group, onSelect }) => {
+  const { width } = useWindowDimensions(); // デバイスの横幅
+  const columns = Math.max(2, Math.min(4, Math.floor(width / 240))); // 横幅が900でカード一枚が200なら、900/200=4余り100なのでカラム数は4。ただし最低のカラム数は2。
+  const cardWidth = (width / columns) * (88 / 100); // カードのサイズ。
+  const boardWidth = cardWidth * (72 / 100); // 盤面のサイズ。
   const [expanded, setExpanded] = useState(false);
 
   const toggle = () => {
@@ -88,9 +80,7 @@ const TsumegoSection: React.FC<{
     setExpanded((prev) => !prev);
   };
 
-  const visibleItems = expanded
-    ? group.data
-    : group.data.slice(0, PREVIEW_COUNT);
+  const visibleItems = expanded ? group.data : group.data.slice(0, columns);
   return (
     <View style={styles.section}>
       {/* ヘッダー＋カードを包む一体化コンテナ */}
@@ -106,19 +96,20 @@ const TsumegoSection: React.FC<{
 
         {/* カードグリッド（ヘッダーの内側） */}
         <View style={styles.grid}>
-          {visibleItems.map((item, index) => (
-            <View key={index} style={styles.gridItem}>
+          {visibleItems.map((item, tsumegoIndex) => (
+            <View key={tsumegoIndex}>
               <TsumegoCard
+                cardWidth={cardWidth}
                 tsumego={item}
-                onPress={() => onSelect(group.id, index)}
+                boardWidth={boardWidth}
+                onPress={() => onSelect(groupIndex, tsumegoIndex)}
               />
             </View>
           ))}
-          {visibleItems.length % 2 !== 0 && <View style={styles.gridItem} />}
         </View>
 
         {/* もっと見るボタン（コンテナの内側） */}
-        {group.data.length > PREVIEW_COUNT && (
+        {group.data.length > columns && (
           <TouchableOpacity
             style={[styles.expandButton, { borderColor: group.color }]}
             onPress={toggle}
@@ -127,7 +118,7 @@ const TsumegoSection: React.FC<{
             <Text style={[styles.expandButtonText, { color: group.color }]}>
               {expanded
                 ? "閉じる ▲"
-                : `残り${group.data.length - PREVIEW_COUNT}問を見る ▼`}
+                : `残り${group.data.length - columns}問を見る ▼`}
             </Text>
           </TouchableOpacity>
         )}
@@ -156,7 +147,7 @@ export default function TsumegoList() {
           <View style={styles.kumakuSection}>
             <View style={styles.characterContainer}>
               <Image
-                source={{uri : ICONS[90]}}
+                source={ICONS[90]}
                 style={styles.characterImage}
                 resizeMode="contain"
               />
@@ -171,9 +162,10 @@ export default function TsumegoList() {
           </View>
 
           {/* グループ一覧 */}
-          {TSUMEGO_GROUPS.map((group) => (
+          {TSUMEGO_GROUPS.map((group, index) => (
             <TsumegoSection
-              key={group.id}
+              groupIndex={index}
+              key={index}
               group={group}
               onSelect={handleSelectTsumego}
             />
@@ -273,8 +265,11 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   // グリッド（FlatListの代わり）
-  grid: { flexDirection: "row", flexWrap: "wrap" },
-  gridItem: { width: "50%" },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-around",
+  },
 
   // 展開ボタン
   expandButton: {

@@ -1,12 +1,11 @@
 // Tsumego.tsx
-import { CPUMessage } from "@/src/components/CPUMessage";
 import { GoBoard } from "@/src/components/GoBoard";
 import { StarBackground } from "@/src/components/StarBackGround";
+import { TextPanel } from "@/src/components/TextPanel";
 import { Agehama } from "@/src/constants/goConstants";
 import {
   applyMove,
   Board,
-  // BOARD_SIZE_COUNT,
   cloneBoard,
   Color,
   getOppositeColor,
@@ -24,12 +23,14 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GoNode, Tsumego, TSUMEGO_GROUPS } from "../../src/lib/tsumegoData";
-
 export default function TsumegoPage() {
+  const { height } = useWindowDimensions();
+
   const router = useRouter();
   const params = useLocalSearchParams();
   console.log("params:", params); // まず確認！
@@ -45,7 +46,7 @@ export default function TsumegoPage() {
 
   const [tsumegoId, setTsumegoId] = useState(tsumegoIndex);
   const group =
-    TSUMEGO_GROUPS.find((g) => g.id === groupId) ?? TSUMEGO_GROUPS[0];
+    TSUMEGO_GROUPS.find((g, index) => index === groupId) ?? TSUMEGO_GROUPS[0];
   const tsumego = group.data[tsumegoId] ?? group.data[0];
 
   const [displayedText, setDisplayedText] = useState("");
@@ -89,6 +90,8 @@ export default function TsumegoPage() {
     return arr[randomIndex];
   }
   const [showQuiz, setShowQuiz] = useState<boolean>(false);
+
+  const [pinPoints, setPinPoints] = useState<string[] | undefined>(undefined);
 
   useEffect(() => {
     handleReset();
@@ -169,20 +172,26 @@ export default function TsumegoPage() {
   const handlePutStone = async (grid: Grid, boardSize: number) => {
     if (gameOver || disabled) return;
 
-    // 合法でなければ何もしない
-    if (
-      !isLegalMove(
-        boardSize,
-        grid,
-        currentBoardRef.current,
-        lastMove,
-        currentColorRef.current,
-        boardHistoryRef.current[boardHistoryRef.current.length - 2] ||
-          initializeBoard(boardSize),
-      )
-    ) {
-      animateText("そこには打てないよ");
-      return false;
+    if (pinPoints !== undefined && pinPoints.includes(stringifyGrid(grid))) {
+      // ピンポイントが存在するときの挙動
+      setPinPoints(undefined);
+      setShowQuiz(false);
+    } else {
+      // 合法でなければ何もしない
+      if (
+        !isLegalMove(
+          boardSize,
+          grid,
+          currentBoardRef.current,
+          lastMove,
+          currentColorRef.current,
+          boardHistoryRef.current[boardHistoryRef.current.length - 2] ||
+            initializeBoard(boardSize),
+        )
+      ) {
+        animateText("そこには打てないよ");
+        return false;
+      }
     }
 
     // 合法手なので石を配置
@@ -235,13 +244,16 @@ export default function TsumegoPage() {
     } else {
       // 登録されていない手
       setDisabled(true);
-      animateText("おしい！もっといい手があるかも");
+      animateText("おしい！ふせいかい");
     }
   };
 
   const handleReset = async () => {
     // 初期準備編
     setShowQuiz(false);
+    setPinPoints(undefined);
+    setGameOver(false);
+    setIsCorrect(false);
     currentGoNodeRef.current = tsumego;
     if (tsumego.isNextBlack === false) {
       currentColorRef.current = "white";
@@ -291,9 +303,16 @@ export default function TsumegoPage() {
     // クイズならクイズを表示
     if (currentGoNodeRef.current.quizChoice !== undefined) {
       setShowQuiz(true);
+
+      const ppList = currentGoNodeRef.current.quizChoice.filter((str) =>
+        /\d{1,2},\d{1,2}/.test(str),
+      );
+
+      if (ppList.length > 0) {
+        setPinPoints(ppList);
+      }
     }
-    setGameOver(false);
-    setIsCorrect(false);
+
     setDisabled(false);
   };
 
@@ -304,8 +323,16 @@ export default function TsumegoPage() {
     });
   };
 
+  const handleBefore = () => {
+    setTsumegoId((prev) => {
+      if (prev <= 0) return prev;
+      return prev - 1;
+    });
+  };
+
   const handleQuizChoice = (choice: string) => {
     setShowQuiz(false);
+    setPinPoints(undefined);
     // 手を探す
     const nextNode = currentGoNodeRef.current.nexts?.find(
       (node) => node.move === choice,
@@ -348,25 +375,43 @@ export default function TsumegoPage() {
           <View style={styles.boardWrapper}>
             <View style={styles.boardWrapper}>
               <GoBoard
-                boardSize={tsumego.board.length}
+                boardWidth={(height * 34) / 100}
+                intersections={tsumego.board.length}
                 territoryBoard={teritoryBoardRef.current}
-                showTerritory={true}
                 disabled={false}
                 moveHistory={movesRef.current}
                 currentIndex={currentIndexRef.current}
                 board={currentBoard}
                 onPutStone={handlePutStone}
                 agehamaHistory={agehamaHistory}
-                pinPoint="3,3"
+                pinPoints={pinPoints}
+                matchType={0}
+                isGameEnded={false}
+                boardHistory={[]}
+                onCurrentIndexChange={function (newIndex: number): void {
+                  throw new Error("Function not implemented.");
+                }}
               />
             </View>
           </View>
 
           {/* 説明パネル */}
-          <CPUMessage text={displayedText} fadeAnim={fadeAnim} />
+          <TextPanel text={displayedText} fadeAnim={fadeAnim} />
 
           {/* ナビゲーション */}
-          <View style={styles.navigationButtons}>
+          <View
+            style={[styles.navigationButtons, { height: (height * 8) / 100 }]}
+          >
+            {/* 戻るボタン（正解時のみ） */}
+            {gameOver && isCorrect && isAnimationComplete && 0 < tsumegoId && (
+              <TouchableOpacity
+                style={[styles.navButton, styles.buttonComplete]}
+                onPress={handleBefore}
+              >
+                <Text style={styles.navButtonText}>← 前の問題へ</Text>
+              </TouchableOpacity>
+            )}
+
             {/* リセットボタン */}
             <TouchableOpacity
               style={[styles.navButton, styles.buttonReset]}
@@ -435,25 +480,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     paddingHorizontal: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
     elevation: 5,
   },
   boardWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
+    paddingTop: 4,
+    paddingBottom: 16,
   },
   boardContainer: {
     backgroundColor: "#daa520",
     padding: 8,
     borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
     elevation: 4,
   },
   explanationContainer: {
@@ -469,53 +507,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  characterImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-  },
-  speechBubble: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    minHeight: 100,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 2,
-    borderColor: "#e8f4f8",
-    position: "relative",
-  },
-  bubbleTriangle: {
-    position: "absolute",
-    left: -10,
-    top: 20,
-    width: 0,
-    height: 0,
-    backgroundColor: "transparent",
-    borderStyle: "solid",
-    borderRightWidth: 10,
-    borderTopWidth: 10,
-    borderBottomWidth: 10,
-    borderLeftWidth: 0,
-    borderRightColor: "#e8f4f8",
-    borderTopColor: "transparent",
-    borderBottomColor: "transparent",
-  },
-  explanationText: {
-    fontSize: 16,
-    color: "#2c3e50",
-    lineHeight: 24,
-    fontWeight: "500",
-  },
   navigationButtons: {
     flexDirection: "row",
     justifyContent: "center",
     paddingHorizontal: 8,
-    paddingBottom: 16,
+    paddingBottom: 8,
     gap: 12,
   },
   navButton: {

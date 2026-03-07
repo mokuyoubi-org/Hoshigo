@@ -1,26 +1,25 @@
-// CPUMessage.tsx
+// TextPanel.tsx
 
 import React from "react";
-import { Animated, Image, StyleSheet, Text, View } from "react-native";
-import { ICONS } from "../../src/constants/icons";
-
-// テキストだけ別コンポーネントに切り出す
-const CPUMessageText = React.memo(({ text }: { text: string }) => {
-  return <Text style={styles.explanationText}>{text}</Text>;
-});
+import { Animated, Image, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { ICONS } from "../constants/icons";
 
 type Props = {
   text: string;
   fadeAnim: Animated.Value;
 };
 
-const CPUMessageComponent = ({ text, fadeAnim }: Props) => {
+const TextPanelComponent = ({ text, fadeAnim }: Props) => {
+    const { width, height } = useWindowDimensions();
+  
   return (
     // ← ここはアニメなしの普通のView
     <View style={styles.explanationContainer}>
-      <View style={styles.characterContainer}>
+      <View
+        style={[styles.characterContainer, { height: (height * 12) / 100 }]}
+      >
         <Image
-          source={{ uri: ICONS[90] }}
+          source={ICONS[90]}
           style={styles.characterImage}
           resizeMode="contain"
         />
@@ -37,7 +36,7 @@ const CPUMessageComponent = ({ text, fadeAnim }: Props) => {
   );
 };
 
-export const CPUMessage = React.memo(CPUMessageComponent);
+export const TextPanel = React.memo(TextPanelComponent);
 
 const styles = StyleSheet.create({
   explanationContainer: {
@@ -49,7 +48,6 @@ const styles = StyleSheet.create({
   },
   characterContainer: {
     width: 80,
-    height: 80,
     justifyContent: "center",
     alignItems: "center",
   },

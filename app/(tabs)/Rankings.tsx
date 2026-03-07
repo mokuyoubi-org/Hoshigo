@@ -1,5 +1,3 @@
-
-
 // import LoadingOverlay from "@/src/components/LoadingOverlay";
 // import { ICONS } from "@/src/constants/icons";
 // import { useTheme } from "@/src/hooks/useTheme";
@@ -377,12 +375,15 @@
 //   },
 // });
 
-
 import LoadingOverlay from "@/src/components/LoadingOverlay";
+import { StarBackground } from "@/src/components/StarBackGround";
+import { GOLD, SILVER, BRONZE, STRAWBERRY, CHOCOLATE, BACKGROUND, CHOCOLATE_SUB } from "@/src/constants/colors";
 import { ICONS } from "@/src/constants/icons";
 import { useTheme } from "@/src/hooks/useTheme";
 import { GUMI_DATA } from "@/src/lib/gumiUtils";
 import { supabase } from "@/src/services/supabase";
+import { AntDesign } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -395,24 +396,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import { AntDesign } from "@expo/vector-icons";
-import { StarBackground } from "@/src/components/StarBackGround";
-
-// ─── Homeページに合わせたカラー ───────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
-
-// ランクカラー（少し優しい色合いに）
-const GOLD   = "#d4af37";
-const SILVER = "#b8b8c0";
-const BRONZE = "#cd7f32";
 
 const RANK_COLORS: Record<number, { color: string; label: string }> = {
-  1: { color: GOLD,   label: "I"   },
-  2: { color: SILVER, label: "II"  },
+  1: { color: GOLD, label: "I" },
+  2: { color: SILVER, label: "II" },
   3: { color: BRONZE, label: "III" },
 };
 
@@ -452,24 +439,17 @@ const RankingItem = ({
 
   return (
     <Animated.View style={[styles.itemContainer, { opacity: fadeIn }]}>
-      <View style={[styles.card, 
-        // isTop3 && { borderColor: `${rankMeta.color}50` }
-        ]}>
-
+      <View
+        style={[
+          styles.card,
+          // isTop3 && { borderColor: `${rankMeta.color}50` }
+        ]}
+      >
         <View style={styles.cardContent}>
           {/* 順位 */}
           {isTop3 ? (
-            <View style={[
-              styles.topRankBadge,
-              {
-                // borderColor: `${rankMeta.color}60`,
-                // backgroundColor: `${rankMeta.color}15`,
-                // shadowColor: rankMeta.color,
-              }
-            ]}>
-
-
-<AntDesign name="crown" size={24} color={rankMeta.color} />
+            <View style={[styles.topRankBadge]}>
+              <AntDesign name="crown" size={24} color={rankMeta.color} />
             </View>
           ) : (
             <View style={styles.normalRank}>
@@ -483,19 +463,19 @@ const RankingItem = ({
               style={[
                 styles.avatarBorder,
                 {
-                  borderColor: 
+                  borderColor:
                     gumiColor !== "shirogumi"
-                    ? colors[gumiColor]
-                    : "transparent",
+                      ? colors[gumiColor]
+                      : "transparent",
                   backgroundColor: "#ffffff",
-                  shadowColor: isTop3 ? rankMeta.color : STRAWBERRY,
-                  shadowOpacity: isTop3 ? 0.4 : 0.15,
-                  shadowRadius: isTop3 ? 10 : 6,
+                  shadowColor: STRAWBERRY,
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
                 },
               ]}
             >
               <Image
-                source={{uri : ICONS[item.icon_index]}}
+                source={ICONS[item.icon_index]}
                 style={styles.avatarIcon}
                 resizeMode="contain"
               />
@@ -505,12 +485,14 @@ const RankingItem = ({
           {/* 名前 */}
           <View style={styles.infoContainer}>
             <Text
-              style={[styles.name, isTop3 && { color: CHOCOLATE, fontWeight: "800" }]}
+              style={[
+                styles.name,
+                isTop3 && { color: CHOCOLATE, fontWeight: "800" },
+              ]}
               numberOfLines={1}
             >
               {item.displayname}
             </Text>
-            {/* <Text style={styles.pointsText}>{item.points.toLocaleString()} pt</Text> */}
           </View>
         </View>
       </View>
@@ -561,11 +543,9 @@ export default function Rankings() {
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
 
-             <StarBackground />   
-      
+      <StarBackground />
 
       <Animated.View style={[styles.content, { opacity: fadeIn }]}>
-
         {/* リスト */}
         <FlatList
           data={profiles}
@@ -688,14 +668,9 @@ const styles = StyleSheet.create({
   topRankBadge: {
     width: 42,
     height: 42,
-    // borderRadius: 12,
-    // borderWidth: 1.5,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 14,
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.3,
-    // shadowRadius: 6,
   },
   topRankText: {
     fontSize: 14,

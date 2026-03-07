@@ -16,13 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRevenueCat } from "../../src/hooks/useRevenueCat";
 import { useTheme } from "../../src/hooks/useTheme";
 import { StarBackground } from "@/src/components/StarBackGround";
+import { BACKGROUND, STRAWBERRY, GOLD, CHOCOLATE, CHOCOLATE_SUB } from "@/src/constants/colors";
 
-// ─── Homeページに合わせたカラー ───────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
-const GOLD = "#d4af37"; // プレミアム用
+
 
 interface CustomCustomerCenterScreenProps {
   onDismiss?: () => void;

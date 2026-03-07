@@ -280,6 +280,7 @@ export const movesToBoardHistory = (
   return { boardHistory, agehamaHistory };
 };
 
+export type territoryBoard = number[][];
 // BoardおよびdeadStones(str)を受け取ったら、territoryBoardと結果を返す関数
 export const makeTerritoryBoard = (
   boardSize: number,
@@ -363,8 +364,6 @@ export const resultToLanguages = (result: string) => {
   } else return;
 };
 
-
-
 export const movesToOpeningIndex = (moves: string[]): number => {
   return 0;
 };
@@ -420,6 +419,13 @@ export const prepareOkigoBoard = (
       board = applyMove(boardSize, { row: 7, col: 7 }, board, "black").board;
       board = applyMove(boardSize, { row: 7, col: 3 }, board, "black").board;
       board = applyMove(boardSize, { row: 3, col: 7 }, board, "black").board;
+      break;
+    case 5: // 5子局
+      board = applyMove(boardSize, { row: 3, col: 3 }, board, "black").board;
+      board = applyMove(boardSize, { row: 7, col: 7 }, board, "black").board;
+      board = applyMove(boardSize, { row: 7, col: 3 }, board, "black").board;
+      board = applyMove(boardSize, { row: 3, col: 7 }, board, "black").board;
+      board = applyMove(boardSize, { row: 5, col: 5 }, board, "black").board;
       break;
   }
   return board;

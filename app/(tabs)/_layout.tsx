@@ -5,14 +5,9 @@ import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Platform, StyleSheet, View } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
+import { CHOCOLATE, INACTIVE, BACKGROUND, STRAWBERRY_DIM, STRAWBERRY } from "@/src/constants/colors";
 
-// Homeページに合わせたカラー
-const STRAWBERRY = "#c8d6e6";
-const STRAWBERRY_DIM = "rgba(200,214,230,0.15)";
-const BG = "#f9fafb";
-const INACTIVE = "rgba(90,58,74,0.35)";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
+
 
 // カスタムタブアイコン（ふわふわアニメーション付き）
 const TabIcon = ({
@@ -106,7 +101,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: CHOCOLATE,
         tabBarInactiveTintColor: INACTIVE,
         tabBarStyle: {
-          backgroundColor: BG,
+          backgroundColor: BACKGROUND,
           borderTopWidth: 1.5,
           borderTopColor: STRAWBERRY_DIM,
           height: Platform.OS === "ios" ? 88 : 72,

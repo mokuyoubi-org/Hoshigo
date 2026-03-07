@@ -12,8 +12,9 @@ import { Agehama } from "../constants/goConstants";
 import { ICONS } from "../constants/icons";
 import { useTheme } from "../hooks/useTheme";
 import { Board, GoString, Grid } from "../lib/goLogics";
+import { ReplayControls } from "./ReplayControls";
 
-// ─── AgehamaDisplay（UIのみ変更） ────────────────────
+// ─── AgehamaDisplay ────────────────────
 const AgehamaDisplay: React.FC<{ count: number; isBlack: boolean }> = ({
   count,
   isBlack,
@@ -60,50 +61,62 @@ const AgehamaDisplay: React.FC<{ count: number; isBlack: boolean }> = ({
   );
 };
 
-// ─── 型定義（変更なし） ───────────────────────────────
 interface GoBoardProps {
-  matchType?: number;
-  topBar?: boolean;
-  boardSize?: number;
-  currentIndex: number;
-  board: Board;
-  onPutStone: (grid: Grid, boardSize: number) => void;
-  moveHistory?: string[];
-  territoryBoard?: number[][];
-  showTerritory?: boolean;
-  disabled?: boolean;
-  stoneShadow?: boolean;
-  agehamaHistory: Agehama[];
-  boardPixelSize?: number;
-  pinPoint?: string;
+  matchType: number; //⭕️
+  // 盤面関連
+  board: Board; //⭕️
+  onPutStone: (grid: Grid, boardSize: number) => void; //⭕️
+  moveHistory?: string[]; //⭕️
+  territoryBoard?: number[][]; //⭕️
+  disabled?: boolean; //⭕️
+  boardWidth: number; //⭕️
+  intersections?: number; //⭕️
+
+  // ゲーム状態
+  isGameEnded: boolean;
+
+  // リプレイ関連
+  boardHistory: Board[]; // 盤面の履歴
+  currentIndex: number; //⭕️
+  onCurrentIndexChange: (newIndex: number) => void;
+
+  // オプション
+  boardBackgroundColor?: string;
+  lineColor?: string;
+  stoneShadow?: boolean; //⭕️
+  agehamaHistory: Agehama[]; //⭕️
+  topBar?: boolean; //⭕️
+  pinPoints?: string[]; //⭕️
 }
 
-// ─── GoBoard（ロジック変更なし、UIのみ変更） ──────────
 export const GoBoard: React.FC<GoBoardProps> = ({
-  matchType = 0,
-  topBar = true,
-  boardSize = 9,
-  currentIndex,
+  matchType,
+
+  intersections: boardSize = 9,
   board,
   onPutStone,
   moveHistory = [],
   territoryBoard,
-  showTerritory = false,
+
   disabled = false,
-  stoneShadow = true,
+  isGameEnded,
+  boardHistory,
+  currentIndex: currentIndex,
+  onCurrentIndexChange: onReplayIndexChange,
+
+  stoneShadow,
   agehamaHistory,
-  boardPixelSize = 300,
-  pinPoint,
+  boardWidth,
+  topBar = true,
+  pinPoints,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-
-  // ── ロジック（変更なし） ──
-  const BOARD_PIXEL_SIZE = boardPixelSize;
-  const CELL_SIZE = BOARD_PIXEL_SIZE / (boardSize - 1);
-  const STONE_PIXEL_SIZE = CELL_SIZE * 0.9;
-  const LINE_WIDTH = Math.max(1, BOARD_PIXEL_SIZE / 200);
-  const STAR_POINT_SIZE = Math.max(4, CELL_SIZE / 3);
+  const cellSize = boardWidth / (boardSize - 1);
+  const stoneSize = cellSize * 0.9;
+  const lineWidth = Math.max(1, boardWidth / 200);
+  const paddingSize = boardWidth * 0.16;
+  const radiusSize = boardWidth * 0.06;
 
   const currentMoveCoords =
     moveHistory.length > 0 && moveHistory[currentIndex - 1] !== "p"
@@ -134,12 +147,12 @@ export const GoBoard: React.FC<GoBoardProps> = ({
       return color === "black"
         ? {
             backgroundColor: colors.blackStoneCurrent,
-            borderWidth: STONE_PIXEL_SIZE * 0.2,
+            borderWidth: stoneSize * 0.2,
             borderColor: colors.blackStone,
           }
         : {
             backgroundColor: colors.whiteStoneCurrent,
-            borderWidth: STONE_PIXEL_SIZE * 0.2,
+            borderWidth: stoneSize * 0.2,
             borderColor: colors.whiteStone,
           };
     }
@@ -158,10 +171,10 @@ export const GoBoard: React.FC<GoBoardProps> = ({
     isPass &&
     ((currentIndex % 2 === 0 && (matchType === 0 || matchType === 1)) ||
       (currentIndex % 2 === 1 && matchType !== 0 && matchType !== 1));
-  const dynamicPadding = boardPixelSize * 0.16;
-  const dynamicRadius = boardPixelSize * 0.06;
+
   const icon = ICONS[80];
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  // これは手の話だ。
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -180,246 +193,244 @@ export const GoBoard: React.FC<GoBoardProps> = ({
       ]),
     ).start();
   }, []);
-  // ── UI ──
+
+  // 表示する盤面を決定
+  const displayBoard = isGameEnded ? boardHistory[currentIndex] : board;
+
+  // 陣地を表示するかどうか（リプレイの最後のみ）
+  const showTerritory = isGameEnded && currentIndex === boardHistory.length - 1;
+
+  // 一つ前に戻るボタンを押した時の処理
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      onReplayIndexChange(currentIndex - 1);
+    }
+  };
+  // 一つ次に進むボタンを押した時の処理
+  const handleNext = () => {
+    if (currentIndex < boardHistory.length - 1) {
+      onReplayIndexChange(currentIndex + 1);
+    }
+  };
+  // スライダーを動かした時の処理
+  const handleSliderChange = (value: number) => {
+    onReplayIndexChange(Math.round(value));
+  };
+
   return (
     <View style={styles.container}>
-      {/* ── トップバー（アゲハマ・パス表示） ── */}
-      {topBar && (
-        <View style={styles.topInfoContainer}>
-          {/* 黒のアゲハマ */}
-          <View style={styles.agehamaSection}>
-            <AgehamaDisplay
-              count={agehamaHistory[currentIndex].black}
-              isBlack={true}
-            />
-          </View>
-
-          {/* パス表示 */}
-          <View style={styles.passIndicatorContainer}>
-            {isBlackPass && (
-              <View style={styles.passBadgeBlack}>
-                <View style={styles.passBadgeDot} />
-                <Text style={styles.passBadgeTextBlack}>
-                  {t("GoBoard.blackPass")}
-                </Text>
-              </View>
-            )}
-            {isWhitePass && (
-              <View style={styles.passBadgeWhite}>
-                <View
-                  style={[styles.passBadgeDot, { backgroundColor: "#1a1a1a" }]}
-                />
-                <Text style={styles.passBadgeTextWhite}>
-                  {t("GoBoard.whitePass")}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* 白のアゲハマ */}
-          <View style={[styles.agehamaSection, styles.agehamaSectionRight]}>
-            <AgehamaDisplay
-              count={agehamaHistory[currentIndex].white}
-              isBlack={false}
-            />
-          </View>
-        </View>
-      )}
-
-      <View
-        style={[
-          styles.boardContainer,
-          {
-            backgroundColor: colors.gridBackground,
-            borderColor: "rgba(201,168,76,0.2)",
-            padding: dynamicPadding,
-            borderRadius: dynamicRadius,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.boardWrapper,
-            { width: BOARD_PIXEL_SIZE, height: BOARD_PIXEL_SIZE },
-          ]}
-        >
-          {/* 盤線 */}
-          {Array.from({ length: boardSize }).map((_, i) => (
-            <React.Fragment key={`line-${i}`}>
-              <View
-                style={[
-                  styles.verticalLine,
-                  {
-                    left: i * CELL_SIZE,
-                    backgroundColor: colors.gridLine,
-                    height: BOARD_PIXEL_SIZE,
-                    width: LINE_WIDTH,
-                  },
-                ]}
+      {/* 碁盤 */}
+      <View style={styles.container}>
+        {/* ── トップバー（アゲハマ・パス表示） ── */}
+        {topBar && (
+          <View style={styles.topInfoContainer}>
+            {/* 黒のアゲハマ */}
+            <View style={styles.agehamaSection}>
+              <AgehamaDisplay
+                count={agehamaHistory[currentIndex].black}
+                isBlack={true}
               />
-              <View
-                style={[
-                  styles.horizontalLine,
-                  {
-                    top: i * CELL_SIZE,
-                    backgroundColor: colors.gridLine,
-                    width: BOARD_PIXEL_SIZE,
-                    height: LINE_WIDTH,
-                  },
-                ]}
-              />
-            </React.Fragment>
-          ))}
+            </View>
 
-          {/* 星 */}
-          {boardSize === 9 && (
-            <>
-              {[
-                [3, 3],
-                [3, 7],
-                [7, 3],
-                [7, 7],
-                [5, 5],
-              ].map(([row, col]) => (
-                <StarPoint
-                  key={`star-${row}-${col}`}
-                  row={row}
-                  col={col}
-                  colors={colors}
-                  CELL_SIZE={CELL_SIZE}
-                  starSize={STAR_POINT_SIZE}
-                />
-              ))}
-            </>
-          )}
-
-          {/* 碁石・着手可能エリア */}
-          {Object.entries(board).map(([key, goString]) => {
-            const [row, col] = key.split(",").map(Number);
-            const territoryValue = territoryBoard?.[row - 1]?.[col - 1];
-
-            return (
-              <Pressable
-                key={key}
-                onPress={() => !disabled && onPutStone({ row, col }, boardSize)}
-                style={[
-                  styles.intersection,
-                  {
-                    left: (col - 1) * CELL_SIZE - CELL_SIZE / 2 + 1,
-                    top: (row - 1) * CELL_SIZE - CELL_SIZE / 2 + 1,
-                    width: CELL_SIZE,
-                    height: CELL_SIZE,
-                  },
-                ]}
-                disabled={disabled}
-              >
-                {goString && (
-                  <View>
-                    <View
-                      style={[
-                        styles.stone,
-                        getStoneStyle(goString, row, col, territoryValue),
-                        !stoneShadow && styles.noShadow,
-                        {
-                          width: STONE_PIXEL_SIZE,
-                          height: STONE_PIXEL_SIZE,
-                          borderRadius: STONE_PIXEL_SIZE / 2,
-                        },
-                      ]}
-                    />
-                    {territoryValue === 3 && showTerritory && (
-                      <View
-                        style={[
-                          styles.emptyGrid,
-                          {
-                            width: STONE_PIXEL_SIZE / 2,
-                            height: STONE_PIXEL_SIZE / 2,
-                            borderRadius: Math.max(2, STONE_PIXEL_SIZE / 8),
-                            backgroundColor:
-                              goString.color === "black"
-                                ? colors.whiteStone
-                                : colors.blackStone,
-                          },
-                          styles.territoryOnStone,
-                        ]}
-                      />
-                    )}
-                  </View>
-                )}
-
-                {!goString && showTerritory && territoryBoard && (
+            {/* パス表示 */}
+            <View style={styles.passIndicatorContainer}>
+              {isBlackPass && (
+                <View style={styles.passBadgeBlack}>
+                  <View style={styles.passBadgeDot} />
+                  <Text style={styles.passBadgeTextBlack}>
+                    {t("GoBoard.blackPass")}
+                  </Text>
+                </View>
+              )}
+              {isWhitePass && (
+                <View style={styles.passBadgeWhite}>
                   <View
                     style={[
-                      styles.emptyGrid,
-                      {
-                        width: STONE_PIXEL_SIZE / 2,
-                        height: STONE_PIXEL_SIZE / 2,
-                        borderRadius: Math.max(2, STONE_PIXEL_SIZE / 8),
-                        backgroundColor:
-                          territoryValue === 1
-                            ? colors.blackStone
-                            : territoryValue === 2
-                              ? colors.whiteStone
-                              : "transparent",
-                      },
-                      territoryValue === 0 && styles.transparent,
+                      styles.passBadgeDot,
+                      { backgroundColor: "#1a1a1a" },
                     ]}
                   />
-                )}
+                  <Text style={styles.passBadgeTextWhite}>
+                    {t("GoBoard.whitePass")}
+                  </Text>
+                </View>
+              )}
+            </View>
 
-                {key === pinPoint && (
-                  <Animated.Image
-                    source={{ uri: icon }}
-                    style={[
-                      styles.iconImage,
-                      {
-                        transform: [{ scale: scaleAnim }],
-                        zIndex: 10,
-                      },
-                    ]}
-                    resizeMode="contain"
-                  />
-                )}
-              </Pressable>
-            );
-          })}
+            {/* 白のアゲハマ */}
+            <View style={[styles.agehamaSection, styles.agehamaSectionRight]}>
+              <AgehamaDisplay
+                count={agehamaHistory[currentIndex].white}
+                isBlack={false}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* 碁盤のうち、本体部分 */}
+        <View
+          style={[
+            styles.boardContainer,
+            {
+              backgroundColor: colors.gridBackground,
+              borderColor: "rgba(201,168,76,0.2)",
+              padding: paddingSize,
+              borderRadius: radiusSize,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.boardWrapper,
+              { width: boardWidth, height: boardWidth },
+            ]}
+          >
+            {/* 盤線 */}
+            {Array.from({ length: boardSize }).map((_, i) => (
+              <React.Fragment key={`line-${i}`}>
+                <View
+                  style={[
+                    styles.verticalLine,
+                    {
+                      left: i * cellSize,
+                      backgroundColor: colors.gridLine,
+                      height: boardWidth,
+                      width: lineWidth,
+                    },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.horizontalLine,
+                    {
+                      top: i * cellSize,
+                      backgroundColor: colors.gridLine,
+                      width: boardWidth,
+                      height: lineWidth,
+                    },
+                  ]}
+                />
+              </React.Fragment>
+            ))}
+
+            {/* 碁石・着手可能エリア */}
+            {Object.entries(board).map(([key, goString]) => {
+              const [row, col] = key.split(",").map(Number);
+              const territoryValue = territoryBoard?.[row - 1]?.[col - 1];
+
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() =>
+                    !disabled && onPutStone({ row, col }, boardSize)
+                  }
+                  style={[
+                    styles.intersection,
+                    {
+                      left: (col - 1) * cellSize - cellSize / 2 + 1,
+                      top: (row - 1) * cellSize - cellSize / 2 + 1,
+                      width: cellSize,
+                      height: cellSize,
+                    },
+                  ]}
+                  disabled={disabled}
+                >
+                  {/* 石 */}
+                  {goString && (
+                    <View
+                      style={{ justifyContent: "center", alignItems: "center" }}
+                    >
+                      <View
+                        style={[
+                          styles.stone,
+                          getStoneStyle(goString, row, col, territoryValue), // ここで石自体の透明度を決めている
+                          !stoneShadow && styles.noShadow,
+                          {
+                            width: stoneSize,
+                            height: stoneSize,
+                            borderRadius: stoneSize / 2,
+                          },
+                        ]}
+                      />
+                      {/* 半透明の死に石の上にも小さな四角を置く */}
+                      {territoryValue === 3 && showTerritory && (
+                        <View
+                          style={[
+                            styles.emptyGrid,
+                            {
+                              width: stoneSize / 2, // 小さい四角
+                              height: stoneSize / 2, // 小さい四角
+                              borderRadius: Math.max(2, stoneSize / 8), // ちょっとした丸み
+                              backgroundColor:
+                                goString.color === "black"
+                                  ? colors.whiteStone
+                                  : colors.blackStone,
+                            },
+                            styles.territoryOnStone,
+                          ]}
+                        />
+                      )}
+                    </View>
+                  )}
+                  {/* 空点 */}
+                  {!goString && showTerritory && territoryBoard && (
+                    <View
+                      style={[
+                        styles.emptyGrid,
+                        {
+                          width: stoneSize / 2,
+                          height: stoneSize / 2,
+                          borderRadius: Math.max(2, stoneSize / 8),
+                          backgroundColor:
+                            territoryValue === 1
+                              ? colors.blackStone
+                              : territoryValue === 2
+                                ? colors.whiteStone
+                                : "transparent",
+                        },
+                        territoryValue === 0 && styles.transparent,
+                      ]}
+                    />
+                  )}
+                  {/* ピンポイント */}
+                  {pinPoints !== undefined && pinPoints.includes(key) && (
+                    <Animated.Image
+                      source={icon}
+                      style={[
+                        styles.iconImage,
+                        {
+                          transform: [{ scale: scaleAnim }],
+                          zIndex: 10,
+                        },
+                      ]}
+                      resizeMode="contain"
+                    />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       </View>
+
+      {/* リプレイコントロール（終局後のみ表示） */}
+      {isGameEnded && (
+        <ReplayControls
+          currentIndex={currentIndex}
+          maxIndex={boardHistory.length - 1}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onSliderChange={handleSliderChange}
+        />
+      )}
     </View>
   );
 };
 
-// ─── StarPoint ────────────────────────────
-const StarPoint: React.FC<{
-  row: number;
-  col: number;
-  colors: any;
-  CELL_SIZE: number;
-  starSize: number;
-}> = ({ row, col, colors, CELL_SIZE, starSize }) => (
-  <View
-    style={[
-      styles.starPoint,
-      {
-        left: (col - 1) * (CELL_SIZE + 0.2),
-        top: (row - 1) * (CELL_SIZE + 0.2),
-        backgroundColor: colors.gridLine,
-        width: starSize,
-        height: starSize,
-        borderRadius: starSize / 2,
-        transform: [
-          { translateX: -starSize / 2 },
-          { translateY: -starSize / 2 },
-        ],
-      },
-    ]}
-  />
-);
-
-// ─── スタイル ──────────────────────────────────────────
-
 const styles = StyleSheet.create({
   container: {
+    alignItems: "center",
+    gap: 16,
     width: "100%",
   },
   iconImage: {

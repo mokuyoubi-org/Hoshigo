@@ -3,6 +3,7 @@ import {
   SubscriptionInfoModal,
   type InfoModalVariant,
 } from "@/src/components/SubscriptionInfoModal";
+import { BACKGROUND, STRAWBERRY, GOLD, CHOCOLATE_SUB, CHOCOLATE } from "@/src/constants/colors";
 import { useRevenueCat } from "@/src/hooks/useRevenueCat";
 import { useTheme } from "@/src/hooks/useTheme";
 import {
@@ -25,13 +26,6 @@ import {
 } from "react-native";
 import type { PurchasesOffering } from "react-native-purchases";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// ─── Homeページに合わせたカラー ───────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
-const GOLD = "#d4af37"; // プレミアム用ゴールド
 
 // ─── 型定義（変更なし） ───────────────────────────────
 interface CustomPaywallScreenProps {

@@ -21,18 +21,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GoBoardWithReplay } from "../../src/components/GoBoardWithReplay";
+import { GoBoard } from "../../src/components/GoBoard";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 import { PlayerCard } from "../../src/components/PlayerCard";
 import { useTheme } from "../../src/hooks/useTheme";
 import { Board, initializeBoard } from "../../src/lib/goLogics";
 import { supabase } from "../../src/services/supabase";
+import { STRAWBERRY, CHOCOLATE_SUB, BACKGROUND, CHOCOLATE } from "@/src/constants/colors";
 
-// ─── カラー定数 ───────────────────────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
+
 
 // ─── リトライ設定 ─────────────────────────────────────
 const MAX_RETRY_COUNT = 5;
@@ -138,7 +135,7 @@ const MatchCard = React.memo(
         </View>
 
         <View style={styles.boardWrapper}>
-          <GoBoardWithReplay
+          <GoBoard
             matchType={data.matchType}
             agehamaHistory={data.agehamaHistory}
             board={board}
@@ -150,6 +147,7 @@ const MatchCard = React.memo(
             boardHistory={data.boardHistory}
             currentIndex={replayIndex}
             onCurrentIndexChange={setReplayIndex}
+            boardWidth={0}
           />
         </View>
       </Animated.View>
@@ -311,10 +309,12 @@ export default function Watch() {
                   updated.boardHistory[updated.boardHistory.length - 1],
                   moveNumbersToStrings(payload.new.dead_stones),
                   current.matchType,
-                  updated.agehamaHistory[updated.agehamaHistory.length - 1]
-                    .black,
-                  updated.agehamaHistory[updated.agehamaHistory.length - 1]
-                    .white,
+                  // updated.agehamaHistory[updated.agehamaHistory.length - 1]
+                  //   .black,
+                  // updated.agehamaHistory[updated.agehamaHistory.length - 1]
+                  //   .white,
+                  0,
+                  0,
                 ).territoryBoard;
               }
             }
@@ -496,12 +496,7 @@ export default function Watch() {
         >
           {matchCardsData.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Image
-                source={{
-                  uri: ICONS[90],
-                }}
-                style={{ width: 80, height: 80 }}
-              />
+              <Image source={ICONS[90]} style={{ width: 80, height: 80 }} />
               <Text style={styles.emptyText}>{t("Watch.noMatches")}</Text>
               <Text style={styles.emptyHint}>
                 {t("Watch.pullToRefreshHint")}

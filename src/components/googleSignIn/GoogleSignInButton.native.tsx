@@ -6,7 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Image, TouchableOpacity } from "react-native";
-import { supabase } from "../services/supabase";
+import { supabase } from "../../services/supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 

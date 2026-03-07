@@ -1,4 +1,4 @@
-import { GoBoardWithReplay } from "@/src/components/GoBoardWithReplay";
+import { GoBoard } from "@/src/components/GoBoard";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import { PlayerCard } from "@/src/components/PlayerCard";
 import { ResultModal } from "@/src/components/ResultModal";
@@ -11,7 +11,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   DisplayNameContext,
@@ -24,12 +30,12 @@ import {
   UserNameContext,
 } from "../../src/components/UserContexts";
 import {
-  Board,
-  Color,
-  Grid,
   applyMove,
+  Board,
   cloneBoard,
+  Color,
   getOppositeColor,
+  Grid,
   initializeBoard,
   isLegalMove,
   keyToGrid,
@@ -56,6 +62,8 @@ const SUBSCRIPTION_RETRY_DELAY_MS = 3_000; // リトライ間隔
 const GNU_API_TIMEOUT_MS = 30_000; // GNUGo APIのタイムアウト
 
 export default function Playing() {
+  const { height } = useWindowDimensions();
+
   const { t } = useTranslation();
   const params = useLocalSearchParams();
   const matchId = params.matchId;
@@ -112,13 +120,6 @@ export default function Playing() {
   const [myRemainSecondsDisplay, setMyRemainingSecondsDisplay] = useState(180);
   const [opponentsRemainSecondsDisplay, setOpponentsRemainingSecondsDisplay] =
     useState(180);
-
-  // 時間切れ負けデバッグ用
-  // const myRemainSecondsRef = useRef(10);
-  // const opponentsRemainSecondsRef = useRef(10);
-  // const [myRemainSecondsDisplay, setMyRemainingSecondsDisplay] = useState(10);
-  // const [opponentsRemainSecondsDisplay, setOpponentsRemainingSecondsDisplay] =
-  //   useState(10);
 
   const meLastSeenRef = useRef(Date.now());
   const opponentLastSeenRef = useRef(Date.now());
@@ -182,15 +183,15 @@ export default function Playing() {
 
     let delta: number;
     if (isWin) {
-      delta = Math.max(0, Math.min(10, 5 - Math.trunc(diff / 50)));
+      delta = Math.max(1, Math.min(19, 10 - Math.trunc((diff + 50) / 100)));
     } else {
-      delta = Math.max(0, Math.min(10, 5 + Math.trunc(diff / 50)));
+      delta = Math.max(1, Math.min(19, 10 + Math.trunc((diff - 50) / 100)));
     }
 
     if (isWin) {
       newPoints += delta;
     } else {
-      if (opponentsGames >= 100) {
+      if (opponentsGames >= 20) {
         newPoints -= delta;
       }
     }
@@ -322,8 +323,10 @@ export default function Playing() {
                 boardRef.current,
                 stringDeadStones,
                 0, // matchType
-                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
-                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
+                agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1]
+                  .black,
+                agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1]
+                  .white,
               ).territoryBoard;
               teritoryBoardRef.current = territoryBoard;
 
@@ -707,8 +710,10 @@ export default function Playing() {
             boardRef.current,
             [],
             0, // matchType
-                            agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
-                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
+            agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1]
+              .black,
+            agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1]
+              .white,
           );
           teritoryBoardRef.current = territoryBoard;
           const success = await updateSupabaseMatchesTable({
@@ -731,8 +736,10 @@ export default function Playing() {
             boardRef.current,
             stringDeadStones,
             0, // matchType
-                            agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].black,
-                agehamaHistoryRef.current[agehamaHistoryRef.current.length-1].white,
+            agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1]
+              .black,
+            agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1]
+              .white,
           );
           teritoryBoardRef.current = territoryBoard;
           const success = await updateSupabaseMatchesTable({
@@ -845,7 +852,6 @@ export default function Playing() {
       const now = new Date();
       myRemainSecondsRef.current++;
       setMyRemainingSecondsDisplay(myRemainSecondsRef.current);
-      // meLastSeenRef はローカルで更新しない（payloadで確認してから更新する設計）
       isHeartbeatInFlightRef.current = true; // 着手送信中フラグを立てる
 
       const success = await updateSupabaseMatchesTable({
@@ -928,7 +934,7 @@ export default function Playing() {
           isActive={true}
         />
 
-        <GoBoardWithReplay
+        <GoBoard
           matchType={0}
           agehamaHistory={agehamaHistory}
           board={board}
@@ -940,6 +946,7 @@ export default function Playing() {
           boardHistory={boardHistoryRef.current}
           currentIndex={currentIndexRef.current}
           onCurrentIndexChange={handleCurrentIndexChange}
+          boardWidth={height * (44 / 100)}
         />
 
         <PlayerCard
@@ -953,45 +960,47 @@ export default function Playing() {
           isActive={true}
         />
 
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              (!isMyTurn || isGameEnded) && styles.actionButtonDisabled,
-            ]}
-            onPress={pass}
-            disabled={!isMyTurn || isGameEnded}
-            activeOpacity={0.7}
-          >
-            <Text
+        {!isGameEnded && (
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
               style={[
-                styles.actionButtonText,
-                (!isMyTurn || isGameEnded) && styles.actionButtonTextDisabled,
+                styles.actionButton,
+                (!isMyTurn || isGameEnded) && styles.actionButtonDisabled,
               ]}
+              onPress={pass}
+              disabled={!isMyTurn || isGameEnded}
+              activeOpacity={0.7}
             >
-              {t("Playing.pass")}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.actionButtonText,
+                  (!isMyTurn || isGameEnded) && styles.actionButtonTextDisabled,
+                ]}
+              >
+                {t("Playing.pass")}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.resignButton,
-              (!isMyTurn || isGameEnded) && styles.resignButtonDisabled,
-            ]}
-            onPress={resign}
-            disabled={!isMyTurn || isGameEnded}
-            activeOpacity={0.7}
-          >
-            <Text
+            <TouchableOpacity
               style={[
-                styles.resignButtonText,
-                (!isMyTurn || isGameEnded) && styles.resignButtonTextDisabled,
+                styles.resignButton,
+                (!isMyTurn || isGameEnded) && styles.resignButtonDisabled,
               ]}
+              onPress={resign}
+              disabled={!isMyTurn || isGameEnded}
+              activeOpacity={0.7}
             >
-              {t("Playing.resign")}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <Text
+                style={[
+                  styles.resignButtonText,
+                  (!isMyTurn || isGameEnded) && styles.resignButtonTextDisabled,
+                ]}
+              >
+                {t("Playing.resign")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <ResultModal

@@ -1,4 +1,5 @@
 import { GoBoard } from "@/src/components/GoBoard";
+import { Agehama } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
 import {
   applyMove,
@@ -16,7 +17,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getTutorialScreens, MyScreen } from "../../src/components/TutorialData";
+import {
+  getTutorialScreens,
+  MyScreen,
+} from "../../src/components/TutorialData";
 import { DisplayNameContext } from "../../src/components/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 
@@ -31,17 +35,15 @@ export default function Tutorial() {
 
   // Board state
   const currentColorRef = useRef<Color>("black");
-  const [currentBoard, setBoard] = useState<Board>(initializeBoard());
-  const currentBoardRef = useRef<Board>(initializeBoard());
-  const boardHistoryRef = useRef<Board[]>([initializeBoard()]);
+  const [currentBoard, setBoard] = useState<Board>(initializeBoard(9));
+  const currentBoardRef = useRef<Board>(initializeBoard(9));
+  const boardHistoryRef = useRef<Board[]>([initializeBoard(9)]);
   const [agehamaHistory, setAgehamaHistory] = useState<Agehama[]>([
     { black: 0, white: 0 },
   ]);
   const agehamaHistoryRef = useRef<Agehama[]>([{ black: 0, white: 0 }]);
   const teritoryBoardRef = useRef<number[][]>( // 黒の陣地(1), 白の陣地(2), 死んでる石(3)。そのほかは(0)
-    Array.from({ length: BOARD_SIZE_COUNT }, () =>
-      Array.from({ length: BOARD_SIZE_COUNT }, () => 0),
-    ),
+    Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => 0)),
   );
   // Move state
   const [lastMove, setLastMove] = useState<Grid | null>(null);
@@ -171,18 +173,20 @@ export default function Tutorial() {
   const applyMoveCommon = (grid: Grid) => {
     if (
       !isLegalMove(
+        9,
         grid,
         currentBoardRef.current,
         lastMove,
         currentColorRef.current,
         boardHistoryRef.current[boardHistoryRef.current.length - 2] ||
-          initializeBoard(),
+          initializeBoard(9),
       )
     ) {
       return false;
     }
 
     const { board: newBoard, agehama } = applyMove(
+      9,
       grid,
       cloneBoard(currentBoardRef.current),
       currentColorRef.current,
@@ -447,13 +451,19 @@ export default function Tutorial() {
             <View style={styles.boardWrapper}>
               <GoBoard
                 territoryBoard={teritoryBoardRef.current}
-                showTerritory={true}
                 disabled={false}
                 moveHistory={movesRef.current}
                 currentIndex={currentIndexRef.current}
                 board={currentBoard}
                 onPutStone={handlePutStone}
                 agehamaHistory={agehamaHistory}
+                matchType={0}
+                boardWidth={0}
+                isGameEnded={false}
+                boardHistory={[]}
+                onCurrentIndexChange={function (newIndex: number): void {
+                  throw new Error("Function not implemented.");
+                }}
               />
             </View>
 
@@ -461,7 +471,7 @@ export default function Tutorial() {
             <View style={styles.explanationContainer}>
               <View style={styles.characterContainer}>
                 <Image
-                 source={{ uri: ICONS[100] }}
+                  source={ICONS[100]}
                   style={styles.characterImage}
                   resizeMode="contain"
                 />

@@ -94,6 +94,7 @@ export default function Matching() {
   const isCancelingRef = useRef<boolean>(false);
 
   useEffect(() => {
+    // デバッグ用
     // router.replace({ pathname: "/PlayWithBot" });
 
     startMatching();
@@ -175,12 +176,19 @@ export default function Matching() {
     const timers: number[] = [];
 
     // 最初の5秒間: 1秒ごとにマッチング試行
-    tryMatch(); // 即座に1回目
-    timers.push(setTimeout(() => tryMatch(), 1000));
-    timers.push(setTimeout(() => tryMatch(), 2000));
-    timers.push(setTimeout(() => tryMatch(), 4000));
-    timers.push(setTimeout(() => tryMatch(), 8000));
+    tryMatch(); // 1回目。 ±50
+    const interval = 1000;
+    timers.push(setTimeout(() => tryMatch(), interval * 1)); // 2回目。±150
+    timers.push(setTimeout(() => tryMatch(), interval * 2)); // 3回目。±250
+    timers.push(setTimeout(() => tryMatch(), interval * 3)); // 4回目。±350
+    timers.push(setTimeout(() => tryMatch(), interval * 4)); // 5回目。±450
+    timers.push(setTimeout(() => tryMatch(), interval * 5)); // 6回目。±550
+    timers.push(setTimeout(() => tryMatch(), interval * 6)); // 7回目。±650
+    timers.push(setTimeout(() => tryMatch(), interval * 7)); // 8回目。±750
+    timers.push(setTimeout(() => tryMatch(), interval * 8)); // 9回目。±850
+    timers.push(setTimeout(() => tryMatch(), interval * 9)); // 10回目。±950
 
+    // マッチングをキャンセルし、ボットと接続
     timers.push(
       setTimeout(async () => {
         if (isCancelingRef.current) return;
@@ -199,7 +207,7 @@ export default function Matching() {
 
           isCancelingRef.current = false;
         }
-      }, 12000),
+      }, interval * 10),
     );
 
     // タイマーをrefに保存
@@ -279,8 +287,8 @@ export default function Matching() {
 
         if (spreadPointsRef.current)
           pointsDiffRef.current = Math.min(
-            Math.floor(pointsDiffRef.current * 1.5),
-            300, // 大事。
+            Math.floor(pointsDiffRef.current + 100),
+            950, // 大事。
           );
       }
     } finally {

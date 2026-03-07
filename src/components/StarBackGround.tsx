@@ -10,7 +10,6 @@ const STRAWBERRY = "#c8d6e6";
 const STAR_COLS = width / 80;
 const STAR_ROWS = height / 80;
 const STAR_SIZE = Math.floor((width / STAR_COLS) * 0.2);
-// const ANIM_DURATION = 2800;
 
 function pseudoRandom(seed: number): number {
   const x = Math.sin(seed + 1) * 43758.5453;
@@ -49,15 +48,6 @@ export const StarBackground = ({
   const cellW = width / STAR_COLS;
   const cellH = height / STAR_ROWS;
   const anim = useRef(new Animated.Value(0)).current;
-
-  // useEffect(() => {
-  //   Animated.loop(
-  //     Animated.sequence([
-  //       Animated.timing(anim, { toValue: 1, duration: ANIM_DURATION, useNativeDriver: true }),
-  //       Animated.timing(anim, { toValue: 0, duration: ANIM_DURATION, useNativeDriver: true }),
-  //     ]),
-  //   ).start();
-  // }, []);
 
   const darkScale = anim.interpolate({
     inputRange: [0, 1],

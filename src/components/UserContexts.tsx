@@ -20,10 +20,6 @@ export const GamesContext = createContext<number | null>(null);
 export const SetGamesContext = createContext<((value: number) => void) | null>(
   null,
 );
-export const StarsContext = createContext<number | null>(null);
-export const SetStarsContext = createContext<((value: number) => void) | null>(
-  null,
-);
 export const IconIndexContext = createContext<number | null>(null);
 export const SetIconIndexContext = createContext<
   ((value: number) => void) | null
@@ -32,11 +28,6 @@ export const SetIconIndexContext = createContext<
 export const TutorialCompletedIndexContext = createContext<number | null>(null);
 export const SetTutorialCompletedIndexContext = createContext<
   ((value: number) => void) | null
->(null);
-
-export const AcquiredIconIndicesContext = createContext<number[] | null>(null);
-export const SetAcquiredIconIndicesContext = createContext<
-  ((value: number[]) => void) | null
 >(null);
 
 export const JwtContext = createContext<string | null>(null);

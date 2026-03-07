@@ -18,13 +18,10 @@ import { UidContext } from "../../src/components/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
 import { StarBackground } from "@/src/components/StarBackGround";
+import { BACKGROUND, STRAWBERRY, DANGER, CHOCOLATE, CHOCOLATE_SUB } from "@/src/constants/colors";
 
-// ─── Homeページに合わせたカラー ───────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
-const DANGER = "#e05c5c";
+
+
 
 export default function Delete() {
   const { colors } = useTheme();

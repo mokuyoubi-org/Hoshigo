@@ -2,9 +2,8 @@ import { DailyLimitModal } from "@/src/components/DailyLimitModal";
 import { InfoModal } from "@/src/components/InfoModal";
 import LoadingOverlay from "@/src/components/LoadingOverlay";
 import LoginNeededModal from "@/src/components/LoginNeededModal";
+import { StarBackground } from "@/src/components/StarBackGround";
 import { supabase } from "@/src/services/supabase";
-import { Octicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -24,15 +23,9 @@ import {
   UidContext,
 } from "../../src/components/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
-import { StarBackground } from "@/src/components/StarBackGround";
+import { BACKGROUND, STRAWBERRY, CHOCOLATE_SUB, CHOCOLATE } from "@/src/constants/colors";
 
 const { width, height } = Dimensions.get("window");
-
-// ─── カラー ───────────────────────────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
 
 // ─── メイン ───────────────────────────────────────────
 export default function Home() {
@@ -47,26 +40,6 @@ export default function Home() {
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
-
-  // ボタンのふわふわ
-
-  const floating = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floating, {
-          toValue: -2,
-          duration: 2400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floating, {
-          toValue: 0,
-          duration: 2400,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, []);
 
   useEffect(() => {
     Animated.timing(fadeIn, {
@@ -123,7 +96,7 @@ export default function Home() {
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
 
-       <StarBackground />   
+      <StarBackground />
 
       <Animated.View style={[styles.content, { opacity: fadeIn }]}>
         {/* ヘッダー */}
@@ -166,10 +139,7 @@ export default function Home() {
                 style={[
                   styles.matchButton,
                   {
-                    transform: [
-                      { scale: pressScale },
-                      { translateY: floating },
-                    ],
+                    transform: [{ scale: pressScale }],
                   },
                 ]}
               >

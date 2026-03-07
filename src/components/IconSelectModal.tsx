@@ -3,19 +3,16 @@ import { MaterialIcons } from "@expo/vector-icons";
 import React, { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Dimensions,
   Image,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
-import {
-  AcquiredIconIndicesContext,
-  GumiIndexContext,
-} from "../../src/components/UserContexts";
+import { GumiIndexContext } from "../../src/components/UserContexts";
 import { ICONS } from "../constants/icons";
 import { useTheme } from "../hooks/useTheme";
 
@@ -26,20 +23,20 @@ interface IconSelectorModalProps {
   currentIconIndex: number;
 }
 
-// ももぐみ　デフォルト アイコン 0 // いるか
-//
-
 export default function IconSelectorModal({
   visible,
   onClose,
   onSelectIcon,
   currentIconIndex,
 }: IconSelectorModalProps) {
+  const { height } = useWindowDimensions();
+  const iconSize: number = 96;
+  const imageSize: number = iconSize * (5 / 6);
+  // カラム数
+
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const acquiredIconIndices = useContext<number[] | null>(
-    AcquiredIconIndicesContext,
-  );
+
   const gumiIndex = useContext<number | null>(GumiIndexContext);
 
   const handleSelectIcon = (index: number) => {
@@ -62,7 +59,11 @@ export default function IconSelectorModal({
         <View
           style={[
             styles.modalContainer,
-            { backgroundColor: colors.background },
+            {
+              backgroundColor: colors.background,
+              maxHeight: height * (72 / 100),
+              maxWidth: height * (72 / 100),
+            },
           ]}
           onStartShouldSetResponder={() => true}
         >
@@ -79,9 +80,7 @@ export default function IconSelectorModal({
           {/* アイコングリッド */}
           <ScrollView style={styles.scrollView}>
             <View style={styles.iconGrid}>
-
               {[
-                ...(acquiredIconIndices ?? []),
                 ...Array.from({ length: (gumiIndex ?? 0) + 1 }, (_, i) => i),
               ]?.map((iconIndex) => {
                 const icon = ICONS[iconIndex];
@@ -91,9 +90,13 @@ export default function IconSelectorModal({
                     key={iconIndex}
                     style={[
                       styles.iconItem,
-                      { backgroundColor: colors.card },
+                      {
+                        backgroundColor: colors.card,
+                        width: iconSize,
+                        height: iconSize,
+                      },
                       currentIconIndex === iconIndex && styles.selectedIconItem,
-                      currentIconIndex === iconIndex && {
+                      currentIconIndex !== iconIndex && {
                         borderColor: colors.background,
                       },
                     ]}
@@ -101,15 +104,15 @@ export default function IconSelectorModal({
                     activeOpacity={0.7}
                   >
                     <Image
-                      source={{uri: icon}}
-                      style={styles.iconImage}
+                      source={icon}
+                      style={{ height: imageSize, width: imageSize }}
                       resizeMode="contain"
                     />
                     {currentIconIndex === iconIndex && (
                       <View
                         style={[
                           styles.checkmark,
-                          { backgroundColor: colors.background },
+                          { backgroundColor: colors.active },
                         ]}
                       >
                         <MaterialIcons name="check" size={16} color="#fff" />
@@ -134,10 +137,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    width: Dimensions.get("window").width * 0.9,
-    maxWidth: 400,
-    maxHeight: Dimensions.get("window").height * 0.7,
-    height: 360,
+    margin: 24,
     borderRadius: 20,
     padding: 24,
     shadowColor: "#000",
@@ -165,12 +165,10 @@ const styles = StyleSheet.create({
   iconGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     gap: 16,
   },
   iconItem: {
-    width: 96,
-    height: 96,
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
@@ -181,10 +179,7 @@ const styles = StyleSheet.create({
   selectedIconItem: {
     borderWidth: 3,
   },
-  iconImage: {
-    width: 80,
-    height: 80,
-  },
+
   checkmark: {
     position: "absolute",
     top: 4,

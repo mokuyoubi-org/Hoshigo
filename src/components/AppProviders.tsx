@@ -21,7 +21,6 @@ import {
 } from "@expo/vector-icons";
 import * as Font from "expo-font";
 import {
-  AcquiredIconIndicesContext,
   DailyPlayCountContext,
   DisplayNameContext,
   EmailContext,
@@ -36,7 +35,6 @@ import {
   // 🆕 RevenueCat用のContextを追加
   RevenueCatCustomerInfoContext,
   RtContext,
-  SetAcquiredIconIndicesContext,
   SetDailyPlayCountContext,
   SetDisplayNameContext,
   SetGamesContext,
@@ -45,11 +43,9 @@ import {
   SetIsPremiumContext,
   SetPointsContext,
   SetRevenueCatCustomerInfoContext,
-  SetStarsContext,
   SetThemeContext,
   SetTutorialCompletedIndexContext,
   SetUserNameContext,
-  StarsContext,
   ThemeContext,
   TutorialCompletedIndexContext,
   UidContext,
@@ -82,8 +78,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState<boolean>(false);
   const [gumiIndex, setGumiIndex] = useState<number>(0);
   const [games, setGames] = useState<number>(0);
-  const [stars, setStars] = useState<number>(0);
-  const [acquiredIconIndices, setAcquiredIconIndices] = useState<number[]>([]);
   const [tutorialCompletedIndexContext, setTutorialCompletedIndexContext] =
     useState<number>(0);
 
@@ -267,10 +261,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
           setDailyPlayCount(0);
           setIsPremium(false);
           setGumiIndex(0);
-          setStars(0);
           setGames(0);
           setTutorialCompletedIndexContext(0);
-          setAcquiredIconIndices([]);
           router.replace("/Login");
         }
       },
@@ -308,7 +300,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "uid, username, displayname, points , icon_index, daily_play_count, is_premium, gumi_index, stars, games, tutorial_completed_index, acquired_icon_indices",
+          "uid, username, displayname, points , icon_index, daily_play_count, is_premium, gumi_index, games, tutorial_completed_index",
         )
         .eq("uid", uid)
         .single();
@@ -322,10 +314,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
           setDailyPlayCount(0);
           setIsPremium(false);
           setGumiIndex(0);
-          setStars(0);
           setGames(0);
           setTutorialCompletedIndexContext(0);
-          setAcquiredIconIndices([]);
           router.replace("/RegisterProfile");
           return;
         }
@@ -341,10 +331,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         setDailyPlayCount(data.daily_play_count);
         setIsPremium(data.is_premium);
         setGumiIndex(data.gumi_index);
-        setStars(data.stars);
         setGames(data.games);
         setTutorialCompletedIndexContext(data.tutorial_completed_index);
-        setAcquiredIconIndices(data.acquired_icon_indices);
 
         // 🆕 プロフィール取得後、RevenueCatと同期
         await refreshRevenueCat();
@@ -425,39 +413,19 @@ export function AppProviders({ children }: { children: ReactNode }) {
                                                     <SetGamesContext.Provider
                                                       value={setGames}
                                                     >
-                                                      <StarsContext.Provider
-                                                        value={stars}
+                                                      <TutorialCompletedIndexContext.Provider
+                                                        value={
+                                                          tutorialCompletedIndexContext
+                                                        }
                                                       >
-                                                        <SetStarsContext.Provider
-                                                          value={setStars}
+                                                        <SetTutorialCompletedIndexContext.Provider
+                                                          value={
+                                                            setTutorialCompletedIndexContext
+                                                          }
                                                         >
-                                                          <TutorialCompletedIndexContext.Provider
-                                                            value={
-                                                              tutorialCompletedIndexContext
-                                                            }
-                                                          >
-                                                            <SetTutorialCompletedIndexContext.Provider
-                                                              value={
-                                                                setTutorialCompletedIndexContext
-                                                              }
-                                                            >
-                                                              <AcquiredIconIndicesContext.Provider
-                                                                value={
-                                                                  acquiredIconIndices
-                                                                }
-                                                              >
-                                                                <SetAcquiredIconIndicesContext.Provider
-                                                                  value={
-                                                                    setAcquiredIconIndices
-                                                                  }
-                                                                >
-                                                                  {children}
-                                                                </SetAcquiredIconIndicesContext.Provider>
-                                                              </AcquiredIconIndicesContext.Provider>
-                                                            </SetTutorialCompletedIndexContext.Provider>
-                                                          </TutorialCompletedIndexContext.Provider>
-                                                        </SetStarsContext.Provider>
-                                                      </StarsContext.Provider>
+                                                          {children}
+                                                        </SetTutorialCompletedIndexContext.Provider>
+                                                      </TutorialCompletedIndexContext.Provider>
                                                     </SetGamesContext.Provider>
                                                   </GamesContext.Provider>
                                                 </SetGumiIndexContext.Provider>

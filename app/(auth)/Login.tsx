@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import GoogleSignInButton from "../../src/components/GoogleSignInButton";
+import GoogleSignInButton from "../../src/components/googleSignIn/GoogleSignInButton";
 import LoadingOverlay from "../../src/components/LoadingOverlay";
 import { useTheme } from "../../src/hooks/useTheme";
 import { isValidEmail, isValidPassword } from "../../src/lib/utils";

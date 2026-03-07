@@ -2,19 +2,19 @@ import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Dimensions,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useTheme } from "../hooks/useTheme";
 import {
-  GUMI_DATA,
   calculateGumiProgress,
   getGumiByIndex,
+  GUMI_DATA,
 } from "../lib/gumiUtils";
 
 interface GumiInfoModalProps {
@@ -30,6 +30,8 @@ export default function GumiInfoModal({
   currentGumiIndex: currentKumiIndex,
   currentPoints: currentPoints = 0,
 }: GumiInfoModalProps) {
+  const { height, width } = useWindowDimensions();
+
   const { t } = useTranslation();
   const { colors } = useTheme();
   const currentKumi = getGumiByIndex(currentKumiIndex);
@@ -74,7 +76,12 @@ export default function GumiInfoModal({
         <View
           style={[
             styles.modalContainer,
-            { backgroundColor: colors.background },
+            {
+              backgroundColor: colors.background,
+              height: height * (84 / 100),
+              maxWidth: width * (88 / 100),
+              width: height * (64 / 100),
+            },
           ]}
         >
           {/* ヘッダー */}
@@ -219,7 +226,6 @@ export default function GumiInfoModal({
                         },
                         isLocked && { opacity: 0.3 },
                         isPast && { opacity: 0.6 },
-                        isCurrent && styles.barFillCurrent,
                       ]}
                     ></View>
                   </View>
@@ -246,7 +252,6 @@ const BACKGROUND = "#f9fafb";
 const CHOCOLATE = "#5a3a4a";
 const CHOCOLATE_SUB = "#c09aa8";
 
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -256,19 +261,11 @@ const styles = StyleSheet.create({
   },
 
   modalContainer: {
-    width: Dimensions.get("window").width * 0.9,
-    maxWidth: 400,
-    maxHeight: Dimensions.get("window").height * 0.8,
-    height: 600,
     borderRadius: 24,
     padding: 24,
     backgroundColor: "#ffffff",
     borderWidth: 1.5,
     borderColor: "rgba(200,214,230,0.3)",
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
 
@@ -385,14 +382,6 @@ const styles = StyleSheet.create({
   barFill: {
     height: 20,
     borderRadius: 10,
-  },
-
-  barFillCurrent: {
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
   },
 
   infoBox: {

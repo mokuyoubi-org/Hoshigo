@@ -370,7 +370,7 @@ export default function LessonListPage() {
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.push("/(tabs)/Practice")}
+              // onPress={() => router.push("/(tabs)/Practice")}
             >
               <Text style={[styles.backButtonText, { color: colors.active }]}>
                 ‹ 戻る

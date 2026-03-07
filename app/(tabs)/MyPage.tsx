@@ -32,12 +32,7 @@ import {
 } from "../../src/components/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { calculateGumiProgress, getGumiByIndex } from "../../src/lib/gumiUtils";
-
-// ─── Homeページに合わせたカラー ───────────────────────
-const STRAWBERRY = "#c8d6e6";
-const BACKGROUND = "#f9fafb";
-const CHOCOLATE = "#5a3a4a";
-const CHOCOLATE_SUB = "#c09aa8";
+import { BACKGROUND, CHOCOLATE_SUB, STRAWBERRY, CHOCOLATE } from "@/src/constants/colors";
 
 export default function MyPage() {
   const { t } = useTranslation();
@@ -187,7 +182,7 @@ export default function MyPage() {
                   ]}
                 >
                   <Image
-                    source={{uri : ICONS[iconIndex ?? 0]}}
+                    source={ICONS[iconIndex ?? 0]}
                     style={styles.avatarImage}
                     resizeMode="contain"
                   />
@@ -387,20 +382,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
-  // avatarRingOuter: {
-  //   position: "absolute",
-  //   width: 128,
-  //   height: 128,
-  //   borderRadius: 64,
-  //   borderWidth: 1.5,
-  // },
-  // avatarRingInner: {
-  //   position: "absolute",
-  //   width: 116,
-  //   height: 116,
-  //   borderRadius: 58,
-  //   borderWidth: 1.5,
-  // },
   avatar: {
     width: 100,
     height: 100,
@@ -435,6 +416,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 6,
   },
+
   displayName: {
     fontSize: 28,
     fontWeight: "800",
@@ -519,8 +501,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1,
     marginBottom: 20,
-    // textShadowOffset: { width: 0, height: 0 },
-    // textShadowRadius: 12,
   },
 
   // 進捗ゲージ

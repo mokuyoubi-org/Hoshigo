@@ -98,3 +98,15 @@ export const THEME_COLORS = {
 } as const;
 
 export type ThemeType = keyof typeof THEME_COLORS;
+
+
+export const STRAWBERRY = "#c8d6e6";
+export const BACKGROUND = "#f9fafb";
+export const CHOCOLATE = "#5a3a4a";
+export const CHOCOLATE_SUB = "#c09aa8";
+export const DANGER = "#e05c5c";
+export const GOLD = "#d4af37"; // プレミアム用
+export const SILVER = "#b8b8c0";
+export const BRONZE = "#cd7f32";
+export const STRAWBERRY_DIM = "rgba(200,214,230,0.15)";
+export const INACTIVE = "rgba(90,58,74,0.35)";
