@@ -1,5 +1,10 @@
-import LoadingOverlay from "@/src/components/LoadingOverlay";
 import { StarBackground } from "@/src/components/StarBackGround";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { Agehama, MatchArchive } from "@/src/constants/goConstants";
 import { moveNumbersToStrings } from "@/src/lib/utils";
 import { router } from "expo-router";
@@ -15,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import {
   Animated,
   FlatList,
+  Modal,
   StatusBar as RNStatusBar,
   StyleSheet,
   Text,
@@ -25,7 +31,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GoBoard } from "../src/components/GoBoard";
 import { PlayerCard } from "../src/components/PlayerCard";
-import { UidContext } from "../src/components/UserContexts";
+import { IsPremiumContext, UidContext } from "../src/components/UserContexts";
 import { useTheme } from "../src/hooks/useTheme";
 import { Board } from "../src/lib/goLogics";
 import {
@@ -34,21 +40,506 @@ import {
   resultToLanguages,
 } from "../src/lib/goUtils";
 import { supabase } from "../src/services/supabase";
-import { BACKGROUND, CHOCOLATE, CHOCOLATE_SUB, STRAWBERRY } from "@/src/constants/colors";
+import CustomPaywallScreen from "./(premium)/CustomPayWall";
 
+// ─── ペイウォールモーダル（落ち着いたデザイン） ───────────────
+const PaywallModal = ({
+  t,
+  setShowPaywall,
+}: {
+  t: any;
+  setShowPaywall: any;
+}) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
 
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 420,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
+  return (
+    <Animated.View style={[modalStyles.container, { opacity: fadeAnim }]}>
+      {/* 薄い霞レイヤー */}
+      <View style={modalStyles.fog} />
+
+      <Animated.View
+        style={[modalStyles.card, { transform: [{ translateY: slideAnim }] }]}
+      >
+        {/* 細いアクセントライン */}
+        <View style={modalStyles.topLine} />
+
+        {/* アイコン */}
+        <View style={modalStyles.iconWrap}>
+          <Text style={modalStyles.iconText}>♛</Text>
+        </View>
+
+        <Text style={modalStyles.title}>
+          {t("MyRecords.premiumTitle") || "続きを見るには"}
+        </Text>
+        <Text style={modalStyles.subtitle}>
+          {t("MyRecords.premiumSubtitle") ||
+            "プレミアム会員になると\n対局履歴をすべて閲覧できます"}
+        </Text>
+
+        {/* 区切り線 */}
+        <View style={modalStyles.divider} />
+
+        {/* 特典リスト */}
+        <View style={modalStyles.benefits}>
+          {[
+            {
+              icon: "📜",
+              text: t("MyRecords.benefit1") || "対局履歴 無制限閲覧",
+            },
+            {
+              icon: "♟",
+              text: t("MyRecords.benefit2") || "棋譜リプレイ 全手数",
+            },
+            {
+              icon: "✦",
+              text: t("MyRecords.benefit3") || "広告なし・優先マッチング",
+            },
+          ].map((b, i) => (
+            <View key={i} style={modalStyles.benefitRow}>
+              <Text style={modalStyles.benefitIcon}>{b.icon}</Text>
+              <Text style={modalStyles.benefitText}>{b.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* CTAボタン */}
+        <TouchableOpacity
+          style={modalStyles.cta}
+          onPress={() => {
+            setShowPaywall(true);
+          }}
+          activeOpacity={0.75}
+        >
+          <Text style={modalStyles.ctaText}>
+            {t("MyRecords.premiumCTA") || "プレミアムにアップグレード"}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={modalStyles.footer}>
+          {t("MyRecords.premiumFooter") || "いつでもキャンセル可能"}
+        </Text>
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+const modalStyles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
+  fog: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(248,245,240,0.5)",
+  },
+  card: {
+    width: "84%",
+    backgroundColor: "#fdfcf9",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(180,160,130,0.25)",
+    paddingHorizontal: 24,
+    paddingTop: 0,
+    paddingBottom: 22,
+    alignItems: "center",
+    shadowColor: "#8a6a3a",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
+    overflow: "hidden",
+  },
+  topLine: {
+    height: 2,
+    width: "100%",
+    backgroundColor: "rgba(180,150,100,0.5)",
+    marginBottom: 22,
+  },
+  iconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(180,150,100,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+  },
+  iconText: {
+    fontSize: 20,
+    color: "#9a7040",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#2e1f0e",
+    letterSpacing: 0.3,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#8a6a4a",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  divider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "rgba(180,160,130,0.18)",
+    marginBottom: 16,
+  },
+  benefits: {
+    width: "100%",
+    gap: 10,
+    marginBottom: 22,
+  },
+  benefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  benefitIcon: {
+    fontSize: 14,
+    width: 20,
+    textAlign: "center",
+  },
+  benefitText: {
+    fontSize: 13,
+    color: "#4a3820",
+    fontWeight: "500",
+    letterSpacing: 0.1,
+  },
+  cta: {
+    width: "100%",
+    backgroundColor: "#7a5530",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    shadowColor: "#7a5530",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  ctaText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#fff",
+    letterSpacing: 0.4,
+  },
+  footer: {
+    marginTop: 12,
+    fontSize: 11,
+    color: "#a08060",
+    letterSpacing: 0.2,
+  },
+});
+
+// ─── ゴーストカード（11枚目・ぼかし＋モーダル） ──────────────
+const GhostPaywallCard = ({
+  setShowPaywall,
+  record,
+  boardHistory,
+  moves,
+  agehamaHistory,
+  territoryBoard,
+  matchType,
+  cardHeight,
+  t,
+  currentLocale,
+}: {
+  setShowPaywall: any;
+  record: MatchArchive | null;
+  boardHistory: Board[];
+  moves: string[];
+  agehamaHistory: Agehama[];
+  territoryBoard: number[][] | undefined;
+  matchType: number;
+  cardHeight: number;
+  t: any;
+  currentLocale: string;
+}) => {
+  const { height } = useWindowDimensions();
+  const board = boardHistory[0] || {};
+  const moveHistory = moves?.slice(0, 1) || [];
+
+  const dateStr = record
+    ? new Date(record.created_at).toLocaleDateString(currentLocale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "----/--/--";
+
+  return (
+    <View style={[ghostStyles.wrapper, { height: cardHeight }]}>
+      {/* 実カードと同じ見た目（操作不可） */}
+      <View style={ghostStyles.cardContent} pointerEvents="none">
+        <View style={ghostStyles.accentLine} />
+        <View style={ghostStyles.recordHeader}>
+          <View style={ghostStyles.playerRow}>
+            {record ? (
+              <PlayerCard
+                gumiIndex={record.black_gumi_index}
+                iconIndex={record.black_icon_index}
+                username={record.black_username}
+                displayname={record.black_displayname}
+                points={record.black_points}
+                color="black"
+              />
+            ) : (
+              <View style={ghostStyles.dummyPlayer} />
+            )}
+          </View>
+          <View style={ghostStyles.resultBlock}>
+            <View style={ghostStyles.resultBadge}>
+              <Text style={ghostStyles.resultText}>
+                {record ? resultToLanguages(record.result || "") || "?" : "---"}
+              </Text>
+            </View>
+            <Text style={ghostStyles.dateText}>{dateStr}</Text>
+          </View>
+          <View style={ghostStyles.playerRow}>
+            {record ? (
+              <PlayerCard
+                gumiIndex={record.white_gumi_index}
+                iconIndex={record.white_icon_index}
+                username={record.white_username || t("MyRecords.cpu")}
+                displayname={record.white_displayname || t("MyRecords.cpu")}
+                points={record.white_points}
+                color="white"
+              />
+            ) : (
+              <View style={ghostStyles.dummyPlayer} />
+            )}
+          </View>
+        </View>
+        <View style={ghostStyles.boardWrapper}>
+          {territoryBoard ? (
+            <GoBoard
+              boardWidth={(height * 36) / 100}
+              matchType={matchType}
+              agehamaHistory={agehamaHistory}
+              board={board}
+              onPutStone={() => {}}
+              moveHistory={moveHistory}
+              territoryBoard={territoryBoard}
+              disabled={true}
+              isGameEnded={true}
+              boardHistory={boardHistory}
+              currentIndex={0}
+              onCurrentIndexChange={() => {}}
+            />
+          ) : (
+            <View style={{ height: (height * 36) / 100 }} />
+          )}
+        </View>
+      </View>
+
+      {/* ぼかし層 */}
+      <View style={ghostStyles.blurOverlay} />
+
+      {/* モーダル */}
+      <PaywallModal t={t} setShowPaywall={setShowPaywall} />
+    </View>
+  );
+};
+
+const ghostStyles = StyleSheet.create({
+  wrapper: {
+    marginHorizontal: 16,
+    borderRadius: 20,
+    overflow: "hidden",
+    position: "relative",
+    backgroundColor: "#ffffff",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+    shadowColor: STRAWBERRY,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  cardContent: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  accentLine: {
+    height: 2.5,
+    width: "100%",
+    backgroundColor: STRAWBERRY,
+    opacity: 0.6,
+  },
+  recordHeader: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(200,214,230,0.15)",
+    backgroundColor: "rgba(249,250,251,0.8)",
+    width: "100%",
+  },
+  playerRow: { flexDirection: "row", alignItems: "center" },
+  dummyPlayer: {
+    width: 80,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "rgba(200,214,230,0.2)",
+  },
+  resultBlock: { alignItems: "center", gap: 6 },
+  resultBadge: {
+    backgroundColor: "rgba(200,214,230,0.15)",
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  resultText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: CHOCOLATE,
+    letterSpacing: 0.5,
+  },
+  dateText: {
+    fontSize: 11,
+    color: CHOCOLATE_SUB,
+    letterSpacing: 0.3,
+    fontWeight: "600",
+  },
+  boardWrapper: {
+    justifyContent: "center",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(200,214,230,0.12)",
+    backgroundColor: "#fafbfc",
+  },
+  blurOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(252,249,244,0.78)",
+  },
+});
+
+// プレースホルダーIDのプレフィックス
+const PLACEHOLDER_PREFIX = "__placeholder__";
+const makePlaceholders = (count: number): MatchArchive[] =>
+  Array.from(
+    { length: count },
+    (_, i) => ({ id: `${PLACEHOLDER_PREFIX}${i}` }) as MatchArchive,
+  );
+
+// ─── 静的スケルトンカード（アニメなし・Web/ネイティブ共通） ──
+const SkeletonCard = ({ cardHeight }: { cardHeight: number }) => (
+  <View style={skeletonStyles.card}>
+    <View style={skeletonStyles.accentLine} />
+    {/* ヘッダー */}
+    <View style={skeletonStyles.header}>
+      <View
+        style={[
+          skeletonStyles.block,
+          { width: 72, height: 48, borderRadius: 10 },
+        ]}
+      />
+      <View
+        style={[
+          skeletonStyles.block,
+          { width: 56, height: 32, borderRadius: 8 },
+        ]}
+      />
+      <View
+        style={[
+          skeletonStyles.block,
+          { width: 72, height: 48, borderRadius: 10 },
+        ]}
+      />
+    </View>
+    {/* 碁盤エリア */}
+    <View style={[skeletonStyles.boardArea, { height: cardHeight }]}>
+      <View
+        style={[
+          skeletonStyles.block,
+          { width: 200, height: 200, borderRadius: 6 },
+        ]}
+      />
+      <Text style={skeletonStyles.loadingText}>読み込み中...</Text>
+    </View>
+  </View>
+);
+
+const skeletonStyles = StyleSheet.create({
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "rgba(200,214,230,0.3)",
+    overflow: "hidden",
+  },
+  accentLine: {
+    height: 2.5,
+    width: "100%",
+    backgroundColor: "rgba(200,214,230,0.4)",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(200,214,230,0.12)",
+    backgroundColor: "rgba(249,250,251,0.8)",
+  },
+  boardArea: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fafbfc",
+    gap: 16,
+  },
+  block: {
+    backgroundColor: "rgba(200,214,230,0.3)",
+  },
+  loadingText: {
+    fontSize: 13,
+    color: CHOCOLATE_SUB,
+    letterSpacing: 0.5,
+  },
+});
+
+// ─── メインコンポーネント ──────────────────────────────────
 export default function MyRecords() {
   const { t, i18n } = useTranslation();
   const uid = useContext(UidContext);
+  const isPremium = useContext(IsPremiumContext);
   const { colors } = useTheme();
+  const { height } = useWindowDimensions();
 
-  // ── ロジック（変更なし） ──
-  const [records, setRecords] = useState<MatchArchive[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentIndexes, setCurrentIndexes] = useState<{
-    [key: string]: number;
-  }>({});
+  const CARD_HEIGHT = height * 0.8;
+  const GAP = 18;
+  const SNAP_INTERVAL = CARD_HEIGHT + GAP;
+
+  // ページを開いた瞬間から10枚のスケルトンが表示される
+  const [records, setRecords] = useState<MatchArchive[]>(makePlaceholders(10));
+  const [ghostRecord, setGhostRecord] = useState<MatchArchive | null>(null);
+  const [hasMore, setHasMore] = useState(true);
   const [boardHistories, setBoardHistories] = useState<{
     [key: string]: Board[];
   }>({});
@@ -60,7 +551,8 @@ export default function MyRecords() {
     [key: string]: number[][];
   }>({});
   const [matchTypes, setMatchTypes] = useState<{ [key: string]: number }>({});
-  const fadeIn = useRef(new Animated.Value(0)).current;
+
+  const isFetchingMore = useRef(false);
 
   const localeMap: { [key: string]: string } = {
     ja: "ja-JP",
@@ -71,82 +563,156 @@ export default function MyRecords() {
   const currentLocale = localeMap[i18n.language] || "en-US";
 
   useEffect(() => {
-    Animated.timing(fadeIn, {
-      toValue: 1,
-      duration: 700,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  useEffect(() => {
-    fetchRecords();
+    if (uid) fetchRecords(0);
   }, [uid]);
 
-  const fetchRecords = async () => {
+  // isPremium が変化したとき（アプリ内課金完了など）に再fetch
+  useEffect(() => {
+    if (uid) fetchRecords(0);
+  }, [isPremium]);
+
+  /**
+   * fetch ロジック
+   *
+   * 無料会員：offset=0 のとき11件取る
+   *   → 11件返ってきた場合：先頭10件を表示用、11件目をゴーストカード用に分ける
+   *   → 10件以下：それだけ表示（ゴーストなし）
+   *
+   * 有料会員：常に10件ずつ取る
+   *   → fetch完了直後にレコードをリストに追加（= カードが「読み込み中」状態で即座に出現）
+   *   → processRecords が非同期で boardHistory を埋めていくと順に完成していく
+   *   → 返ってきた件数が10未満 → hasMore = false（末尾）
+   */
+  const fetchRecords = async (offset: number) => {
     if (!uid) return;
     try {
+      const fetchCount = !isPremium && offset === 0 ? 11 : 10;
       const { data, error } = await supabase
         .from("matches_archive")
         .select("*")
         .or(`black_uid.eq.${uid},white_uid.eq.${uid}`)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .range(offset, offset + fetchCount - 1);
 
       if (error) {
         console.error("Error fetching records:", error);
+        isFetchingMore.current = false;
         return;
       }
 
-      const fetchedRecords = data || [];
-      setRecords(fetchedRecords);
-      setLoading(false);
+      const fetched = data || [];
 
-      fetchedRecords.forEach((record: MatchArchive, index: number) => {
-        setTimeout(() => {
-          const newMoves = moveNumbersToStrings(record.moves);
-          const newDeadStones = moveNumbersToStrings(record.dead_stones);
-          const { boardHistory, agehamaHistory } = movesToBoardHistory(
-            9,
-            record.match_type,
-            newMoves || [],
-          );
-          const territoryBoard = !newDeadStones
-            ? Array.from({ length: 9 }, () =>
-                Array.from({ length: 9 }, () => 0),
-              )
-            : makeTerritoryBoard(
-                9,
-                boardHistory[boardHistory.length - 1],
-                newDeadStones,
-                record.match_type,
-                0,
-                0,
-              ).territoryBoard;
+      if (!isPremium && offset === 0) {
+        // 無料会員の初回fetch
+        if (fetched.length === 0) {
+          // 対局なし → プレースホルダーをクリアして空表示
+          setRecords([]);
+          setGhostRecord(null);
+          setHasMore(false);
+        } else if (fetched.length === 11) {
+          const display = fetched.slice(0, 10);
+          const ghost = fetched[10];
+          setRecords(display);
+          setGhostRecord(ghost);
+          setHasMore(false);
+          processRecords(display);
+          processRecords([ghost]);
+        } else {
+          setRecords(fetched);
+          setGhostRecord(null);
+          setHasMore(false);
+          processRecords(fetched);
+        }
+      } else {
+        // 有料会員：
+        // fetch完了 → プレースホルダーを実データで置き換える
+        const isFirst = offset === 0;
+        if (fetched.length === 0 && isFirst) {
+          // 対局なし → プレースホルダーをクリアして空表示
+          setRecords([]);
+        } else {
+          setRecords((prev) => {
+            const real = prev.filter(
+              (r) => !r.id.startsWith(PLACEHOLDER_PREFIX),
+            );
+            return isFirst ? fetched : [...real, ...fetched];
+          });
+          processRecords(fetched);
+        }
+        setHasMore(fetched.length === 10);
+      }
 
-          setBoardHistories((prev) => ({ ...prev, [record.id]: boardHistory }));
-          setMovess((prev) => ({ ...prev, [record.id]: newMoves }));
-          setAgehamaHistories((prev) => ({
-            ...prev,
-            [record.id]: agehamaHistory,
-          }));
-          setTerritoryBoards((prev) => ({
-            ...prev,
-            [record.id]: territoryBoard,
-          }));
-          setMatchTypes((prev) => ({
-            ...prev,
-            [record.id]: record.match_type,
-          }));
-          setCurrentIndexes((prev) => ({ ...prev, [record.id]: 0 }));
-        }, index * 50);
-      });
+      isFetchingMore.current = false;
     } catch (error) {
       console.error("Error:", error);
-      setLoading(false);
+      isFetchingMore.current = false;
     }
   };
 
-  // ── RecordCard（UIのみ変更） ──
+  // boardHistory などの計算を共通化
+  const processRecords = (list: MatchArchive[]) => {
+    list.forEach((record: MatchArchive, index: number) => {
+      setTimeout(() => {
+        const newMoves = moveNumbersToStrings(record.moves);
+        const newDeadStones = moveNumbersToStrings(record.dead_stones);
+        const { boardHistory, agehamaHistory } = movesToBoardHistory(
+          9,
+          record.match_type,
+          newMoves || [],
+        );
+        const territoryBoard = !newDeadStones
+          ? Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => 0))
+          : makeTerritoryBoard(
+              9,
+              boardHistory[boardHistory.length - 1],
+              newDeadStones,
+              record.match_type,
+              0,
+              0,
+            ).territoryBoard;
+
+        setBoardHistories((prev) => ({ ...prev, [record.id]: boardHistory }));
+        setMovess((prev) => ({ ...prev, [record.id]: newMoves }));
+        setAgehamaHistories((prev) => ({
+          ...prev,
+          [record.id]: agehamaHistory,
+        }));
+        setTerritoryBoards((prev) => ({
+          ...prev,
+          [record.id]: territoryBoard,
+        }));
+        setMatchTypes((prev) => ({ ...prev, [record.id]: record.match_type }));
+      }, index * 50);
+    });
+  };
+
+  // スクロール末尾検知（Web・ネイティブ共通）
+  const handleScroll = useCallback(
+    (event: any) => {
+      if (!hasMore || isFetchingMore.current) return;
+
+      const { layoutMeasurement, contentOffset, contentSize } =
+        event.nativeEvent;
+      const distanceFromBottom =
+        contentSize.height - contentOffset.y - layoutMeasurement.height;
+
+      if (distanceFromBottom < SNAP_INTERVAL * 1.5) {
+        isFetchingMore.current = true;
+        // fetch前にプレースホルダーを10枚追加 → すぐスケルトンが見える
+        const currentRealCount = records.filter(
+          (r) => !r.id.startsWith(PLACEHOLDER_PREFIX),
+        ).length;
+        setRecords((prev) => [
+          ...prev.filter((r) => !r.id.startsWith(PLACEHOLDER_PREFIX)),
+          ...makePlaceholders(10),
+        ]);
+        fetchRecords(currentRealCount);
+      }
+    },
+    [hasMore, records, SNAP_INTERVAL],
+  );
+
+  // ── RecordCard ──
   const RecordCard = React.memo(
     ({
       record,
@@ -158,6 +724,7 @@ export default function MyRecords() {
       currentLocale,
       matchType,
       index,
+      cardHeight,
     }: {
       record: MatchArchive;
       boardHistory: Board[];
@@ -169,53 +736,32 @@ export default function MyRecords() {
       currentLocale: string;
       matchType: number;
       index: number;
+      cardHeight: number;
     }) => {
       const [replayIndex, setReplayIndex] = useState(0);
-      const cardFade = useRef(new Animated.Value(0)).current;
-      const { height } = useWindowDimensions();
 
-      useEffect(() => {
-        Animated.timing(cardFade, {
-          toValue: 1,
-          duration: 400,
-          delay: index * 80,
-          useNativeDriver: true,
-        }).start();
-      }, []);
-
+      const isPlaceholder = record.id.startsWith(PLACEHOLDER_PREFIX);
       const board = boardHistory[replayIndex] || {};
       const moveHistory = moves?.slice(0, replayIndex + 1) || [];
+      const dateStr = !isPlaceholder
+        ? new Date(record.created_at).toLocaleDateString(currentLocale, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : "";
 
-      // ローディング中
-      if (!territoryBoard) {
-        return (
-          <Animated.View style={[styles.recordCard, { opacity: cardFade }]}>
-            <View style={styles.cardAccentLine} />
-            <View style={styles.loadingCard}>
-              <View style={styles.loadingDot} />
-              <Text style={styles.loadingText}>{t("MyRecords.loading")}</Text>
-            </View>
-          </Animated.View>
-        );
+      // スケルトン表示条件：プレースホルダー OR boardHistory未計算
+      const showSkeleton = isPlaceholder || !territoryBoard;
+
+      if (showSkeleton) {
+        return <SkeletonCard cardHeight={cardHeight} />;
       }
 
-      const dateStr = new Date(record.created_at).toLocaleDateString(
-        currentLocale,
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        },
-      );
-
       return (
-        <Animated.View style={[styles.recordCard, { opacity: cardFade }]}>
-          {/* 上部アクセントライン */}
+        <View style={[styles.recordCard, { height: cardHeight }]}>
           <View style={styles.cardAccentLine} />
-
-          {/* ヘッダー：プレイヤー・結果・日付 */}
           <View style={styles.recordHeader}>
-            {/* 黒番 */}
             <View style={styles.playerRow}>
               <PlayerCard
                 gumiIndex={record.black_gumi_index}
@@ -226,8 +772,6 @@ export default function MyRecords() {
                 color="black"
               />
             </View>
-
-            {/* 中央：結果・日付 */}
             <View style={styles.resultBlock}>
               <View style={styles.resultBadge}>
                 <Text style={styles.resultText}>
@@ -237,8 +781,6 @@ export default function MyRecords() {
               </View>
               <Text style={styles.dateText}>{dateStr}</Text>
             </View>
-
-            {/* 白番 */}
             <View style={styles.playerRow}>
               <PlayerCard
                 gumiIndex={record.white_gumi_index}
@@ -250,8 +792,6 @@ export default function MyRecords() {
               />
             </View>
           </View>
-
-          {/* 碁盤 */}
           <View style={styles.boardWrapper}>
             <GoBoard
               boardWidth={(height * 36) / 100}
@@ -268,7 +808,7 @@ export default function MyRecords() {
               onCurrentIndexChange={setReplayIndex}
             />
           </View>
-        </Animated.View>
+        </View>
       );
     },
   );
@@ -286,6 +826,7 @@ export default function MyRecords() {
         currentLocale={currentLocale}
         matchType={matchTypes[record.id]}
         index={index}
+        cardHeight={CARD_HEIGHT}
       />
     ),
     [
@@ -296,12 +837,13 @@ export default function MyRecords() {
       colors,
       t,
       currentLocale,
+      CARD_HEIGHT,
     ],
   );
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const keyExtractor = useCallback((item: MatchArchive) => item.id, []);
 
-  // ── UI ──
   return (
     <SafeAreaView style={styles.container}>
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
@@ -309,53 +851,92 @@ export default function MyRecords() {
 
       <StarBackground />
 
-      <Animated.View style={[styles.content, { opacity: fadeIn }]}>
-        {/* ページヘッダー */}
+      <View style={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => {
+              router.back();
+            }}
             activeOpacity={0.7}
           >
             <Text style={styles.backButtonText}>‹ {t("MyRecords.back")}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* リスト */}
         <FlatList
-          pagingEnabled={true}       // ← これで一枚ずつスクロールになるにゃん
-  snapToAlignment="start"    // スクロール位置をぴったり合わせる
-  decelerationRate="fast"    // スワイプの止まり方を自然に
+          pagingEnabled={true}
           data={records}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
+          snapToInterval={SNAP_INTERVAL}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          getItemLayout={(_, index) => ({
+            length: CARD_HEIGHT,
+            offset: SNAP_INTERVAL * index,
+            index,
+          })}
           contentContainerStyle={
             records.length === 0 ? styles.emptyContainer : styles.listContent
           }
           showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          onEndReached={() => {
+            // ネイティブ用フォールバック
+            if (!hasMore || isFetchingMore.current) return;
+            isFetchingMore.current = true;
+            const currentRealCount = records.filter(
+              (r) => !r.id.startsWith(PLACEHOLDER_PREFIX),
+            ).length;
+            setRecords((prev) => [
+              ...prev.filter((r) => !r.id.startsWith(PLACEHOLDER_PREFIX)),
+              ...makePlaceholders(10),
+            ]);
+            fetchRecords(currentRealCount);
+          }}
+          onEndReachedThreshold={0.3}
           ListEmptyComponent={
-            !loading ? (
-              <View style={styles.emptyInner}>
-                <View style={styles.emptyIcon}>
-                  <View style={styles.emptyIconInner} />
-                </View>
-                <Text style={styles.emptyText}>{t("MyRecords.empty")}</Text>
+            <View style={styles.emptyInner}>
+              <View style={styles.emptyIcon}>
+                <View style={styles.emptyIconInner} />
               </View>
+              <Text style={styles.emptyText}>{t("MyRecords.empty")}</Text>
+            </View>
+          }
+          // 11枚目 = ゴーストカード（無料会員のみ表示）
+          ListFooterComponent={
+            ghostRecord ? (
+              <GhostPaywallCard
+                setShowPaywall={setShowPaywall}
+                record={ghostRecord}
+                boardHistory={boardHistories[ghostRecord.id] || []}
+                moves={movess[ghostRecord.id] || []}
+                agehamaHistory={agehamaHistories[ghostRecord.id] || []}
+                territoryBoard={territoryBoards[ghostRecord.id]}
+                matchType={matchTypes[ghostRecord.id] ?? 0}
+                cardHeight={CARD_HEIGHT}
+                t={t}
+                currentLocale={currentLocale}
+              />
             ) : null
           }
         />
-      </Animated.View>
 
-      {loading && <LoadingOverlay text={t("MyRecords.loading")} />}
+        {/* 🆕 Paywall Modal */}
+        <Modal
+          visible={showPaywall}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowPaywall(false)}
+        >
+          <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} />
+        </Modal>
+      </View>
     </SafeAreaView>
   );
 }
-
-
-
-
-
-
 
 // ─── スタイル ──────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -366,24 +947,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-
-  // 背景グリッド（優しい色に）
-  bgLineV: {
-    position: "absolute",
-    top: 0,
-    width: 1,
-    height: "100%",
-    backgroundColor: "rgba(200,214,230,0.08)",
-  },
-  bgLineH: {
-    position: "absolute",
-    left: 0,
-    width: "100%",
-    height: 1,
-    backgroundColor: "rgba(200,214,230,0.08)",
-  },
-
-  // ページヘッダー
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -401,29 +964,6 @@ const styles = StyleSheet.create({
     color: STRAWBERRY,
     letterSpacing: 0.3,
   },
-  pageTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  pageTitleAccent: {
-    width: 3,
-    height: 22,
-    borderRadius: 2,
-    backgroundColor: STRAWBERRY,
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-  },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: CHOCOLATE,
-    letterSpacing: 1.5,
-  },
-  headerSpacer: { minWidth: 60 },
-
-  // リスト
   listContent: {
     paddingHorizontal: 16,
     paddingTop: 18,
@@ -466,8 +1006,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     fontWeight: "600",
   },
-
-  // レコードカード
   recordCard: {
     alignItems: "center",
     backgroundColor: "#ffffff",
@@ -483,34 +1021,10 @@ const styles = StyleSheet.create({
   },
   cardAccentLine: {
     height: 2.5,
-    backgroundColor: STRAWBERRY,
-    opacity: 0.6,
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-  },
-
-  // ローディングカード
-  loadingCard: {
-    height: 180,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  loadingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: "100%",
     backgroundColor: STRAWBERRY,
     opacity: 0.6,
   },
-  loadingText: {
-    fontSize: 13,
-    color: CHOCOLATE_SUB,
-    letterSpacing: 1,
-  },
-
-  // レコードヘッダー
   recordHeader: {
     flexDirection: "row",
     justifyContent: "space-evenly",
@@ -520,13 +1034,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(200,214,230,0.15)",
     backgroundColor: "rgba(249,250,251,0.8)",
+    width: "100%",
   },
   playerRow: {
     flexDirection: "row",
     alignItems: "center",
   },
-
-  // 結果・日付ブロック
   resultBlock: {
     alignItems: "center",
     gap: 6,
@@ -551,8 +1064,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     fontWeight: "600",
   },
-
-  // 碁盤ラッパー
   boardWrapper: {
     justifyContent: "center",
     borderTopWidth: 1,

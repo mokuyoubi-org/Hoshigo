@@ -99,6 +99,7 @@ export const StarBackground = ({
         intensity={blurIntensity}
         tint={blurTint}
         style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
       />
     </>
   );

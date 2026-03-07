@@ -110,7 +110,7 @@ export default function Settings() {
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.push("/(tabs)/MyPage")}
+              onPress={() => router.push("/(tabs)/PlayerPage")}
               activeOpacity={0.7}
             >
               <Text style={styles.backButtonText}>‹ {t("Settings.back")}</Text>

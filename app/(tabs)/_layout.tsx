@@ -182,7 +182,7 @@ export default function TabsLayout() {
 
       
       <Tabs.Screen
-        name="MyPage"
+        name="PlayerPage"
         options={{
           title: t("Tabs.myPage"),
           tabBarIcon: ({ color, focused }) => (

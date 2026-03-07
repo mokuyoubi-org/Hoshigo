@@ -115,7 +115,7 @@ export const GoBoard: React.FC<GoBoardProps> = ({
   const cellSize = boardWidth / (boardSize - 1);
   const stoneSize = cellSize * 0.9;
   const lineWidth = Math.max(1, boardWidth / 200);
-  const paddingSize = boardWidth * 0.16;
+  const paddingSize = boardWidth * 0.12;
   const radiusSize = boardWidth * 0.06;
 
   const currentMoveCoords =

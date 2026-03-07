@@ -899,7 +899,7 @@ export default function PlayWithBot() {
           boardHistory={boardHistoryRef.current}
           currentIndex={currentIndexRef.current}
           onCurrentIndexChange={handleCurrentIndexChange}
-          boardWidth={height * (44 / 100)}
+          boardWidth={height * (42 / 100)}
         />
 
         <PlayerCard

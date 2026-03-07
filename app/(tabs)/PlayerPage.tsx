@@ -34,7 +34,7 @@ import { useTheme } from "../../src/hooks/useTheme";
 import { calculateGumiProgress, getGumiByIndex } from "../../src/lib/gumiUtils";
 import { BACKGROUND, CHOCOLATE_SUB, STRAWBERRY, CHOCOLATE } from "@/src/constants/colors";
 
-export default function MyPage() {
+export default function PlayerPage() {
   const { t } = useTranslation();
   const { colors } = useTheme();
 

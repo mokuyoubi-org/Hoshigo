@@ -3,7 +3,13 @@ import {
   SubscriptionInfoModal,
   type InfoModalVariant,
 } from "@/src/components/SubscriptionInfoModal";
-import { BACKGROUND, STRAWBERRY, GOLD, CHOCOLATE_SUB, CHOCOLATE } from "@/src/constants/colors";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  GOLD,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { useRevenueCat } from "@/src/hooks/useRevenueCat";
 import { useTheme } from "@/src/hooks/useTheme";
 import {
@@ -447,19 +453,6 @@ export default function CustomPaywallScreen({
                           ? t("Paywall.UpgradeYearly")
                           : t("Paywall.UpgradeMonthly")}
                       </Text>
-                      {/* {billingCycle === "yearly" && yearly ? (
-                        <Text style={styles.purchaseButtonPrice}>
-                          {t("Paywall.PricePerYear", {
-                            price: yearly.product.priceString,
-                          })}
-                        </Text>
-                      ) : billingCycle === "monthly" && monthly ? (
-                        <Text style={styles.purchaseButtonPrice}>
-                          {t("Paywall.PricePerMonth", {
-                            price: monthly.product.priceString,
-                          })}
-                        </Text>
-                      ) : null} */}
 
                       {billingCycle === "yearly" && yearly ? (
                         <Text style={styles.purchaseButtonPrice}>
@@ -503,7 +496,7 @@ export default function CustomPaywallScreen({
         </Animated.View>
       </ScrollView>
 
-      {/* モーダル（変更なし） */}
+      {/* モーダル */}
       <SubscriptionInfoModal
         visible={infoModal.visible}
         variant={infoModal.variant}

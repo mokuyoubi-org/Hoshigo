@@ -1,5 +1,4 @@
 import CustomPaywallScreen from "@/app/(premium)/CustomPayWall";
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,7 +34,6 @@ export const DailyLimitModal: React.FC<DailyLimitModalProps> = ({
   customMessage,
 }) => {
   const { t } = useTranslation();
-  const router = useRouter();
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handleGoToPaywall = () => {
@@ -46,7 +44,7 @@ export const DailyLimitModal: React.FC<DailyLimitModalProps> = ({
   };
 
   return (
-    <>
+    <View>
       <Modal
         visible={visible}
         transparent={true}
@@ -117,7 +115,7 @@ export const DailyLimitModal: React.FC<DailyLimitModalProps> = ({
       >
         <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} />
       </Modal>
-    </>
+    </View>
   );
 };
 

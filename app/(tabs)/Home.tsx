@@ -150,22 +150,6 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-        {/* 統計 */}
-        {/* <View style={styles.statsArea}>
-          {[
-            { num: "-", label: t("Home.online") },
-            { num: "-", label: t("Home.plan") },
-            { num: "-", label: t("Home.remaining") },
-          ].map((item, i, arr) => (
-            <React.Fragment key={i}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{item.num}</Text>
-                <Text style={styles.statLabel}>{item.label}</Text>
-              </View>
-              {i < arr.length - 1 && <View style={styles.statDivider} />}
-            </React.Fragment>
-          ))}
-        </View> */}
       </Animated.View>
 
       {loading && <LoadingOverlay text={t("Home.loading")} />}
