@@ -158,19 +158,6 @@ export default function PlayerPage() {
                 activeOpacity={0.8}
                 style={styles.avatarWrapper}
               >
-                {/* 外側グローリング */}
-                {/* <View
-                  style={[
-                    styles.avatarRingOuter,
-                    { borderColor: `${gumiColor}40` },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.avatarRingInner,
-                    { borderColor: `${gumiColor}25` },
-                  ]}
-                /> */}
 
                 <View
                   style={[
@@ -200,13 +187,6 @@ export default function PlayerPage() {
               </Text>
               <Text style={styles.username}>@{username || "guest"}</Text>
 
-              {/* ポイント */}
-              {/* <View style={styles.pointsBadge}>
-                <Text style={styles.pointsValue}>
-                  {(points || 0).toLocaleString()}
-                </Text>
-                <Text style={styles.pointsLabel}>pt</Text>
-              </View> */}
             </View>
 
             {/* ─── くみカード ─── */}
