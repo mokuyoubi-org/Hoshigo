@@ -15,7 +15,7 @@ import {
   getGumiByIndex,
   GUMI_DATA,
 } from "../../lib/gumiUtils";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 interface GumiInfoModalProps {
   visible: boolean;
@@ -30,6 +30,7 @@ export default function GumiInfoModal({
   currentGumiIndex: currentKumiIndex,
   currentPoints: currentPoints = 0,
 }: GumiInfoModalProps) {
+  const { t } = useTranslation();
   const { height, width } = useWindowDimensions();
 
   const { colors } = useTheme();

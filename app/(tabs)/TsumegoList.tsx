@@ -1,11 +1,13 @@
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { GoBoard } from "@/src/components/goComponents/GoBoard";
+import TsumegoLanguageNoticeModal from "@/src/components/modals/TsumegoLanguageNoticeModal";
 import { ICONS } from "@/src/constants/icons";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import { DisplayNameContext } from "@/src/contexts/UserContexts";
 import { prepareBoard2d } from "@/src/lib/goUtils";
 import { Tsumego, TSUMEGO_GROUPS, TsumegoGroup } from "@/src/lib/tsumegoData";
 import { useRouter } from "expo-router";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Image,
   LayoutAnimation,
@@ -26,7 +28,7 @@ const TsumegoCard: React.FC<{
   onPress: () => void;
 }> = ({ tsumego, cardWidth, boardWidth, onPress }) => {
   const board = prepareBoard2d(tsumego.board, tsumego.board.length);
-
+  const lang = useContext(LangContext);
   return (
     <TouchableOpacity
       style={[styles.card, { width: cardWidth }]}
@@ -73,8 +75,9 @@ const TsumegoSection: React.FC<{
   const columns = Math.max(2, Math.min(4, Math.floor(width / 240))); // 横幅が900でカード一枚が200なら、900/200=4余り100なのでカラム数は4。ただし最低のカラム数は2。
   const cardWidth = (width / columns) * (88 / 100); // カードのサイズ。
   const boardWidth = cardWidth * (72 / 100); // 盤面のサイズ。
+  console.log({ width, columns, cardWidth, boardWidth }); // ← 追加
   const [expanded, setExpanded] = useState(false);
-
+  const { t } = useTranslation();
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((prev) => !prev);
@@ -91,13 +94,15 @@ const TsumegoSection: React.FC<{
           onPress={toggle}
           activeOpacity={0.8}
         >
-          <Text style={styles.sectionTitle}>{group.title}</Text>
+          <Text style={styles.sectionTitle}>
+            {t(group.titleKey, { count: group.data.length })}
+          </Text>
         </TouchableOpacity>
 
         {/* カードグリッド（ヘッダーの内側） */}
         <View style={styles.grid}>
           {visibleItems.map((item, tsumegoIndex) => (
-            <View key={tsumegoIndex}>
+            <View key={tsumegoIndex} style={{ width: cardWidth }}>
               <TsumegoCard
                 cardWidth={cardWidth}
                 tsumego={item}
@@ -117,8 +122,10 @@ const TsumegoSection: React.FC<{
           >
             <Text style={[styles.expandButtonText, { color: group.color }]}>
               {expanded
-                ? "閉じる ▲"
-                : `残り${group.data.length - columns}問を見る ▼`}
+                ? t("TsumegoList.close")
+                : t("TsumegoList.remaining", {
+                    count: group.data.length - columns,
+                  })}
             </Text>
           </TouchableOpacity>
         )}
@@ -128,12 +135,19 @@ const TsumegoSection: React.FC<{
 };
 
 export default function TsumegoList() {
+  const lang = useContext(LangContext);
   const router = useRouter();
   const displayName = useContext(DisplayNameContext);
-
+  const { t } = useTranslation();
   const handleSelectTsumego = (groupId: number, index: number) => {
     router.push({ pathname: "/Tsumego", params: { groupId, index } });
   };
+  const [showLangNotice, setShowLangNotice] = useState(false);
+  useEffect(() => {
+    if (lang !== "ja") {
+      setShowLangNotice(true);
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -155,8 +169,11 @@ export default function TsumegoList() {
             <View style={styles.speechBubble}>
               <View style={styles.bubbleTriangle} />
               <Text style={styles.explanationText}>
-                詰碁で読みの力を鍛えよう！{"\n"}
-                全部{`${displayName ?? "ゲスト"}`}が ● だよ
+                {t("TsumegoList.explanation1")}
+                {"\n"}
+                {t("TsumegoList.explanation2", {
+                  name: displayName ?? t("TsumegoList.guest"),
+                })}
               </Text>
             </View>
           </View>
@@ -172,6 +189,10 @@ export default function TsumegoList() {
           ))}
         </View>
       </ScrollView>
+      <TsumegoLanguageNoticeModal
+        visible={showLangNotice}
+        onClose={() => setShowLangNotice(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -263,6 +284,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa", // 親の白と差をつけて少し沈んで見える
     borderRadius: 12,
     padding: 8,
+    
   },
   // グリッド（FlatListの代わり）
   grid: {
@@ -288,5 +310,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 6,
+    
   },
 });

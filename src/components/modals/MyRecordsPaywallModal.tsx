@@ -44,11 +44,10 @@ export const PaywallModal = ({
         </View>
 
         <Text style={modalStyles.title}>
-          {t("MyRecords.premiumTitle") || "続きを見るには"}
+          {t("MyRecordsPaywallModal.premiumTitle")}
         </Text>
         <Text style={modalStyles.subtitle}>
-          {t("MyRecords.premiumSubtitle") ||
-            "プレミアム会員になると\n対局履歴をすべて閲覧できます"}
+          {t("MyRecordsPaywallModal.premiumSubtitle")}
         </Text>
 
         {/* 区切り線 */}
@@ -58,20 +57,14 @@ export const PaywallModal = ({
         <View style={modalStyles.benefits}>
           {[
             {
-              icon: "📜",
-              text: t("MyRecords.benefit1") || "対局履歴 無制限閲覧",
+              text: t("MyRecordsPaywallModal.benefit1"),
             },
             {
-              icon: "♟",
-              text: t("MyRecords.benefit2") || "棋譜リプレイ 全手数",
+              text: t("MyRecordsPaywallModal.benefit2"),
             },
-            {
-              icon: "✦",
-              text: t("MyRecords.benefit3") || "広告なし・優先マッチング",
-            },
+
           ].map((b, i) => (
             <View key={i} style={modalStyles.benefitRow}>
-              <Text style={modalStyles.benefitIcon}>{b.icon}</Text>
               <Text style={modalStyles.benefitText}>{b.text}</Text>
             </View>
           ))}
@@ -86,12 +79,12 @@ export const PaywallModal = ({
           activeOpacity={0.75}
         >
           <Text style={modalStyles.ctaText}>
-            {t("MyRecords.premiumCTA") || "プレミアムにアップグレード"}
+            {t("MyRecordsPaywallModal.premiumCTA")}
           </Text>
         </TouchableOpacity>
 
         <Text style={modalStyles.footer}>
-          {t("MyRecords.premiumFooter") || "いつでもキャンセル可能"}
+          {t("MyRecordsPaywallModal.premiumFooter")}
         </Text>
       </Animated.View>
     </Animated.View>

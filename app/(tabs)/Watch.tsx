@@ -10,6 +10,7 @@ import {
 } from "@/src/constants/colors";
 import { Agehama, Match } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Board, initializeBoard } from "@/src/lib/goLogics";
 import {
@@ -19,7 +20,6 @@ import {
 } from "@/src/lib/goUtils";
 import { moveNumbersToStrings } from "@/src/lib/utils";
 import { supabase } from "@/src/services/supabase";
-import { t } from "@/src/services/translations";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -197,7 +197,7 @@ function buildCardData(match: Match): MatchCardData {
 // ─── メインコンポーネント ──────────────────────────────
 export default function Watch() {
   const { colors } = useTheme();
-
+const { t } = useTranslation();
   const [matchCardsData, setMatchCardsData] = useState<MatchCardData[]>([]);
   const matchCardsDataRef = useRef<{ [id: string]: MatchCardData }>({});
   const [loading, setLoading] = useState(true);

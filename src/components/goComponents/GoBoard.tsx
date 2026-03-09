@@ -1,3 +1,8 @@
+import { Agehama } from "@/src/constants/goConstants";
+import { ICONS } from "@/src/constants/icons";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
+import { useTheme } from "@/src/hooks/useTheme";
+import { Board, GoString, Grid } from "@/src/lib/goLogics";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -7,12 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Agehama } from "@/src/constants/goConstants";
-import { ICONS } from "@/src/constants/icons";
-import { useTheme } from "@/src/hooks/useTheme";
-import { Board, GoString, Grid } from "@/src/lib/goLogics";
 import { ReplayControls } from "./ReplayControls";
-import { t } from "@/src/services/translations";
 
 // ─── AgehamaDisplay ────────────────────
 const AgehamaDisplay: React.FC<{ count: number; isBlack: boolean }> = ({
@@ -20,6 +20,7 @@ const AgehamaDisplay: React.FC<{ count: number; isBlack: boolean }> = ({
   isBlack,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   if (count === 0) return <View style={styles.agehamaContainer} />;
 
@@ -173,6 +174,7 @@ export const GoBoard: React.FC<GoBoardProps> = ({
 
   const icon = ICONS[80];
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const { t } = useTranslation();
   // これは手の話だ。
   useEffect(() => {
     Animated.loop(

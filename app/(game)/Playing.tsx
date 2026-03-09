@@ -6,7 +6,6 @@ import { ResultModal } from "@/src/components/modals/ResultModal";
 import { Agehama } from "@/src/constants/goConstants";
 import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
 import { moveNumbersToStrings, moveStringsToNumbers } from "@/src/lib/utils";
-import { t } from "@/src/services/translations";
 import { useAudioPlayer } from "expo-audio";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -49,6 +48,7 @@ import {
   sleep,
 } from "../../src/lib/goUtils";
 import { supabase } from "../../src/services/supabase";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (9 - 1);
@@ -62,6 +62,7 @@ const SUBSCRIPTION_RETRY_DELAY_MS = 3_000; // リトライ間隔
 const GNU_API_TIMEOUT_MS = 30_000; // GNUGo APIのタイムアウト
 
 export default function Playing() {
+  const { t } = useTranslation();
   const { height } = useWindowDimensions();
 
   const params = useLocalSearchParams();

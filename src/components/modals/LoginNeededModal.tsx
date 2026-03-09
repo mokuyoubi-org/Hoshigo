@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../../hooks/useTheme";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 interface LoginNeededModalProps {
   visible: boolean;
@@ -15,6 +15,7 @@ export default function LoginNeededModal({
   onClose,
   message,
 }: LoginNeededModalProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
 
   const handleLogin = () => {

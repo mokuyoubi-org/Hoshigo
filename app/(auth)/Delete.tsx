@@ -7,8 +7,8 @@ import {
   DANGER,
   STRAWBERRY,
 } from "@/src/constants/colors";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { logoutRevenueCat } from "@/src/services/RevenueCat";
-import { t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -30,6 +30,7 @@ export default function Delete() {
   const { colors } = useTheme();
 
   // ── ロジック（変更なし） ──
+  const { t } = useTranslation();
   const uid = useContext(UidContext);
   const [loading, setLoading] = useState(false);
   const fadeIn = useRef(new Animated.Value(0)).current;

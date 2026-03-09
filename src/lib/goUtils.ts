@@ -1,5 +1,5 @@
 import { Agehama } from "../constants/goConstants";
-import { t } from "../services/translations";
+import { useTranslation } from "../contexts/LocaleContexts";
 import {
   applyMove,
   Board,
@@ -102,6 +102,7 @@ export function formatResult(result: string): string {
 
 // 要はシンプルな二次元配列にしている。012のみの。
 export function boardToStones(board: Board, boardSize: number): number[][] {
+  const { t } = useTranslation();
   const stones: number[][] = Array.from({ length: boardSize }, () =>
     Array.from({ length: boardSize }, () => 0),
   );
@@ -129,6 +130,7 @@ export const resultToLanguagesComment = (
   result: string,
   playerColor: string,
 ) => {
+  const { t } = useTranslation();
   if (
     (result === "W+R" && playerColor === "white") ||
     (result === "B+R" && playerColor === "black")
@@ -343,6 +345,7 @@ export const makeTerritoryBoard = (
 };
 
 export const resultToLanguages = (result: string) => {
+  const { t } = useTranslation();
   if (result === "B+R") {
     return t("GameResult.blackResignationWin");
   } else if (result === "W+R") {

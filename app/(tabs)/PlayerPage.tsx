@@ -1,3 +1,4 @@
+import { Avatar } from "@/src/components/Avatar";
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import GumiInfoModal from "@/src/components/modals/GumiInfoModal";
 import IconSelectorModal from "@/src/components/modals/IconSelectModal";
@@ -9,16 +10,14 @@ import {
   CHOCOLATE_SUB,
   STRAWBERRY,
 } from "@/src/constants/colors";
-import { ICONS } from "@/src/constants/icons";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { supabase } from "@/src/services/supabase";
-import { t } from "@/src/services/translations";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Image,
   StatusBar as RNStatusBar,
   ScrollView,
   StyleSheet,
@@ -41,6 +40,7 @@ import { calculateGumiProgress, getGumiByIndex } from "../../src/lib/gumiUtils";
 
 export default function PlayerPage() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   // ── ロジック（変更なし） ──
   const username = useContext(UserNameContext);
@@ -160,7 +160,13 @@ export default function PlayerPage() {
                 activeOpacity={0.8}
                 style={styles.avatarWrapper}
               >
-                <View
+                <Avatar
+                  gumiIndex={playersGumiIndex ?? 0}
+                  iconIndex={iconIndex ?? 0}
+                  size={96}
+                />
+
+                {/* <View
                   style={[
                     styles.avatar,
                     {
@@ -174,7 +180,7 @@ export default function PlayerPage() {
                     style={styles.avatarImage}
                     resizeMode="contain"
                   />
-                </View>
+                </View> */}
 
                 {/* 編集バッジ */}
                 <View style={styles.editBadge}>
@@ -362,28 +368,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2.5,
-    backgroundColor: "#ffffff",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  avatarImage: {
-    width: 96,
-    height: 96,
-  },
+  // avatar: {
+  //   width: 100,
+  //   height: 100,
+  //   borderRadius: 50,
+  //   borderWidth: 2.5,
+  //   backgroundColor: "#ffffff",
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  //   overflow: "hidden",
+  //   shadowOffset: { width: 0, height: 4 },
+  //   shadowOpacity: 0.2,
+  //   shadowRadius: 10,
+  //   elevation: 5,
+  // },
+  // avatarImage: {
+  //   width: 96,
+  //   height: 96,
+  // },
   editBadge: {
     position: "absolute",
-    bottom: 2,
-    right: 2,
+    bottom: 8,
+    right: 8,
     width: 28,
     height: 28,
     borderRadius: 14,

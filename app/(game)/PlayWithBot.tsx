@@ -19,7 +19,6 @@ import LoadingModal from "../../src/components/modals/LoadingModal";
 
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { Agehama } from "@/src/constants/goConstants";
-import { t } from "@/src/services/translations";
 import {
   DisplayNameContext,
   GumiIndexContext,
@@ -52,6 +51,7 @@ import {
   sleep,
 } from "../../src/lib/goUtils";
 import { supabase } from "../../src/services/supabase";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (9 - 1);
@@ -63,7 +63,7 @@ const GNU_API_TIMEOUT_MS = 30_000; // GNUGo APIのタイムアウト
 
 export default function PlayWithBot() {
   const { height } = useWindowDimensions();
-
+const { t } = useTranslation();
   // ── Context ──────────────────────────────────────
   const uid = useContext(UidContext);
   const jwt = useContext(JwtContext);

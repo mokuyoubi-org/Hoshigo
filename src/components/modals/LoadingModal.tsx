@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { ActivityIndicator, Animated, StyleSheet, Text } from "react-native";
 import { useTheme } from "../../hooks/useTheme";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 // ─── Homeページに合わせたカラー ───────────────────────
 const STRAWBERRY = "#c8d6e6";
@@ -15,6 +15,7 @@ type LoadingModalProps = {
 };
 
 export default function LoadingModal({ text }: LoadingModalProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;

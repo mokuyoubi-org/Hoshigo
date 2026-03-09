@@ -23,7 +23,7 @@ import {
 import { supabase } from "../../services/supabase";
 import { DailyLimitModal } from "./DailyLimitModal";
 import LoadingModal from "./LoadingModal";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 interface ResultModalProps {
   visible: boolean;
@@ -44,6 +44,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   gumiIndexBefore,
   gumiIndexAfter,
 }) => {
+  const { t } = useTranslation();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const hasAnimated = useRef(false);
   const uid = useContext(UidContext);

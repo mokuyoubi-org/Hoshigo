@@ -1,3 +1,4 @@
+import { Avatar } from "@/src/components/Avatar";
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import LoadingModal from "@/src/components/modals/LoadingModal";
 import {
@@ -9,18 +10,16 @@ import {
   SILVER,
   STRAWBERRY,
 } from "@/src/constants/colors";
-import { ICONS } from "@/src/constants/icons";
+import { Profile } from "@/src/constants/profile";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { useTheme } from "@/src/hooks/useTheme";
-import { GUMI_DATA } from "@/src/lib/gumiUtils";
 import { supabase } from "@/src/services/supabase";
-import { t } from "@/src/services/translations";
 import { AntDesign } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
-  Image,
   StatusBar as RNStatusBar,
   StyleSheet,
   Text,
@@ -35,30 +34,13 @@ const RANK_COLORS: Record<number, { color: string; label: string }> = {
 };
 
 // ─── 型定義 ───────────────────────────────
-type Profile = {
-  uid: string;
-  displayname: string;
-  points: number;
-  gumi_index: number;
-  icon_index: number;
-};
 
 // ─── RankingItem ──────────────────────
-const RankingItem = ({
-  item,
-  index,
-  colors,
-}: {
-  item: Profile;
-  index: number;
-  colors: any;
-}) => {
+const RankingItem = ({ item, index }: { item: Profile; index: number }) => {
   const rank = index + 1;
-  const gumiColor = GUMI_DATA[item.gumi_index].color;
   const rankMeta = RANK_COLORS[rank];
   const isTop3 = rank <= 3;
   const fadeIn = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
     Animated.timing(fadeIn, {
       toValue: 1,
@@ -84,29 +66,7 @@ const RankingItem = ({
           )}
 
           {/* アバター */}
-          <View style={styles.avatarContainer}>
-            <View
-              style={[
-                styles.avatarBorder,
-                {
-                  borderColor:
-                    gumiColor !== "shirogumi"
-                      ? colors[gumiColor]
-                      : "transparent",
-                  backgroundColor: "#ffffff",
-                  shadowColor: STRAWBERRY,
-                  shadowOpacity: 0.15,
-                  shadowRadius: 6,
-                },
-              ]}
-            >
-              <Image
-                source={ICONS[item.icon_index]}
-                style={styles.avatarIcon}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
+          <Avatar gumiIndex={item.gumi_index} iconIndex={item.icon_index} size={50}/>
 
           {/* 名前 */}
           <View style={styles.infoContainer}>
@@ -134,7 +94,7 @@ export default function Rankings() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const fadeIn = useRef(new Animated.Value(0)).current;
-
+  const { t } = useTranslation();
   useEffect(() => {
     Animated.timing(fadeIn, {
       toValue: 1,
@@ -176,7 +136,7 @@ export default function Rankings() {
           data={profiles}
           keyExtractor={(item) => item.uid}
           renderItem={({ item, index }) => (
-            <RankingItem item={item} index={index} colors={colors} />
+            <RankingItem item={item} index={index} />
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -317,25 +277,6 @@ const styles = StyleSheet.create({
     color: CHOCOLATE_SUB,
     letterSpacing: 0.5,
     opacity: 0.6,
-  },
-
-  // アバター
-  avatarContainer: {
-    marginRight: 14,
-  },
-  avatarBorder: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 2.5,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  avatarIcon: {
-    width: 48,
-    height: 48,
   },
 
   // 名前・ポイント

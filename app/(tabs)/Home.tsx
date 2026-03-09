@@ -14,10 +14,10 @@ import {
   MaintenanceContext,
   MaintenanceMessageContext,
 } from "@/src/contexts/AppContexts";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import { IsPremiumContext, UidContext } from "@/src/contexts/UserContexts";
 import { useTheme } from "@/src/hooks/useTheme";
 import { supabase } from "@/src/services/supabase";
-import { lang, t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -33,6 +33,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // ─── メイン ───────────────────────────────────────────
 export default function Home() {
+  const lang = useContext(LangContext);
   const [isInfoModalVisible, setIsModalVisible] = useState(false);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
   const uid = useContext(UidContext);
@@ -45,7 +46,7 @@ export default function Home() {
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
-
+const { t } = useTranslation();
   useEffect(() => {
     Animated.timing(fadeIn, {
       toValue: 1,

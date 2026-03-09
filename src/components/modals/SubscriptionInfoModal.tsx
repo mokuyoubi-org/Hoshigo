@@ -1,5 +1,6 @@
 // @/src/components/modals/SubscriptionInfoModal.tsx
-import { t, translations } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
+import { translations } from "@/src/services/translations";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -93,6 +94,7 @@ export const SubscriptionInfoModal: React.FC<SubscriptionInfoModalProps> = ({
   onClose,
   colors,
 }) => {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const checkAnim = useRef(new Animated.Value(0)).current;

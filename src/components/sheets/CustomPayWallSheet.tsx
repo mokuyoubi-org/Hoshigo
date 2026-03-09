@@ -10,6 +10,7 @@ import {
   GOLD,
   STRAWBERRY,
 } from "@/src/constants/colors";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import { useRevenueCat } from "@/src/hooks/useRevenueCat";
 import { useTheme } from "@/src/hooks/useTheme";
 import {
@@ -17,8 +18,8 @@ import {
   purchasePackage,
   restorePurchases,
 } from "@/src/services/RevenueCat";
-import { t, translations } from "@/src/services/translations";
-import React, { useEffect, useRef, useState } from "react";
+import { TranslationKey } from "@/src/services/translations";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -39,12 +40,11 @@ interface CustomPaywallScreenProps {
 }
 type SelectedTier = "starter" | "pro";
 type BillingCycle = "monthly" | "yearly";
-type PaywallKey = `Paywall.${keyof typeof translations.en.Paywall}`;
 
 interface FeatureRow {
-  labelKey: PaywallKey;
-  starterKey: PaywallKey;
-  proKey: PaywallKey;
+  labelKey: TranslationKey;
+  starterKey: TranslationKey;
+  proKey: TranslationKey;
   highlight: boolean;
 }
 interface InfoModalState {
@@ -73,6 +73,8 @@ export default function CustomPaywallScreen({
 }: CustomPaywallScreenProps): React.JSX.Element {
   const { colors } = useTheme();
   const { refreshStatus } = useRevenueCat();
+  const { t } = useTranslation();
+  const lang = useContext(LangContext);
 
   // ── ロジック（変更なし） ──
   const [offerings, setOfferings] = useState<PurchasesOffering | null>(null);

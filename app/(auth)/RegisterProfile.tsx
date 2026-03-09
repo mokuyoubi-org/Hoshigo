@@ -24,12 +24,14 @@ import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
 
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
-import { lang, t } from "@/src/services/translations";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import * as hangulRomanization from "hangul-romanization";
 import { pinyin } from "pinyin-pro";
 import * as wanakana from "wanakana";
 
 export const generateUsername = (text: string, lang: string): string => {
+
+  
   let username = "";
 
   switch (lang) {
@@ -61,6 +63,7 @@ export const generateUsername = (text: string, lang: string): string => {
 };
 
 export default function RegisterProfile() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   // グローバルstate
   const uid = useContext<string | null>(UidContext);
@@ -75,7 +78,7 @@ export default function RegisterProfile() {
   const setPoints = useContext<((value: number) => void) | null>(
     SetPointsContext,
   );
-
+const lang = useContext(LangContext);
   // ローカルstate
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,6 +89,7 @@ export default function RegisterProfile() {
   // 中国語: 漢字 2文字まで
   // 英語: アルファベット 10文字まで
   const isValidDisplayName = (text: string) => {
+    const lang = useContext(LangContext);
     switch (lang) {
       case "ja":
         return /^[ぁ-ゖァ-ヶー〜]{1,5}$/.test(text);

@@ -3,6 +3,7 @@ import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { GoBoard } from "@/src/components/goComponents/GoBoard";
 import { TextPanel } from "@/src/components/TextPanel";
 import { Agehama } from "@/src/constants/goConstants";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import {
   applyMove,
   Board,
@@ -30,7 +31,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 export default function TsumegoPage() {
   const { height } = useWindowDimensions();
-
+const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams();
   console.log("params:", params); // まず確認！
@@ -189,7 +190,7 @@ export default function TsumegoPage() {
             initializeBoard(boardSize),
         )
       ) {
-        animateText("そこには打てないよ");
+        animateText(t("Tsumego.cannotPlace"));
         return false;
       }
     }
@@ -205,15 +206,13 @@ export default function TsumegoPage() {
     if (nextNode) {
       if (nextNode.isCorrect) {
         // コメントをアニメーション表示
-        animateText(nextNode.comment ?? "せいかい！");
-        // 登録されている正解の手
+        animateText(nextNode.comment ?? t("Tsumego.correct")); // 登録されている正解の手
         setDisabled(true);
         setGameOver(true);
         setIsCorrect(true);
       } else if (nextNode.isCorrect === false) {
         // コメントをアニメーション表示
-        animateText(nextNode.comment ?? "おしい！ふせいかい");
-        // 登録されている間違いの手
+        animateText(nextNode.comment ?? t("Tsumego.incorrect")); // 登録されている間違いの手
         setGameOver(true);
         setDisabled(true);
       } else {
@@ -231,12 +230,12 @@ export default function TsumegoPage() {
           animateText(nextNextNode.comment ?? "");
           setDisabled(false);
         } else if (currentGoNodeRef.current.isCorrect) {
-          animateText(nextNextNode.comment ?? "せいかい！");
+          animateText(nextNode.comment ?? t("Tsumego.correct"));
           setIsCorrect(true);
           setDisabled(true);
           setGameOver(true);
         } else {
-          animateText(nextNextNode.comment ?? "おしい！ふせいかい");
+          animateText(nextNode.comment ?? t("Tsumego.incorrect"));
           setDisabled(true);
           setGameOver(true);
         }
@@ -244,7 +243,7 @@ export default function TsumegoPage() {
     } else {
       // 登録されていない手
       setDisabled(true);
-      animateText("おしい！ふせいかい");
+      animateText(t("Tsumego.incorrect"));
     }
   };
 
@@ -366,7 +365,9 @@ export default function TsumegoPage() {
             style={styles.backButton}
             onPress={() => router.push("/(tabs)/TsumegoList")}
           >
-            <Text style={styles.backButtonText}>‹ もどる</Text>
+            <Text style={styles.backButtonText}>
+              ‹ {t("Tsumego.back")}
+            </Text>{" "}
           </TouchableOpacity>
         </View>
 
@@ -408,7 +409,9 @@ export default function TsumegoPage() {
                 style={[styles.navButton, styles.buttonComplete]}
                 onPress={handleBefore}
               >
-                <Text style={styles.navButtonText}>← 前の問題へ</Text>
+                <Text style={styles.navButtonText}>
+                  ← {t("Tsumego.previous")}
+                </Text>{" "}
               </TouchableOpacity>
             )}
 
@@ -417,7 +420,9 @@ export default function TsumegoPage() {
               style={[styles.navButton, styles.buttonReset]}
               onPress={handleReset}
             >
-              <Text style={styles.navButtonText}>リセット</Text>
+              <Text style={styles.navButtonText}>
+                {t("Tsumego.reset")}
+              </Text>{" "}
             </TouchableOpacity>
 
             {/* 次へボタン（正解時のみ） */}
@@ -429,7 +434,9 @@ export default function TsumegoPage() {
                   style={[styles.navButton, styles.buttonComplete]}
                   onPress={handleNext}
                 >
-                  <Text style={styles.navButtonText}>次の問題へ →</Text>
+                  <Text style={styles.navButtonText}>
+                    {t("Tsumego.next")} →
+                  </Text>{" "}
                 </TouchableOpacity>
               )}
 

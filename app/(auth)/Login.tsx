@@ -1,5 +1,4 @@
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
-import { t } from "@/src/services/translations";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
@@ -20,6 +19,7 @@ import LoadingModal from "../../src/components/modals/LoadingModal";
 import { useTheme } from "../../src/hooks/useTheme";
 import { isValidEmail, isValidPassword } from "../../src/lib/utils";
 import { supabase } from "../../src/services/supabase";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,7 +31,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const canLogin = isValidEmail(email) && isValidPassword(password);
-
+  const { t } = useTranslation();
   // ← これを追加
   useEffect(() => {
     const handleDeepLink = async (url: string) => {

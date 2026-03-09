@@ -1,5 +1,5 @@
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
-import { PaywallModal } from "@/src/components/modals/PaywallModal";
+import { PaywallModal } from "@/src/components/modals/MyRecordsPaywallModal";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -7,8 +7,8 @@ import {
   STRAWBERRY,
 } from "@/src/constants/colors";
 import { Agehama, MatchArchive } from "@/src/constants/goConstants";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import { moveNumbersToStrings } from "@/src/lib/utils";
-import { lang, t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, {
@@ -268,7 +268,6 @@ const SkeletonCard = ({ cardHeight }: { cardHeight: number }) => (
           { width: 200, height: 200, borderRadius: 6 },
         ]}
       />
-      <Text style={skeletonStyles.loadingText}>読み込み中...</Text>
     </View>
   </View>
 );
@@ -318,6 +317,7 @@ export default function MyRecords() {
   const isPremium = useContext(IsPremiumContext);
   const { colors } = useTheme();
   const { height } = useWindowDimensions();
+  const lang = useContext(LangContext);
 
   const CARD_HEIGHT = height * 0.8;
   const GAP = 18;
@@ -338,7 +338,7 @@ export default function MyRecords() {
     [key: string]: number[][];
   }>({});
   const [matchTypes, setMatchTypes] = useState<{ [key: string]: number }>({});
-
+  const { t } = useTranslation();
   const isFetchingMore = useRef(false);
 
   // const localeMap: { [key: string]: string } = {

@@ -1,4 +1,5 @@
-import { t, translations } from "../services/translations";
+import { useTranslation } from "../contexts/LocaleContexts";
+import {  translations } from "../services/translations";
 
 type GumiKey = `Gumi.${keyof typeof translations.en.Gumi}`;
 
@@ -10,28 +11,28 @@ export interface GumiInfo {
 
 // 白、黄色、緑、青、オレンジ、赤、
 export const GUMI_DATA: GumiInfo[] = [
-  { nameKey: "Gumi.shirogumi", color: "shirogumi", minPoints: 0 },
-  { nameKey: "Gumi.momogumi", color: "momogumi", minPoints: 20 },
-  { nameKey: "Gumi.orangegumi", color: "orangegumi", minPoints: 60 },
-  { nameKey: "Gumi.kiirogumi", color: "kiirogumi", minPoints: 120 },
-  { nameKey: "Gumi.midorigumi", color: "midorigumi", minPoints: 200 },
-  { nameKey: "Gumi.aogumi", color: "aogumi", minPoints: 300 },
-  { nameKey: "Gumi.soragumi1", color: "soragumi", minPoints: 420 },
-  { nameKey: "Gumi.soragumi2", color: "soragumi", minPoints: 560 },
-  { nameKey: "Gumi.soragumi3", color: "soragumi", minPoints: 720 },
-  { nameKey: "Gumi.nijigumi1", color: "nijigumi", minPoints: 900 },
-  { nameKey: "Gumi.nijigumi2", color: "nijigumi", minPoints: 1100 },
-  { nameKey: "Gumi.nijigumi3", color: "nijigumi", minPoints: 1300 },
-  { nameKey: "Gumi.tsukigumi1", color: "tsukigumi", minPoints: 1500 },
-  { nameKey: "Gumi.tsukigumi2", color: "tsukigumi", minPoints: 1700 },
-  { nameKey: "Gumi.tsukigumi3", color: "tsukigumi", minPoints: 1900 },
-  { nameKey: "Gumi.hoshigumi1", color: "hoshigumi", minPoints: 2100 },
-  { nameKey: "Gumi.hoshigumi2", color: "hoshigumi", minPoints: 2300 },
+  { nameKey: "Gumi.shirogumi", color: "shirogumi", minPoints: 0 }, // 0
+  { nameKey: "Gumi.momogumi", color: "momogumi", minPoints: 20 }, // 1
+  { nameKey: "Gumi.orangegumi", color: "orangegumi", minPoints: 60 }, // 2
+  { nameKey: "Gumi.kiirogumi", color: "kiirogumi", minPoints: 120 }, // 3
+  { nameKey: "Gumi.midorigumi", color: "midorigumi", minPoints: 200 }, // 4
+  { nameKey: "Gumi.aogumi", color: "aogumi", minPoints: 300 }, // 5
+  { nameKey: "Gumi.soragumi1", color: "soragumi", minPoints: 420 }, // 6
+  { nameKey: "Gumi.soragumi2", color: "soragumi", minPoints: 560 }, // 7
+  { nameKey: "Gumi.soragumi3", color: "soragumi", minPoints: 720 }, // 8
+  { nameKey: "Gumi.nijigumi1", color: "nijigumi", minPoints: 900 }, // 9
+  { nameKey: "Gumi.nijigumi2", color: "nijigumi", minPoints: 1100 }, // 10
+  { nameKey: "Gumi.nijigumi3", color: "nijigumi", minPoints: 1300 }, // 11
+  { nameKey: "Gumi.tsukigumi1", color: "tsukigumi", minPoints: 1500 }, // 12
+  { nameKey: "Gumi.tsukigumi2", color: "tsukigumi", minPoints: 1700 }, // 13
+  { nameKey: "Gumi.tsukigumi3", color: "tsukigumi", minPoints: 1900 }, // 14
+  { nameKey: "Gumi.hoshigumi1", color: "hoshigumi", minPoints: 2100 }, // 15
+  { nameKey: "Gumi.hoshigumi2", color: "hoshigumi", minPoints: 2300 }, // 16
   {
     nameKey: "Gumi.hoshigumi3",
     color: "hoshigumi",
     minPoints: 2500,
-  },
+  }, // 17
 ];
 
 /**
@@ -40,6 +41,7 @@ export const GUMI_DATA: GumiInfo[] = [
  * nameは現在の言語で翻訳された名前を返す
  */
 export function getGumiByIndex(index: number): GumiInfo & { name: string } {
+  const { t } = useTranslation();
   if (index < 0 || index >= GUMI_DATA.length) {
     const gumi = GUMI_DATA[0];
     return {
@@ -84,6 +86,7 @@ export function calculateGumiProgress(
   currentPoints: number,
   currentGumiIndex: number,
 ): ProgressInfo {
+  const { t } = useTranslation();
   const nextGumi = GUMI_DATA[currentGumiIndex + 1];
 
   // 最上位ランクの場合は常に満タン

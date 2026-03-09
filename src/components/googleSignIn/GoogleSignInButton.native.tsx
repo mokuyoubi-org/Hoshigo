@@ -6,11 +6,12 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
 import { Image, TouchableOpacity } from "react-native";
 import { supabase } from "../../services/supabase";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function GoogleSignInButton() {
+  const { t } = useTranslation();
 
   function extractParamsFromUrl(url: string) {
     const parsedUrl = new URL(url);

@@ -1,5 +1,4 @@
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
-import { t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -16,6 +15,7 @@ import {
   UserNameContext,
 } from "../../src/contexts/UserContexts";
 import { supabase } from "../../src/services/supabase";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 // 囲碁のシーケンス(黒スタート)
 const boardSequence = [
@@ -67,6 +67,7 @@ const boardSequence = [
 ];
 
 export default function Matching() {
+  const { t } = useTranslation();
   const uid = useContext(UidContext);
   const username = useContext(UserNameContext);
   const displayname = useContext(DisplayNameContext);

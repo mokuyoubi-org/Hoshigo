@@ -1,5 +1,4 @@
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
-import { t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
@@ -16,12 +15,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingModal from "../../src/components/modals/LoadingModal";
 import { isValidEmail } from "../../src/lib/utils";
 import { supabase } from "../../src/services/supabase";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+    const { t } = useTranslation();
 
   const onSendResetEmail = async () => {
     if (!isValidEmail(email)) {

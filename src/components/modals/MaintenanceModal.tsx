@@ -1,9 +1,10 @@
 // @/src/components/modals/MaintenanceModal.tsx
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export function MaintenanceModal({ message }: { message: string | null }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.overlay}>
       <View style={styles.card}>

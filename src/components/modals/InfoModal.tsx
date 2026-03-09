@@ -1,4 +1,4 @@
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import React from "react";
 import {
   Modal,
@@ -29,7 +29,7 @@ type InfoModalProps = {
 
 export const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
   const {height} = useWindowDimensions();
-
+const { t } = useTranslation();
   const RuleItem = ({
     title,
     description,

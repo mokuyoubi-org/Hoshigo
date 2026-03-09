@@ -14,7 +14,7 @@ import {
 import { ICONS } from "../../constants/icons";
 import { GumiIndexContext } from "../../contexts/UserContexts";
 import { useTheme } from "../../hooks/useTheme";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 interface IconSelectorModalProps {
   visible: boolean;
@@ -29,6 +29,7 @@ export default function IconSelectorModal({
   onSelectIcon,
   currentIconIndex,
 }: IconSelectorModalProps) {
+  const { t } = useTranslation();
   const { height } = useWindowDimensions();
   const iconSize: number = 96;
   const imageSize: number = iconSize * (5 / 6);

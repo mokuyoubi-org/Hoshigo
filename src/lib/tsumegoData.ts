@@ -1,6 +1,8 @@
 // TsumegoData.ts
 // 詰碁のデータ定義とサンプルデータ
 
+import { TranslationKey } from "../services/translations";
+
 export type GoNode = {
   move: string; // "p" とか "3,2", "1,1" etc.
   nexts?: GoNode[];
@@ -22,7 +24,7 @@ export type Tsumego = {
 // ルール確認レベル。石を取れるか。置けない場所置ける場所がわかっているか。コウがわかっているか。地を数えられるか。交互に打つ。マスの上に打つ。パス二回で終局。もしくは投了。
 export const PINK: Tsumego[] = [
   {
-    title: "石をとろう",
+    title: "石をとろう1",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -39,7 +41,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "はしっこの石をとろう",
+    title: "石をとろう2",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -56,7 +58,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "すみっこの石をとろう",
+    title: "石をとろう3",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -73,7 +75,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "相手の石をとろう1",
+    title: "石をとろう4",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 1, 0, 0],
@@ -90,7 +92,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "相手の石をとろう2",
+    title: "石をとろう5",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -107,7 +109,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "相手の石をとろう3",
+    title: "石をとろう6",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -138,7 +140,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "相手の石をとろう4",
+    title: "石をとろう7",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -155,7 +157,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "相手の石をとろう5",
+    title: "石をとろう8",
     comment: "○をとれるかな？",
     board: [
       [0, 1, 1, 0, 0],
@@ -172,7 +174,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "●はここに打てる？1",
+    title: "ここに打てる？1",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -197,7 +199,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "●はここに打てる？2",
+    title: "ここに打てる？2",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -220,9 +222,8 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
-    title: "●はここに打てる？3",
+    title: "ここに打てる？3",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -246,9 +247,8 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
-    title: "●はここに打てる？4",
+    title: "ここに打てる？4",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -273,7 +273,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "●はここに打てる？5",
+    title: "ここに打てる？5",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -297,9 +297,8 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
-    title: "●はここに打てる？6",
+    title: "ここに打てる？6",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -323,9 +322,8 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
-    title: "●はここに打てる？7",
+    title: "ここに打てる？7",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -356,9 +354,8 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
-    title: "●はここに打てる？8",
+    title: "ここに打てる？8",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 1, 2, 2],
@@ -382,7 +379,6 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "コウがわかるかな1",
     comment: "まず○が打つよ",
@@ -416,7 +412,6 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "コウがわかるかな2",
     comment: "まず○が打つよ",
@@ -482,7 +477,6 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "コウがわかるかな4",
     comment: "まず○が打つよ",
@@ -532,7 +526,6 @@ export const PINK: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "コウがわかるかな5",
     comment: "まず○が打つよ",
@@ -4017,56 +4010,35 @@ export const RAINBOW1: Tsumego[] = [];
 export const RAINBOW2: Tsumego[] = [];
 
 export type TsumegoGroup = {
-  // id: number;
-  title: string; // "ももぐみを目指す" など
-  color: string; // グループのテーマカラー
+  titleKey: TranslationKey; // stringから変更
+  color: string;
   data: Tsumego[];
 };
 
 export const TSUMEGO_GROUPS: TsumegoGroup[] = [
   {
-    title: `ももぐみを目指す${PINK.length}問`,
+    titleKey: "TsumegoGroup.groupPink",
     color: "#FFB7C5",
     data: PINK,
   },
   {
-    title: `おれんじぐみを目指す${ORANGE.length}問`,
+    titleKey: "TsumegoGroup.groupOrange",
     color: "#FFA07A",
     data: ORANGE,
   },
   {
-    title: `きいろぐみを目指す${YELLOW.length}問`,
+    titleKey: "TsumegoGroup.groupYellow",
     color: "#ffed7a",
     data: YELLOW,
   },
   {
-    title: `みどりぐみを目指す${GREEN.length}問`,
+    titleKey: "TsumegoGroup.groupGreen",
     color: "#7dbb99",
     data: GREEN,
   },
   {
-    title: `あおぐみを目指す${BLUE.length}問`,
+    titleKey: "TsumegoGroup.groupBlue",
     color: "#7a97ff",
     data: BLUE,
   },
-  // {
-  //   title: `そらぐみ☆を目指す${SKY1.length}問`,
-  //   color: "#7ad3ff",
-  //   data: SKY1,
-  // },
-  // {
-  //   title: `そらぐみ☆☆を目指す${SKY2.length}問`,
-  //   color: "#7ad3ff",
-  //   data: SKY2,
-  // },
-  // {
-  //   title: `にじぐみ☆を目指す${RAINBOW1.length}問`,
-  //   color: "#dc7aff",
-  //   data: RAINBOW1,
-  // },
-  // {
-  //   title: `にじぐみ☆☆を目指す${RAINBOW2.length}問`,
-  //   color: "#dc7aff",
-  //   data: RAINBOW2,
-  // },
 ];

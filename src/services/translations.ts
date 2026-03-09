@@ -36,14 +36,14 @@ export const translations = {
       loginRequired: "この操作にはログインが必要です",
       loggingOut: "ログアウト中...",
     },
-    Language: {
-      back: "戻る",
-      title: "言語",
-      subtitle: "デバイスの言語設定に従って表示されます",
-      currentLanguage: "現在の言語",
-      changeNote:
-        "言語を変更するには、デバイスの設定から言語を変更してください",
-    },
+Language: {
+  back: "戻る",
+  title: "言語設定",
+  ja: "日本語",
+  en: "English",
+  zh: "中文",
+  ko: "한국어",
+},
     MyPage: {
       title: "マイページ",
       guest: "ゲスト",
@@ -343,6 +343,42 @@ export const translations = {
       title: "メンテナンス中",
       message: "現在メンテナンス中です。\nしばらくお待ちください。",
     },
+    MyRecordsPaywallModal: {
+      premiumTitle: "続きを見るには",
+      premiumpremiumSubtitleTitle:
+        "プレミアム会員になると\n対局履歴をすべて閲覧できます",
+      benefit1: "対局無制限",
+      benefit2: "棋譜をすべてクラウドに保存",
+      premiumCTA: "プレミアムにアップグレード",
+      premiumFooter: "いつでもキャンセル可能",
+    },
+    TsumegoList: {
+      explanation1: "詰碁で読みの力を鍛えよう！",
+      explanation2: "全部{{name}}が ● だよ",
+      guest: "ゲスト",
+      close: "閉じる ▲",
+      remaining: "残り{{count}}問を見る ▼",
+    },
+    Tsumego: {
+      cannotPlace: "そこには打てないよ",
+      correct: "せいかい！",
+      incorrect: "おしい！ふせいかい",
+      back: "もどる",
+      previous: "前の問題へ",
+      next: "次の問題へ",
+      reset: "リセット",
+    },
+    TsumegoGroup: {
+      groupPink: "ももぐみを目指す{{count}}問",
+      groupOrange: "おれんじぐみを目指す{{count}}問",
+      groupYellow: "きいろぐみを目指す{{count}}問",
+      groupGreen: "みどりぐみを目指す{{count}}問",
+      groupBlue: "あおぐみを目指す{{count}}問",
+    },
+    tsumegoLanguageNotice: {
+      message: "このページの問題文は現在日本語のみで表示されています。",
+      ok: "OK",
+    },
   },
   en: {
     Home: {
@@ -379,13 +415,14 @@ export const translations = {
       loginRequired: "Please log in to continue",
       loggingOut: "Logging out...",
     },
-    Language: {
-      back: "Back",
-      title: "Language",
-      subtitle: "Display language follows your device settings",
-      currentLanguage: "Current Language",
-      changeNote: "To change the language, update your device settings.",
-    },
+Language: {
+  back: "Back",
+  title: "Language",
+  ja: "日本語",
+  en: "English",
+  zh: "中文",
+  ko: "한국어",
+},
     MyPage: {
       title: "PROFILE",
       guest: "Guest",
@@ -689,6 +726,43 @@ export const translations = {
       message:
         "The service is currently under maintenance.\nPlease wait a moment.",
     },
+    MyRecordsPaywallModal: {
+      premiumTitle: "See More",
+      premiumpremiumSubtitleTitle:
+        "Upgrade to Premium\nto view all your game records",
+      benefit1: "Unlimited Games",
+      benefit2: "All game records saved to the cloud",
+      premiumCTA: "Upgrade to Premium",
+      premiumFooter: "Cancel anytime",
+    },
+    TsumegoList: {
+      explanation1: "Train your reading skills with tsumego!",
+      explanation2: "{{name}} plays Black ● in every problem",
+      guest: "Guest",
+      close: "Close ▲",
+      remaining: "See {{count}} more problems ▼",
+    },
+    Tsumego: {
+      cannotPlace: "You can't play there",
+      correct: "Correct!",
+      incorrect: "Close! That's not correct",
+      back: "Back",
+      previous: "Previous Problem",
+      next: "Next Problem",
+      reset: "Reset",
+    },
+    TsumegoGroup: {
+      groupPink: "{{count}} Problems to reach the Pink Rank",
+      groupOrange: "{{count}} Problems to reach the Orange Rank",
+      groupYellow: "{{count}} Problems to reach the Yellow Rank",
+      groupGreen: "{{count}} Problems to reach the Green Rank",
+      groupBlue: "{{count}} Problems to reach the Blue Rank",
+    },
+    tsumegoLanguageNotice: {
+      message:
+        "The problem text on this page is currently available only in Japanese.",
+      ok: "OK",
+    },
   },
   zh: {
     Home: {
@@ -725,13 +799,14 @@ export const translations = {
       loginRequired: "请登录后继续",
       loggingOut: "退出中...",
     },
-    Language: {
-      back: "返回",
-      title: "语言",
-      subtitle: "显示语言将跟随设备语言设置",
-      currentLanguage: "当前语言",
-      changeNote: "如需更改语言，请前往设备设置中进行修改。",
-    },
+Language: {
+  back: "返回",
+  title: "语言设置",
+  ja: "日本語",
+  en: "English",
+  zh: "中文",
+  ko: "한국어",
+},
     MyPage: {
       title: "我的",
       guest: "游客",
@@ -1024,6 +1099,41 @@ export const translations = {
       title: "维护中",
       message: "服务正在维护中。\n请稍候。",
     },
+    MyRecordsPaywallModal: {
+      premiumTitle: "查看更多",
+      premiumpremiumSubtitleTitle: "升级为高级会员\n即可查看全部对局记录",
+      benefit1: "无限对局",
+      benefit2: "所有棋谱云端保存",
+      premiumCTA: "升级为高级会员",
+      premiumFooter: "可随时取消",
+    },
+    TsumegoList: {
+      explanation1: "通过死活题提升你的计算力！",
+      explanation2: "所有题目中 {{name}} 都执黑 ●",
+      guest: "游客",
+      close: "收起 ▲",
+      remaining: "查看剩余 {{count}} 题 ▼",
+    },
+    Tsumego: {
+      cannotPlace: "不能下在那里",
+      correct: "正确！",
+      incorrect: "可惜！不正确",
+      back: "返回",
+      previous: "上一题",
+      next: "下一题",
+      reset: "重置",
+    },
+    TsumegoGroup: {
+      groupPink: "挑战{{count}}题成为粉色等级",
+      groupOrange: "挑战{{count}}题成为橙色等级",
+      groupYellow: "挑战{{count}}题成为黄色等级",
+      groupGreen: "挑战{{count}}题成为绿色等级",
+      groupBlue: "挑战{{count}}题成为蓝色等级",
+    },
+    tsumegoLanguageNotice: {
+      message: "本页面的题目内容目前仅提供日文。",
+      ok: "确定",
+    },
   },
   ko: {
     Home: {
@@ -1060,13 +1170,14 @@ export const translations = {
       loginRequired: "계속하려면 로그인하세요",
       loggingOut: "로그아웃 중...",
     },
-    Language: {
-      back: "뒤로",
-      title: "언어",
-      subtitle: "기기 언어 설정에 따라 표시됩니다",
-      currentLanguage: "현재 언어",
-      changeNote: "언어를 변경하려면 기기 설정에서 언어를 변경해 주세요.",
-    },
+Language: {
+  back: "뒤로",
+  title: "언어 설정",
+  ja: "日本語",
+  en: "English",
+  zh: "中文",
+  ko: "한국어",
+},
     MyPage: {
       title: "마이페이지",
       guest: "게스트",
@@ -1364,33 +1475,59 @@ export const translations = {
       title: "점검 중",
       message: "현재 서비스 점검 중입니다.\n잠시만 기다려 주세요。",
     },
+    MyRecordsPaywallModal: {
+      premiumTitle: "더 보기",
+      premiumpremiumSubtitleTitle:
+        "프리미엄으로 업그레이드하면\n모든 대국 기록을 볼 수 있습니다",
+      benefit1: "무제한 대국",
+      benefit2: "모든 기보 클라우드 저장",
+      premiumCTA: "프리미엄으로 업그레이드",
+      premiumFooter: "언제든지 취소 가능",
+    },
+    TsumegoList: {
+      explanation1: "사활 문제로 읽기 실력을 키워보세요!",
+      explanation2: "모든 문제에서 {{name}}이 흑 ● 입니다",
+      guest: "게스트",
+      close: "닫기 ▲",
+      remaining: "남은 {{count}}문제 보기 ▼",
+    },
+    Tsumego: {
+      cannotPlace: "거기에 둘 수 없습니다",
+      correct: "정답!",
+      incorrect: "아쉽지만 오답입니다",
+      back: "뒤로",
+      previous: "이전 문제",
+      next: "다음 문제",
+      reset: "리셋",
+    },
+    TsumegoGroup: {
+      groupPink: "핑크 등급을 목표로 {{count}}문제",
+      groupOrange: "오렌지 등급을 목표로 {{count}}문제",
+      groupYellow: "노랑 등급을 목표로 {{count}}문제",
+      groupGreen: "초록 등급을 목표로 {{count}}문제",
+      groupBlue: "파랑 등급을 목표로 {{count}}문제",
+    },
+    tsumegoLanguageNotice: {
+      message: "이 페이지의 문제 내용은 현재 일본어로만 제공됩니다.",
+      ok: "확인",
+    },
   },
 } as const;
 
-import { getLocales } from "expo-localization";
+
+
+// @/src/services/translations.ts
 export type Lang = keyof typeof translations;
 type Section = keyof typeof translations.en;
 type SectionKey<S extends Section> = keyof (typeof translations.en)[S];
+export type TranslationKey = {
+  [S in Section]: `${S}.${string & SectionKey<S>}`;
+}[Section];
 
-const deviceLang = getLocales()[0]?.languageCode ?? "en";
-export const lang: Lang =
-  deviceLang in translations ? (deviceLang as Lang) : "en";
-
-export function t<S extends Section>(
-  sectionAndKey: `${S}.${string & SectionKey<S>}`,
-): string;
-export function t<S extends Section>(
-  sectionAndKey: `${S}.${string & SectionKey<S>}`,
-  params: Record<string, string | number>,
-): string;
-export function t<S extends Section>(
-  sectionAndKey: `${S}.${string & SectionKey<S>}`,
-  params?: Record<string, string | number>,
-): string {
-  const [section, key] = sectionAndKey.split(".") as [
-    S,
-    string & SectionKey<S>,
-  ];
+export function t(sectionAndKey: TranslationKey, lang: Lang): string;
+export function t(sectionAndKey: TranslationKey, lang: Lang, params: Record<string, string | number>): string;
+export function t(sectionAndKey: TranslationKey, lang: Lang, params?: Record<string, string | number>): string {
+  const [section, key] = sectionAndKey.split(".") as [Section, string];
   const value =
     (translations[lang][section] as any)[key] ??
     (translations.en[section] as any)[key];

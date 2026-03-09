@@ -43,6 +43,7 @@ import {
   ThemeContext,
 } from "@/src/contexts/AppContexts";
 import {
+  defaultLang,
   LangContext,
   SetLangContext
 } from "@/src/contexts/LocaleContexts";
@@ -54,7 +55,8 @@ import {
   Octicons,
 } from "@expo/vector-icons";
 import * as Font from "expo-font";
-import { Lang } from "../services/translations";
+import { Lang, translations } from "../services/translations";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 // ------------------------------------------------------------------ //
@@ -99,8 +101,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
     null,
   );
 
-    const [lang, setLang] = useState<Lang | null>(null);
+const [lang, setLang] = useState<Lang>(defaultLang);
 
+useEffect(() => {
+  AsyncStorage.getItem("userLang").then((saved) => {
+    if (saved && saved in translations) setLang(saved as Lang);
+  });
+}, []);
+
+const saveLang = async (newLang: Lang) => {
+  await AsyncStorage.setItem("userLang", newLang);
+  setLang(newLang);
+};
   const router = useRouter();
 
   // 🆕 app_statusをSubscribe

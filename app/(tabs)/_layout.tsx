@@ -5,7 +5,7 @@ import React, { useEffect, useRef } from "react";
 import { Animated, Platform, StyleSheet, View } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { CHOCOLATE, INACTIVE, BACKGROUND, STRAWBERRY_DIM, STRAWBERRY } from "@/src/constants/colors";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 
 
@@ -81,7 +81,7 @@ const TabIcon = ({
 };
 
 export default function TabsLayout() {
-
+const { t } = useTranslation();
   useEffect(() => {
     async function setupNavBar() {
       if (Platform.OS === "android") {

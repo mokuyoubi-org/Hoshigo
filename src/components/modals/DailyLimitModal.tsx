@@ -1,5 +1,5 @@
 import CustomPaywallScreen from "@/src/components/sheets/CustomPayWallSheet";
-import { t } from "@/src/services/translations";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import React, { useState } from "react";
 import {
   Modal,
@@ -34,6 +34,7 @@ export const DailyLimitModal: React.FC<DailyLimitModalProps> = ({
   customMessage,
 }) => {
   const [showPaywall, setShowPaywall] = useState(false);
+  const { t } = useTranslation();
 
   const handleGoToPaywall = () => {
     onClose();

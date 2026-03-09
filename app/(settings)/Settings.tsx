@@ -26,8 +26,8 @@ import {
   GOLD,
   STRAWBERRY,
 } from "@/src/constants/colors";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import { logoutRevenueCat } from "@/src/services/RevenueCat";
-import { lang, t } from "@/src/services/translations";
 import LoadingModal from "../../src/components/modals/LoadingModal";
 import { EmailContext, UidContext } from "../../src/contexts/UserContexts";
 import { useRevenueCat } from "../../src/hooks/useRevenueCat";
@@ -36,7 +36,8 @@ import { supabase } from "../../src/services/supabase";
 
 export default function Settings() {
   const { colors } = useTheme();
-
+  const lang = useContext(LangContext);
+  const { t } = useTranslation();
   // ── ロジック（変更なし） ──
   const [loading, setLoading] = useState(false);
   const email = useContext<string | null>(EmailContext);
@@ -182,10 +183,19 @@ export default function Settings() {
           {/* ─── カスタマイズ ─── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t("Settings.customize")}</Text>
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>{t("Settings.language")}</Text>
-              <Text style={styles.infoValue}>{currentLanguageLabel}</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.7}
+              onPress={() => router.push("/(settings)/Language")}
+            >
+              <View style={styles.menuItemInner}>
+                <View>
+                  <Text style={styles.infoLabel}>{t("Settings.language")}</Text>
+                  <Text style={styles.infoValue}>{currentLanguageLabel}</Text>
+                </View>
+                <Text style={styles.menuItemArrow}>›</Text>
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* ─── 情報 ─── */}
@@ -427,6 +437,18 @@ const styles = StyleSheet.create({
     gap: 14,
     flex: 1,
   },
+    menuItemText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: CHOCOLATE,
+    letterSpacing: 0.3,
+  },
+  menuItemArrow: {
+    fontSize: 24,
+    fontWeight: "300",
+    color: CHOCOLATE_SUB,
+    opacity: 0.5,
+  },
   menuIconWrapper: {
     width: 36,
     height: 36,
@@ -444,18 +466,7 @@ const styles = StyleSheet.create({
   menuIconEmoji: {
     fontSize: 18,
   },
-  menuItemText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: CHOCOLATE,
-    letterSpacing: 0.3,
-  },
-  menuItemArrow: {
-    fontSize: 24,
-    fontWeight: "300",
-    color: CHOCOLATE_SUB,
-    opacity: 0.5,
-  },
+
   planValue: {
     fontSize: 15,
     fontWeight: "700",

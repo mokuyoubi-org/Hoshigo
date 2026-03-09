@@ -7,10 +7,10 @@ import {
   GOLD,
   STRAWBERRY,
 } from "@/src/constants/colors";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import { useRevenueCat } from "@/src/hooks/useRevenueCat";
 import { useTheme } from "@/src/hooks/useTheme";
-import { lang, t } from "@/src/services/translations";
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import {
   Alert,
   Animated,
@@ -34,7 +34,8 @@ export default function CustomCustomerCenterScreen({
   const { customerInfo } = useRevenueCat();
   const { colors } = useTheme();
   const fadeIn = useRef(new Animated.Value(0)).current;
-
+  const { t } = useTranslation();
+  const lang = useContext(LangContext);
   useEffect(() => {
     Animated.timing(fadeIn, {
       toValue: 1,
