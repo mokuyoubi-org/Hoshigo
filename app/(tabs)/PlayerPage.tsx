@@ -1,8 +1,14 @@
-import GumiInfoModal from "@/src/components/GumiInfoModal";
-import IconSelectorModal from "@/src/components/IconSelectModal";
-import LoadingOverlay from "@/src/components/LoadingOverlay";
-import LoginNeededModal from "@/src/components/LoginNeededModal";
-import { StarBackground } from "@/src/components/StarBackGround";
+import GumiInfoModal from "@/src/components/modals/GumiInfoModal";
+import IconSelectorModal from "@/src/components/modals/IconSelectModal";
+import LoadingModal from "@/src/components/modals/LoadingModal";
+import LoginNeededModal from "@/src/components/modals/LoginNeededModal";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { ICONS } from "@/src/constants/icons";
 import { supabase } from "@/src/services/supabase";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
@@ -29,10 +35,9 @@ import {
   SetIconIndexContext,
   UidContext,
   UserNameContext,
-} from "../../src/components/UserContexts";
+} from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { calculateGumiProgress, getGumiByIndex } from "../../src/lib/gumiUtils";
-import { BACKGROUND, CHOCOLATE_SUB, STRAWBERRY, CHOCOLATE } from "@/src/constants/colors";
 
 export default function PlayerPage() {
   const { t } = useTranslation();
@@ -158,7 +163,6 @@ export default function PlayerPage() {
                 activeOpacity={0.8}
                 style={styles.avatarWrapper}
               >
-
                 <View
                   style={[
                     styles.avatar,
@@ -186,7 +190,6 @@ export default function PlayerPage() {
                 {displayName || t("MyPage.guest")}
               </Text>
               <Text style={styles.username}>@{username || "guest"}</Text>
-
             </View>
 
             {/* ─── くみカード ─── */}
@@ -288,7 +291,7 @@ export default function PlayerPage() {
         </ScrollView>
       </Animated.View>
 
-      {loading && <LoadingOverlay text={t("MyPage.settingIcon")} />}
+      {loading && <LoadingModal text={t("MyPage.settingIcon")} />}
     </SafeAreaView>
   );
 }

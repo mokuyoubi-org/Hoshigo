@@ -455,10 +455,6 @@
 //   );
 // }
 
-
-
-
-
 // src/components/AppProviders.tsx
 import { useRouter } from "expo-router";
 import React, { ReactNode, useEffect, useState } from "react";
@@ -509,7 +505,7 @@ import {
   TutorialCompletedIndexContext,
   UidContext,
   UserNameContext,
-} from "./UserContexts";
+} from "../contexts/UserContexts";
 
 // ------------------------------------------------------------------ //
 // メンテナンスオーバーレイ
@@ -595,7 +591,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   // 🆕 メンテナンス状態
   const [maintenance, setMaintenance] = useState<boolean>(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState<string | null>(null);
+  const [maintenanceMessage, setMaintenanceMessage] = useState<string | null>(
+    null,
+  );
 
   const router = useRouter();
 
@@ -626,7 +624,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           console.log("🔔 app_status changed:", payload.new);
           setMaintenance(payload.new.maintenance);
           setMaintenanceMessage(payload.new.message);
-        }
+        },
       )
       .subscribe();
 
@@ -916,24 +914,60 @@ export function AppProviders({ children }: { children: ReactNode }) {
                         <ThemeContext.Provider value={theme}>
                           <SetThemeContext.Provider value={setTheme}>
                             <IconIndexContext.Provider value={iconIndex}>
-                              <SetIconIndexContext.Provider value={setIconIndex}>
-                                <DailyPlayCountContext.Provider value={dailyPlayCount}>
-                                  <SetDailyPlayCountContext.Provider value={setDailyPlayCount}>
-                                    <IsPremiumContext.Provider value={isPremium}>
-                                      <SetIsPremiumContext.Provider value={setIsPremium}>
-                                        <RevenueCatCustomerInfoContext.Provider value={revenueCatCustomerInfo}>
-                                          <SetRevenueCatCustomerInfoContext.Provider value={setRevenueCatCustomerInfo}>
-                                            <RefreshRevenueCatContext.Provider value={refreshRevenueCat}>
-                                              <GumiIndexContext.Provider value={gumiIndex}>
-                                                <SetGumiIndexContext.Provider value={setGumiIndex}>
-                                                  <GamesContext.Provider value={games}>
-                                                    <SetGamesContext.Provider value={setGames}>
-                                                      <TutorialCompletedIndexContext.Provider value={tutorialCompletedIndexContext}>
-                                                        <SetTutorialCompletedIndexContext.Provider value={setTutorialCompletedIndexContext}>
+                              <SetIconIndexContext.Provider
+                                value={setIconIndex}
+                              >
+                                <DailyPlayCountContext.Provider
+                                  value={dailyPlayCount}
+                                >
+                                  <SetDailyPlayCountContext.Provider
+                                    value={setDailyPlayCount}
+                                  >
+                                    <IsPremiumContext.Provider
+                                      value={isPremium}
+                                    >
+                                      <SetIsPremiumContext.Provider
+                                        value={setIsPremium}
+                                      >
+                                        <RevenueCatCustomerInfoContext.Provider
+                                          value={revenueCatCustomerInfo}
+                                        >
+                                          <SetRevenueCatCustomerInfoContext.Provider
+                                            value={setRevenueCatCustomerInfo}
+                                          >
+                                            <RefreshRevenueCatContext.Provider
+                                              value={refreshRevenueCat}
+                                            >
+                                              <GumiIndexContext.Provider
+                                                value={gumiIndex}
+                                              >
+                                                <SetGumiIndexContext.Provider
+                                                  value={setGumiIndex}
+                                                >
+                                                  <GamesContext.Provider
+                                                    value={games}
+                                                  >
+                                                    <SetGamesContext.Provider
+                                                      value={setGames}
+                                                    >
+                                                      <TutorialCompletedIndexContext.Provider
+                                                        value={
+                                                          tutorialCompletedIndexContext
+                                                        }
+                                                      >
+                                                        <SetTutorialCompletedIndexContext.Provider
+                                                          value={
+                                                            setTutorialCompletedIndexContext
+                                                          }
+                                                        >
                                                           {children}
                                                           {/* 🆕 メンテナンスオーバーレイ（最前面） */}
                                                           {maintenance && (
-                                                            <MaintenanceOverlay message={maintenanceMessage} />
+                                                            <MaintenanceOverlay
+                                                              message={
+                                                                maintenanceMessage
+                                                              }
+                                                            />
                                                           )}
                                                         </SetTutorialCompletedIndexContext.Provider>
                                                       </TutorialCompletedIndexContext.Provider>

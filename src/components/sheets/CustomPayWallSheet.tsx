@@ -1,8 +1,8 @@
-import { StarBackground } from "@/src/components/StarBackGround";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import {
   SubscriptionInfoModal,
   type InfoModalVariant,
-} from "@/src/components/SubscriptionInfoModal";
+} from "@/src/components/modals/SubscriptionInfoModal";
 import {
   BACKGROUND,
   CHOCOLATE,

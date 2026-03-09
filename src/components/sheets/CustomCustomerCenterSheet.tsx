@@ -1,4 +1,14 @@
 // src/screens/CustomCustomerCenterScreen.tsx
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  GOLD,
+  STRAWBERRY,
+} from "@/src/constants/colors";
+import { useRevenueCat } from "@/src/hooks/useRevenueCat";
+import { useTheme } from "@/src/hooks/useTheme";
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,12 +23,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRevenueCat } from "../../src/hooks/useRevenueCat";
-import { useTheme } from "../../src/hooks/useTheme";
-import { StarBackground } from "@/src/components/StarBackGround";
-import { BACKGROUND, STRAWBERRY, GOLD, CHOCOLATE, CHOCOLATE_SUB } from "@/src/constants/colors";
-
-
 
 interface CustomCustomerCenterScreenProps {
   onDismiss?: () => void;
@@ -84,8 +88,7 @@ export default function CustomCustomerCenterScreen({
     <SafeAreaView style={styles.container}>
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
 
-          <StarBackground />   
-   
+      <StarBackground />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View style={{ opacity: fadeIn }}>

@@ -1,3 +1,4 @@
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
@@ -12,10 +13,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
+import LoadingModal from "../../src/components/modals/LoadingModal";
 import { isValidEmail } from "../../src/lib/utils";
 import { supabase } from "../../src/services/supabase";
-import { StarBackground } from "@/src/components/StarBackGround";
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
@@ -51,8 +51,8 @@ export default function ForgotPassword() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-             <StarBackground />   
-      
+      <StarBackground />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -164,7 +164,7 @@ export default function ForgotPassword() {
           )}
         </View>
 
-        {loading && <LoadingOverlay text={t("ForgotPassword.sending")} />}
+        {loading && <LoadingModal text={t("ForgotPassword.sending")} />}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

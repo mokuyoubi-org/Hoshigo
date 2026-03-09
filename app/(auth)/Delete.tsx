@@ -1,4 +1,12 @@
-import LoadingOverlay from "@/src/components/LoadingOverlay";
+import LoadingModal from "@/src/components/modals/LoadingModal";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  DANGER,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { logoutRevenueCat } from "@/src/services/RevenueCat";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -14,14 +22,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { UidContext } from "../../src/components/UserContexts";
+import { UidContext } from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
-import { StarBackground } from "@/src/components/StarBackGround";
-import { BACKGROUND, STRAWBERRY, DANGER, CHOCOLATE, CHOCOLATE_SUB } from "@/src/constants/colors";
-
-
-
 
 export default function Delete() {
   const { colors } = useTheme();
@@ -76,8 +79,7 @@ export default function Delete() {
       <StatusBar style="dark" />
 
       {/* 背景グリッド（優しい色に） */}
-          <StarBackground />   
-   
+      <StarBackground />
 
       <ScrollView
         contentContainerStyle={styles.scrollView}
@@ -149,7 +151,7 @@ export default function Delete() {
         </Animated.View>
       </ScrollView>
 
-      {loading && <LoadingOverlay text={t("Delete.loading")} />}
+      {loading && <LoadingModal text={t("Delete.loading")} />}
     </SafeAreaView>
   );
 }

@@ -10,12 +10,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useTheme } from "../hooks/useTheme";
+import { useTheme } from "../../hooks/useTheme";
 import {
   calculateGumiProgress,
   getGumiByIndex,
   GUMI_DATA,
-} from "../lib/gumiUtils";
+} from "../../lib/gumiUtils";
 
 interface GumiInfoModalProps {
   visible: boolean;

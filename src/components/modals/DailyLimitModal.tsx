@@ -1,4 +1,4 @@
-import CustomPaywallScreen from "@/app/(premium)/CustomPayWall";
+import CustomPaywallScreen from "@/src/components/sheets/CustomPayWallSheet";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {

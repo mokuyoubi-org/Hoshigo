@@ -8,10 +8,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { Agehama } from "../constants/goConstants";
-import { ICONS } from "../constants/icons";
-import { useTheme } from "../hooks/useTheme";
-import { Board, GoString, Grid } from "../lib/goLogics";
+import { Agehama } from "@/src/constants/goConstants";
+import { ICONS } from "@/src/constants/icons";
+import { useTheme } from "@/src/hooks/useTheme";
+import { Board, GoString, Grid } from "@/src/lib/goLogics";
 import { ReplayControls } from "./ReplayControls";
 
 // ─── AgehamaDisplay ────────────────────

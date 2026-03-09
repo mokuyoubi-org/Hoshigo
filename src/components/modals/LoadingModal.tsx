@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Animated, StyleSheet, Text } from "react-native";
-import { useTheme } from "../hooks/useTheme";
+import { useTheme } from "../../hooks/useTheme";
 
 // ─── Homeページに合わせたカラー ───────────────────────
 const STRAWBERRY = "#c8d6e6";
@@ -10,11 +10,11 @@ const BACKGROUND = "#f9fafb";
 const CHOCOLATE = "#5a3a4a";
 const CHOCOLATE_SUB = "#c09aa8";
 
-type LoadingOverlayProps = {
+type LoadingModalProps = {
   text?: string; // 表示するテキストだけ props に
 };
 
-export default function LoadingOverlay({ text }: LoadingOverlayProps) {
+export default function LoadingModal({ text }: LoadingModalProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const fadeIn = useRef(new Animated.Value(0)).current;

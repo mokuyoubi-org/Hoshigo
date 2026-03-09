@@ -1,4 +1,4 @@
-import LoadingOverlay from "@/src/components/LoadingOverlay";
+import LoadingModal from "@/src/components/modals/LoadingModal";
 import { ICONS } from "@/src/constants/icons";
 import { supabase } from "@/src/services/supabase";
 import { router, useLocalSearchParams } from "expo-router";
@@ -9,7 +9,7 @@ import {
   SetTutorialCompletedIndexContext,
   TutorialCompletedIndexContext,
   UidContext,
-} from "../../src/components/UserContexts";
+} from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 
 export default function TutorialCompleted() {
@@ -137,7 +137,7 @@ export default function TutorialCompleted() {
         </View>
       </View>
       {/* ← ここがLoadingオーバーレイ */}
-      {loading && <LoadingOverlay text="つうしん中..." />}
+      {loading && <LoadingModal text="つうしん中..." />}
     </SafeAreaView>
   );
 }

@@ -1,6 +1,6 @@
 // Tsumego.tsx
-import { GoBoard } from "@/src/components/GoBoard";
-import { StarBackground } from "@/src/components/StarBackGround";
+import { GoBoard } from "@/src/components/goComponents/GoBoard";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { TextPanel } from "@/src/components/TextPanel";
 import { Agehama } from "@/src/constants/goConstants";
 import {

@@ -1,6 +1,6 @@
-import { GoBoard } from "@/src/components/GoBoard";
-import { PlayerCard } from "@/src/components/PlayerCard";
-import { ResultModal } from "@/src/components/ResultModal";
+import { GoBoard } from "@/src/components/goComponents/GoBoard";
+import { PlayerCard } from "@/src/components/goComponents/PlayerCard";
+import { ResultModal } from "@/src/components/modals/ResultModal";
 import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
 import { moveStringsToNumbers } from "@/src/lib/utils";
 import { useAudioPlayer } from "expo-audio";
@@ -16,9 +16,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
+import LoadingModal from "../../src/components/modals/LoadingModal";
 
-import { StarBackground } from "@/src/components/StarBackGround";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { Agehama } from "@/src/constants/goConstants";
 import {
   DisplayNameContext,
@@ -30,7 +30,7 @@ import {
   SetPointsContext,
   UidContext,
   UserNameContext,
-} from "../../src/components/UserContexts";
+} from "../../src/contexts/UserContexts";
 import {
   applyMove,
   Board,
@@ -161,13 +161,17 @@ export default function PlayWithBot() {
 
     let delta: number;
     if (isBlackWin) {
-      delta = Math.trunc(Math.max(1, Math.min(19, 10 - Math.trunc((diff+50) / 100)))/2);
+      delta = Math.trunc(
+        Math.max(1, Math.min(19, 10 - Math.trunc((diff + 50) / 100))) / 2,
+      );
     } else {
-      // 
-      if (point< 420) {
+      //
+      if (point < 420) {
         delta = 5;
       } else {
-        delta = Math.trunc(Math.max(1, Math.min(19, 10 + Math.trunc((diff-50) / 100)))/2);
+        delta = Math.trunc(
+          Math.max(1, Math.min(19, 10 + Math.trunc((diff - 50) / 100))) / 2,
+        );
       }
     }
 
@@ -396,7 +400,7 @@ export default function PlayWithBot() {
         { row: 6, col: 7 },
         { row: 6, col: 6 },
       ];
-    } else if (stones === 4 || stones === 5 ) {
+    } else if (stones === 4 || stones === 5) {
       arr = [
         { row: 5, col: 3 },
         { row: 5, col: 7 },
@@ -966,7 +970,7 @@ export default function PlayWithBot() {
         gumiIndexAfter={gumiIndexAfterRef.current ?? 0}
       />
 
-      {loading && <LoadingOverlay text={t("Playing.calculating")} />}
+      {loading && <LoadingModal text={t("Playing.calculating")} />}
     </SafeAreaView>
   );
 }

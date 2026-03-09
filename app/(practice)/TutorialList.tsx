@@ -314,7 +314,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TutorialCompletedIndexContext } from "../../src/components/UserContexts";
+import { TutorialCompletedIndexContext } from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 
 interface LessonItem {

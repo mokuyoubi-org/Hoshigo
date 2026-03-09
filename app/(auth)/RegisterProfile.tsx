@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
+import LoadingModal from "../../src/components/modals/LoadingModal";
 import {
   DisplayNameContext,
   SetDisplayNameContext,
@@ -20,11 +20,11 @@ import {
   SetUserNameContext,
   UidContext,
   UserNameContext,
-} from "../../src/components/UserContexts";
+} from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
 
-import { StarBackground } from "@/src/components/StarBackGround";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import * as hangulRomanization from "hangul-romanization";
 import { pinyin } from "pinyin-pro";
 import * as wanakana from "wanakana";
@@ -327,7 +327,7 @@ export default function RegisterProfile() {
           </View>
         </View>
         {/* ← ここがLoadingオーバーレイ */}
-        {loading && <LoadingOverlay text={t("RegisterProfile.registering")} />}
+        {loading && <LoadingModal text={t("RegisterProfile.registering")} />}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

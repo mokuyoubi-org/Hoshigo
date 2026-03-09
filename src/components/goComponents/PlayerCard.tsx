@@ -1,8 +1,8 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { getGumiByIndex } from "../../src/lib/gumiUtils";
-import { ICONS } from "../constants/icons";
-import { useTheme } from "../hooks/useTheme";
+import { getGumiByIndex } from "@/src/lib/gumiUtils";
+import { ICONS } from "@/src/constants/icons";
+import { useTheme } from "@/src/hooks/useTheme";
 
 interface PlayerCardProps {
   iconIndex: number;

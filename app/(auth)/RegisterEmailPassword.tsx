@@ -1,3 +1,4 @@
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
@@ -12,11 +13,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
+import LoadingModal from "../../src/components/modals/LoadingModal";
 import { useTheme } from "../../src/hooks/useTheme";
 import { isValidEmail, isValidPassword } from "../../src/lib/utils";
 import { supabase } from "../../src/services/supabase";
-import { StarBackground } from "@/src/components/StarBackGround";
 
 export default function RegisterEmailPassword() {
   const { t } = useTranslation();
@@ -55,8 +55,8 @@ export default function RegisterEmailPassword() {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <StatusBar style="dark" />
-             <StarBackground />   
-      
+      <StarBackground />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -182,7 +182,7 @@ export default function RegisterEmailPassword() {
 
         {/* ← ここがLoadingオーバーレイ */}
         {loading && (
-          <LoadingOverlay text={t("RegisterEmailPassword.registering")} />
+          <LoadingModal text={t("RegisterEmailPassword.registering")} />
         )}
       </KeyboardAvoidingView>
     </SafeAreaView>

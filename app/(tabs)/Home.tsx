@@ -1,8 +1,14 @@
-import { DailyLimitModal } from "@/src/components/DailyLimitModal";
-import { InfoModal } from "@/src/components/InfoModal";
-import LoadingOverlay from "@/src/components/LoadingOverlay";
-import LoginNeededModal from "@/src/components/LoginNeededModal";
-import { StarBackground } from "@/src/components/StarBackGround";
+import { DailyLimitModal } from "@/src/components/modals/DailyLimitModal";
+import { InfoModal } from "@/src/components/modals/InfoModal";
+import LoadingModal from "@/src/components/modals/LoadingModal";
+import LoginNeededModal from "@/src/components/modals/LoginNeededModal";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { supabase } from "@/src/services/supabase";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -18,12 +24,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  IsPremiumContext,
-  UidContext,
-} from "../../src/components/UserContexts";
+import { IsPremiumContext, UidContext } from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
-import { BACKGROUND, STRAWBERRY, CHOCOLATE_SUB, CHOCOLATE } from "@/src/constants/colors";
 
 const { width, height } = Dimensions.get("window");
 
@@ -149,10 +151,9 @@ export default function Home() {
             </View>
           </TouchableOpacity>
         </View>
-
       </Animated.View>
 
-      {loading && <LoadingOverlay text={t("Home.loading")} />}
+      {loading && <LoadingModal text={t("Home.loading")} />}
       <LoginNeededModal
         visible={isLoginModalVisible}
         onClose={() => setIsLoginModalVisible(false)}

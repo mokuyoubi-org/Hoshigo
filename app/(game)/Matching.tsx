@@ -1,11 +1,11 @@
-import { StarBackground } from "@/src/components/StarBackGround";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
+import LoadingModal from "../../src/components/modals/LoadingModal";
 import {
   DisplayNameContext,
   GamesContext,
@@ -14,7 +14,7 @@ import {
   PointsContext,
   UidContext,
   UserNameContext,
-} from "../../src/components/UserContexts";
+} from "../../src/contexts/UserContexts";
 import { supabase } from "../../src/services/supabase";
 
 // 囲碁のシーケンス(黒スタート)
@@ -422,12 +422,10 @@ export default function Matching() {
       </View>
 
       {/* ← ここがLoadingオーバーレイ */}
-      {loading && <LoadingOverlay text={t("Matching.loading")} />}
+      {loading && <LoadingModal text={t("Matching.loading")} />}
 
       {/* ← ここがLoadingオーバーレイ */}
-      {isCancelingRef.current && (
-        <LoadingOverlay text={t("Matching.loading")} />
-      )}
+      {isCancelingRef.current && <LoadingModal text={t("Matching.loading")} />}
     </SafeAreaView>
   );
 }

@@ -1,4 +1,4 @@
-import { GoBoard } from "@/src/components/GoBoard";
+import { GoBoard } from "@/src/components/goComponents/GoBoard";
 import { Agehama } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
 import {
@@ -21,7 +21,7 @@ import {
   getTutorialScreens,
   MyScreen,
 } from "../../src/components/TutorialData";
-import { DisplayNameContext } from "../../src/components/UserContexts";
+import { DisplayNameContext } from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 
 // ==================== コンポーネント ====================

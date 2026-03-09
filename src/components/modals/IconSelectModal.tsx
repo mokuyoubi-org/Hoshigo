@@ -12,9 +12,9 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { GumiIndexContext } from "../../src/components/UserContexts";
-import { ICONS } from "../constants/icons";
-import { useTheme } from "../hooks/useTheme";
+import { ICONS } from "../../constants/icons";
+import { GumiIndexContext } from "../../contexts/UserContexts";
+import { useTheme } from "../../hooks/useTheme";
 
 interface IconSelectorModalProps {
   visible: boolean;

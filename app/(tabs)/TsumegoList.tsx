@@ -1,7 +1,7 @@
-import { GoBoard } from "@/src/components/GoBoard";
-import { StarBackground } from "@/src/components/StarBackGround";
-import { DisplayNameContext } from "@/src/components/UserContexts";
+import { GoBoard } from "@/src/components/goComponents/GoBoard";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { ICONS } from "@/src/constants/icons";
+import { DisplayNameContext } from "@/src/contexts/UserContexts";
 import { prepareBoard2d } from "@/src/lib/goUtils";
 import { Tsumego, TSUMEGO_GROUPS, TsumegoGroup } from "@/src/lib/tsumegoData";
 import { useRouter } from "expo-router";

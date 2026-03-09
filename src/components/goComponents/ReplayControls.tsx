@@ -1,7 +1,7 @@
 import Slider from "@react-native-community/slider";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useTheme } from "../hooks/useTheme";
+import { useTheme } from "@/src/hooks/useTheme";
 
 interface ReplayControlsProps {
   currentIndex: number;

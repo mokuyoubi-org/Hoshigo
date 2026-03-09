@@ -1,14 +1,14 @@
+import { StatusBar } from "expo-status-bar";
+import React from "react";
 import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import LoadingOverlay from "../src/components/LoadingOverlay";
-import React from "react";
+import LoadingModal from "../src/components/modals/LoadingModal";
 
 export default function Index() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <LoadingOverlay />
+      <LoadingModal />
     </SafeAreaView>
   );
 }

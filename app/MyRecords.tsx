@@ -1,4 +1,4 @@
-import { StarBackground } from "@/src/components/StarBackGround";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -29,9 +29,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GoBoard } from "../src/components/GoBoard";
-import { PlayerCard } from "../src/components/PlayerCard";
-import { IsPremiumContext, UidContext } from "../src/components/UserContexts";
+import { GoBoard } from "../src/components/goComponents/GoBoard";
+import { PlayerCard } from "../src/components/goComponents/PlayerCard";
+import CustomPaywallScreen from "../src/components/sheets/CustomPayWallSheet";
+import { IsPremiumContext, UidContext } from "../src/contexts/UserContexts";
 import { useTheme } from "../src/hooks/useTheme";
 import { Board } from "../src/lib/goLogics";
 import {
@@ -40,7 +41,6 @@ import {
   resultToLanguages,
 } from "../src/lib/goUtils";
 import { supabase } from "../src/services/supabase";
-import CustomPaywallScreen from "./(premium)/CustomPayWall";
 
 // ─── ペイウォールモーダル（落ち着いたデザイン） ───────────────
 const PaywallModal = ({

@@ -8,8 +8,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SetThemeContext } from "../../src/components/UserContexts";
 import { THEME_COLORS, ThemeType } from "../../src/constants/colors";
+import { SetThemeContext } from "../../src/contexts/UserContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { themeStore } from "../../src/services/storage";
 

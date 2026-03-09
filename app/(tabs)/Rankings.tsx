@@ -1,6 +1,14 @@
-import LoadingOverlay from "@/src/components/LoadingOverlay";
-import { StarBackground } from "@/src/components/StarBackGround";
-import { GOLD, SILVER, BRONZE, STRAWBERRY, CHOCOLATE, BACKGROUND, CHOCOLATE_SUB } from "@/src/constants/colors";
+import LoadingModal from "@/src/components/modals/LoadingModal";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import {
+  BACKGROUND,
+  BRONZE,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  GOLD,
+  SILVER,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { ICONS } from "@/src/constants/icons";
 import { useTheme } from "@/src/hooks/useTheme";
 import { GUMI_DATA } from "@/src/lib/gumiUtils";
@@ -62,11 +70,7 @@ const RankingItem = ({
 
   return (
     <Animated.View style={[styles.itemContainer, { opacity: fadeIn }]}>
-      <View
-        style={[
-          styles.card,
-        ]}
-      >
+      <View style={[styles.card]}>
         <View style={styles.cardContent}>
           {/* 順位 */}
           {isTop3 ? (
@@ -180,7 +184,7 @@ export default function Rankings() {
         />
       </Animated.View>
 
-      {loading && <LoadingOverlay text={t("Rankings.loading")} />}
+      {loading && <LoadingModal text={t("Rankings.loading")} />}
     </SafeAreaView>
   );
 }

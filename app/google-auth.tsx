@@ -1,4 +1,4 @@
-import LoadingOverlay from "@/src/components/LoadingOverlay";
+import LoadingModal from "@/src/components/modals/LoadingModal";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
@@ -14,7 +14,7 @@ export default function GoogleAuthRedirect() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <LoadingOverlay />
+      <LoadingModal />
     </SafeAreaView>
   );
 }

@@ -1,8 +1,8 @@
-import { GoBoard } from "@/src/components/GoBoard";
-import LoadingOverlay from "@/src/components/LoadingOverlay";
-import { PlayerCard } from "@/src/components/PlayerCard";
-import { ResultModal } from "@/src/components/ResultModal";
-import { StarBackground } from "@/src/components/StarBackGround";
+import { GoBoard } from "@/src/components/goComponents/GoBoard";
+import LoadingModal from "@/src/components/modals/LoadingModal";
+import { ResultModal } from "@/src/components/modals/ResultModal";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { PlayerCard } from "@/src/components/goComponents/PlayerCard";
 import { Agehama } from "@/src/constants/goConstants";
 import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
 import { moveNumbersToStrings, moveStringsToNumbers } from "@/src/lib/utils";
@@ -28,7 +28,7 @@ import {
   SetGumiIndexContext,
   SetPointsContext,
   UserNameContext,
-} from "../../src/components/UserContexts";
+} from "../../src/contexts/UserContexts";
 import {
   applyMove,
   Board,
@@ -1013,8 +1013,8 @@ export default function Playing() {
         gumiIndexAfter={gumiIndexAfterRef.current ?? 0}
       />
 
-      {loading && <LoadingOverlay text={t("Playing.calculating")} />}
-      {loadingConnection && <LoadingOverlay />}
+      {loading && <LoadingModal text={t("Playing.calculating")} />}
+      {loadingConnection && <LoadingModal />}
     </SafeAreaView>
   );
 }

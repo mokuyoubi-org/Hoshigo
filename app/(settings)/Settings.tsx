@@ -1,4 +1,4 @@
-import LoginNeededModal from "@/src/components/LoginNeededModal";
+import LoginNeededModal from "@/src/components/modals/LoginNeededModal";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -15,17 +15,24 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CustomCustomerCenterScreen from "../(premium)/CustomCustomerCenter";
-import CustomPaywallScreen from "../(premium)/CustomPayWall";
+import CustomCustomerCenterScreen from "../../src/components/sheets/CustomCustomerCenterSheet";
+import CustomPaywallScreen from "../../src/components/sheets/CustomPayWallSheet";
 
-import { StarBackground } from "@/src/components/StarBackGround";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  DANGER,
+  GOLD,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { logoutRevenueCat } from "@/src/services/RevenueCat";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
-import { EmailContext, UidContext } from "../../src/components/UserContexts";
+import LoadingModal from "../../src/components/modals/LoadingModal";
+import { EmailContext, UidContext } from "../../src/contexts/UserContexts";
 import { useRevenueCat } from "../../src/hooks/useRevenueCat";
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
-import { BACKGROUND, GOLD, STRAWBERRY, CHOCOLATE, CHOCOLATE_SUB, DANGER } from "@/src/constants/colors";
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -279,7 +286,7 @@ export default function Settings() {
           />
         </Modal>
 
-        {loading && <LoadingOverlay text={t("Settings.loggingOut")} />}
+        {loading && <LoadingModal text={t("Settings.loggingOut")} />}
       </ScrollView>
     </SafeAreaView>
   );

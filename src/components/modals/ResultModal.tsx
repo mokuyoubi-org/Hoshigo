@@ -14,16 +14,16 @@ import {
   GumiIndexContext,
   IsPremiumContext,
   UidContext,
-} from "../../src/components/UserContexts";
-import { useTheme } from "../hooks/useTheme";
+} from "../../contexts/UserContexts";
+import { useTheme } from "../../hooks/useTheme";
 import {
   calculateGumiProgress,
   getGumiByIndex,
   howManyPointsLeft,
-} from "../lib/gumiUtils";
-import { supabase } from "../services/supabase";
+} from "../../lib/gumiUtils";
+import { supabase } from "../../services/supabase";
 import { DailyLimitModal } from "./DailyLimitModal";
-import LoadingOverlay from "./LoadingOverlay";
+import LoadingModal from "./LoadingModal";
 
 interface ResultModalProps {
   visible: boolean;
@@ -248,7 +248,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
       />
 
       {/* ローディングオーバーレイ */}
-      {loading && <LoadingOverlay text={t("ResultModal.loading")} />}
+      {loading && <LoadingModal text={t("ResultModal.loading")} />}
     </>
   );
 };

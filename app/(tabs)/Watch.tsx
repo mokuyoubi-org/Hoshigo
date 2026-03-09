@@ -1,4 +1,10 @@
-import { StarBackground } from "@/src/components/StarBackGround";
+import { StarBackground } from "@/src/components/modals/StarBackGround";
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  CHOCOLATE_SUB,
+  STRAWBERRY,
+} from "@/src/constants/colors";
 import { Agehama, Match } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
 import {
@@ -21,15 +27,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GoBoard } from "../../src/components/GoBoard";
-import LoadingOverlay from "../../src/components/LoadingOverlay";
-import { PlayerCard } from "../../src/components/PlayerCard";
+import { GoBoard } from "../../src/components/goComponents/GoBoard";
+import LoadingModal from "../../src/components/modals/LoadingModal";
+import { PlayerCard } from "../../src/components/goComponents/PlayerCard";
 import { useTheme } from "../../src/hooks/useTheme";
 import { Board, initializeBoard } from "../../src/lib/goLogics";
 import { supabase } from "../../src/services/supabase";
-import { STRAWBERRY, CHOCOLATE_SUB, BACKGROUND, CHOCOLATE } from "@/src/constants/colors";
-
-
 
 // ─── リトライ設定 ─────────────────────────────────────
 const MAX_RETRY_COUNT = 5;
@@ -510,7 +513,7 @@ export default function Watch() {
         </ScrollView>
       </Animated.View>
 
-      {loading && <LoadingOverlay text={t("Watch.loading")} />}
+      {loading && <LoadingModal text={t("Watch.loading")} />}
     </SafeAreaView>
   );
 }

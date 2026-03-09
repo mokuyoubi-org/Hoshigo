@@ -1,12 +1,12 @@
 // src/hooks/useRevenueCat.ts
-import { useContext } from 'react';
-import { CustomerInfo } from 'react-native-purchases';
+import { useContext } from "react";
+import { CustomerInfo } from "react-native-purchases";
 import {
   IsPremiumContext,
-  RevenueCatCustomerInfoContext,
   // RevenueCatLoadingContext,
   RefreshRevenueCatContext,
-} from '../components/UserContexts';
+  RevenueCatCustomerInfoContext,
+} from "../contexts/UserContexts";
 
 interface UseRevenueCatReturn {
   isPro: boolean;
@@ -23,7 +23,7 @@ export const useRevenueCat = (): UseRevenueCatReturn => {
 
   // Context内でチェック
   if (refreshStatus === null) {
-    throw new Error('useRevenueCat must be used within AppProviders');
+    throw new Error("useRevenueCat must be used within AppProviders");
   }
 
   return {
