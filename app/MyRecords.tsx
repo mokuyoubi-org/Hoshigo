@@ -101,7 +101,9 @@ const GhostPaywallCard = ({
           <View style={ghostStyles.resultBlock}>
             <View style={ghostStyles.resultBadge}>
               <Text style={ghostStyles.resultText}>
-                {record ? resultToLanguages(record.result || "") || "?" : "---"}
+                {record
+                  ? resultToLanguages(record.result || "", t) || "?"
+                  : "---"}
               </Text>
             </View>
             <Text style={ghostStyles.dateText}>{dateStr}</Text>
@@ -562,7 +564,7 @@ export default function MyRecords() {
             <View style={styles.resultBlock}>
               <View style={styles.resultBadge}>
                 <Text style={styles.resultText}>
-                  {resultToLanguages(record.result || "") ||
+                  {resultToLanguages(record.result || "", t) ||
                     t("MyRecords.unknown")}
                 </Text>
               </View>
