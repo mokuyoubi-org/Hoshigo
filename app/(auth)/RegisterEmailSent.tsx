@@ -1,15 +1,14 @@
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { t } from "@/src/services/translations";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../src/hooks/useTheme";
 
 export default function RegisterEmailSent() {
   const { colors } = useTheme();
-  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const email = params.email as string;
 

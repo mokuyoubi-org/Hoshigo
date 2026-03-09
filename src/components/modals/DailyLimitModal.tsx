@@ -1,6 +1,6 @@
 import CustomPaywallScreen from "@/src/components/sheets/CustomPayWallSheet";
+import { t } from "@/src/services/translations";
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Modal,
   StyleSheet,
@@ -33,7 +33,6 @@ export const DailyLimitModal: React.FC<DailyLimitModalProps> = ({
   dailyLimit = 10,
   customMessage,
 }) => {
-  const { t } = useTranslation();
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handleGoToPaywall = () => {

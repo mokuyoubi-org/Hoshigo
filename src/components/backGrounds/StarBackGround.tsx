@@ -68,7 +68,7 @@ export const StarBackground = ({
 
   return (
     <>
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      <View style={[StyleSheet.absoluteFillObject, { pointerEvents: "none" }]}>
         {STARS.map(({ col, row, color, rotation }, i) => {
           const scale = color === "dark" ? darkScale : lightScale;
           const opacity = color === "dark" ? darkOpacity : lightOpacity;
@@ -98,8 +98,7 @@ export const StarBackground = ({
       <BlurView
         intensity={blurIntensity}
         tint={blurTint}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
+        style={[StyleSheet.absoluteFillObject, { pointerEvents: "none" }]}
       />
     </>
   );

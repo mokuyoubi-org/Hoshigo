@@ -1,16 +1,16 @@
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { GoBoard } from "@/src/components/goComponents/GoBoard";
+import { PlayerCard } from "@/src/components/goComponents/PlayerCard";
 import LoadingModal from "@/src/components/modals/LoadingModal";
 import { ResultModal } from "@/src/components/modals/ResultModal";
-import { StarBackground } from "@/src/components/modals/StarBackGround";
-import { PlayerCard } from "@/src/components/goComponents/PlayerCard";
 import { Agehama } from "@/src/constants/goConstants";
 import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
 import { moveNumbersToStrings, moveStringsToNumbers } from "@/src/lib/utils";
+import { t } from "@/src/services/translations";
 import { useAudioPlayer } from "expo-audio";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   StyleSheet,
   Text,
@@ -64,7 +64,6 @@ const GNU_API_TIMEOUT_MS = 30_000; // GNUGo APIのタイムアウト
 export default function Playing() {
   const { height } = useWindowDimensions();
 
-  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const matchId = params.matchId;
 

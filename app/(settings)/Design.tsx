@@ -9,17 +9,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { THEME_COLORS, ThemeType } from "../../src/constants/colors";
-import { SetThemeContext } from "../../src/contexts/UserContexts";
+import { ThemeContext } from "../../src/contexts/AppContexts";
 import { useTheme } from "../../src/hooks/useTheme";
 import { themeStore } from "../../src/services/storage";
 
 export default function Design() {
   const { theme, colors: currentColors } = useTheme();
-  const setTheme = useContext(SetThemeContext);
+  const setTheme = useContext(ThemeContext)?.setTheme;
   const router = useRouter();
 
   const handleThemeChange = async (newTheme: ThemeType) => {
-    if (setTheme === null) return;
+    if (setTheme === undefined) return;
 
     setTheme(newTheme);
     await themeStore.set(newTheme);

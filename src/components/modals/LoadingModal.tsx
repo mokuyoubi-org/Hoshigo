@@ -1,8 +1,8 @@
 // app/components/LoadingOverlay.tsx
 import React, { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Animated, StyleSheet, Text } from "react-native";
 import { useTheme } from "../../hooks/useTheme";
+import { t } from "@/src/services/translations";
 
 // ─── Homeページに合わせたカラー ───────────────────────
 const STRAWBERRY = "#c8d6e6";
@@ -16,7 +16,6 @@ type LoadingModalProps = {
 
 export default function LoadingModal({ text }: LoadingModalProps) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
   const fadeIn = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 

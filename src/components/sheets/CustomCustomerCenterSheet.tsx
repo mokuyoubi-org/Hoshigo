@@ -1,5 +1,5 @@
 // src/screens/CustomCustomerCenterScreen.tsx
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -9,8 +9,8 @@ import {
 } from "@/src/constants/colors";
 import { useRevenueCat } from "@/src/hooks/useRevenueCat";
 import { useTheme } from "@/src/hooks/useTheme";
+import { lang, t } from "@/src/services/translations";
 import React, { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Alert,
   Animated,
@@ -31,7 +31,6 @@ interface CustomCustomerCenterScreenProps {
 export default function CustomCustomerCenterScreen({
   onDismiss,
 }: CustomCustomerCenterScreenProps): React.JSX.Element {
-  const { t } = useTranslation();
   const { customerInfo } = useRevenueCat();
   const { colors } = useTheme();
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -58,13 +57,6 @@ export default function CustomCustomerCenterScreen({
     return t("CustomerCenter.plan");
   };
 
-  // 日付ロケールを i18n の現在言語に合わせる
-  const getDateLocale = () => {
-    const lang = t("CustomerCenter.back") === "‹ Back" ? "en" : undefined;
-    // i18n.language を直接参照する方が確実
-    return undefined; // useTranslation の i18n インスタンスを使う場合は下記参照
-  };
-
   const openSubscriptionManagement = () => {
     Linking.openURL(
       "https://play.google.com/store/account/subscriptions",
@@ -75,10 +67,6 @@ export default function CustomCustomerCenterScreen({
       ),
     );
   };
-
-  // i18n インスタンスから現在の言語を取得して日付フォーマットに使う
-  const { i18n } = useTranslation();
-  const dateLocale = i18n.language || "ja";
 
   const BENEFITS = [
     { icon: "♾️", label: t("CustomerCenter.benefitUnlimited") },
@@ -147,7 +135,7 @@ export default function CustomCustomerCenterScreen({
                 <View style={styles.cardAccent} />
                 <View style={styles.dateWrapper}>
                   <Text style={styles.cardValue}>
-                    {expirationDate.toLocaleDateString(dateLocale, {
+                    {expirationDate.toLocaleDateString(lang, {
                       year: "numeric",
                       month: "long",
                       day: "numeric",

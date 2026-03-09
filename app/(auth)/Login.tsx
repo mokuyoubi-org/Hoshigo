@@ -1,9 +1,9 @@
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { t } from "@/src/services/translations";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Linking,
@@ -24,7 +24,6 @@ import { supabase } from "../../src/services/supabase";
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
-  const { t } = useTranslation();
   const { colors } = useTheme();
   const params = useLocalSearchParams();
   const [email, setEmail] = useState("");

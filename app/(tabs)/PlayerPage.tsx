@@ -1,8 +1,8 @@
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import GumiInfoModal from "@/src/components/modals/GumiInfoModal";
 import IconSelectorModal from "@/src/components/modals/IconSelectModal";
 import LoadingModal from "@/src/components/modals/LoadingModal";
 import LoginNeededModal from "@/src/components/modals/LoginNeededModal";
-import { StarBackground } from "@/src/components/modals/StarBackGround";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -11,11 +11,11 @@ import {
 } from "@/src/constants/colors";
 import { ICONS } from "@/src/constants/icons";
 import { supabase } from "@/src/services/supabase";
+import { t } from "@/src/services/translations";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
   Image,
@@ -40,7 +40,6 @@ import { useTheme } from "../../src/hooks/useTheme";
 import { calculateGumiProgress, getGumiByIndex } from "../../src/lib/gumiUtils";
 
 export default function PlayerPage() {
-  const { t } = useTranslation();
   const { colors } = useTheme();
 
   // ── ロジック（変更なし） ──

@@ -1,8 +1,8 @@
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -19,7 +19,6 @@ import { isValidEmail, isValidPassword } from "../../src/lib/utils";
 import { supabase } from "../../src/services/supabase";
 
 export default function RegisterEmailPassword() {
-  const { t } = useTranslation();
   const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -1,4 +1,5 @@
-// SubscriptionInfoModal.tsx
+// @/src/components/modals/SubscriptionInfoModal.tsx
+import { t, translations } from "@/src/services/translations";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -8,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useTranslation } from "react-i18next";
 
 export type InfoModalVariant =
   | "purchaseSuccess"
@@ -17,11 +17,14 @@ export type InfoModalVariant =
   | "restoreEmpty"
   | "restoreError";
 
+type SubscriptionInfoModalKey =
+  `SubscriptionInfoModal.${keyof typeof translations.en.SubscriptionInfoModal}`;
+
 interface VariantConfig {
-  icon: "check" | string;
-  titleKey: string;
-  messageKey: string;
-  buttonLabelKey: string;
+  icon: string;
+  titleKey: SubscriptionInfoModalKey;
+  messageKey: SubscriptionInfoModalKey;
+  buttonLabelKey: SubscriptionInfoModalKey;
   buttonStyle: "primary" | "outline";
   iconAccent: "brand" | "neutral";
 }
@@ -29,41 +32,41 @@ interface VariantConfig {
 const VARIANT_CONFIG: Record<InfoModalVariant, VariantConfig> = {
   purchaseSuccess: {
     icon: "check",
-    titleKey: "SubscriptionInfoModal.purchaseSuccess.title",
-    messageKey: "SubscriptionInfoModal.purchaseSuccess.message",
-    buttonLabelKey: "SubscriptionInfoModal.purchaseSuccess.button",
+    titleKey: "SubscriptionInfoModal.purchaseSuccessTitle",
+    messageKey: "SubscriptionInfoModal.purchaseSuccessMessage",
+    buttonLabelKey: "SubscriptionInfoModal.purchaseSuccessButton",
     buttonStyle: "primary",
     iconAccent: "brand",
   },
   purchaseError: {
     icon: "⚠️",
-    titleKey: "SubscriptionInfoModal.purchaseError.title",
-    messageKey: "SubscriptionInfoModal.purchaseError.message",
-    buttonLabelKey: "SubscriptionInfoModal.purchaseError.button",
+    titleKey: "SubscriptionInfoModal.purchaseErrorTitle",
+    messageKey: "SubscriptionInfoModal.purchaseErrorMessage",
+    buttonLabelKey: "SubscriptionInfoModal.purchaseErrorButton",
     buttonStyle: "outline",
     iconAccent: "neutral",
   },
   restoreSuccess: {
     icon: "check",
-    titleKey: "SubscriptionInfoModal.restoreSuccess.title",
-    messageKey: "SubscriptionInfoModal.restoreSuccess.message",
-    buttonLabelKey: "SubscriptionInfoModal.restoreSuccess.button",
+    titleKey: "SubscriptionInfoModal.restoreSuccessTitle",
+    messageKey: "SubscriptionInfoModal.restoreSuccessMessage",
+    buttonLabelKey: "SubscriptionInfoModal.restoreSuccessButton",
     buttonStyle: "primary",
     iconAccent: "brand",
   },
   restoreEmpty: {
     icon: "📭",
-    titleKey: "SubscriptionInfoModal.restoreEmpty.title",
-    messageKey: "SubscriptionInfoModal.restoreEmpty.message",
-    buttonLabelKey: "SubscriptionInfoModal.restoreEmpty.button",
+    titleKey: "SubscriptionInfoModal.restoreEmptyTitle",
+    messageKey: "SubscriptionInfoModal.restoreEmptyMessage",
+    buttonLabelKey: "SubscriptionInfoModal.restoreEmptyButton",
     buttonStyle: "outline",
     iconAccent: "neutral",
   },
   restoreError: {
     icon: "⚠️",
-    titleKey: "SubscriptionInfoModal.restoreError.title",
-    messageKey: "SubscriptionInfoModal.restoreError.message",
-    buttonLabelKey: "SubscriptionInfoModal.restoreError.button",
+    titleKey: "SubscriptionInfoModal.restoreErrorTitle",
+    messageKey: "SubscriptionInfoModal.restoreErrorMessage",
+    buttonLabelKey: "SubscriptionInfoModal.restoreErrorButton",
     buttonStyle: "outline",
     iconAccent: "neutral",
   },
@@ -90,7 +93,6 @@ export const SubscriptionInfoModal: React.FC<SubscriptionInfoModalProps> = ({
   onClose,
   colors,
 }) => {
-  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const checkAnim = useRef(new Animated.Value(0)).current;

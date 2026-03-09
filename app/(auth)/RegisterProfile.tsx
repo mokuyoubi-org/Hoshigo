@@ -1,7 +1,6 @@
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -24,7 +23,8 @@ import {
 import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
 
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { lang, t } from "@/src/services/translations";
 import * as hangulRomanization from "hangul-romanization";
 import { pinyin } from "pinyin-pro";
 import * as wanakana from "wanakana";
@@ -61,7 +61,6 @@ export const generateUsername = (text: string, lang: string): string => {
 };
 
 export default function RegisterProfile() {
-  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   // グローバルstate
   const uid = useContext<string | null>(UidContext);
@@ -87,7 +86,6 @@ export default function RegisterProfile() {
   // 中国語: 漢字 2文字まで
   // 英語: アルファベット 10文字まで
   const isValidDisplayName = (text: string) => {
-    const lang = i18n.language || "ja";
     switch (lang) {
       case "ja":
         return /^[ぁ-ゖァ-ヶー〜]{1,5}$/.test(text);
@@ -187,7 +185,7 @@ export default function RegisterProfile() {
       setUserName(userName);
       setDisplayName(displayName);
       setPoints(0);
-      router.replace({ pathname: "/(tabs)/MyPage" });
+      router.replace({ pathname: "/(tabs)/PlayerPage" });
     }
   };
 
@@ -237,9 +235,7 @@ export default function RegisterProfile() {
                   onChangeText={(text) => {
                     setDisplayName?.(text);
                     if (setUserName) {
-                      setUserName(
-                        generateUsername(text, i18n.language || "en"),
-                      );
+                      setUserName(generateUsername(text, lang || "en"));
                     }
                   }}
                   editable={!loading}

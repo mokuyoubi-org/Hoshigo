@@ -1,4 +1,7 @@
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { GoBoard } from "@/src/components/goComponents/GoBoard";
+import { PlayerCard } from "@/src/components/goComponents/PlayerCard";
+import LoadingModal from "@/src/components/modals/LoadingModal";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -7,16 +10,19 @@ import {
 } from "@/src/constants/colors";
 import { Agehama, Match } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
+import { useTheme } from "@/src/hooks/useTheme";
+import { Board, initializeBoard } from "@/src/lib/goLogics";
 import {
   makeTerritoryBoard,
   movesToBoardHistory,
   resultToLanguages,
 } from "@/src/lib/goUtils";
 import { moveNumbersToStrings } from "@/src/lib/utils";
+import { supabase } from "@/src/services/supabase";
+import { t } from "@/src/services/translations";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
   Image,
@@ -27,12 +33,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GoBoard } from "../../src/components/goComponents/GoBoard";
-import LoadingModal from "../../src/components/modals/LoadingModal";
-import { PlayerCard } from "../../src/components/goComponents/PlayerCard";
-import { useTheme } from "../../src/hooks/useTheme";
-import { Board, initializeBoard } from "../../src/lib/goLogics";
-import { supabase } from "../../src/services/supabase";
 
 // ─── リトライ設定 ─────────────────────────────────────
 const MAX_RETRY_COUNT = 5;
@@ -196,7 +196,6 @@ function buildCardData(match: Match): MatchCardData {
 
 // ─── メインコンポーネント ──────────────────────────────
 export default function Watch() {
-  const { t } = useTranslation();
   const { colors } = useTheme();
 
   const [matchCardsData, setMatchCardsData] = useState<MatchCardData[]>([]);

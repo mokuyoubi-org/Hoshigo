@@ -1,6 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import {
   Modal,
   ScrollView,
@@ -16,6 +15,7 @@ import {
   getGumiByIndex,
   GUMI_DATA,
 } from "../../lib/gumiUtils";
+import { t } from "@/src/services/translations";
 
 interface GumiInfoModalProps {
   visible: boolean;
@@ -32,7 +32,6 @@ export default function GumiInfoModal({
 }: GumiInfoModalProps) {
   const { height, width } = useWindowDimensions();
 
-  const { t } = useTranslation();
   const { colors } = useTheme();
   const currentKumi = getGumiByIndex(currentKumiIndex);
   const progressInfo = calculateGumiProgress(currentPoints, currentKumiIndex);

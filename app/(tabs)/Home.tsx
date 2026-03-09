@@ -1,22 +1,28 @@
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { DailyLimitModal } from "@/src/components/modals/DailyLimitModal";
 import { InfoModal } from "@/src/components/modals/InfoModal";
 import LoadingModal from "@/src/components/modals/LoadingModal";
 import LoginNeededModal from "@/src/components/modals/LoginNeededModal";
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { MaintenanceModal } from "@/src/components/modals/MaintenanceModal";
 import {
   BACKGROUND,
   CHOCOLATE,
   CHOCOLATE_SUB,
   STRAWBERRY,
 } from "@/src/constants/colors";
+import {
+  MaintenanceContext,
+  MaintenanceMessageContext,
+} from "@/src/contexts/AppContexts";
+import { IsPremiumContext, UidContext } from "@/src/contexts/UserContexts";
+import { useTheme } from "@/src/hooks/useTheme";
 import { supabase } from "@/src/services/supabase";
+import { lang, t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
-  Dimensions,
   StatusBar as RNStatusBar,
   StyleSheet,
   Text,
@@ -24,18 +30,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IsPremiumContext, UidContext } from "../../src/contexts/UserContexts";
-import { useTheme } from "../../src/hooks/useTheme";
-
-const { width, height } = Dimensions.get("window");
 
 // ─── メイン ───────────────────────────────────────────
 export default function Home() {
-  const { t, i18n } = useTranslation();
   const [isInfoModalVisible, setIsModalVisible] = useState(false);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
   const uid = useContext(UidContext);
   const isPremium = useContext(IsPremiumContext);
+  const maintenance = useContext(MaintenanceContext);
+  const maintenanceMessage = useContext(MaintenanceMessageContext);
   const [isDailyLimitReached, setIsDailyLimitReached] = useState(false);
   const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
@@ -98,6 +101,9 @@ export default function Home() {
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
 
+      {/* 🆕 メンテナンスオーバーレイ（最前面） */}
+      {maintenance && <MaintenanceModal message={maintenanceMessage} />}
+
       <StarBackground />
 
       <Animated.View style={[styles.content, { opacity: fadeIn }]}>
@@ -116,9 +122,7 @@ export default function Home() {
         <View style={styles.titleArea}>
           <Text style={styles.tagline}>{t("Home.tagline")}</Text>
           <Text style={styles.appTitle}>{t("Home.titleMain")}</Text>
-          <Text
-            style={i18n.language === "en" ? styles.appMotto : styles.appRomaji}
-          >
+          <Text style={lang === "en" ? styles.appMotto : styles.appRomaji}>
             {t("Home.titleReading")}
           </Text>
           <View style={styles.divider}>

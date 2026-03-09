@@ -1,6 +1,6 @@
 // Tsumego.tsx
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { GoBoard } from "@/src/components/goComponents/GoBoard";
-import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { TextPanel } from "@/src/components/TextPanel";
 import { Agehama } from "@/src/constants/goConstants";
 import {
@@ -16,6 +16,7 @@ import {
   stringifyGrid,
 } from "@/src/lib/goLogics";
 import { prepareBoard2d, sleep } from "@/src/lib/goUtils";
+import { GoNode, Tsumego, TSUMEGO_GROUPS } from "@/src/lib/tsumegoData";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -27,7 +28,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GoNode, Tsumego, TSUMEGO_GROUPS } from "../../src/lib/tsumegoData";
 export default function TsumegoPage() {
   const { height } = useWindowDimensions();
 

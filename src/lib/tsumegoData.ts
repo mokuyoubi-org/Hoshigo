@@ -3007,7 +3007,7 @@ export const BLUE: Tsumego[] = [
       },
     ],
   },
-    {
+  {
     title: "○をしとめられるかな",
     comment: "○をしとめられるかな？",
     board: [
@@ -3738,6 +3738,75 @@ export const BLUE: Tsumego[] = [
       },
 
       {
+        move: "6,4",
+
+        nexts: [
+          {
+            move: "6,3",
+            nexts: [
+              {
+                move: "5,4",
+                nexts: [
+                  {
+                    move: "5,5",
+                    nexts: [
+                      {
+                        move: "5,3",
+                        nexts: [
+                          {
+                            move: "6,5",
+                            isCorrect: false,
+                          },
+                        ],
+                      },
+                      {
+                        move: "6,5",
+                        nexts: [
+                          {
+                            move: "5,3",
+                            isCorrect: false,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+
+              {
+                move: "5,3",
+                nexts: [
+                  {
+                    move: "6,5",
+                    nexts: [
+                      {
+                        move: "5,4",
+                        nexts: [
+                          {
+                            move: "5,5",
+                            isCorrect: false,
+                          },
+                        ],
+                      },
+                      {
+                        move: "5,5",
+                        nexts: [
+                          {
+                            move: "5,4",
+                            isCorrect: false,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+
+      {
         move: "5,4",
 
         nexts: [
@@ -3933,21 +4002,15 @@ export const BLUE: Tsumego[] = [
 
 // そらぐみ1を目指す詰碁
 // ここら辺から基本的な詰碁が始まる。初級詰碁
-export const SKY1: Tsumego[] = [
-
-];
+export const SKY1: Tsumego[] = [];
 
 // そらぐみ2を目指す詰碁
 // 中級詰碁
-export const SKY2: Tsumego[] = [
-
-];
+export const SKY2: Tsumego[] = [];
 
 // にじぐみ1を目指す詰碁
 // 上級詰碁
-export const RAINBOW1: Tsumego[] = [
-
-];
+export const RAINBOW1: Tsumego[] = [];
 
 // にじぐみ2を目指す詰碁
 // 上級詰碁

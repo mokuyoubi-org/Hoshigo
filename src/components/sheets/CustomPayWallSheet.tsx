@@ -1,4 +1,4 @@
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import {
   SubscriptionInfoModal,
   type InfoModalVariant,
@@ -17,8 +17,8 @@ import {
   purchasePackage,
   restorePurchases,
 } from "@/src/services/RevenueCat";
+import { t, translations } from "@/src/services/translations";
 import React, { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Animated,
@@ -39,11 +39,13 @@ interface CustomPaywallScreenProps {
 }
 type SelectedTier = "starter" | "pro";
 type BillingCycle = "monthly" | "yearly";
+type PaywallKey = `Paywall.${keyof typeof translations.en.Paywall}`;
+
 interface FeatureRow {
-  labelKey: string;
-  starterKey: string;
-  proKey: string;
-  highlight?: boolean;
+  labelKey: PaywallKey;
+  starterKey: PaywallKey;
+  proKey: PaywallKey;
+  highlight: boolean;
 }
 interface InfoModalState {
   visible: boolean;
@@ -69,7 +71,6 @@ const INITIAL_INFO_MODAL: InfoModalState = {
 export default function CustomPaywallScreen({
   onDismiss,
 }: CustomPaywallScreenProps): React.JSX.Element {
-  const { t } = useTranslation();
   const { colors } = useTheme();
   const { refreshStatus } = useRevenueCat();
 

@@ -1,7 +1,6 @@
 // src/components/IconSelectorModal.tsx
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useContext } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Image,
   Modal,
@@ -15,6 +14,7 @@ import {
 import { ICONS } from "../../constants/icons";
 import { GumiIndexContext } from "../../contexts/UserContexts";
 import { useTheme } from "../../hooks/useTheme";
+import { t } from "@/src/services/translations";
 
 interface IconSelectorModalProps {
   visible: boolean;
@@ -35,7 +35,6 @@ export default function IconSelectorModal({
   // カラム数
 
   const { colors } = useTheme();
-  const { t } = useTranslation();
 
   const gumiIndex = useContext<number | null>(GumiIndexContext);
 

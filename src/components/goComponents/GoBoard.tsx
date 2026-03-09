@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
   Easing,
@@ -13,6 +12,7 @@ import { ICONS } from "@/src/constants/icons";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Board, GoString, Grid } from "@/src/lib/goLogics";
 import { ReplayControls } from "./ReplayControls";
+import { t } from "@/src/services/translations";
 
 // ─── AgehamaDisplay ────────────────────
 const AgehamaDisplay: React.FC<{ count: number; isBlack: boolean }> = ({
@@ -111,7 +111,6 @@ export const GoBoard: React.FC<GoBoardProps> = ({
   pinPoints,
 }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
   const cellSize = boardWidth / (boardSize - 1);
   const stoneSize = cellSize * 0.9;
   const lineWidth = Math.max(1, boardWidth / 200);

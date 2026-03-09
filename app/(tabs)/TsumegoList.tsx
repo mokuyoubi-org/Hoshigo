@@ -1,5 +1,5 @@
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { GoBoard } from "@/src/components/goComponents/GoBoard";
-import { StarBackground } from "@/src/components/modals/StarBackGround";
 import { ICONS } from "@/src/constants/icons";
 import { DisplayNameContext } from "@/src/contexts/UserContexts";
 import { prepareBoard2d } from "@/src/lib/goUtils";

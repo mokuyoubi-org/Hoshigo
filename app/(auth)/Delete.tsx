@@ -1,5 +1,5 @@
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import LoadingModal from "@/src/components/modals/LoadingModal";
-import { StarBackground } from "@/src/components/modals/StarBackGround";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -8,10 +8,10 @@ import {
   STRAWBERRY,
 } from "@/src/constants/colors";
 import { logoutRevenueCat } from "@/src/services/RevenueCat";
+import { t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
   StatusBar as RNStatusBar,
@@ -28,7 +28,6 @@ import { supabase } from "../../src/services/supabase";
 
 export default function Delete() {
   const { colors } = useTheme();
-  const { t } = useTranslation();
 
   // ── ロジック（変更なし） ──
   const uid = useContext(UidContext);

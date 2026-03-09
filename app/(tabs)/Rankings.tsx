@@ -1,5 +1,5 @@
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import LoadingModal from "@/src/components/modals/LoadingModal";
-import { StarBackground } from "@/src/components/modals/StarBackGround";
 import {
   BACKGROUND,
   BRONZE,
@@ -13,10 +13,10 @@ import { ICONS } from "@/src/constants/icons";
 import { useTheme } from "@/src/hooks/useTheme";
 import { GUMI_DATA } from "@/src/lib/gumiUtils";
 import { supabase } from "@/src/services/supabase";
+import { t } from "@/src/services/translations";
 import { AntDesign } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
   FlatList,
@@ -128,7 +128,6 @@ const RankingItem = ({
 
 // ─── メインコンポーネント ──────────────────────────────
 export default function Rankings() {
-  const { t } = useTranslation();
   const { colors } = useTheme();
 
   // ── ロジック（変更なし） ──

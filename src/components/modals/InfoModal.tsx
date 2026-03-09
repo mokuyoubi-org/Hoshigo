@@ -1,5 +1,5 @@
+import { t } from "@/src/services/translations";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import {
   Modal,
   ScrollView,
@@ -28,7 +28,6 @@ type InfoModalProps = {
 };
 
 export const InfoModal: React.FC<InfoModalProps> = ({ visible, onClose }) => {
-  const { t } = useTranslation();
   const {height} = useWindowDimensions();
 
   const RuleItem = ({

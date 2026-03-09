@@ -1,7 +1,7 @@
+// @/src/contexts/UserContexts.tsx
 import { createContext } from "react";
-import { CustomerInfo } from 'react-native-purchases';
+import { CustomerInfo } from "react-native-purchases";
 
-// Context: グローバルstateをしまっておくための棚
 export const EmailContext = createContext<string | null>(null);
 export const UidContext = createContext<string | null>(null);
 export const UserNameContext = createContext<string | null>(null);
@@ -32,23 +32,7 @@ export const SetTutorialCompletedIndexContext = createContext<
 
 export const JwtContext = createContext<string | null>(null);
 export const RtContext = createContext<string | null>(null);
-export const ThemeContext = createContext<
-  ("standard" | "light" | "dark") | null
->(null);
-export const SetThemeContext = createContext<
-  ((theme: "standard" | "light" | "dark") => void) | null
->(null);
 
-export const GobanThemeContext = createContext<
-  ("standard" | "light" | "dark") | null
->(null);
-export const SetGobanThemeContext = createContext<
-  ((theme: "standard" | "light" | "dark") => void) | null
->(null);
-export const DailyPlayCountContext = createContext<number | null>(null);
-export const SetDailyPlayCountContext = createContext<
-  ((value: number) => void) | null
->(null);
 
 export const IsPremiumContext = createContext<boolean | null>(null);
 export const SetIsPremiumContext = createContext<
@@ -61,6 +45,12 @@ export const SetGumiIndexContext = createContext<
 >(null);
 
 
-export const RevenueCatCustomerInfoContext = createContext<CustomerInfo | null>(null);
-export const SetRevenueCatCustomerInfoContext = createContext<React.Dispatch<React.SetStateAction<CustomerInfo | null>> | null>(null);
-export const RefreshRevenueCatContext = createContext<(() => Promise<void>) | null>(null);
+export const RevenueCatCustomerInfoContext = createContext<CustomerInfo | null>(
+  null,
+);
+export const SetRevenueCatCustomerInfoContext = createContext<React.Dispatch<
+  React.SetStateAction<CustomerInfo | null>
+> | null>(null);
+export const RefreshRevenueCatContext = createContext<
+  (() => Promise<void>) | null
+>(null);

@@ -2,10 +2,10 @@ import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Tabs } from "expo-router";
 import React, { useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
 import { Animated, Platform, StyleSheet, View } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { CHOCOLATE, INACTIVE, BACKGROUND, STRAWBERRY_DIM, STRAWBERRY } from "@/src/constants/colors";
+import { t } from "@/src/services/translations";
 
 
 
@@ -81,7 +81,6 @@ const TabIcon = ({
 };
 
 export default function TabsLayout() {
-  const { t } = useTranslation();
 
   useEffect(() => {
     async function setupNavBar() {

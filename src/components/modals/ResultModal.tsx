@@ -1,7 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
   Modal,
@@ -24,6 +23,7 @@ import {
 import { supabase } from "../../services/supabase";
 import { DailyLimitModal } from "./DailyLimitModal";
 import LoadingModal from "./LoadingModal";
+import { t } from "@/src/services/translations";
 
 interface ResultModalProps {
   visible: boolean;
@@ -44,7 +44,6 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   gumiIndexBefore,
   gumiIndexAfter,
 }) => {
-  const { t } = useTranslation();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const hasAnimated = useRef(false);
   const uid = useContext(UidContext);

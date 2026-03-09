@@ -1,9 +1,8 @@
-import { useNavigation } from "@react-navigation/native";
 import { router } from "expo-router";
 import React from "react";
-import { useTranslation } from "react-i18next";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../../hooks/useTheme";
+import { t } from "@/src/services/translations";
 
 interface LoginNeededModalProps {
   visible: boolean;
@@ -17,8 +16,6 @@ export default function LoginNeededModal({
   message,
 }: LoginNeededModalProps) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
-  const navigation = useNavigation();
 
   const handleLogin = () => {
     onClose();

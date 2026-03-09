@@ -2,7 +2,6 @@ import LoginNeededModal from "@/src/components/modals/LoginNeededModal";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   Animated,
   Linking,
@@ -18,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CustomCustomerCenterScreen from "../../src/components/sheets/CustomCustomerCenterSheet";
 import CustomPaywallScreen from "../../src/components/sheets/CustomPayWallSheet";
 
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -28,6 +27,7 @@ import {
   STRAWBERRY,
 } from "@/src/constants/colors";
 import { logoutRevenueCat } from "@/src/services/RevenueCat";
+import { lang, t } from "@/src/services/translations";
 import LoadingModal from "../../src/components/modals/LoadingModal";
 import { EmailContext, UidContext } from "../../src/contexts/UserContexts";
 import { useRevenueCat } from "../../src/hooks/useRevenueCat";
@@ -35,7 +35,6 @@ import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
 
 export default function Settings() {
-  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
 
   // ── ロジック（変更なし） ──
@@ -99,7 +98,7 @@ export default function Settings() {
         string,
         string
       >
-    )[i18n.language.split("-")[0]] ?? i18n.language;
+    )[lang.split("-")[0]] ?? lang;
 
   // ── UI ──
   return (

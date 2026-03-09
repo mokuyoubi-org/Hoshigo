@@ -1,5 +1,5 @@
 import { Agehama } from "../constants/goConstants";
-import i18n from "../services/i18n";
+import { t } from "../services/translations";
 import {
   applyMove,
   Board,
@@ -133,46 +133,46 @@ export const resultToLanguagesComment = (
     (result === "W+R" && playerColor === "white") ||
     (result === "B+R" && playerColor === "black")
   ) {
-    return i18n.t("GameResult.yourResignationWin");
+    return t("GameResult.yourResignationWin");
   } else if (
     (result === "W+R" && playerColor === "black") ||
     (result === "B+R" && playerColor === "white")
   ) {
-    return i18n.t("GameResult.yourResignationLoss");
+    return t("GameResult.yourResignationLoss");
   } else if (
     (result === "W+T" && playerColor === "white") ||
     (result === "B+T" && playerColor === "black")
   ) {
-    return i18n.t("GameResult.yourTimeoutWin");
+    return t("GameResult.yourTimeoutWin");
   } else if (
     (result === "W+T" && playerColor === "black") ||
     (result === "B+T" && playerColor === "white")
   ) {
-    return i18n.t("GameResult.yourTimeoutLoss");
+    return t("GameResult.yourTimeoutLoss");
   } else if (
     (result === "W+C" && playerColor === "white") ||
     (result === "B+C" && playerColor === "black")
   ) {
-    return i18n.t("GameResult.yourDisconnectWin");
+    return t("GameResult.yourDisconnectWin");
   } else if (
     (result === "W+C" && playerColor === "black") ||
     (result === "B+C" && playerColor === "white")
   ) {
-    return i18n.t("GameResult.yourDisconnectLoss");
+    return t("GameResult.yourDisconnectLoss");
   } else if (
     (result[0] === "B" && playerColor === "black") ||
     (result[0] === "W" && playerColor === "white")
   ) {
     const points = result.slice(2);
-    console.log(i18n.t("GameResult.yourPointsWin", { points }));
-    return i18n.t("GameResult.yourPointsWin", { points });
+    console.log(t("GameResult.yourPointsWin", { points }));
+    return t("GameResult.yourPointsWin", { points });
   } else if (
     (result[0] === "W" && playerColor === "black") ||
     (result[0] === "B" && playerColor === "white")
   ) {
     const points = result.slice(2);
-    console.log(i18n.t("GameResult.yourPointsLoss", { points }));
-    return i18n.t("GameResult.yourPointsLoss", { points });
+    console.log(t("GameResult.yourPointsLoss", { points }));
+    return t("GameResult.yourPointsLoss", { points });
   } else {
     return;
   }
@@ -344,23 +344,23 @@ export const makeTerritoryBoard = (
 
 export const resultToLanguages = (result: string) => {
   if (result === "B+R") {
-    return i18n.t("GameResult.blackResignationWin");
+    return t("GameResult.blackResignationWin");
   } else if (result === "W+R") {
-    return i18n.t("GameResult.whiteResignationWin");
+    return t("GameResult.whiteResignationWin");
   } else if (result === "B+T") {
-    return i18n.t("GameResult.blackTimeoutWin");
+    return t("GameResult.blackTimeoutWin");
   } else if (result === "W+T") {
-    return i18n.t("GameResult.whiteTimeoutWin");
+    return t("GameResult.whiteTimeoutWin");
   } else if (result === "B+C") {
-    return i18n.t("GameResult.blackDisconnectWin");
+    return t("GameResult.blackDisconnectWin");
   } else if (result === "W+C") {
-    return i18n.t("GameResult.whiteDisconnectWin");
+    return t("GameResult.whiteDisconnectWin");
   } else if (result.startsWith("B+")) {
     const points = result.slice(2);
-    return i18n.t("GameResult.blackPointsWin", { points });
+    return t("GameResult.blackPointsWin", { points });
   } else if (result.startsWith("W+")) {
     const points = result.slice(2);
-    return i18n.t("GameResult.whitePointsWin", { points });
+    return t("GameResult.whitePointsWin", { points });
   } else return;
 };
 

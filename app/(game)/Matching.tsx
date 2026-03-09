@@ -1,8 +1,8 @@
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingModal from "../../src/components/modals/LoadingModal";
@@ -67,7 +67,6 @@ const boardSequence = [
 ];
 
 export default function Matching() {
-  const { t } = useTranslation();
   const uid = useContext(UidContext);
   const username = useContext(UserNameContext);
   const displayname = useContext(DisplayNameContext);

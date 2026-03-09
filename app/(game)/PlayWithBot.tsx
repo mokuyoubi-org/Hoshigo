@@ -7,7 +7,6 @@ import { useAudioPlayer } from "expo-audio";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   StyleSheet,
   Text,
@@ -18,8 +17,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import LoadingModal from "../../src/components/modals/LoadingModal";
 
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { Agehama } from "@/src/constants/goConstants";
+import { t } from "@/src/services/translations";
 import {
   DisplayNameContext,
   GumiIndexContext,
@@ -63,8 +63,6 @@ const GNU_API_TIMEOUT_MS = 30_000; // GNUGo APIのタイムアウト
 
 export default function PlayWithBot() {
   const { height } = useWindowDimensions();
-
-  const { t } = useTranslation();
 
   // ── Context ──────────────────────────────────────
   const uid = useContext(UidContext);

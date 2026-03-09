@@ -1,4 +1,5 @@
-import { StarBackground } from "@/src/components/modals/StarBackGround";
+import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { PaywallModal } from "@/src/components/modals/PaywallModal";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -7,6 +8,7 @@ import {
 } from "@/src/constants/colors";
 import { Agehama, MatchArchive } from "@/src/constants/goConstants";
 import { moveNumbersToStrings } from "@/src/lib/utils";
+import { lang, t } from "@/src/services/translations";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, {
@@ -16,9 +18,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useTranslation } from "react-i18next";
 import {
-  Animated,
   FlatList,
   Modal,
   StatusBar as RNStatusBar,
@@ -41,218 +41,6 @@ import {
   resultToLanguages,
 } from "../src/lib/goUtils";
 import { supabase } from "../src/services/supabase";
-
-// ─── ペイウォールモーダル（落ち着いたデザイン） ───────────────
-const PaywallModal = ({
-  t,
-  setShowPaywall,
-}: {
-  t: any;
-  setShowPaywall: any;
-}) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 420,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  return (
-    <Animated.View style={[modalStyles.container, { opacity: fadeAnim }]}>
-      {/* 薄い霞レイヤー */}
-      <View style={modalStyles.fog} />
-
-      <Animated.View
-        style={[modalStyles.card, { transform: [{ translateY: slideAnim }] }]}
-      >
-        {/* 細いアクセントライン */}
-        <View style={modalStyles.topLine} />
-
-        {/* アイコン */}
-        <View style={modalStyles.iconWrap}>
-          <Text style={modalStyles.iconText}>♛</Text>
-        </View>
-
-        <Text style={modalStyles.title}>
-          {t("MyRecords.premiumTitle") || "続きを見るには"}
-        </Text>
-        <Text style={modalStyles.subtitle}>
-          {t("MyRecords.premiumSubtitle") ||
-            "プレミアム会員になると\n対局履歴をすべて閲覧できます"}
-        </Text>
-
-        {/* 区切り線 */}
-        <View style={modalStyles.divider} />
-
-        {/* 特典リスト */}
-        <View style={modalStyles.benefits}>
-          {[
-            {
-              icon: "📜",
-              text: t("MyRecords.benefit1") || "対局履歴 無制限閲覧",
-            },
-            {
-              icon: "♟",
-              text: t("MyRecords.benefit2") || "棋譜リプレイ 全手数",
-            },
-            {
-              icon: "✦",
-              text: t("MyRecords.benefit3") || "広告なし・優先マッチング",
-            },
-          ].map((b, i) => (
-            <View key={i} style={modalStyles.benefitRow}>
-              <Text style={modalStyles.benefitIcon}>{b.icon}</Text>
-              <Text style={modalStyles.benefitText}>{b.text}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* CTAボタン */}
-        <TouchableOpacity
-          style={modalStyles.cta}
-          onPress={() => {
-            setShowPaywall(true);
-          }}
-          activeOpacity={0.75}
-        >
-          <Text style={modalStyles.ctaText}>
-            {t("MyRecords.premiumCTA") || "プレミアムにアップグレード"}
-          </Text>
-        </TouchableOpacity>
-
-        <Text style={modalStyles.footer}>
-          {t("MyRecords.premiumFooter") || "いつでもキャンセル可能"}
-        </Text>
-      </Animated.View>
-    </Animated.View>
-  );
-};
-
-const modalStyles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10,
-  },
-  fog: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(248,245,240,0.5)",
-  },
-  card: {
-    width: "84%",
-    backgroundColor: "#fdfcf9",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(180,160,130,0.25)",
-    paddingHorizontal: 24,
-    paddingTop: 0,
-    paddingBottom: 22,
-    alignItems: "center",
-    shadowColor: "#8a6a3a",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
-    overflow: "hidden",
-  },
-  topLine: {
-    height: 2,
-    width: "100%",
-    backgroundColor: "rgba(180,150,100,0.5)",
-    marginBottom: 22,
-  },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(180,150,100,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
-  },
-  iconText: {
-    fontSize: 20,
-    color: "#9a7040",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#2e1f0e",
-    letterSpacing: 0.3,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#8a6a4a",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 18,
-  },
-  divider: {
-    width: "100%",
-    height: 1,
-    backgroundColor: "rgba(180,160,130,0.18)",
-    marginBottom: 16,
-  },
-  benefits: {
-    width: "100%",
-    gap: 10,
-    marginBottom: 22,
-  },
-  benefitRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  benefitIcon: {
-    fontSize: 14,
-    width: 20,
-    textAlign: "center",
-  },
-  benefitText: {
-    fontSize: 13,
-    color: "#4a3820",
-    fontWeight: "500",
-    letterSpacing: 0.1,
-  },
-  cta: {
-    width: "100%",
-    backgroundColor: "#7a5530",
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: "center",
-    shadowColor: "#7a5530",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  ctaText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#fff",
-    letterSpacing: 0.4,
-  },
-  footer: {
-    marginTop: 12,
-    fontSize: 11,
-    color: "#a08060",
-    letterSpacing: 0.2,
-  },
-});
 
 // ─── ゴーストカード（11枚目・ぼかし＋モーダル） ──────────────
 const GhostPaywallCard = ({
@@ -526,7 +314,6 @@ const skeletonStyles = StyleSheet.create({
 
 // ─── メインコンポーネント ──────────────────────────────────
 export default function MyRecords() {
-  const { t, i18n } = useTranslation();
   const uid = useContext(UidContext);
   const isPremium = useContext(IsPremiumContext);
   const { colors } = useTheme();
@@ -554,13 +341,13 @@ export default function MyRecords() {
 
   const isFetchingMore = useRef(false);
 
-  const localeMap: { [key: string]: string } = {
-    ja: "ja-JP",
-    en: "en-US",
-    zh: "zh-CN",
-    ko: "ko-KR",
-  };
-  const currentLocale = localeMap[i18n.language] || "en-US";
+  // const localeMap: { [key: string]: string } = {
+  //   ja: "ja-JP",
+  //   en: "en-US",
+  //   zh: "zh-CN",
+  //   ko: "ko-KR",
+  // };
+  // const currentLocale = localeMap[lang] || "en-US";
 
   useEffect(() => {
     if (uid) fetchRecords(0);
@@ -823,7 +610,7 @@ export default function MyRecords() {
         territoryBoard={territoryBoards[record.id]}
         colors={colors}
         t={t}
-        currentLocale={currentLocale}
+        currentLocale={lang}
         matchType={matchTypes[record.id]}
         index={index}
         cardHeight={CARD_HEIGHT}
@@ -836,7 +623,7 @@ export default function MyRecords() {
       territoryBoards,
       colors,
       t,
-      currentLocale,
+      lang,
       CARD_HEIGHT,
     ],
   );
@@ -918,7 +705,7 @@ export default function MyRecords() {
                 matchType={matchTypes[ghostRecord.id] ?? 0}
                 cardHeight={CARD_HEIGHT}
                 t={t}
-                currentLocale={currentLocale}
+                currentLocale={lang}
               />
             ) : null
           }

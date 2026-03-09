@@ -1,8 +1,9 @@
-// src/lib/gumiutils.ts
-import i18n from "../services/i18n";
+import { t, translations } from "../services/translations";
+
+type GumiKey = `Gumi.${keyof typeof translations.en.Gumi}`;
 
 export interface GumiInfo {
-  nameKey: string; // 翻訳キーを保存
+  nameKey: GumiKey; // stringからGumiKeyに変更
   color: string;
   minPoints: number;
 }
@@ -43,13 +44,13 @@ export function getGumiByIndex(index: number): GumiInfo & { name: string } {
     const gumi = GUMI_DATA[0];
     return {
       ...gumi,
-      name: i18n.t(gumi.nameKey),
+      name: t(gumi.nameKey),
     };
   }
   const gumi = GUMI_DATA[index];
   return {
     ...gumi,
-    name: i18n.t(gumi.nameKey),
+    name: t(gumi.nameKey),
   };
 }
 
@@ -106,7 +107,7 @@ export function calculateGumiProgress(
   return {
     pointsNeeded: Math.max(0, pointsNeeded),
     progressPercent: Math.min(100, Math.max(0, progressPercent)),
-    nextGumiName: i18n.t(nextGumi.nameKey), // 翻訳された名前を返す
+    nextGumiName: t(nextGumi.nameKey), // 翻訳された名前を返す
   };
 }
 
