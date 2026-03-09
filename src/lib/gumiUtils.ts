@@ -18,17 +18,17 @@ export const GUMI_DATA: GumiInfo[] = [
   { nameKey: "Gumi.aogumi", color: "aogumi", minPoints: 300 },
   { nameKey: "Gumi.soragumi1", color: "soragumi", minPoints: 420 },
   { nameKey: "Gumi.soragumi2", color: "soragumi", minPoints: 560 },
-  { nameKey: "Gumi.nijigumi1", color: "nijigumi", minPoints: 720 },
-  { nameKey: "Gumi.nijigumi2", color: "nijigumi", minPoints: 900 },
-  { nameKey: "Gumi.tsukigumi1", color: "tsukigumi", minPoints: 1100 },
-  { nameKey: "Gumi.tsukigumi2", color: "tsukigumi", minPoints: 1300 },
-  { nameKey: "Gumi.tsukigumi3", color: "tsukigumi", minPoints: 1500 },
-  { nameKey: "Gumi.hoshigumi1", color: "hoshigumi", minPoints: 1700 },
-  { nameKey: "Gumi.hoshigumi2", color: "hoshigumi", minPoints: 1900 },
-  { nameKey: "Gumi.hoshigumi3", color: "hoshigumi", minPoints: 2100 },
-  { nameKey: "Gumi.hoshigumi4", color: "hoshigumi", minPoints: 2300 },
+  { nameKey: "Gumi.soragumi3", color: "soragumi", minPoints: 720 },
+  { nameKey: "Gumi.nijigumi1", color: "nijigumi", minPoints: 900 },
+  { nameKey: "Gumi.nijigumi2", color: "nijigumi", minPoints: 1100 },
+  { nameKey: "Gumi.nijigumi3", color: "nijigumi", minPoints: 1300 },
+  { nameKey: "Gumi.tsukigumi1", color: "tsukigumi", minPoints: 1500 },
+  { nameKey: "Gumi.tsukigumi2", color: "tsukigumi", minPoints: 1700 },
+  { nameKey: "Gumi.tsukigumi3", color: "tsukigumi", minPoints: 1900 },
+  { nameKey: "Gumi.hoshigumi1", color: "hoshigumi", minPoints: 2100 },
+  { nameKey: "Gumi.hoshigumi2", color: "hoshigumi", minPoints: 2300 },
   {
-    nameKey: "Gumi.hoshigumi5",
+    nameKey: "Gumi.hoshigumi3",
     color: "hoshigumi",
     minPoints: 2500,
   },
@@ -84,7 +84,6 @@ export function calculateGumiProgress(
   currentPoints: number,
   currentGumiIndex: number,
 ): ProgressInfo {
-  const currentGumi = GUMI_DATA[currentGumiIndex];
   const nextGumi = GUMI_DATA[currentGumiIndex + 1];
 
   // 最上位ランクの場合は常に満タン
@@ -111,10 +110,7 @@ export function calculateGumiProgress(
   };
 }
 
-const thresholds = [
-  0, 10, 30, 60, 100, 150, 210, 280, 360, 450, 550, 660, 780, 910, 1050, 1200,
-  1360, 1530,
-] as const;
+const thresholds = GUMI_DATA.map(g => g.minPoints);
 
 export const pointsToGumiIndex = (value: number): number =>
   Math.max(

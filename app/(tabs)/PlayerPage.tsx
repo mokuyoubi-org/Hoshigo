@@ -107,13 +107,11 @@ export default function PlayerPage() {
       setIconIndex(iconIndex);
       return;
     }
-    const fetchTopProfiles = async () => {
+    const updateIcon = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({ icon_index: iconIndex })
-        .eq("uid", uid)
-        .select();
+      const { error } = await supabase.rpc("update_icon_index", {
+        new_icon_index: iconIndex,
+      });
       if (error) {
         console.error(error);
       } else {
@@ -121,7 +119,7 @@ export default function PlayerPage() {
       }
       setLoading(false);
     };
-    fetchTopProfiles();
+    updateIcon();
   };
 
   const animatedWidth = progressAnim.interpolate({
