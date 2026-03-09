@@ -24,7 +24,7 @@ export type Tsumego = {
 // ルール確認レベル。石を取れるか。置けない場所置ける場所がわかっているか。コウがわかっているか。地を数えられるか。交互に打つ。マスの上に打つ。パス二回で終局。もしくは投了。
 export const PINK: Tsumego[] = [
   {
-    title: "石をとろう1",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -41,7 +41,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "石をとろう2",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -58,7 +58,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "石をとろう3",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -75,7 +75,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "石をとろう4",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 1, 0, 0],
@@ -92,7 +92,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "石をとろう5",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -109,7 +109,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "石をとろう6",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -140,7 +140,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "石をとろう7",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 0, 0, 0, 0],
@@ -157,7 +157,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "石をとろう8",
+    title: "石をとろう",
     comment: "○をとれるかな？",
     board: [
       [0, 1, 1, 0, 0],
@@ -174,7 +174,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？1",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -199,7 +199,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？2",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -223,7 +223,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？3",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -248,7 +248,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？4",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -273,7 +273,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？5",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -298,7 +298,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？6",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -323,7 +323,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？7",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 0, 0, 0],
@@ -355,7 +355,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "ここに打てる？8",
+    title: "ここに打てる？",
     comment: "●はここに打っていい？",
     board: [
       [0, 0, 1, 2, 2],
@@ -380,7 +380,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "コウがわかるかな1",
+    title: "コウがわかるかな",
     comment: "まず○が打つよ",
     isNextBlack: false,
     board: [
@@ -413,7 +413,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "コウがわかるかな2",
+    title: "コウがわかるかな",
     comment: "まず○が打つよ",
     isNextBlack: false,
     board: [
@@ -446,7 +446,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "コウがわかるかな3",
+    title: "コウがわかるかな",
     comment: "まず○が打つよ",
     isNextBlack: false,
     board: [
@@ -478,7 +478,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "コウがわかるかな4",
+    title: "コウがわかるかな",
     comment: "まず○が打つよ",
     isNextBlack: false,
     board: [
@@ -527,7 +527,7 @@ export const PINK: Tsumego[] = [
     ],
   },
   {
-    title: "コウがわかるかな5",
+    title: "コウがわかるかな",
     comment: "まず○が打つよ",
     isNextBlack: false,
     board: [
@@ -630,7 +630,6 @@ export const ORANGE: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "○をつかまえよう",
     comment: "○をつかまえられるかな？",
@@ -716,7 +715,6 @@ export const ORANGE: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "○をつかまえよう",
     comment: "○をつかまえられるかな？",
@@ -838,7 +836,6 @@ export const ORANGE: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "○をつかまえよう",
     comment: "○をつかまえられるかな？",
@@ -943,7 +940,6 @@ export const ORANGE: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "○をつかまえよう",
     comment: "○をつかまえられるかな？",
@@ -1009,7 +1005,6 @@ export const ORANGE: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "○をつかまえよう",
     comment: "○をつかまえられるかな？",
@@ -1065,7 +1060,6 @@ export const ORANGE: Tsumego[] = [
       },
     ],
   },
-
   {
     title: "○をつかまえよう",
     comment: "○をつかまえられるかな？",
@@ -1298,7 +1292,7 @@ export const ORANGE: Tsumego[] = [
   },
 
   {
-    title: "○をとろう",
+    title: "○をつかまえよう",
     comment: "タダでとれる○があるよ",
     board: [
       [0, 1, 2, 0, 0],
@@ -1364,7 +1358,7 @@ export const ORANGE: Tsumego[] = [
   },
 
   {
-    title: "○をとろう",
+    title: "○をつかまえよう",
     comment: "タダでとれる○があるよ",
     board: [
       [0, 0, 2, 1, 0],
@@ -1414,8 +1408,8 @@ export const ORANGE: Tsumego[] = [
     ],
   },
   {
-    title: "両アタリで○をとろう",
-    comment: "両アタリで○をとろう",
+    title: "両アタリで○をつかまえよう",
+    comment: "両アタリで○をつかまえよう",
     board: [
       [0, 0, 0, 0, 0],
       [0, 0, 2, 1, 0],
@@ -1628,7 +1622,7 @@ export const YELLOW: Tsumego[] = [
   },
 
   {
-    title: "生きてる？2",
+    title: "生きてる？",
     comment: "この●は生きてる？",
     quizChoice: ["はい", "いいえ"],
     board: [
@@ -3997,17 +3991,6 @@ export const BLUE: Tsumego[] = [
 // ここら辺から基本的な詰碁が始まる。初級詰碁
 export const SKY1: Tsumego[] = [];
 
-// そらぐみ2を目指す詰碁
-// 中級詰碁
-export const SKY2: Tsumego[] = [];
-
-// にじぐみ1を目指す詰碁
-// 上級詰碁
-export const RAINBOW1: Tsumego[] = [];
-
-// にじぐみ2を目指す詰碁
-// 上級詰碁
-export const RAINBOW2: Tsumego[] = [];
 
 export type TsumegoGroup = {
   titleKey: TranslationKey; // stringから変更
@@ -4015,30 +3998,51 @@ export type TsumegoGroup = {
   data: Tsumego[];
 };
 
+
+const CIRCLED = ["❶","❷","❸","❹","❺","❻","❼","❽","❾","❿"] as const;
+
+function autoNumberTitles(list: Tsumego[]): Tsumego[] {
+  const counter: Record<string, number> = {};
+
+  return list.map((item) => {
+    const base = item.title ?? "Quiz";
+
+    counter[base] = (counter[base] ?? 0) + 1;
+    const n = counter[base];
+
+    const mark = CIRCLED[n - 1] ?? `(${n})`;
+
+    return {
+      ...item,
+      title: `${base}${mark}`,
+    };
+  });
+}
+
 export const TSUMEGO_GROUPS: TsumegoGroup[] = [
   {
     titleKey: "TsumegoGroup.groupPink",
     color: "#FFB7C5",
-    data: PINK,
+    data: autoNumberTitles(PINK),
   },
   {
     titleKey: "TsumegoGroup.groupOrange",
     color: "#FFA07A",
-    data: ORANGE,
+    data: autoNumberTitles(ORANGE),
   },
   {
     titleKey: "TsumegoGroup.groupYellow",
     color: "#ffed7a",
-    data: YELLOW,
+    data: autoNumberTitles(YELLOW),
   },
   {
     titleKey: "TsumegoGroup.groupGreen",
     color: "#7dbb99",
-    data: GREEN,
+    data: autoNumberTitles(GREEN),
   },
   {
     titleKey: "TsumegoGroup.groupBlue",
     color: "#7a97ff",
-    data: BLUE,
+    data: autoNumberTitles(BLUE),
   },
 ];
