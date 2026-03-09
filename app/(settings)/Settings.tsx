@@ -189,44 +189,35 @@ export default function Settings() {
           </View>
 
           {/* ─── 情報 ─── */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t("Settings.information")}</Text>
-            <View style={styles.menuGroup}>
-              {[
+          <Text style={styles.sectionTitle}>{t("Settings.information")}</Text>
+          {[
+            {
+              label: t("Settings.privacyPolicy"),
+              url: "https://mokuyoubi.org/privacy",
+            },
+            {
+              label: t("Settings.termsOfService"),
+              url: "https://mokuyoubi.org/terms",
+            },
+          ].map((item, i, arr) => (
+            <TouchableOpacity
+              key={item.url}
+              style={[
+                styles.menuItem,
+                i < arr.length - 1 && styles.menuItemBorderBottom,
                 {
-                  label: t("Settings.privacyPolicy"),
-                  url: "https://mokuyoubi.org/privacy",
+                  borderRadius: i === 0 ? 14 : i === arr.length - 1 ? 14 : 0,
                 },
-                {
-                  label: t("Settings.termsOfService"),
-                  url: "https://mokuyoubi.org/terms",
-                },
-                {
-                  label: t("Settings.license"),
-                  url: "https://mokuyoubi.org/license",
-                },
-              ].map((item, i, arr) => (
-                <TouchableOpacity
-                  key={item.url}
-                  style={[
-                    styles.menuItem,
-                    i < arr.length - 1 && styles.menuItemBorderBottom,
-                    {
-                      borderRadius:
-                        i === 0 ? 14 : i === arr.length - 1 ? 14 : 0,
-                    },
-                  ]}
-                  activeOpacity={0.7}
-                  onPress={() => openURL(item.url)}
-                >
-                  <View style={styles.menuItemInner}>
-                    <Text style={styles.menuItemText}>{item.label}</Text>
-                    <Text style={styles.menuItemArrow}>›</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+              ]}
+              activeOpacity={0.7}
+              onPress={() => openURL(item.url)}
+            >
+              <View style={styles.menuItemInner}>
+                <Text style={styles.menuItemText}>{item.label}</Text>
+                <Text style={styles.menuItemArrow}>›</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
 
           {/* ─── アカウント操作 ─── */}
           <View style={styles.section}>

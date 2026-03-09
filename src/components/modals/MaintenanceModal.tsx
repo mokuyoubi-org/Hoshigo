@@ -1,4 +1,5 @@
 // @/src/components/modals/MaintenanceModal.tsx
+import { t } from "@/src/services/translations";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -6,9 +7,9 @@ export function MaintenanceModal({ message }: { message: string | null }) {
   return (
     <View style={styles.overlay}>
       <View style={styles.card}>
-        <Text style={styles.title}>🛠 メンテナンス中</Text>
+        <Text style={styles.title}>{t("MaintenanceModal.title")}</Text>
         <Text style={styles.message}>
-          {message ?? "現在メンテナンス中です。\nしばらくお待ちください。"}
+          {message ?? t("MaintenanceModal.message")}
         </Text>
       </View>
     </View>

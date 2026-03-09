@@ -339,6 +339,10 @@ export const translations = {
       Close: "閉じる",
       ErrorRetry: "時間をおいて再度お試しください。",
     },
+    MaintenanceModal: {
+      title: "メンテナンス中",
+      message: "現在メンテナンス中です。\nしばらくお待ちください。",
+    },
   },
   en: {
     Home: {
@@ -680,6 +684,11 @@ export const translations = {
       Close: "Close",
       ErrorRetry: "Please try again later.",
     },
+    MaintenanceModal: {
+      title: "Maintenance",
+      message:
+        "The service is currently under maintenance.\nPlease wait a moment.",
+    },
   },
   zh: {
     Home: {
@@ -716,7 +725,6 @@ export const translations = {
       loginRequired: "请登录后继续",
       loggingOut: "退出中...",
     },
-
     Language: {
       back: "返回",
       title: "语言",
@@ -1012,6 +1020,10 @@ export const translations = {
       Close: "关闭",
       ErrorRetry: "请稍后再试。",
     },
+    MaintenanceModal: {
+      title: "维护中",
+      message: "服务正在维护中。\n请稍候。",
+    },
   },
   ko: {
     Home: {
@@ -1106,7 +1118,6 @@ export const translations = {
       watching: "명 관전 중",
       moves: "{{count}}수",
     },
-
     Login: {
       welcome: "환영합니다",
       subtitle: "계정에 로그인",
@@ -1348,6 +1359,10 @@ export const translations = {
       LoadError: "상품 정보를 불러올 수 없습니다",
       Close: "닫기",
       ErrorRetry: "잠시 후 다시 시도해 주세요.",
+    },
+    MaintenanceModal: {
+      title: "점검 중",
+      message: "현재 서비스 점검 중입니다.\n잠시만 기다려 주세요。",
     },
   },
 } as const;
