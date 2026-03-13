@@ -2,6 +2,7 @@ import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
 import { GoBoard } from "@/src/components/goComponents/GoBoard";
 import { PlayerCard } from "@/src/components/goComponents/PlayerCard";
 import LoadingModal from "@/src/components/modals/LoadingModal";
+import { MaintenanceModal } from "@/src/components/modals/MaintenanceModal";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -10,6 +11,10 @@ import {
 } from "@/src/constants/colors";
 import { Agehama, Match } from "@/src/constants/goConstants";
 import { ICONS } from "@/src/constants/icons";
+import {
+  MaintenanceContext,
+  MaintenanceMessageContext,
+} from "@/src/contexts/AppContexts";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Board, initializeBoard } from "@/src/lib/goLogics";
@@ -22,7 +27,13 @@ import { moveNumbersToStrings } from "@/src/lib/utils";
 import { supabase } from "@/src/services/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Image,
@@ -112,7 +123,7 @@ const MatchCard = React.memo(
             {data.status === "ended" && data.result ? (
               <View style={styles.resultContainer}>
                 <Text style={styles.resultText}>
-                  {resultToLanguages(data.result)}
+                  {resultToLanguages(data.result, t)}
                 </Text>
               </View>
             ) : data.status === "playing" ? (
@@ -197,7 +208,7 @@ function buildCardData(match: Match): MatchCardData {
 // ─── メインコンポーネント ──────────────────────────────
 export default function Watch() {
   const { colors } = useTheme();
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const [matchCardsData, setMatchCardsData] = useState<MatchCardData[]>([]);
   const matchCardsDataRef = useRef<{ [id: string]: MatchCardData }>({});
   const [loading, setLoading] = useState(true);
@@ -215,23 +226,88 @@ const { t } = useTranslation();
 
   // フェードイン
   const fadeIn = useRef(new Animated.Value(0)).current;
+  const maintenance = useContext(MaintenanceContext);
+  const maintenanceMessage = useContext(MaintenanceMessageContext);
 
-  // ─── マウント管理 ───────────────────────────────────
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  if (maintenance === false) {
+    // ─── マウント管理 ───────────────────────────────────
+    useEffect(() => {
+      isMountedRef.current = true;
+      return () => {
+        isMountedRef.current = false;
+      };
+    }, []);
 
-  // ─── フェードイン ───────────────────────────────────
-  useEffect(() => {
-    Animated.timing(fadeIn, {
-      toValue: 1,
-      duration: 700,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+    // ─── フェードイン ───────────────────────────────────
+    useEffect(() => {
+      Animated.timing(fadeIn, {
+        toValue: 1,
+        duration: 700,
+        useNativeDriver: true,
+      }).start();
+    }, []);
+
+    // ─── 初期化 ──────────────────────────────────────────
+    useEffect(() => {
+      const init = async () => {
+        const ids = await fetchMatches();
+        // 空配列のときはサブスク不要
+        if (ids && ids.length > 0) {
+          setupSubscription(ids);
+        }
+      };
+      init();
+
+      return () => {
+        cleanupChannel();
+      };
+    }, []);
+
+    // ─── カウントダウンタイマー ──────────────────────────
+    useEffect(() => {
+      timerRef.current = setInterval(() => {
+        if (!isMountedRef.current) return;
+
+        const updates: { id: string; black: number; white: number }[] = [];
+
+        Object.values(matchCardsDataRef.current).forEach((card) => {
+          if (card.status !== "playing") return;
+          let black = card.blackRemainSeconds;
+          let white = card.whiteRemainSeconds;
+          if (card.turn === "black") {
+            black = Math.max(0, black - 1);
+          } else {
+            white = Math.max(0, white - 1);
+          }
+          matchCardsDataRef.current[card.id] = {
+            ...card,
+            blackRemainSeconds: black,
+            whiteRemainSeconds: white,
+          };
+          updates.push({ id: card.id, black, white });
+        });
+
+        if (updates.length > 0) {
+          setMatchCardsData((prev) =>
+            prev.map((card) => {
+              const u = updates.find((u) => u.id === card.id);
+              return u
+                ? {
+                    ...card,
+                    blackRemainSeconds: u.black,
+                    whiteRemainSeconds: u.white,
+                  }
+                : card;
+            }),
+          );
+        }
+      }, 1000);
+
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    }, []);
+  }
 
   // ─── チャンネルクリーンアップ ────────────────────────
   const cleanupChannel = useCallback(() => {
@@ -401,67 +477,6 @@ const { t } = useTranslation();
     [],
   );
 
-  // ─── 初期化 ──────────────────────────────────────────
-  useEffect(() => {
-    const init = async () => {
-      const ids = await fetchMatches();
-      // 空配列のときはサブスク不要
-      if (ids && ids.length > 0) {
-        setupSubscription(ids);
-      }
-    };
-    init();
-
-    return () => {
-      cleanupChannel();
-    };
-  }, []);
-
-  // ─── カウントダウンタイマー ──────────────────────────
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      if (!isMountedRef.current) return;
-
-      const updates: { id: string; black: number; white: number }[] = [];
-
-      Object.values(matchCardsDataRef.current).forEach((card) => {
-        if (card.status !== "playing") return;
-        let black = card.blackRemainSeconds;
-        let white = card.whiteRemainSeconds;
-        if (card.turn === "black") {
-          black = Math.max(0, black - 1);
-        } else {
-          white = Math.max(0, white - 1);
-        }
-        matchCardsDataRef.current[card.id] = {
-          ...card,
-          blackRemainSeconds: black,
-          whiteRemainSeconds: white,
-        };
-        updates.push({ id: card.id, black, white });
-      });
-
-      if (updates.length > 0) {
-        setMatchCardsData((prev) =>
-          prev.map((card) => {
-            const u = updates.find((u) => u.id === card.id);
-            return u
-              ? {
-                  ...card,
-                  blackRemainSeconds: u.black,
-                  whiteRemainSeconds: u.white,
-                }
-              : card;
-          }),
-        );
-      }
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
   // ─── プルリフレッシュ ────────────────────────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -478,7 +493,8 @@ const { t } = useTranslation();
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <StarBackground />
-
+      {/* 🆕 メンテナンスオーバーレイ（最前面） */}
+      {maintenance && <MaintenanceModal message={maintenanceMessage} />}
       <Animated.View style={[styles.content, { opacity: fadeIn }]}>
         <ScrollView
           style={styles.scrollView}

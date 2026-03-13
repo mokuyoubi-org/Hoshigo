@@ -23,4 +23,7 @@ export const ICONS: Record<number, ImageSourcePropType> = {
   80: require("@/assets/images/iconHand.png"), // 手
   90: require("@/assets/images/iconSleep.png"), // 眠る恐竜くん
   100: require("@/assets/images/icon100.png"), // くまくん
+  101: require("@/assets/images/icon101.png"), // くまくん
+  102: require("@/assets/images/icon102.png"), // くまくん
+  103: require("@/assets/images/icon103.png"), // くまくん
 };

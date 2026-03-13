@@ -50,7 +50,7 @@ export default function LanguagePage() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <StarBackground />
+      {/* <StarBackground /> */}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -66,7 +66,6 @@ export default function LanguagePage() {
               <Text style={styles.backButtonText}>‹ {t("Language.back")}</Text>
             </TouchableOpacity>
             <View style={styles.pageTitleRow}>
-              <View style={styles.pageTitleAccent} />
               <Text style={styles.pageTitle}>{t("Language.title")}</Text>
             </View>
           </View>
@@ -85,10 +84,8 @@ export default function LanguagePage() {
                   activeOpacity={0.7}
                   onPress={() => handleSelect(option.code)}
                 >
-                  {isSelected && <View style={styles.cardAccentLine} />}
                   <View style={styles.menuItemInner}>
                     <Text style={styles.menuItemText}>{option.nativeName}</Text>
-                    <Text style={styles.menuItemArrow}>›</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -111,24 +108,15 @@ const styles = StyleSheet.create({
   },
 
   // ─── ヘッダー ───
-  header: { marginBottom: 24 },
-  backButton: { marginBottom: 16, alignSelf: "flex-start" },
+  header: { height: 84 },
+  backButton: { height: 36, alignSelf: "flex-start" },
   backButtonText: {
     fontSize: 16,
     fontWeight: "700",
     color: STRAWBERRY,
     letterSpacing: 0.3,
   },
-  pageTitleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  pageTitleAccent: {
-    width: 3,
-    height: 28,
-    borderRadius: 2,
-    backgroundColor: STRAWBERRY,
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-  },
+  pageTitleRow: { flexDirection: "row", alignItems: "center", height: 36 },
   pageTitle: {
     fontSize: 28,
     fontWeight: "800",
@@ -146,14 +134,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "rgba(200,214,230,0.25)",
     overflow: "hidden",
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
   },
   menuItemSelected: {
-    borderColor: `${STRAWBERRY}50`,
-    shadowOpacity: 0.15,
+    backgroundColor: "#f0f0f0",
   },
 
   menuItemBorderBottom: {
@@ -166,19 +149,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
   },
   menuItemLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
     flex: 1,
-  },
-  cardAccentLine: {
-    height: 2.5,
-    backgroundColor: STRAWBERRY,
-    opacity: 0.6,
   },
 
   menuItemText: {

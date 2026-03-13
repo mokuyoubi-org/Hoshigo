@@ -1,4 +1,5 @@
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useEffect, useRef, useState } from "react";
@@ -15,7 +16,6 @@ import {
   UserNameContext,
 } from "../../src/contexts/UserContexts";
 import { supabase } from "../../src/services/supabase";
-import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 // 囲碁のシーケンス(黒スタート)
 const boardSequence = [
@@ -188,27 +188,27 @@ export default function Matching() {
     timers.push(setTimeout(() => tryMatch(), interval * 8)); // 9回目。±850
     timers.push(setTimeout(() => tryMatch(), interval * 9)); // 10回目。±950
 
-    // マッチングをキャンセルし、ボットと接続
-    timers.push(
-      setTimeout(async () => {
-        if (isCancelingRef.current) return;
-        isCancelingRef.current = true;
+    // // マッチングをキャンセルし、ボットと接続
+    // timers.push(
+    //   setTimeout(async () => {
+    //     if (isCancelingRef.current) return;
+    //     isCancelingRef.current = true;
 
-        try {
-          await fallbackCancel(); // エラーがあれば throw される
-          console.log("✅ キャンセル完了、PlayWithBotへ遷移");
-          router.replace({ pathname: "/PlayWithBot" });
-        } catch (error) {
-          console.error("キャンセル失敗:", error);
-          // エラー時は Home に戻る
-          router.replace({ pathname: "/Home" });
-        } finally {
-          stopMatchingLoop();
+    //     try {
+    //       await fallbackCancel(); // エラーがあれば throw される
+    //       console.log("✅ キャンセル完了、PlayWithBotへ遷移");
+    //       router.replace({ pathname: "/PlayWithBot" });
+    //     } catch (error) {
+    //       console.error("キャンセル失敗:", error);
+    //       // エラー時は Home に戻る
+    //       router.replace({ pathname: "/Home" });
+    //     } finally {
+    //       stopMatchingLoop();
 
-          isCancelingRef.current = false;
-        }
-      }, interval * 10),
-    );
+    //       isCancelingRef.current = false;
+    //     }
+    //   }, interval * 10),
+    // );
 
     // タイマーをrefに保存
     matchingTimersRef.current = timers;
@@ -422,10 +422,9 @@ export default function Matching() {
       </View>
 
       {/* ← ここがLoadingオーバーレイ */}
-      {loading && <LoadingModal text={t("Matching.loading")} />}
-
-      {/* ← ここがLoadingオーバーレイ */}
-      {isCancelingRef.current && <LoadingModal text={t("Matching.loading")} />}
+      {(isCancelingRef.current || loading) && (
+        <LoadingModal text={t("Matching.loading")} />
+      )}
     </SafeAreaView>
   );
 }

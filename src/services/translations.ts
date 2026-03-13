@@ -36,14 +36,14 @@ export const translations = {
       loginRequired: "この操作にはログインが必要です",
       loggingOut: "ログアウト中...",
     },
-Language: {
-  back: "戻る",
-  title: "言語設定",
-  ja: "日本語",
-  en: "English",
-  zh: "中文",
-  ko: "한국어",
-},
+    Language: {
+      back: "戻る",
+      title: "言語設定",
+      ja: "日本語",
+      en: "English",
+      zh: "中文",
+      ko: "한국어",
+    },
     MyPage: {
       title: "マイページ",
       guest: "ゲスト",
@@ -60,18 +60,18 @@ Language: {
       kiirogumi: "きいろぐみ",
       midorigumi: "みどりぐみ",
       aogumi: "あおぐみ",
-      soragumi1: "そらぐみ☆",
-      soragumi2: "そらぐみ☆☆",
-      soragumi3: "そらぐみ☆☆☆",
-      nijigumi1: "にじぐみ☆",
-      nijigumi2: "にじぐみ☆☆",
-      nijigumi3: "にじぐみ☆☆☆",
-      tsukigumi1: "つきぐみ☆",
-      tsukigumi2: "つきぐみ☆☆",
-      tsukigumi3: "つきぐみ☆☆☆",
-      hoshigumi1: "ほしぐみ☆",
-      hoshigumi2: "ほしぐみ☆☆",
-      hoshigumi3: "ほしぐみ☆☆☆",
+      soragumi1: "そらぐみ★",
+      soragumi2: "そらぐみ★★",
+      soragumi3: "そらぐみ★★★",
+      nijigumi1: "にじぐみ★",
+      nijigumi2: "にじぐみ★★",
+      nijigumi3: "にじぐみ★★★",
+      tsukigumi1: "つきぐみ★",
+      tsukigumi2: "つきぐみ★★",
+      tsukigumi3: "つきぐみ★★★",
+      hoshigumi1: "ほしぐみ★",
+      hoshigumi2: "ほしぐみ★★",
+      hoshigumi3: "ほしぐみ★★★",
     },
     Tabs: {
       home: "対局",
@@ -241,10 +241,6 @@ Language: {
     GoogleSignInButton: {
       signIn: "Googleでログイン",
     },
-    GoBoard: {
-      blackPass: "黒パス",
-      whitePass: "白パス",
-    },
     MyRecords: {
       back: "戻る",
       title: "棋譜",
@@ -338,6 +334,8 @@ Language: {
       LoadError: "商品情報を読み込めませんでした",
       Close: "閉じる",
       ErrorRetry: "時間をおいて再度お試しください。",
+      Records: "棋譜",
+      RecordsLimit: "10局まで",
     },
     MaintenanceModal: {
       title: "メンテナンス中",
@@ -379,6 +377,19 @@ Language: {
       message: "このページの問題文は現在日本語のみで表示されています。",
       ok: "OK",
     },
+        GoTerms: {
+      captures: "アゲハマ",
+      matchType0: "互先",
+      matchType1: "定先",
+      matchType2: "二子局",
+      matchType3: "三子局",
+      matchType4: "四子局",
+      matchType5: "五子局",
+      matchType6: "六子局",
+      matchType7: "七子局",
+      matchType8: "八子局",
+      matchType9: "九子局",
+    }
   },
   en: {
     Home: {
@@ -415,14 +426,14 @@ Language: {
       loginRequired: "Please log in to continue",
       loggingOut: "Logging out...",
     },
-Language: {
-  back: "Back",
-  title: "Language",
-  ja: "日本語",
-  en: "English",
-  zh: "中文",
-  ko: "한국어",
-},
+    Language: {
+      back: "Back",
+      title: "Language",
+      ja: "日本語",
+      en: "English",
+      zh: "中文",
+      ko: "한국어",
+    },
     MyPage: {
       title: "PROFILE",
       guest: "Guest",
@@ -433,24 +444,24 @@ Language: {
       settingIcon: "Updating icon...",
     },
     Gumi: {
-      shirogumi: "White Class",
-      momogumi: "Pink Class",
-      orangegumi: "Orange Class",
-      kiirogumi: "Yellow Class",
-      midorigumi: "Green Class",
-      aogumi: "Blue Class",
-      soragumi1: "Sky Class ☆",
-      soragumi2: "Sky Class ☆☆",
-      soragumi3: "Sky Class ☆☆☆",
-      nijigumi1: "Rainbow Class ☆",
-      nijigumi2: "Rainbow Class ☆☆",
-      nijigumi3: "Rainbow Class ☆☆☆",
-      tsukigumi1: "Moon Class ☆",
-      tsukigumi2: "Moon Class ☆☆",
-      tsukigumi3: "Moon Class ☆☆☆",
-      hoshigumi1: "Star Class ☆",
-      hoshigumi2: "Star Class ☆☆",
-      hoshigumi3: "Star Class ☆☆☆",
+      shirogumi: "White",
+      momogumi: "Pink",
+      orangegumi: "Orange",
+      kiirogumi: "Yellow",
+      midorigumi: "Green",
+      aogumi: "Blue",
+      soragumi1: "Sky★",
+      soragumi2: "Sky★★",
+      soragumi3: "Sky★★★",
+      nijigumi1: "Rainbow★",
+      nijigumi2: "Rainbow★★",
+      nijigumi3: "Rainbow★★★",
+      tsukigumi1: "Moon★",
+      tsukigumi2: "Moon★★",
+      tsukigumi3: "Moon★★★",
+      hoshigumi1: "Star★",
+      hoshigumi2: "Star★★",
+      hoshigumi3: "Star★★★",
     },
     Tabs: {
       home: "PLAY",
@@ -620,10 +631,6 @@ Language: {
     GoogleSignInButton: {
       signIn: "Sign in with Google",
     },
-    GoBoard: {
-      blackPass: "Black Pass",
-      whitePass: "White Pass",
-    },
     MyRecords: {
       back: "Back",
       title: "RECORDS",
@@ -720,6 +727,8 @@ Language: {
       LoadError: "Failed to load products",
       Close: "Close",
       ErrorRetry: "Please try again later.",
+      Records: "Records",
+      RecordsLimit: "10 records",
     },
     MaintenanceModal: {
       title: "Maintenance",
@@ -747,8 +756,8 @@ Language: {
       correct: "Correct!",
       incorrect: "Close! That's not correct",
       back: "Back",
-      previous: "Previous Problem",
-      next: "Next Problem",
+      previous: "Previous",
+      next: "Next",
       reset: "Reset",
     },
     TsumegoGroup: {
@@ -763,6 +772,19 @@ Language: {
         "The problem text on this page is currently available only in Japanese.",
       ok: "OK",
     },
+GoTerms: {
+  captures: "Captures",
+  matchType0: "Even Game",
+  matchType1: "No Komi",
+  matchType2: "2-stone Handicap",
+  matchType3: "3-stone Handicap",
+  matchType4: "4-stone Handicap",
+  matchType5: "5-stone Handicap",
+  matchType6: "6-stone Handicap",
+  matchType7: "7-stone Handicap",
+  matchType8: "8-stone Handicap",
+  matchType9: "9-stone Handicap",
+}
   },
   zh: {
     Home: {
@@ -799,14 +821,14 @@ Language: {
       loginRequired: "请登录后继续",
       loggingOut: "退出中...",
     },
-Language: {
-  back: "返回",
-  title: "语言设置",
-  ja: "日本語",
-  en: "English",
-  zh: "中文",
-  ko: "한국어",
-},
+    Language: {
+      back: "返回",
+      title: "语言设置",
+      ja: "日本語",
+      en: "English",
+      zh: "中文",
+      ko: "한국어",
+    },
     MyPage: {
       title: "我的",
       guest: "游客",
@@ -823,18 +845,18 @@ Language: {
       kiirogumi: "黄组",
       midorigumi: "绿组",
       aogumi: "蓝组",
-      soragumi1: "天空组 ☆",
-      soragumi2: "天空组 ☆☆",
-      soragumi3: "天空组 ☆☆☆",
-      nijigumi1: "彩虹组 ☆",
-      nijigumi2: "彩虹组 ☆☆",
-      nijigumi3: "彩虹组 ☆☆☆",
-      tsukigumi1: "月亮组 ☆",
-      tsukigumi2: "月亮组 ☆☆",
-      tsukigumi3: "月亮组 ☆☆☆",
-      hoshigumi1: "星星组 ☆",
-      hoshigumi2: "星星组 ☆☆",
-      hoshigumi3: "星星组 ☆☆☆",
+      soragumi1: "天空组★",
+      soragumi2: "天空组★★",
+      soragumi3: "天空组★★★",
+      nijigumi1: "彩虹组★",
+      nijigumi2: "彩虹组★★",
+      nijigumi3: "彩虹组★★★",
+      tsukigumi1: "月亮组★",
+      tsukigumi2: "月亮组★★",
+      tsukigumi3: "月亮组★★★",
+      hoshigumi1: "星星组★",
+      hoshigumi2: "星星组★★",
+      hoshigumi3: "星星组★★★",
     },
     Tabs: {
       home: "对局",
@@ -999,10 +1021,7 @@ Language: {
     GoogleSignInButton: {
       signIn: "使用Google登录",
     },
-    GoBoard: {
-      blackPass: "黑棋弃权",
-      whitePass: "白棋弃权",
-    },
+
     MyRecords: {
       back: "返回",
       title: "棋谱",
@@ -1094,6 +1113,8 @@ Language: {
       LoadError: "无法加载商品信息",
       Close: "关闭",
       ErrorRetry: "请稍后再试。",
+      Records: "棋谱",
+      RecordsLimit: "10局",
     },
     MaintenanceModal: {
       title: "维护中",
@@ -1134,6 +1155,19 @@ Language: {
       message: "本页面的题目内容目前仅提供日文。",
       ok: "确定",
     },
+GoTerms: {
+  captures: "提子",
+  matchType0: "分先",
+  matchType1: "定先",
+  matchType2: "二子局",
+  matchType3: "三子局",
+  matchType4: "四子局",
+  matchType5: "五子局",
+  matchType6: "六子局",
+  matchType7: "七子局",
+  matchType8: "八子局",
+  matchType9: "九子局",
+}
   },
   ko: {
     Home: {
@@ -1170,14 +1204,14 @@ Language: {
       loginRequired: "계속하려면 로그인하세요",
       loggingOut: "로그아웃 중...",
     },
-Language: {
-  back: "뒤로",
-  title: "언어 설정",
-  ja: "日本語",
-  en: "English",
-  zh: "中文",
-  ko: "한국어",
-},
+    Language: {
+      back: "뒤로",
+      title: "언어 설정",
+      ja: "日本語",
+      en: "English",
+      zh: "中文",
+      ko: "한국어",
+    },
     MyPage: {
       title: "마이페이지",
       guest: "게스트",
@@ -1188,24 +1222,24 @@ Language: {
       settingIcon: "아이콘 설정 중...",
     },
     Gumi: {
-      shirogumi: "백 반",
-      momogumi: "복숭아 반",
-      orangegumi: "주황 반",
-      kiirogumi: "노랑 반",
-      midorigumi: "초록 반",
-      aogumi: "파랑 반",
-      soragumi1: "하늘 반 ☆",
-      soragumi2: "하늘 반 ☆☆",
-      soragumi3: "하늘 반 ☆☆☆",
-      nijigumi1: "무지개 반 ☆",
-      nijigumi2: "무지개 반 ☆☆",
-      nijigumi3: "무지개 반 ☆☆☆",
-      tsukigumi1: "달 반 ☆",
-      tsukigumi2: "달 반 ☆☆",
-      tsukigumi3: "달 반 ☆☆☆",
-      hoshigumi1: "별 반 ☆",
-      hoshigumi2: "별 반 ☆☆",
-      hoshigumi3: "별 반 ☆☆☆",
+      shirogumi: "백반",
+      momogumi: "복숭아반",
+      orangegumi: "주황반",
+      kiirogumi: "노랑반",
+      midorigumi: "초록반",
+      aogumi: "파랑반",
+      soragumi1: "하늘반★",
+      soragumi2: "하늘반★★",
+      soragumi3: "하늘반★★★",
+      nijigumi1: "무지개반★",
+      nijigumi2: "무지개반★★",
+      nijigumi3: "무지개반★★★",
+      tsukigumi1: "달반★",
+      tsukigumi2: "달반★★",
+      tsukigumi3: "달반★★★",
+      hoshigumi1: "별반★",
+      hoshigumi2: "별반★★",
+      hoshigumi3: "별반★★★",
     },
     Tabs: {
       home: "대국",
@@ -1371,10 +1405,6 @@ Language: {
     GoogleSignInButton: {
       signIn: "Google로 로그인",
     },
-    GoBoard: {
-      blackPass: "흑 패스",
-      whitePass: "백 패스",
-    },
     MyRecords: {
       back: "뒤로",
       title: "기보",
@@ -1470,6 +1500,8 @@ Language: {
       LoadError: "상품 정보를 불러올 수 없습니다",
       Close: "닫기",
       ErrorRetry: "잠시 후 다시 시도해 주세요.",
+      Records: "기보",
+      RecordsLimit: "10개",
     },
     MaintenanceModal: {
       title: "점검 중",
@@ -1511,10 +1543,21 @@ Language: {
       message: "이 페이지의 문제 내용은 현재 일본어로만 제공됩니다.",
       ok: "확인",
     },
+GoTerms: {
+  captures: "사석",
+  matchType0: "호선",
+  matchType1: "정선",
+  matchType2: "두 점 접바둑",
+  matchType3: "세 점 접바둑",
+  matchType4: "네 점 접바둑",
+  matchType5: "다섯 점 접바둑",
+  matchType6: "여섯 점 접바둑",
+  matchType7: "일곱 점 접바둑",
+  matchType8: "여덟 점 접바둑",
+  matchType9: "아홉 점 접바둑",
+}
   },
 } as const;
-
-
 
 // @/src/services/translations.ts
 export type Lang = keyof typeof translations;
@@ -1525,8 +1568,16 @@ export type TranslationKey = {
 }[Section];
 
 export function t(sectionAndKey: TranslationKey, lang: Lang): string;
-export function t(sectionAndKey: TranslationKey, lang: Lang, params: Record<string, string | number>): string;
-export function t(sectionAndKey: TranslationKey, lang: Lang, params?: Record<string, string | number>): string {
+export function t(
+  sectionAndKey: TranslationKey,
+  lang: Lang,
+  params: Record<string, string | number>,
+): string;
+export function t(
+  sectionAndKey: TranslationKey,
+  lang: Lang,
+  params?: Record<string, string | number>,
+): string {
   const [section, key] = sectionAndKey.split(".") as [Section, string];
   const value =
     (translations[lang][section] as any)[key] ??

@@ -18,7 +18,6 @@ import { useTheme } from "../../hooks/useTheme";
 import {
   calculateGumiProgress,
   getGumiByIndex,
-  howManyPointsLeft,
 } from "../../lib/gumiUtils";
 import { supabase } from "../../services/supabase";
 import { DailyLimitModal } from "./DailyLimitModal";
@@ -206,7 +205,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
               <Text style={styles.gaugeText}>
                 {t("ResultModal.remaining", {
                   nextGumi: nextGumiName,
-                  points: howManyPointsLeft(pointsAfter, gumiIndex ?? 0),
+                  points: calculateGumiProgress(pointsAfter, gumiIndex ?? 0).pointsNeeded,
                 })}
               </Text>
             )}

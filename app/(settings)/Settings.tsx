@@ -31,11 +31,9 @@ import { logoutRevenueCat } from "@/src/services/RevenueCat";
 import LoadingModal from "../../src/components/modals/LoadingModal";
 import { EmailContext, UidContext } from "../../src/contexts/UserContexts";
 import { useRevenueCat } from "../../src/hooks/useRevenueCat";
-import { useTheme } from "../../src/hooks/useTheme";
 import { supabase } from "../../src/services/supabase";
 
 export default function Settings() {
-  const { colors } = useTheme();
   const lang = useContext(LangContext);
   const { t } = useTranslation();
   // ── ロジック（変更なし） ──
@@ -106,7 +104,7 @@ export default function Settings() {
     <SafeAreaView style={styles.container}>
       <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
-      <StarBackground />
+      {/* <StarBackground /> */}
 
       <ScrollView
         style={styles.scrollView}
@@ -123,7 +121,6 @@ export default function Settings() {
               <Text style={styles.backButtonText}>‹ {t("Settings.back")}</Text>
             </TouchableOpacity>
             <View style={styles.pageTitleRow}>
-              <View style={styles.pageTitleAccent} />
               <Text style={styles.pageTitle}>{t("Settings.title")}</Text>
             </View>
           </View>
@@ -342,15 +339,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  pageTitleAccent: {
-    width: 3,
-    height: 28,
-    borderRadius: 2,
-    backgroundColor: STRAWBERRY,
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-  },
   pageTitle: {
     fontSize: 28,
     fontWeight: "800",
@@ -522,13 +510,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(224,92,92,0.08)",
+    backgroundColor: "#ffffff",
     borderWidth: 1.5,
     borderColor: "rgba(224,92,92,0.3)",
-    shadowColor: DANGER,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
   },
   dangerButtonText: {
     fontSize: 15,

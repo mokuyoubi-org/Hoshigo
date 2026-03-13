@@ -1,18 +1,20 @@
 import { AntDesign } from "@expo/vector-icons";
 import React from "react";
 import { Image, StyleSheet, View } from "react-native";
-import { STRAWBERRY } from "../constants/colors";
-import { ICONS } from "../constants/icons";
-import { useTheme } from "../hooks/useTheme";
-import { GUMI_DATA } from "../lib/gumiUtils";
+import { STRAWBERRY } from "../../constants/colors";
+import { ICONS } from "../../constants/icons";
+import { useTheme } from "../../hooks/useTheme";
+import { Color } from "../../lib/goLogics";
+import { GUMI_DATA } from "../../lib/gumiUtils";
 
 type Props = {
   gumiIndex: number;
   iconIndex: number;
   size: number; // 追加：デフォルト52
+  color?: Color;
 };
 
-const AvatarComponent = ({ gumiIndex, iconIndex, size }: Props) => {
+const AvatarComponent = ({ gumiIndex, iconIndex, size, color }: Props) => {
   const { colors } = useTheme();
 
   const gumiColor =
@@ -26,14 +28,14 @@ const AvatarComponent = ({ gumiIndex, iconIndex, size }: Props) => {
   const radius = (size / 2) * 1.05; // 円の半径
   const center = size / 2; // 中心座標
   const starOuterSize = size * 0.35;
-  const starInnerSize = size * 0.30;
+  const starInnerSize = size * 0.3;
   const starOffset = starOuterSize / 2;
 
   // 9時方向（左）を中心に、上・中・下へ広がる角度
-  const angles = [-40, 0, 40]; // 度数法（9時方向 = 180°を基準）
+  const angles = [40, 0, -40]; // 度数法（9時方向 = 180°を基準）
 
   return (
-    <View style={styles.avatarContainer}>
+    <View>
       <View
         style={[
           styles.avatarBorder,
@@ -54,6 +56,20 @@ const AvatarComponent = ({ gumiIndex, iconIndex, size }: Props) => {
           style={{ width: size - 4, height: size - 4 }}
           resizeMode="contain"
         />
+
+        {color && (
+          <View
+            style={[
+              styles.stone,
+              {
+                backgroundColor:
+                  color === "black" ? colors.blackStone : colors.whiteStone,
+                borderWidth: color === "white" ? 1 : 0,
+                borderColor: colors.borderColor,
+              },
+            ]}
+          />
+        )}
 
         {Array.from({ length: starCount }).map((_, i) => {
           const deg = 180 + angles[i]; // 9時方向を中心に展開
@@ -95,9 +111,6 @@ const AvatarComponent = ({ gumiIndex, iconIndex, size }: Props) => {
 export const Avatar = React.memo(AvatarComponent);
 
 const styles = StyleSheet.create({
-  avatarContainer: {
-    marginRight: 14,
-  },
   avatarBorder: {
     borderWidth: 2.5,
     justifyContent: "center",
@@ -115,5 +128,13 @@ const styles = StyleSheet.create({
   },
   starInner: {
     position: "absolute",
+  },
+  stone: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    position: "absolute",
+    bottom: -2,
+    right: -2,
   },
 });

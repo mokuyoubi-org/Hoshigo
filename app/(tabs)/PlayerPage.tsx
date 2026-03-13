@@ -1,5 +1,5 @@
-import { Avatar } from "@/src/components/Avatar";
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { Avatar } from "@/src/components/goComponents/Avatar";
 import GumiInfoModal from "@/src/components/modals/GumiInfoModal";
 import IconSelectorModal from "@/src/components/modals/IconSelectModal";
 import LoadingModal from "@/src/components/modals/LoadingModal";
@@ -63,7 +63,7 @@ export default function PlayerPage() {
   const gumiColor =
     colors[currentGumi.color as keyof typeof colors] || colors.text;
   const progressInfo = calculateGumiProgress(
-    points || 0,
+    points || 10,
     playersGumiIndex || 0,
   );
 
@@ -97,7 +97,7 @@ export default function PlayerPage() {
     if (!uid) {
       setIsLoginModalVisible(true);
     } else {
-      router.push("/MyRecords");
+      router.push("/PlayerRecords");
     }
   };
 
@@ -166,22 +166,6 @@ export default function PlayerPage() {
                   size={96}
                 />
 
-                {/* <View
-                  style={[
-                    styles.avatar,
-                    {
-                      borderColor: gumiColor,
-                      shadowColor: gumiColor,
-                    },
-                  ]}
-                >
-                  <Image
-                    source={ICONS[iconIndex ?? 0]}
-                    style={styles.avatarImage}
-                    resizeMode="contain"
-                  />
-                </View> */}
-
                 {/* 編集バッジ */}
                 <View style={styles.editBadge}>
                   <MaterialIcons name="edit" size={13} color="#ffffff" />
@@ -197,9 +181,7 @@ export default function PlayerPage() {
 
             {/* ─── くみカード ─── */}
             <View style={styles.gumiCard}>
-              <View
-                style={[styles.cardAccentLine, { backgroundColor: gumiColor }]}
-              />
+              <View />
               <View style={styles.gumiCardInner}>
                 {/* ラベル＋infoボタン */}
                 <View style={styles.gumiLabelRow}>
@@ -238,16 +220,10 @@ export default function PlayerPage() {
                       </Text>
                     </View>
                     <View style={styles.progressBarBg}>
+                      {/* 中身 */}
                       <Animated.View
                         style={[
                           styles.progressBarFill,
-                          { backgroundColor: gumiColor, width: animatedWidth },
-                        ]}
-                      />
-                      {/* グロー */}
-                      <Animated.View
-                        style={[
-                          styles.progressBarGlow,
                           { backgroundColor: gumiColor, width: animatedWidth },
                         ]}
                       />
@@ -289,7 +265,7 @@ export default function PlayerPage() {
             visible={isGumiInfoVisible}
             onClose={() => setIsGumiInfoVisible(false)}
             currentGumiIndex={playersGumiIndex || 0}
-            currentPoints={points || 0}
+            currentPoints={points || 10}
           />
         </ScrollView>
       </Animated.View>
@@ -368,28 +344,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
-  // avatar: {
-  //   width: 100,
-  //   height: 100,
-  //   borderRadius: 50,
-  //   borderWidth: 2.5,
-  //   backgroundColor: "#ffffff",
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   overflow: "hidden",
-  //   shadowOffset: { width: 0, height: 4 },
-  //   shadowOpacity: 0.2,
-  //   shadowRadius: 10,
-  //   elevation: 5,
-  // },
-  // avatarImage: {
-  //   width: 96,
-  //   height: 96,
-  // },
   editBadge: {
     position: "absolute",
-    bottom: 8,
-    right: 8,
+    bottom: 4,
+    right: 4,
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -450,18 +408,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "rgba(200,214,230,0.3)",
     overflow: "hidden",
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
+    // shadowColor: STRAWBERRY,
+    // shadowOffset: { width: 0, height: 6 },
+    // shadowOpacity: 0.12,
+    // shadowRadius: 16,
     elevation: 6,
   },
-  cardAccentLine: {
-    height: 2.5,
-    opacity: 0.6,
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-  },
+  // cardAccentLine: {
+  //   height: 2.5,
+  //   opacity: 0.6,
+  //   shadowOpacity: 0.6,
+  //   shadowRadius: 4,
+  // },
   gumiCardInner: {
     padding: 28,
     alignItems: "center",
@@ -513,15 +471,15 @@ const styles = StyleSheet.create({
   },
   progressBarBg: {
     width: "100%",
-    height: 7,
-    borderRadius: 4,
+    height: 24,
+    borderRadius: 24,
     backgroundColor: "rgba(200,214,230,0.2)",
     overflow: "hidden",
     position: "relative",
   },
   progressBarFill: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: 24,
   },
   progressBarGlow: {
     position: "absolute",

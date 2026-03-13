@@ -95,7 +95,7 @@ export default function GumiInfoModal({
           </View>
 
           {/* 現在のくみ */}
-          <View
+          {/* <View
             style={[styles.currentKumiCard, { backgroundColor: colors.card }]}
           >
             <Text style={[styles.currentKumiLabel, { color: colors.subtext }]}>
@@ -122,7 +122,7 @@ export default function GumiInfoModal({
                 })}
               </Text>
             )}
-          </View>
+          </View> */}
 
           {/* くみ一覧（棒グラフ風） */}
           <ScrollView
@@ -187,20 +187,20 @@ export default function GumiInfoModal({
                           </Text>
                         </View>
                       )}
-                      {isPast && (
+                      {/* {isPast && (
                         <MaterialIcons
                           name="check-circle"
                           size={14}
                           color={colors.subtext}
                         />
-                      )}
-                      {isLocked && (
+                      )} */}
+                      {/* {isLocked && (
                         <MaterialIcons
                           name="lock"
                           size={14}
                           color={colors.inactive}
                         />
-                      )}
+                      )} */}
                     </View>
                     <Text
                       style={[

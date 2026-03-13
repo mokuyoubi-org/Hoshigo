@@ -1,5 +1,5 @@
-import { Avatar } from "@/src/components/Avatar";
 import { StarBackground } from "@/src/components/backGrounds/StarBackGround";
+import { Avatar } from "@/src/components/goComponents/Avatar";
 import LoadingModal from "@/src/components/modals/LoadingModal";
 import {
   BACKGROUND,
@@ -12,7 +12,6 @@ import {
 } from "@/src/constants/colors";
 import { Profile } from "@/src/constants/profile";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
-import { useTheme } from "@/src/hooks/useTheme";
 import { supabase } from "@/src/services/supabase";
 import { AntDesign } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
@@ -66,7 +65,13 @@ const RankingItem = ({ item, index }: { item: Profile; index: number }) => {
           )}
 
           {/* アバター */}
-          <Avatar gumiIndex={item.gumi_index} iconIndex={item.icon_index} size={50}/>
+          <Avatar
+            gumiIndex={item.gumi_index}
+            iconIndex={item.icon_index}
+            size={50}
+          />
+
+          <View style={{ paddingHorizontal: 8 }} />
 
           {/* 名前 */}
           <View style={styles.infoContainer}>
@@ -88,8 +93,6 @@ const RankingItem = ({ item, index }: { item: Profile; index: number }) => {
 
 // ─── メインコンポーネント ──────────────────────────────
 export default function Rankings() {
-  const { colors } = useTheme();
-
   // ── ロジック（変更なし） ──
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,10 +109,8 @@ export default function Rankings() {
   useEffect(() => {
     const fetchTopProfiles = async () => {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("uid, displayname, points, gumi_index, icon_index")
-        .order("points", { ascending: false })
-        .limit(100);
+        .schema("users")
+        .rpc("get_top_profiles", { p_limit: 100 });
 
       if (error) {
         console.error(error);

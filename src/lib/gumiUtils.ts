@@ -1,10 +1,8 @@
 import { useTranslation } from "../contexts/LocaleContexts";
-import {  translations } from "../services/translations";
-
-type GumiKey = `Gumi.${keyof typeof translations.en.Gumi}`;
+import { TranslationKey } from "../services/translations";
 
 export interface GumiInfo {
-  nameKey: GumiKey; // stringからGumiKeyに変更
+  nameKey: TranslationKey; // stringからGumiKeyに変更
   color: string;
   minPoints: number;
 }
@@ -56,18 +54,6 @@ export function getGumiByIndex(index: number): GumiInfo & { name: string } {
   };
 }
 
-export function getGumiByPoints(
-  points: number,
-  currentGumiIndex: number,
-): number {
-  for (let i = GUMI_DATA.length - 1; i > currentGumiIndex; i--) {
-    if (points >= GUMI_DATA[i].minPoints) {
-      return i;
-    }
-  }
-  return currentGumiIndex;
-}
-
 export interface ProgressInfo {
   pointsNeeded: number;
   progressPercent: number;
@@ -88,23 +74,26 @@ export function calculateGumiProgress(
 ): ProgressInfo {
   const { t } = useTranslation();
   const nextGumi = GUMI_DATA[currentGumiIndex + 1];
+  const currentGumi = GUMI_DATA[currentGumiIndex];
 
   // 最上位ランクの場合は常に満タン
   if (!nextGumi) {
-    console.log("nextGumiがない");
+    // console.log("nextGumiがない");
     return {
       pointsNeeded: 0,
       progressPercent: 100,
       nextGumiName: null,
     };
   }
-  console.log("nextGumi: ", nextGumi);
 
   // 次のぐみまでに必要なレート
   const pointsNeeded = nextGumi.minPoints - currentPoints;
 
   let progressPercent: number;
-  progressPercent = (currentPoints / nextGumi.minPoints) * 100;
+  progressPercent =
+    ((currentPoints - currentGumi.minPoints) /
+      (nextGumi.minPoints - currentGumi.minPoints)) *
+    100;
 
   return {
     pointsNeeded: Math.max(0, pointsNeeded),
@@ -112,19 +101,3 @@ export function calculateGumiProgress(
     nextGumiName: t(nextGumi.nameKey), // 翻訳された名前を返す
   };
 }
-
-const thresholds = GUMI_DATA.map(g => g.minPoints);
-
-export const pointsToGumiIndex = (value: number): number =>
-  Math.max(
-    0,
-    thresholds.findLastIndex((t) => value >= t),
-  );
-
-// 自分の今のレートとぐみを渡すと次のぐみまであとなんポイントか返してくれる関数
-export const howManyPointsLeft = (
-  playerPoints: number,
-  playerGumiIndex: number,
-) => {
-  return GUMI_DATA[playerGumiIndex + 1].minPoints - playerPoints;
-};

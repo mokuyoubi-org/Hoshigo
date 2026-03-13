@@ -28,7 +28,7 @@ export  type Match = {
 
 
 export type MatchArchive = {
-  id: string;
+  id: number;
   black_uid: string;
   white_uid: string | null;
   created_at: string;

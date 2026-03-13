@@ -1,23 +1,36 @@
+import { useTheme } from "@/src/hooks/useTheme";
 import Slider from "@react-native-community/slider";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useTheme } from "@/src/hooks/useTheme";
 
 interface ReplayControlsProps {
   currentIndex: number;
   maxIndex: number;
-  onPrevious: () => void;
-  onNext: () => void;
-  onSliderChange?: (value: number) => void;
+  onCurrentIndexChange: any;
 }
 
 export const ReplayControls: React.FC<ReplayControlsProps> = ({
   currentIndex,
   maxIndex,
-  onPrevious,
-  onNext,
-  onSliderChange,
+  onCurrentIndexChange: onReplayIndexChange,
 }) => {
+  // 一つ前に戻るボタンを押した時の処理
+  const onPrevious = () => {
+    if (currentIndex > 0) {
+      onReplayIndexChange(currentIndex - 1);
+    }
+  };
+  // 一つ次に進むボタンを押した時の処理
+  const onNext = () => {
+    if (currentIndex < maxIndex - 1) {
+      onReplayIndexChange(currentIndex + 1);
+    }
+  };
+  // スライダーを動かした時の処理
+  const onSliderChange = (value: number) => {
+    onReplayIndexChange(Math.round(value));
+  };
+
   const { colors } = useTheme();
 
   return (
@@ -88,11 +101,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    // justifyContent: "space-between",
     gap: 16,
-    paddingHorizontal: 24,
-    paddingTop: 0,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderRadius: 16,
     borderWidth: 1,
     width: "100%",

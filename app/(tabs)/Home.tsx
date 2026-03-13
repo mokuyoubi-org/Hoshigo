@@ -46,7 +46,7 @@ export default function Home() {
 
   const fadeIn = useRef(new Animated.Value(0)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
-const { t } = useTranslation();
+  const { t } = useTranslation();
   useEffect(() => {
     Animated.timing(fadeIn, {
       toValue: 1,

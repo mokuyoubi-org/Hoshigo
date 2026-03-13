@@ -1,13 +1,17 @@
+import {
+  BACKGROUND,
+  CHOCOLATE,
+  INACTIVE,
+  STRAWBERRY,
+  STRAWBERRY_DIM,
+} from "@/src/constants/colors";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { FontAwesome5, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { Tabs } from "expo-router";
-import React, { useEffect, useRef } from "react";
-import { Animated, Platform, StyleSheet, View } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
-import { CHOCOLATE, INACTIVE, BACKGROUND, STRAWBERRY_DIM, STRAWBERRY } from "@/src/constants/colors";
-import { useTranslation } from "@/src/contexts/LocaleContexts";
-
-
+import { Tabs } from "expo-router";
+import React, { useEffect } from "react";
+import { Platform, StyleSheet, View } from "react-native";
 
 // カスタムタブアイコン（ふわふわアニメーション付き）
 const TabIcon = ({
@@ -19,42 +23,6 @@ const TabIcon = ({
   color: string;
   focused: boolean;
 }) => {
-  const floating = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(focused ? 1 : 0.9)).current;
-
-  useEffect(() => {
-    if (focused) {
-      // ふわふわアニメーション
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(floating, {
-            toValue: -2,
-            duration: 2000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(floating, {
-            toValue: 0,
-            duration: 2000,
-            useNativeDriver: true,
-          }),
-        ]),
-      ).start();
-
-      // スケールアニメーション
-      Animated.spring(scale, {
-        toValue: 1,
-        friction: 5,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.spring(scale, {
-        toValue: 0.9,
-        friction: 5,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [focused]);
-
   return (
     <View style={styles.iconWrapper}>
       {focused && (
@@ -63,25 +31,15 @@ const TabIcon = ({
           <View style={styles.iconDot} />
         </>
       )}
-      <Animated.View
-        style={[
-          focused ? styles.iconActive : styles.iconInactive,
-          {
-            transform: [
-              { translateY: focused ? floating : 0 },
-              { scale },
-            ],
-          },
-        ]}
-      >
+      <View style={[focused ? styles.iconActive : styles.iconInactive]}>
         {icon}
-      </Animated.View>
+      </View>
     </View>
   );
 };
 
 export default function TabsLayout() {
-const { t } = useTranslation();
+  const { t } = useTranslation();
   useEffect(() => {
     async function setupNavBar() {
       if (Platform.OS === "android") {
@@ -164,7 +122,6 @@ const { t } = useTranslation();
         }}
       />
 
-      
       <Tabs.Screen
         name="TsumegoList"
         options={{
@@ -173,13 +130,12 @@ const { t } = useTranslation();
             <TabIcon
               focused={focused}
               color={color}
-              icon={<FontAwesome5 name="school" size={24} color={color}  />}
+              icon={<FontAwesome5 name="school" size={24} color={color} />}
             />
           ),
         }}
       />
 
-      
       <Tabs.Screen
         name="PlayerPage"
         options={{

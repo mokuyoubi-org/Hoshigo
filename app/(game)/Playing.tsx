@@ -4,7 +4,8 @@ import { PlayerCard } from "@/src/components/goComponents/PlayerCard";
 import LoadingModal from "@/src/components/modals/LoadingModal";
 import { ResultModal } from "@/src/components/modals/ResultModal";
 import { Agehama } from "@/src/constants/goConstants";
-import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
+// import { pointsToGumiIndex } from "@/src/lib/gumiUtils";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { moveNumbersToStrings, moveStringsToNumbers } from "@/src/lib/utils";
 import { useAudioPlayer } from "expo-audio";
 import { router, useLocalSearchParams } from "expo-router";
@@ -48,7 +49,6 @@ import {
   sleep,
 } from "../../src/lib/goUtils";
 import { supabase } from "../../src/services/supabase";
-import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 const BOARD_PIXEL_SIZE = 300;
 const CELL_SIZE = BOARD_PIXEL_SIZE / (9 - 1);
@@ -159,58 +159,58 @@ export default function Playing() {
     boardRef.current = boardHistoryRef.current[newIndex];
   };
 
-  // ── ポイント更新 ──────────────────────────────────
-  // この中でsetShowResultは行う
-  const updateMyPoints = (result: string) => {
-    if (
-      pointsGlobal === null ||
-      setPoints === null ||
-      setGumiIndex === null ||
-      gumiIndex === null
-    )
-      return;
+  // // ── ポイント更新 ──────────────────────────────────
+  // // この中でsetShowResultは行う
+  // const updateMyPoints = (result: string) => {
+  //   if (
+  //     pointsGlobal === null ||
+  //     setPoints === null ||
+  //     setGumiIndex === null ||
+  //     gumiIndex === null
+  //   )
+  //     return;
 
-    let newPoints = pointsGlobal;
-    pointsBeforeRef.current = pointsGlobal;
-    gumiIndexBeforeRef.current = gumiIndex;
+  //   let newPoints = pointsGlobal;
+  //   pointsBeforeRef.current = pointsGlobal;
+  //   gumiIndexBeforeRef.current = gumiIndex;
 
-    const isBlackWin = result.startsWith("B+");
-    const isWhiteWin = result.startsWith("W+");
-    const isMeBlack = playerColor === "black";
-    const isMeWhite = playerColor === "white";
-    const isWin = (isBlackWin && isMeBlack) || (isWhiteWin && isMeWhite);
-    const diff = pointsGlobal - opponentsPoints;
+  //   const isBlackWin = result.startsWith("B+");
+  //   const isWhiteWin = result.startsWith("W+");
+  //   const isMeBlack = playerColor === "black";
+  //   const isMeWhite = playerColor === "white";
+  //   const isWin = (isBlackWin && isMeBlack) || (isWhiteWin && isMeWhite);
+  //   const diff = pointsGlobal - opponentsPoints;
 
-    let delta: number;
-    if (isWin) {
-      delta = Math.max(1, Math.min(19, 10 - Math.trunc((diff + 50) / 100)));
-    } else {
-      delta = Math.max(1, Math.min(19, 10 + Math.trunc((diff - 50) / 100)));
-    }
+  //   let delta: number;
+  //   if (isWin) {
+  //     delta = Math.max(1, Math.min(19, 10 - Math.trunc((diff + 50) / 100)));
+  //   } else {
+  //     delta = Math.max(1, Math.min(19, 10 + Math.trunc((diff - 50) / 100)));
+  //   }
 
-    if (isWin) {
-      newPoints += delta;
-    } else {
-      if (opponentsGames >= 20) {
-        newPoints -= delta;
-      }
-    }
+  //   if (isWin) {
+  //     newPoints += delta;
+  //   } else {
+  //     if (opponentsGames >= 20) {
+  //       newPoints -= delta;
+  //     }
+  //   }
 
-    newPoints = Math.max(0, newPoints);
-    setPoints(newPoints);
-    pointsAfterRef.current = newPoints;
+  //   newPoints = Math.max(0, newPoints);
+  //   setPoints(newPoints);
+  //   pointsAfterRef.current = newPoints;
 
-    let tempGumiIndex = pointsToGumiIndex(newPoints);
-    if (tempGumiIndex > gumiIndex) {
-      gumiIndexAfterRef.current = tempGumiIndex;
-      setGumiIndex(tempGumiIndex);
-    } else {
-      gumiIndexAfterRef.current = gumiIndex;
-      setGumiIndex(gumiIndex);
-    }
+  //   let tempGumiIndex = pointsToGumiIndex(newPoints);
+  //   if (tempGumiIndex > gumiIndex) {
+  //     gumiIndexAfterRef.current = tempGumiIndex;
+  //     setGumiIndex(tempGumiIndex);
+  //   } else {
+  //     gumiIndexAfterRef.current = gumiIndex;
+  //     setGumiIndex(gumiIndex);
+  //   }
 
-    setShowResult(true);
-  };
+  //   setShowResult(true);
+  // };
 
   // ── Supabase: matches テーブル更新（リトライ付き） ─────
   const updateSupabaseMatchesTable = async (
@@ -313,7 +313,7 @@ export default function Playing() {
 
             if (suffix === "R" || suffix === "T" || suffix === "C") {
               setResultComment(
-                resultToLanguagesComment(result, playerColor) ??
+                resultToLanguagesComment(result, playerColor, t) ??
                   t("Playing.matchComplete"),
               );
             } else {
@@ -331,7 +331,7 @@ export default function Playing() {
               teritoryBoardRef.current = territoryBoard;
 
               setResultComment(
-                resultToLanguagesComment(result, playerColor) ??
+                resultToLanguagesComment(result, playerColor, t) ??
                   t("Playing.matchComplete"),
               );
             }
@@ -354,7 +354,7 @@ export default function Playing() {
               }
             })();
 
-            updateMyPoints(result);
+            // updateMyPoints(result);
             return;
           }
 
@@ -494,7 +494,7 @@ export default function Playing() {
             // リトライ上限を超えたら接続切れ負けとして処理
             const result = playerColor === "black" ? "W+C" : "B+C";
             setResultComment(
-              resultToLanguagesComment(result, playerColor) ??
+              resultToLanguagesComment(result, playerColor, t) ??
                 t("Playing.matchComplete"),
             );
             setShowResult(true);
@@ -515,12 +515,12 @@ export default function Playing() {
       const result = `${opponentsLetter}+T`;
       await updateSupabaseMatchesTable({ result, status: "ended" });
       setResultComment(
-        resultToLanguagesComment(result, playerColor) ??
+        resultToLanguagesComment(result, playerColor, t) ??
           t("Playing.matchComplete"),
       );
       // setShowResult(true);
       endGame();
-      updateMyPoints(result);
+      // updateMyPoints(result);
     };
 
     timerRef.current = setInterval(() => {
@@ -559,7 +559,7 @@ export default function Playing() {
         console.log("相手の接続切れを検出:", result);
         updateSupabaseMatchesTable({ result, status: "ended" });
         setResultComment(
-          resultToLanguagesComment(result, playerColor) ??
+          resultToLanguagesComment(result, playerColor, t) ??
             t("Playing.matchComplete"),
         );
         setLoadingConnection(true);
@@ -724,11 +724,11 @@ export default function Playing() {
           if (!success) console.error("フォールバック結果の送信失敗");
           setLoading(false);
           setResultComment(
-            resultToLanguagesComment(result, playerColor) ??
+            resultToLanguagesComment(result, playerColor, t) ??
               t("Playing.matchComplete"),
           );
           // setShowResult(true);
-          updateMyPoints(result);
+          // updateMyPoints(result);
         } else {
           console.log("死に石:", stringDeadStones);
           const { territoryBoard, result } = makeTerritoryBoard(
@@ -750,11 +750,11 @@ export default function Playing() {
           if (!success) console.error("地計算結果の送信失敗");
           setLoading(false);
           setResultComment(
-            resultToLanguagesComment(result, playerColor) ??
+            resultToLanguagesComment(result, playerColor, t) ??
               t("Playing.matchComplete"),
           );
           // setShowResult(true);
-          updateMyPoints(result);
+          // updateMyPoints(result);
         }
       }
     } finally {
@@ -785,12 +785,12 @@ export default function Playing() {
       }
 
       setResultComment(
-        resultToLanguagesComment(result, playerColor) ??
+        resultToLanguagesComment(result, playerColor, t) ??
           t("Playing.matchComplete"),
       );
       // setShowResult(true);
       endGame();
-      updateMyPoints(result);
+      // updateMyPoints(result);
     } finally {
       if (!isGameEndedRef.current) {
       }

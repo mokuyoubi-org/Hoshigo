@@ -1,4 +1,5 @@
 import { Agehama } from "../constants/goConstants";
+import { TranslationKey } from "../services/translations";
 import {
   applyMove,
   Board,
@@ -127,7 +128,7 @@ export const sleep = (ms: number) =>
 export const resultToLanguagesComment = (
   result: string,
   playerColor: string,
-    t: (key: string, params?: any) => string
+    t: (key: TranslationKey, params?: any) => string
 
 ) => {
   if (
@@ -345,7 +346,7 @@ export const makeTerritoryBoard = (
 
 export const resultToLanguages = (result: string
 ,
-  t: (key: string, params?: any) => string
+  t: (key: TranslationKey, params?: any) => string
 
 ) => {
   if (result === "B+R") {

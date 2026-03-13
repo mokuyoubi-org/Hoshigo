@@ -4,68 +4,12 @@ import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { useTheme } from "@/src/hooks/useTheme";
 import { Board, GoString, Grid } from "@/src/lib/goLogics";
 import React, { useEffect, useRef } from "react";
-import {
-  Animated,
-  Easing,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { ReplayControls } from "./ReplayControls";
-
-// ─── AgehamaDisplay ────────────────────
-const AgehamaDisplay: React.FC<{ count: number; isBlack: boolean }> = ({
-  count,
-  isBlack,
-}) => {
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-
-  if (count === 0) return <View style={styles.agehamaContainer} />;
-
-  // 捕獲された石の色（捕った方の色 = 相手の石）
-  const stoneStyle = isBlack
-    ? {
-        backgroundColor: colors.whiteStone,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.3)",
-      }
-    : {
-        backgroundColor: colors.blackStone,
-        borderWidth: 1,
-        borderColor: "rgba(0,0,0,0.4)",
-      };
-
-  if (count >= 5) {
-    return (
-      <View style={styles.agehamaContainer}>
-        <View style={[styles.agehamaStone, stoneStyle]} />
-        <Text
-          style={[
-            styles.agehamaText,
-            { color: isBlack ? "#f0ebe3" : "#f0ebe3" },
-          ]}
-        >
-          ×{count}
-        </Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.agehamaContainer}>
-      {Array.from({ length: count }).map((_, i) => (
-        <View key={`stone-${i}`} style={[styles.agehamaStone, stoneStyle]} />
-      ))}
-    </View>
-  );
-};
+import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
 
 interface GoBoardProps {
-  matchType: number; //⭕️
+  matchType: number;
   // 盤面関連
-  board: Board; //⭕️
+  board: Board;
   onPutStone: (grid: Grid, boardSize: number) => void; //⭕️
   moveHistory?: string[]; //⭕️
   territoryBoard?: number[][]; //⭕️
@@ -79,7 +23,7 @@ interface GoBoardProps {
   // リプレイ関連
   boardHistory: Board[]; // 盤面の履歴
   currentIndex: number; //⭕️
-  onCurrentIndexChange: (newIndex: number) => void;
+  // onCurrentIndexChange: (newIndex: number) => void;
 
   // オプション
   boardBackgroundColor?: string;
@@ -102,11 +46,8 @@ export const GoBoard: React.FC<GoBoardProps> = ({
   disabled = false,
   isGameEnded,
   boardHistory,
-  currentIndex: currentIndex,
-  onCurrentIndexChange: onReplayIndexChange,
-
+  currentIndex,
   stoneShadow,
-  agehamaHistory,
   boardWidth,
   topBar = true,
   pinPoints,
@@ -195,79 +136,16 @@ export const GoBoard: React.FC<GoBoardProps> = ({
     ).start();
   }, []);
 
-  // 表示する盤面を決定
-  const displayBoard = isGameEnded ? boardHistory[currentIndex] : board;
+  // // 表示する盤面を決定
+  // const displayBoard = isGameEnded ? boardHistory[currentIndex] : board;
 
   // 陣地を表示するかどうか（リプレイの最後のみ）
   const showTerritory = isGameEnded && currentIndex === boardHistory.length - 1;
-
-  // 一つ前に戻るボタンを押した時の処理
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      onReplayIndexChange(currentIndex - 1);
-    }
-  };
-  // 一つ次に進むボタンを押した時の処理
-  const handleNext = () => {
-    if (currentIndex < boardHistory.length - 1) {
-      onReplayIndexChange(currentIndex + 1);
-    }
-  };
-  // スライダーを動かした時の処理
-  const handleSliderChange = (value: number) => {
-    onReplayIndexChange(Math.round(value));
-  };
 
   return (
     <View style={styles.container}>
       {/* 碁盤 */}
       <View style={styles.container}>
-        {/* ── トップバー（アゲハマ・パス表示） ── */}
-        {topBar && (
-          <View style={styles.topInfoContainer}>
-            {/* 黒のアゲハマ */}
-            <View style={styles.agehamaSection}>
-              <AgehamaDisplay
-                count={agehamaHistory[currentIndex].black}
-                isBlack={true}
-              />
-            </View>
-
-            {/* パス表示 */}
-            <View style={styles.passIndicatorContainer}>
-              {isBlackPass && (
-                <View style={styles.passBadgeBlack}>
-                  <View style={styles.passBadgeDot} />
-                  <Text style={styles.passBadgeTextBlack}>
-                    {t("GoBoard.blackPass")}
-                  </Text>
-                </View>
-              )}
-              {isWhitePass && (
-                <View style={styles.passBadgeWhite}>
-                  <View
-                    style={[
-                      styles.passBadgeDot,
-                      { backgroundColor: "#1a1a1a" },
-                    ]}
-                  />
-                  <Text style={styles.passBadgeTextWhite}>
-                    {t("GoBoard.whitePass")}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* 白のアゲハマ */}
-            <View style={[styles.agehamaSection, styles.agehamaSectionRight]}>
-              <AgehamaDisplay
-                count={agehamaHistory[currentIndex].white}
-                isBlack={false}
-              />
-            </View>
-          </View>
-        )}
-
         {/* 碁盤のうち、本体部分 */}
         <View
           style={[
@@ -413,17 +291,6 @@ export const GoBoard: React.FC<GoBoardProps> = ({
           </View>
         </View>
       </View>
-
-      {/* リプレイコントロール（終局後のみ表示） */}
-      {isGameEnded && (
-        <ReplayControls
-          currentIndex={currentIndex}
-          maxIndex={boardHistory.length - 1}
-          onPrevious={handlePrevious}
-          onNext={handleNext}
-          onSliderChange={handleSliderChange}
-        />
-      )}
     </View>
   );
 };
@@ -431,7 +298,6 @@ export const GoBoard: React.FC<GoBoardProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    gap: 16,
     width: "100%",
   },
   iconImage: {
@@ -442,90 +308,8 @@ const styles = StyleSheet.create({
     left: -10,
     zIndex: 10, // ← 石より上にする
   }, // ── トップバー ──
-  topInfoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 4,
-    marginBottom: 10,
-  },
-  agehamaSection: {
-    flex: 1,
-  },
-  agehamaSectionRight: {
-    alignItems: "flex-end",
-  },
-  agehamaContainer: {
-    height: 36,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  agehamaStone: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  agehamaText: {
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-
-  // パスバッジ
-  passIndicatorContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  passBadgeBlack: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "rgba(20,20,20,0.9)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  passBadgeWhite: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "rgba(240,235,227,0.9)",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.1)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  passBadgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#f0ebe3",
-  },
-  passBadgeTextBlack: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#f0ebe3",
-    letterSpacing: 0.5,
-  },
-  passBadgeTextWhite: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    letterSpacing: 0.5,
-  },
-
   // ── 碁盤 ──
   boardContainer: {
-    // padding: 28,
     borderRadius: 16,
     borderWidth: 1,
     shadowColor: "#000",

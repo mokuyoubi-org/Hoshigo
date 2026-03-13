@@ -31,7 +31,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 export default function TsumegoPage() {
   const { height } = useWindowDimensions();
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams();
   console.log("params:", params); // まず確認！
@@ -365,9 +365,7 @@ const { t } = useTranslation();
             style={styles.backButton}
             onPress={() => router.push("/(tabs)/TsumegoList")}
           >
-            <Text style={styles.backButtonText}>
-              ‹ {t("Tsumego.back")}
-            </Text>{" "}
+            <Text style={styles.backButtonText}>‹ {t("Tsumego.back")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -411,7 +409,7 @@ const { t } = useTranslation();
               >
                 <Text style={styles.navButtonText}>
                   ← {t("Tsumego.previous")}
-                </Text>{" "}
+                </Text>
               </TouchableOpacity>
             )}
 
@@ -420,9 +418,7 @@ const { t } = useTranslation();
               style={[styles.navButton, styles.buttonReset]}
               onPress={handleReset}
             >
-              <Text style={styles.navButtonText}>
-                {t("Tsumego.reset")}
-              </Text>{" "}
+              <Text style={styles.navButtonText}>{t("Tsumego.reset")}</Text>
             </TouchableOpacity>
 
             {/* 次へボタン（正解時のみ） */}
@@ -436,7 +432,7 @@ const { t } = useTranslation();
                 >
                   <Text style={styles.navButtonText}>
                     {t("Tsumego.next")} →
-                  </Text>{" "}
+                  </Text>
                 </TouchableOpacity>
               )}
 

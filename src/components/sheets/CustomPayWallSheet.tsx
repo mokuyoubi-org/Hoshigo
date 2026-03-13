@@ -10,7 +10,7 @@ import {
   GOLD,
   STRAWBERRY,
 } from "@/src/constants/colors";
-import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { useRevenueCat } from "@/src/hooks/useRevenueCat";
 import { useTheme } from "@/src/hooks/useTheme";
 import {
@@ -19,7 +19,7 @@ import {
   restorePurchases,
 } from "@/src/services/RevenueCat";
 import { TranslationKey } from "@/src/services/translations";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -29,6 +29,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import type { PurchasesOffering } from "react-native-purchases";
@@ -61,6 +62,12 @@ const FEATURE_ROWS: FeatureRow[] = [
     proKey: "Paywall.Unlimited",
     highlight: true,
   },
+  {
+    labelKey: "Paywall.Records",
+    starterKey: "Paywall.RecordsLimit",
+    proKey: "Paywall.Unlimited",
+    highlight: true,
+  },
 ];
 
 const INITIAL_INFO_MODAL: InfoModalState = {
@@ -74,14 +81,15 @@ export default function CustomPaywallScreen({
   const { colors } = useTheme();
   const { refreshStatus } = useRevenueCat();
   const { t } = useTranslation();
-  const lang = useContext(LangContext);
+  const { width } = useWindowDimensions();
+  // const lang = useContext(LangContext);
 
   // ── ロジック（変更なし） ──
   const [offerings, setOfferings] = useState<PurchasesOffering | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [purchasing, setPurchasing] = useState<boolean>(false);
   const [selectedTier, setSelectedTier] = useState<SelectedTier>("starter");
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [infoModal, setInfoModal] =
     useState<InfoModalState>(INITIAL_INFO_MODAL);
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -265,6 +273,7 @@ export default function CustomPaywallScreen({
               {/* Starter列 */}
               <TouchableOpacity
                 style={[
+                  { width: width / 3 },
                   styles.planHeaderCol,
                   !isProSelected && styles.planHeaderColActive,
                 ]}
@@ -293,6 +302,7 @@ export default function CustomPaywallScreen({
               {/* Pro列 */}
               <TouchableOpacity
                 style={[
+                  { width: width / 3 },
                   styles.planHeaderCol,
                   isProSelected && styles.planHeaderColActive,
                 ]}
@@ -333,6 +343,7 @@ export default function CustomPaywallScreen({
                 </View>
                 <View
                   style={[
+                    { width: width / 3 },
                     styles.planDataCol,
                     !isProSelected && styles.planDataColActive,
                   ]}
@@ -341,6 +352,7 @@ export default function CustomPaywallScreen({
                 </View>
                 <View
                   style={[
+                    { width: width / 3 },
                     styles.planDataCol,
                     isProSelected && styles.planDataColActive,
                   ]}
@@ -365,7 +377,7 @@ export default function CustomPaywallScreen({
                 return (
                   <TouchableOpacity
                     key={tier}
-                    style={styles.radioCol}
+                    style={[{ width: width / 3 }, styles.radioCol]}
                     onPress={() => setSelectedTier(tier)}
                     disabled={purchasing}
                     activeOpacity={0.7}
@@ -398,7 +410,7 @@ export default function CustomPaywallScreen({
               <View style={styles.purchaseAreaInner}>
                 {/* 年/月トグル */}
                 <View style={styles.toggleTrack}>
-                  {(["yearly", "monthly"] as BillingCycle[]).map((cycle) => {
+                  {(["monthly", "yearly"] as BillingCycle[]).map((cycle) => {
                     const active = billingCycle === cycle;
                     return (
                       <TouchableOpacity
@@ -644,7 +656,7 @@ const styles = StyleSheet.create({
     color: CHOCOLATE,
   },
   planHeaderCol: {
-    width: 120,
+    // width: 120,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 16,
@@ -688,7 +700,7 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   planDataCol: {
-    width: 120,
+    // width: 120,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 14,
@@ -712,6 +724,8 @@ const styles = StyleSheet.create({
 
   // ラジオ
   radioRow: {
+    justifyContent: "space-between",
+    width: "100%",
     flexDirection: "row",
     borderTopWidth: 1.5,
     borderTopColor: "rgba(200,214,230,0.2)",
@@ -719,7 +733,7 @@ const styles = StyleSheet.create({
   },
   radioSpacer: { flex: 1 },
   radioCol: {
-    width: 120,
+    // width: 120,
     alignItems: "center",
     justifyContent: "center",
   },

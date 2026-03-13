@@ -13,6 +13,16 @@ import { Linking } from "react-native";
 import type { CustomerInfo } from "react-native-purchases";
 
 import {
+  MaintenanceContext,
+  MaintenanceMessageContext,
+  ThemeContext,
+} from "@/src/contexts/AppContexts";
+import {
+  defaultLang,
+  LangContext,
+  SetLangContext,
+} from "@/src/contexts/LocaleContexts";
+import {
   DisplayNameContext,
   EmailContext,
   GamesContext,
@@ -38,26 +48,16 @@ import {
   UserNameContext,
 } from "@/src/contexts/UserContexts";
 import {
-  MaintenanceContext,
-  MaintenanceMessageContext,
-  ThemeContext,
-} from "@/src/contexts/AppContexts";
-import {
-  defaultLang,
-  LangContext,
-  SetLangContext
-} from "@/src/contexts/LocaleContexts";
-import {
   AntDesign,
   FontAwesome5,
   FontAwesome6,
   MaterialIcons,
   Octicons,
 } from "@expo/vector-icons";
-import * as Font from "expo-font";
-import { Lang, translations } from "../services/translations";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import * as Font from "expo-font";
+// import { pointsToGumiIndex } from "../lib/gumiUtils";
+import { Lang, translations } from "../services/translations";
 
 // ------------------------------------------------------------------ //
 // AppProviders
@@ -73,7 +73,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   console.log("fontsLoaded:", fontsLoaded, "fontError:", fontError);
   const [rcInitialized, setRcInitialized] = useState<boolean>(false);
-
   const [email, setEmail] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -90,36 +89,34 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [tutorialCompletedIndex, setTutorialCompletedIndex] =
     useState<number>(0);
 
-  // 🆕 RevenueCat用のstate
+  //  RevenueCat用のstate
   const [revenueCatCustomerInfo, setRevenueCatCustomerInfo] =
     useState<CustomerInfo | null>(null);
   const [revenueCatLoading, setRevenueCatLoading] = useState<boolean>(true);
 
-  // 🆕 メンテナンス状態
+  //  メンテナンス状態
   const [maintenance, setMaintenance] = useState<boolean>(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState<string | null>(
     null,
   );
 
-const [lang, setLang] = useState<Lang>(defaultLang);
+  const [lang, setLang] = useState<Lang>(defaultLang);
 
-useEffect(() => {
-  AsyncStorage.getItem("userLang").then((saved) => {
-    if (saved && saved in translations) setLang(saved as Lang);
-  });
-}, []);
+  useEffect(() => {
+    AsyncStorage.getItem("userLang").then((saved) => {
+      if (saved && saved in translations) setLang(saved as Lang);
+    });
+  }, []);
 
-const saveLang = async (newLang: Lang) => {
-  await AsyncStorage.setItem("userLang", newLang);
-  setLang(newLang);
-};
   const router = useRouter();
 
-  // 🆕 app_statusをSubscribe
+  // app_statusの確認
   useEffect(() => {
+    console.log("🚀 useEffect fired");
     // 初回取得
     const fetchAppStatus = async () => {
       const { data, error } = await supabase
+        .schema("system")
         .from("app_status")
         .select("maintenance, message")
         .single();
@@ -131,27 +128,45 @@ const saveLang = async (newLang: Lang) => {
       setMaintenanceMessage(data.message);
     };
     fetchAppStatus();
-
-    // リアルタイムSubscribe
-    const channel = supabase
-      .channel("app_status")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "app_status" },
-        (payload) => {
-          console.log("🔔 app_status changed:", payload.new);
-          setMaintenance(payload.new.maintenance);
-          setMaintenanceMessage(payload.new.message);
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
-  // 🆕 RevenueCatを初期化
+  useEffect(() => {
+    const initChannel = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      await supabase.realtime.setAuth(session?.access_token ?? null);
+      await supabase.realtime.connect();
+
+      const channel = supabase
+        .channel("app_status", { config: { private: true } })
+        .on("broadcast", { event: "UPDATE" }, ({ payload }) => {
+          setMaintenance(payload.record.maintenance);
+          setMaintenanceMessage(payload.record.message);
+        })
+        .subscribe((status, err) => {
+          console.log("📡 status:", status);
+          if (err) console.error("❌ err:", err);
+        });
+
+      return () => supabase.removeChannel(channel);
+    };
+
+    initChannel();
+  }, []);
+
+  // アプリ起動時（App.tsxやAppProviders.tsx）
+  useEffect(() => {
+    supabase
+      .schema("users")
+      .rpc("update_lastseen")
+      .then(({ error }) => {
+        if (error) console.error("❌ update_lastseen:", error);
+        else console.log("✅ update_lastseen ok");
+      });
+  }, []);
+
+  // RevenueCatを初期化
   useEffect(() => {
     const initRevenueCat = async () => {
       try {
@@ -173,26 +188,13 @@ const saveLang = async (newLang: Lang) => {
     initRevenueCat();
   }, []);
 
-  // 🆕 サブスク状態を再チェックする関数
+  // サブスク状態を再チェックする関数
   const refreshRevenueCat = async () => {
     setRevenueCatLoading(true);
     const { isPro, customerInfo } = await checkSubscriptionStatus();
     setRevenueCatCustomerInfo(customerInfo);
     setIsPremium(isPro);
     setRevenueCatLoading(false);
-
-    if (uid) {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_premium: isPro })
-        .eq("uid", uid);
-
-      if (error) {
-        console.error("❌ Failed to update is_premium in Supabase:", error);
-      } else {
-        console.log("✅ Supabase is_premium updated:", isPro);
-      }
-    }
   };
 
   // 1. ⭐️ログインチェック
@@ -352,9 +354,10 @@ const saveLang = async (newLang: Lang) => {
 
     const fetchProfile = async () => {
       const { data, error } = await supabase
+        .schema("users")
         .from("profiles")
         .select(
-          "uid, username, displayname, points , icon_index, daily_play_count, is_premium, gumi_index, games, tutorial_completed_index",
+          "uid, username, displayname, points, gumi_index, icon_index, daily_play_count, is_premium, games, tutorial_progress",
         )
         .eq("uid", uid)
         .single();
@@ -381,10 +384,9 @@ const saveLang = async (newLang: Lang) => {
         setDisplayName(data.displayname);
         setPoints(data.points);
         setIconIndex(data.icon_index);
-        setIsPremium(data.is_premium);
         setGumiIndex(data.gumi_index);
         setGames(data.games);
-        setTutorialCompletedIndex(data.tutorial_completed_index);
+        setTutorialCompletedIndex(data.tutorial_progress);
 
         await refreshRevenueCat();
 
@@ -415,53 +417,41 @@ const saveLang = async (newLang: Lang) => {
 
   if (!fontsLoaded) return null;
 
+  const providers: Array<[React.Context<any>, any]> = [
+    [UidContext, uid],
+    [EmailContext, email],
+    [UserNameContext, userName],
+    [SetUserNameContext, setUserName],
+    [DisplayNameContext, displayName],
+    [SetDisplayNameContext, setDisplayName],
+    [PointsContext, points],
+    [SetPointsContext, setPoints],
+    [JwtContext, jwt],
+    [RtContext, rt],
+    [ThemeContext, { theme, setTheme }],
+    [IconIndexContext, iconIndex],
+    [SetIconIndexContext, setIconIndex],
+    [IsPremiumContext, isPremium],
+    [SetIsPremiumContext, setIsPremium],
+    [RevenueCatCustomerInfoContext, revenueCatCustomerInfo],
+    [SetRevenueCatCustomerInfoContext, setRevenueCatCustomerInfo],
+    [RefreshRevenueCatContext, refreshRevenueCat],
+    [GumiIndexContext, gumiIndex],
+    [SetGumiIndexContext, setGumiIndex],
+    [GamesContext, games],
+    [SetGamesContext, setGames],
+    [TutorialCompletedIndexContext, tutorialCompletedIndex],
+    [SetTutorialCompletedIndexContext, setTutorialCompletedIndex],
+    [MaintenanceContext, maintenance],
+    [MaintenanceMessageContext, maintenanceMessage],
+    [LangContext, lang],
+    [SetLangContext, setLang],
+  ];
 
-
-
-
-
-
-
-
-
-
-  // AppProviders.tsx
-
-const providers: Array<[React.Context<any>, any]> = [
-  [UidContext, uid],
-  [EmailContext, email],
-  [UserNameContext, userName],
-  [SetUserNameContext, setUserName],
-  [DisplayNameContext, displayName],
-  [SetDisplayNameContext, setDisplayName],
-  [PointsContext, points],
-  [SetPointsContext, setPoints],
-  [JwtContext, jwt],
-  [RtContext, rt],
-  [ThemeContext, {theme,setTheme}],
-  [IconIndexContext, iconIndex],
-  [SetIconIndexContext, setIconIndex],
-  [IsPremiumContext, isPremium],
-  [SetIsPremiumContext, setIsPremium],
-  [RevenueCatCustomerInfoContext, revenueCatCustomerInfo],
-  [SetRevenueCatCustomerInfoContext, setRevenueCatCustomerInfo],
-  [RefreshRevenueCatContext, refreshRevenueCat],
-  [GumiIndexContext, gumiIndex],
-  [SetGumiIndexContext, setGumiIndex],
-  [GamesContext, games],
-  [SetGamesContext, setGames],
-  [TutorialCompletedIndexContext, tutorialCompletedIndex],
-  [SetTutorialCompletedIndexContext, setTutorialCompletedIndex],
-  [MaintenanceContext, maintenance],
-  [MaintenanceMessageContext, maintenanceMessage],
-  [LangContext, lang],                       // 新規追加
-  [SetLangContext, setLang],                 // 新規追加
-];
-
-return providers.reduceRight(
-  (children, [Context, value]) => (
-    <Context.Provider value={value}>{children}</Context.Provider>
-  ),
-  <>{children}</>
-);
+  return providers.reduceRight(
+    (children, [Context, value]) => (
+      <Context.Provider value={value}>{children}</Context.Provider>
+    ),
+    <>{children}</>,
+  );
 }
