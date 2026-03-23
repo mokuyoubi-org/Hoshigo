@@ -1,0 +1,354 @@
+import { Agehama } from "@/src/constants/goConstants";
+import { useTheme } from "@/src/hooks/useTheme";
+import { Board, GoString, Grid } from "@/src/lib/goLogics";
+import React, { useEffect, useRef } from "react";
+import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
+
+type Props ={
+  matchType: number;
+  // 盤面関連
+  board: Board;
+  onPutStone: (grid: Grid, boardSize: number) => void;
+  moveHistory?: string[];
+  territoryBoard?: number[][];
+  disabled?: boolean;
+  boardWidth: number;
+  intersections?: number;
+
+  // ゲーム状態
+  isGameEnded: boolean;
+
+  // リプレイ関連
+  boardHistory: Board[];
+  currentIndex: number;
+
+  // オプション
+  boardBackgroundColor?: string;
+  lineColor?: string;
+  stoneShadow?: boolean;
+  agehamaHistory: Agehama[];
+  pinPoints?: string[];
+}
+
+export function GoBoard  ({
+  matchType,
+  intersections: boardSize = 9,
+  board,
+  onPutStone,
+  moveHistory = [],
+  territoryBoard,
+  disabled = false,
+  isGameEnded,
+  boardHistory,
+  currentIndex,
+  stoneShadow,
+  boardWidth,
+  pinPoints,
+}:Props)  {
+  const { colors } = useTheme();
+  const cellSize = boardWidth / (boardSize - 1);
+  const stoneSize = cellSize * 0.9;
+  const lineWidth = Math.max(1, boardWidth / 200);
+  const paddingSize = boardWidth * 0.12;
+  const radiusSize = boardWidth * 0.06;
+
+  const currentMoveCoords =
+    moveHistory.length > 0 && moveHistory[currentIndex - 1] !== "p"
+      ? {
+          row: Number(moveHistory[currentIndex - 1]?.[0]),
+          col: Number(moveHistory[currentIndex - 1]?.[2]),
+        }
+      : null;
+
+  const getStoneStyle = (
+    goString: GoString,
+    row: number,
+    col: number,
+    territoryValue?: number,
+  ) => {
+    if (!goString) return null;
+    const isCurrentMove =
+      currentMoveCoords?.row === row && currentMoveCoords?.col === col;
+    const isDead = territoryValue === 3;
+    const { color } = goString;
+
+    if (isDead && showTerritory) {
+      return color === "black"
+        ? { backgroundColor: colors.blackStone, opacity: 0.48 }
+        : { backgroundColor: colors.whiteStone, opacity: 0.48 };
+    }
+    if (isCurrentMove) {
+      return color === "black"
+        ? {
+            backgroundColor: colors.blackStoneCurrent,
+            borderWidth: stoneSize * 0.2,
+            borderColor: colors.blackStone,
+          }
+        : {
+            backgroundColor: colors.whiteStoneCurrent,
+            borderWidth: stoneSize * 0.2,
+            borderColor: colors.whiteStone,
+          };
+    }
+    return color === "black"
+      ? { backgroundColor: colors.blackStone }
+      : { backgroundColor: colors.whiteStone };
+  };
+
+  const lastMove = moveHistory[currentIndex - 1];
+  const isPass = lastMove === "p";
+  const isBlackPass =
+    isPass &&
+    ((currentIndex % 2 === 1 && (matchType === 0 || matchType === 1)) ||
+      (currentIndex % 2 === 0 && matchType !== 0 && matchType !== 1));
+  const isWhitePass =
+    isPass &&
+    ((currentIndex % 2 === 0 && (matchType === 0 || matchType === 1)) ||
+      (currentIndex % 2 === 1 && matchType !== 0 && matchType !== 1));
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  // これは手の話だ。
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1, // 大きくなる
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // 元に戻る
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  // // 表示する盤面を決定
+  // const displayBoard = isGameEnded ? boardHistory[currentIndex] : board;
+
+  // 陣地を表示するかどうか（リプレイの最後のみ）
+  const showTerritory = isGameEnded && currentIndex === boardHistory.length - 1;
+
+  return (
+    <View style={styles.container}>
+      {/* 碁盤 */}
+      <View style={styles.container}>
+        {/* 碁盤のうち、本体部分 */}
+        <View
+          style={[
+            styles.boardContainer,
+            {
+              backgroundColor: colors.gridBackground,
+              borderColor: "rgba(201,168,76,0.2)",
+              padding: paddingSize,
+              borderRadius: radiusSize,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.boardWrapper,
+              { width: boardWidth, height: boardWidth },
+            ]}
+          >
+            {/* 盤線 */}
+            {Array.from({ length: boardSize }).map((_, i) => (
+              <React.Fragment key={`line-${i}`}>
+                <View
+                  style={[
+                    styles.verticalLine,
+                    {
+                      left: i * cellSize,
+                      backgroundColor: colors.gridLine,
+                      height: boardWidth,
+                      width: lineWidth,
+                    },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.horizontalLine,
+                    {
+                      top: i * cellSize,
+                      backgroundColor: colors.gridLine,
+                      width: boardWidth,
+                      height: lineWidth,
+                    },
+                  ]}
+                />
+              </React.Fragment>
+            ))}
+
+            {/* 碁石・着手可能エリア */}
+            {Object.entries(board).map(([key, goString]) => {
+              const [row, col] = key.split(",").map(Number);
+              const territoryValue = territoryBoard?.[row - 1]?.[col - 1];
+
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() =>
+                    !disabled && onPutStone({ row, col }, boardSize)
+                  }
+                  style={[
+                    styles.intersection,
+                    {
+                      left: (col - 1) * cellSize - cellSize / 2 + 1,
+                      top: (row - 1) * cellSize - cellSize / 2 + 1,
+                      width: cellSize,
+                      height: cellSize,
+                    },
+                  ]}
+                  disabled={disabled}
+                >
+                  {/* 石 */}
+                  {goString && (
+                    <View
+                      style={{ justifyContent: "center", alignItems: "center" }}
+                    >
+                      <View
+                        style={[
+                          styles.stone,
+                          getStoneStyle(goString, row, col, territoryValue), // ここで石自体の透明度を決めている
+                          !stoneShadow && styles.noShadow,
+                          {
+                            width: stoneSize,
+                            height: stoneSize,
+                            borderRadius: stoneSize / 2,
+                          },
+                        ]}
+                      />
+                      {/* 半透明の死に石の上にも小さな四角を置く */}
+                      {territoryValue === 3 && showTerritory && (
+                        <View
+                          style={[
+                            styles.emptyGrid,
+                            {
+                              width: stoneSize / 2, // 小さい四角
+                              height: stoneSize / 2, // 小さい四角
+                              borderRadius: Math.max(2, stoneSize / 8), // ちょっとした丸み
+                              backgroundColor:
+                                goString.color === "black"
+                                  ? colors.whiteStone
+                                  : colors.blackStone,
+                            },
+                            styles.territoryOnStone,
+                          ]}
+                        />
+                      )}
+                    </View>
+                  )}
+                  {/* 空点 */}
+                  {!goString && showTerritory && territoryBoard && (
+                    <View
+                      style={[
+                        styles.emptyGrid,
+                        {
+                          width: stoneSize / 2,
+                          height: stoneSize / 2,
+                          borderRadius: Math.max(2, stoneSize / 8),
+                          backgroundColor:
+                            territoryValue === 1
+                              ? colors.blackStone
+                              : territoryValue === 2
+                                ? colors.whiteStone
+                                : "transparent",
+                        },
+                        territoryValue === 0 && styles.transparent,
+                      ]}
+                    />
+                  )}
+                  {/* ピンポイント */}
+                  {pinPoints !== undefined && pinPoints.includes(key) && (
+                    <Animated.Image
+                      source={require("@/assets/images/hand.png")}
+                      style={[
+                        styles.iconImage,
+                        {
+                          transform: [{ scale: scaleAnim }],
+                          zIndex: 10,
+                        },
+                      ]}
+                      resizeMode="contain"
+                    />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    width: "100%",
+  },
+  iconImage: {
+    position: "absolute",
+    width: 80,
+    height: 80,
+    top: -40,
+    left: -10,
+    zIndex: 10, // ← 石より上にする
+  }, // ── トップバー ──
+  // ── 碁盤 ──
+  boardContainer: {
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+    position: "relative",
+  },
+
+  boardWrapper: {
+    position: "relative",
+  },
+  verticalLine: {
+    position: "absolute",
+  },
+  horizontalLine: {
+    position: "absolute",
+  },
+  starPoint: {
+    position: "absolute",
+  },
+  intersection: {
+    position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stone: {
+    borderWidth: 0,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    elevation: 3,
+    opacity: 1,
+  },
+  noShadow: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  emptyGrid: {
+    opacity: 0.32,
+    shadowOpacity: 0,
+    elevation: 1,
+  },
+  transparent: {
+    opacity: 0,
+  },
+  territoryOnStone: {
+    position: "absolute",
+  },
+});
