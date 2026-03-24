@@ -43,4 +43,4 @@ jobs:
       - name: EAS Build (ストア提出)
         if: steps.pkg.outputs.changed == 'true'
         working-directory: expo
-        run: eas build --platform all --profile production --auto-submit
+        run: eas build --platform android --profile production --auto-submit
