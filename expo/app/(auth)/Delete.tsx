@@ -1,3 +1,4 @@
+// Delete.tsx
 import { DeleteAccountModal } from "@/src/components/Modals/DeleteConfirmModal";
 import LoadingModal from "@/src/components/Modals/LoadingModal";
 import {
