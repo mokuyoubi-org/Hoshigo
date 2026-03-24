@@ -82,6 +82,9 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
+    "updates": {
+      "url": "https://u.expo.dev/0c034fcf-9b3f-4ae4-be56-052d71e47d52"
+    },
     "extra": {
       "router": {},
       "eas": {
@@ -89,7 +92,7 @@
       }
     },
     "assetBundlePatterns": ["assets/images/*"],
-        "runtimeVersion": {
+    "runtimeVersion": {
       "policy": "appVersion"
     }
   }
