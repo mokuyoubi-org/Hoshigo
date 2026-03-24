@@ -18,6 +18,13 @@
       "channel": "production"
     }
   },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
+  },
   "cli": {
     "appVersionSource": "remote"
   }
