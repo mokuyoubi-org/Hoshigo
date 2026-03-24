@@ -50,15 +50,6 @@ export const useStartMatching = () => {
 
       // 遊べる場合
       router.replace("/Matching");
-
-
-
-
-
-
-
-
-
       
     } catch (err) {
       setLoading(false);

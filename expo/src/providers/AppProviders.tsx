@@ -64,7 +64,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
     null,
   ); // メンテナンスメッセージ
   const [lang, setLang] = useState<Lang>(defaultLang); // 言語
-  console.log("AppProviders lang:", lang);
   const router = useRouter();
 
   // サブスク状態を再チェックする関数
