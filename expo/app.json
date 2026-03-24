@@ -4,7 +4,7 @@
     "slug": "Hoshigo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "@/assets/images/hoshigo-icon.png",
+    "icon": "./assets/images/hoshigo-icon.png",
     "scheme": "hoshigo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,15 +12,15 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mokuyoubi.hoshigo",
       "icon": {
-        "dark": "@/assets/icons/ios-dark.png",
-        "light": "@/assets/icons/ios-light.png",
-        "tinted": "@/assets/icons/ios-tinted.png"
+        "dark": "./assets/icons/ios-dark.png",
+        "light": "./assets/icons/ios-light.png",
+        "tinted": "./assets/icons/ios-tinted.png"
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "@/assets/icons/adaptive-icon.png",
+        "foregroundImage": "./assets/icons/adaptive-icon.png",
         "monochromeImage": "./assets/icons/adaptive-icon.png"
       },
       "edgeToEdgeEnabled": true,
