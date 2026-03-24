@@ -1,0 +1,44 @@
+name: EAS Update / Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "expo/**"
+
+jobs:
+  update-or-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: expo
+        run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_UPDATE_TOKEN }}
+
+      - name: Check if package.json changed
+        id: pkg
+        run: |
+          git diff HEAD~1 HEAD --name-only | grep -q 'expo/package.json' \
+            && echo "changed=true" >> $GITHUB_OUTPUT \
+            || echo "changed=false" >> $GITHUB_OUTPUT
+
+      - name: EAS Update (OTA)
+        if: steps.pkg.outputs.changed == 'false'
+        working-directory: expo
+        run: eas update --branch production --message "${{ github.event.head_commit.message }}"
+
+      - name: EAS Build (ストア提出)
+        if: steps.pkg.outputs.changed == 'true'
+        working-directory: expo
+        run: eas build --platform all --profile production --auto-submit
