@@ -3,9 +3,11 @@ import { AgehamaDisplay } from "@/src/components/GoComponents/Agehama";
 import { Avatar } from "@/src/components/GoComponents/Avatar";
 import { GoBoard } from "@/src/components/GoComponents/GoBoard";
 import { Pass } from "@/src/components/GoComponents/Pass";
+import { ReplayControls } from "@/src/components/GoComponents/ReplayControls";
 import { DailyLimitModal } from "@/src/components/Modals/DailyLimitModal";
 import LoadingModal from "@/src/components/Modals/LoadingModal";
 import { ResultModal } from "@/src/components/Modals/ResultModal";
+import { STRAWBERRY } from "@/src/constants/colors";
 import { Agehama } from "@/src/constants/goConstants";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
 import {
@@ -69,6 +71,10 @@ export default function Playing() {
   const { height, width } = useWindowDimensions();
   const uid = useContext(UidContext);
   const { points, setPoints } = useContext(PointsContext)!;
+  const [pointsBefore, setPointsBefore] = useState(0);
+  const [gumiIndexBefore, setGumiIndexBefore] = useState(0);
+  const [pointsAfter, setPointsAfter] = useState(0);
+  const [gumiIndexAfter, setGumiIndexAfter] = useState(0);
   const { gumiIndex, setGumiIndex } = useContext(GumiIndexContext)!;
   const { iconIndex, setIconIndex } = useContext(IconIndexContext)!;
   const { displayname, setDisplayname } = useContext(DisplaynameContext)!;
@@ -106,7 +112,7 @@ export default function Playing() {
     const colors: Color[] =
       firstTurn === "black" ? ["black", "white"] : ["white", "black"];
 
-    const agehamaHistory: Agehama[] = [{ black: 0, white: 0 }];
+    const agehmHist: Agehama[] = [{ black: 0, white: 0 }];
     const boardHistory: Board[] = [cloneBoard(board)];
     const moves: string[] = [];
     let lastMoveGrid: Grid | null = null;
@@ -114,11 +120,11 @@ export default function Playing() {
     for (let i = 0; i < movesInt.length; i++) {
       const moveInt = movesInt[i];
       const color = colors[i % 2];
-      const last = agehamaHistory[agehamaHistory.length - 1];
+      const last = agehmHist[agehmHist.length - 1];
       if (moveInt === -1) {
         moves.push("p");
         boardHistory.push(cloneBoard(board));
-        agehamaHistory.push({ ...last });
+        agehmHist.push({ ...last });
         lastMoveGrid = { row: 0, col: 0 };
       } else {
         const grid = intToGrid(moveInt);
@@ -131,7 +137,7 @@ export default function Playing() {
         board = newBoard;
         boardHistory.push(cloneBoard(board));
         moves.push(stringifyGrid(grid));
-        agehamaHistory.push(
+        agehmHist.push(
           color === "black"
             ? { ...last, black: last.black + agehama }
             : { ...last, white: last.white + agehama },
@@ -145,7 +151,7 @@ export default function Playing() {
       board,
       boardHistory,
       moves,
-      agehamaHistory,
+      agehamaHistory: agehmHist,
       currentTurn,
       lastMoveGrid,
     };
@@ -153,8 +159,11 @@ export default function Playing() {
 
   const initialState = buildInitialState();
 
-  const [board, setBoard] = useState<Board>(initialState.board);
+  // const [board, setBoard] = useState<Board>(initialState.board);
   const boardRef = useRef<Board>(initialState.board);
+  const [boardHistory, setBoardHistory] = useState<Board[]>(
+    initialState.boardHistory,
+  );
   const boardHistoryRef = useRef<Board[]>(initialState.boardHistory);
   const territoryBoardRef = useRef<number[][]>(
     Array.from({ length: 9 }, () => Array(9).fill(0)),
@@ -164,10 +173,14 @@ export default function Playing() {
   );
   const agehamaHistoryRef = useRef<Agehama[]>(initialState.agehamaHistory);
   const movesRef = useRef<string[]>(initialState.moves);
+
   const [lastMove, setLastMove] = useState<Grid | null>(
     initialState.lastMoveGrid,
   );
   const currentIndexRef = useRef<number>(initialState.moves.length);
+  const [currentIndex, setCurrentIndex] = useState<number>(
+    initialState.moves.length,
+  );
 
   // ─── 時間・手番 State ─────────────────────────────────
   const [isMyTurn, setIsMyTurn] = useState<boolean>(
@@ -183,10 +196,6 @@ export default function Playing() {
   const [showResult, setShowResult] = useState(false);
   const [loading, setLoading] = useState(false);
   //
-  const [pointsBefore, setPointsBefore] = useState(0);
-  const [gumiIndexBefore, setGumiIndexBefore] = useState(0);
-  const [pointsAfter, setPointsAfter] = useState(0);
-  const [gumiIndexAfter, setGumiIndexAfter] = useState(0);
 
   // ─── タイマー ─────────────────────────────────────────
   // 表示用のタイマー
@@ -205,8 +214,8 @@ export default function Playing() {
   //
 
   const [isDailyLimitReached, setIsDailyLimitReached] = useState(false);
-
-  const currentMove = movesRef.current[currentIndexRef.current - 1];
+  const moveHistory = movesRef.current?.slice(0, currentIndex + 1) ?? [];
+  const currentMove = moveHistory[currentIndex - 1];
   const isCurrentMovePass = currentMove === "p";
   const isBlackPass =
     isCurrentMovePass &&
@@ -265,15 +274,17 @@ export default function Playing() {
       const isTurnFlipped = data.turn === myColor;
 
       if (isTurnFlipped) {
+        currentIndexRef.current++;
+        setCurrentIndex(currentIndexRef.current);
         if (move === "p") {
           // パス
           movesRef.current = [...movesRef.current, "p"];
-          currentIndexRef.current++;
           setLastMove({ row: 0, col: 0 });
           boardHistoryRef.current = [
             ...boardHistoryRef.current,
             cloneBoard(boardRef.current),
           ];
+          setBoardHistory(boardHistoryRef.current);
           const last =
             agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
           agehamaHistoryRef.current.push({ ...last });
@@ -287,11 +298,13 @@ export default function Playing() {
             cloneBoard(boardRef.current),
             oppColor,
           );
-          setBoard(newBoard);
+          // setBoard(newBoard);
           boardRef.current = newBoard;
           boardHistoryRef.current = [...boardHistoryRef.current, newBoard];
+          setBoardHistory(boardHistoryRef.current);
+
           movesRef.current = [...movesRef.current, stringifyGrid(grid)];
-          currentIndexRef.current++;
+
           setLastMove(grid);
 
           const lastAgehama =
@@ -470,11 +483,11 @@ export default function Playing() {
       const now = new Date().toISOString();
 
       // Presenceを更新（相手のクライアントに生存を通知）
-      gameChannel.track({
-        uid,
-        color: myColor,
-        online_at: now,
-      });
+      // gameChannel.track({
+      //   uid,
+      //   color: myColor,
+      //   online_at: now,
+      // });
 
       // DBにlast_seenを書き込む
       const { data, error } = await supabase
@@ -520,9 +533,10 @@ export default function Playing() {
         cloneBoard(boardRef.current),
         myColor,
       );
-      setBoard(newBoard);
+      // setBoard(newBoard);
       boardRef.current = newBoard;
       boardHistoryRef.current = [...boardHistoryRef.current, newBoard];
+      setBoardHistory(boardHistoryRef.current);
 
       const lastAgehama =
         agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
@@ -535,6 +549,8 @@ export default function Playing() {
       setLastMove(grid);
       movesRef.current = [...movesRef.current, stringifyGrid(grid)];
       currentIndexRef.current++;
+      setCurrentIndex(currentIndexRef.current);
+
       setIsMyTurn(false);
       turnRef.current = oppColor;
 
@@ -550,11 +566,13 @@ export default function Playing() {
         movesRef.current = movesRef.current.slice(0, -1);
         currentIndexRef.current--;
         boardHistoryRef.current = boardHistoryRef.current.slice(0, -1);
+        setBoardHistory(boardHistoryRef.current);
+
         agehamaHistoryRef.current = agehamaHistoryRef.current.slice(0, -1);
         const prevBoard =
           boardHistoryRef.current[boardHistoryRef.current.length - 1];
         boardRef.current = prevBoard;
-        setBoard(prevBoard);
+        // setBoard(prevBoard);
         setAgehamaHistory([...agehamaHistoryRef.current]);
         setIsMyTurn(true);
         turnRef.current = myColor;
@@ -569,11 +587,15 @@ export default function Playing() {
 
     movesRef.current = [...movesRef.current, "p"];
     currentIndexRef.current++;
+    setCurrentIndex(currentIndexRef.current);
+
     setLastMove({ row: 0, col: 0 });
     boardHistoryRef.current = [
       ...boardHistoryRef.current,
       cloneBoard(boardRef.current),
     ];
+    setBoardHistory(boardHistoryRef.current);
+
     const last =
       agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
     agehamaHistoryRef.current.push({ ...last });
@@ -592,6 +614,8 @@ export default function Playing() {
       movesRef.current = movesRef.current.slice(0, -1);
       currentIndexRef.current--;
       boardHistoryRef.current = boardHistoryRef.current.slice(0, -1);
+      setBoardHistory(boardHistoryRef.current);
+
       agehamaHistoryRef.current = agehamaHistoryRef.current.slice(0, -1);
       setAgehamaHistory([...agehamaHistoryRef.current]);
       setIsMyTurn(true);
@@ -621,7 +645,7 @@ export default function Playing() {
     setShowResult(false);
     const finalIndex = boardHistoryRef.current.length - 1;
     currentIndexRef.current = finalIndex;
-    setBoard(boardHistoryRef.current[finalIndex]);
+    // setBoard(boardHistoryRef.current[finalIndex]);
     boardRef.current = boardHistoryRef.current[finalIndex];
   }, []);
 
@@ -631,6 +655,29 @@ export default function Playing() {
       <StatusBar style="dark" />
 
       <View style={styles.content}>
+        {/* ─── ヘッダー ─── */}
+        <View style={styles.header}>
+          {/* 戻るボタン */}
+          <TouchableOpacity
+            style={[styles.backButton, !isGameEnded && { opacity: 0 }]}
+            onPress={() => router.push("/(tabs)/Home")}
+            activeOpacity={0.7}
+            disabled={!isGameEnded}
+          >
+            <Text style={styles.backButtonText}>‹ {t("common.back")}</Text>
+          </TouchableOpacity>
+
+          {/* 結果ボタン */}
+          <TouchableOpacity
+            style={[styles.backButton, !isGameEnded && { opacity: 0 }]}
+            onPress={() => setShowResult(true)}
+            activeOpacity={0.7}
+            disabled={!isGameEnded}
+          >
+            <Text style={styles.backButtonText}>{t("common.result")}</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* 相手情報 */}
         <View style={styles.playerCell}>
           <View style={styles.passSlot}>
@@ -672,17 +719,17 @@ export default function Playing() {
 
         {/* 碁盤 */}
         <GoBoard
-          matchType={matchType}
-          agehamaHistory={agehamaHistory}
-          board={board}
-          onPutStone={handlePutStone}
+          matchType={matchType} // ok
+          agehamaHistory={agehamaHistory} // 多分ok
+          board={boardHistory[currentIndex] ?? {}}
+          onPutStone={handlePutStone} // 多分ok
           moveHistory={movesRef.current}
-          territoryBoard={territoryBoardRef.current}
-          disabled={!isMyTurn || isGameEnded}
-          isGameEnded={isGameEnded}
-          boardHistory={boardHistoryRef.current}
-          currentIndex={currentIndexRef.current}
-          boardWidth={boardWidth}
+          territoryBoard={territoryBoardRef.current} // 多分ok(そもそも不変)
+          disabled={!isMyTurn || isGameEnded} // ok
+          isGameEnded={isGameEnded} // ok
+          boardHistory={boardHistory} // 多分ok
+          currentIndex={currentIndex} // 多分ok
+          boardWidth={boardWidth} // ok
         />
 
         {/* 自分情報 */}
@@ -724,7 +771,7 @@ export default function Playing() {
           </View>
         </View>
 
-        {!isGameEnded ? (
+        {!isGameEnded && (
           <View style={styles.actionsContainer}>
             {/* パスボタン */}
             <TouchableOpacity
@@ -766,23 +813,21 @@ export default function Playing() {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => router.replace("/(tabs)/Home")}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.actionButtonText}>{t("common.back")}</Text>
-            </TouchableOpacity>
+        )}
 
-            <TouchableOpacity
-              style={styles.resignButton}
-              onPress={() => setShowResult(true)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.resignButtonText}>{t("common.result")}</Text>
-            </TouchableOpacity>
+        {/* ── リプレイコントロール ── */}
+        {isGameEnded && (
+          <View
+            style={[
+              styles.controlsWrapper,
+              // theme.controls
+            ]}
+          >
+            <ReplayControls
+              onCurrentIndexChange={setCurrentIndex}
+              currentIndex={currentIndex}
+              maxIndex={boardHistoryRef.current.length - 1}
+            />
           </View>
         )}
       </View>
@@ -815,6 +860,22 @@ export default function Playing() {
 }
 // ─── スタイル ───────────────────────────────────────────
 const styles = StyleSheet.create({
+  header: {
+    width: "100%",
+    marginBottom: 24,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  backButton: {
+    marginBottom: 16,
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: STRAWBERRY,
+    letterSpacing: 0.3,
+  },
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
@@ -936,5 +997,11 @@ const styles = StyleSheet.create({
 
   playerNameRight: {
     textAlign: "right",
+  },
+  // ── コントロール ──
+  controlsWrapper: {
+    width: "100%",
+    borderTopWidth: 0.5,
+    backgroundColor: "transparent",
   },
 });

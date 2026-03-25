@@ -4,7 +4,7 @@ import { Board, GoString, Grid } from "@/src/lib/goLogics";
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
 
-type Props ={
+type Props = {
   matchType: number;
   // 盤面関連
   board: Board;
@@ -28,9 +28,9 @@ type Props ={
   stoneShadow?: boolean;
   agehamaHistory: Agehama[];
   pinPoints?: string[];
-}
+};
 
-export function GoBoard  ({
+export function GoBoard({
   matchType,
   intersections: boardSize = 9,
   board,
@@ -44,7 +44,7 @@ export function GoBoard  ({
   stoneShadow,
   boardWidth,
   pinPoints,
-}:Props)  {
+}: Props) {
   const { colors } = useTheme();
   const cellSize = boardWidth / (boardSize - 1);
   const stoneSize = cellSize * 0.9;
@@ -284,7 +284,7 @@ export function GoBoard  ({
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -303,10 +303,6 @@ const styles = StyleSheet.create({
   boardContainer: {
     borderRadius: 16,
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
     position: "relative",
   },
 
@@ -329,9 +325,6 @@ const styles = StyleSheet.create({
   },
   stone: {
     borderWidth: 0,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 3,
     opacity: 1,
   },
   noShadow: {
@@ -339,7 +332,6 @@ const styles = StyleSheet.create({
   },
   emptyGrid: {
     opacity: 0.32,
-    shadowOpacity: 0,
   },
   transparent: {
     opacity: 0,

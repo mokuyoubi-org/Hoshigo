@@ -1,7 +1,5 @@
 // ============================================================
 // src/providers/IAPProvider.tsx
-// useIAP をルートレベルで保持するプロバイダー
-// uid を obfuscatedAccountId に埋め込んで Google Play に渡す
 // ============================================================
 
 import React, { ReactNode, useCallback, useContext, useEffect, useState } from 'react';
@@ -14,10 +12,9 @@ import { PLANS } from '@/src/constants/plans';
 
 type BillingCycle = 'monthly' | 'yearly';
 
-const getSkus = (cycle: BillingCycle): string[] =>
-  PLANS
-    .map((p) => (cycle === 'monthly' ? p.androidMonthlyId : p.androidYearlyId))
-    .filter(Boolean);
+// fetchProducts に渡すのは Product ID だけ（basePlanId は不要）
+const getProductIds = (): string[] =>
+  PLANS.map((p) => p.androidProductId).filter(Boolean);
 
 export function IAPProvider({ children }: { children: ReactNode }) {
   if (Platform.OS === 'web') {
@@ -41,7 +38,7 @@ export function IAPProvider({ children }: { children: ReactNode }) {
 }
 
 function IAPProviderNative({ children }: { children: ReactNode }) {
-  const uid = useContext(UidContext); // Supabase の uid
+  const uid = useContext(UidContext);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
@@ -59,7 +56,6 @@ function IAPProviderNative({ children }: { children: ReactNode }) {
       try {
         await finishTransaction({ purchase, isConsumable: false });
         setActivePlanId(purchase.productId);
-        // plan_id の更新は Google Play Webhook（google-play-webhook）が行う
       } catch (e) {
         console.error('[IAP] finishTransaction error:', e);
       } finally {
@@ -75,57 +71,49 @@ function IAPProviderNative({ children }: { children: ReactNode }) {
     },
   });
 
-const fetchCurrentProducts = useCallback(async (cycle: BillingCycle) => {
-  setLoading(true);
-  setError(null);
-  try {
-    console.log('[IAP] fetching skus:', getSkus(cycle));
-    await fetchProducts({ skus: getSkus(cycle), type: 'subs' });
-    console.log('[IAP] subscriptions count:', subscriptions.length);
-    console.log('[IAP] subscriptions detail:', JSON.stringify(subscriptions, null, 2));
-  } catch (e) {
-    console.error('[IAP] fetchProducts error:', e);
-    setError('商品情報の取得に失敗しました');
-  } finally {
-    setLoading(false);
-  }
-}, [fetchProducts]);
-
-
-
-useEffect(() => {
-  console.log('[IAP] subscriptions changed:', subscriptions.length);
-  console.log('[IAP] subscriptions detail:', JSON.stringify(subscriptions, null, 2));
-}, [subscriptions]);
-
-
-
+  const fetchCurrentProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const ids = getProductIds();
+      console.log('[IAP] fetching product ids:', ids);
+      await fetchProducts({ skus: ids, type: 'subs' });
+      console.log('[IAP] subscriptions:', subscriptions);
+    } catch (e) {
+      console.error('[IAP] fetchProducts error:', e);
+      setError('商品情報の取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchProducts]);
 
   useEffect(() => {
     if (connected) {
-      fetchCurrentProducts(billingCycle);
+      fetchCurrentProducts();
     }
   }, [connected]);
 
   const switchCycle = useCallback((cycle: BillingCycle) => {
     setBillingCycle(cycle);
-    if (connected) {
-      fetchCurrentProducts(cycle);
-    }
-  }, [connected, fetchCurrentProducts]);
+  }, []);
 
-  const subscribe = useCallback(async (productId: string) => {
+  const subscribe = useCallback(async (productId: string, basePlanId: string) => {
     try {
       setPurchasing(productId);
       setError(null);
 
+      // productId に一致するサブスク商品を取得
       const subscription = subscriptions.find((s) => s.id === productId);
+
+      // basePlanId に一致する offerToken を選択
       const subscriptionOffers =
         subscription?.platform === 'android'
-          ? ((subscription as ProductSubscriptionAndroid).subscriptionOfferDetailsAndroid ?? []).map(
-              (offer) => ({ sku: productId, offerToken: offer.offerToken }),
-            )
+          ? ((subscription as ProductSubscriptionAndroid).subscriptionOfferDetailsAndroid ?? [])
+              .filter((offer) => offer.basePlanId === basePlanId)
+              .map((offer) => ({ sku: productId, offerToken: offer.offerToken }))
           : [];
+
+      console.log('[IAP] subscriptionOffers:', subscriptionOffers);
 
       await requestPurchase({
         request: {
@@ -136,7 +124,6 @@ useEffect(() => {
           google: {
             skus: [productId],
             subscriptionOffers,
-            // uid を埋め込む → Google Play Webhook で取り出して DB を更新する
             obfuscatedAccountId: uid ?? undefined,
           },
         },
@@ -147,9 +134,21 @@ useEffect(() => {
     }
   }, [requestPurchase, subscriptions, uid]);
 
+  // displayPrice を月払い・年払いそれぞれで priceMap に入れる
+  // キーは "productId:basePlanId" 形式
   const priceMap = Object.fromEntries(
-    subscriptions.map((s) => [s.id, s.displayPrice])
+    subscriptions.flatMap((s) => {
+      if (s.platform !== 'android') return [];
+      const android = s as ProductSubscriptionAndroid;
+      return (android.subscriptionOfferDetailsAndroid ?? []).map((offer) => [
+        `${s.id}:${offer.basePlanId}`,
+        // pricingPhases の最後のフェーズが通常価格
+        offer.pricingPhases.pricingPhaseList.at(-1)?.formattedPrice ?? '',
+      ]);
+    })
   );
+
+  console.log('[IAP] priceMap:', priceMap);
 
   return (
     <IAPContext.Provider value={{
@@ -160,7 +159,14 @@ useEffect(() => {
       error,
       billingCycle,
       switchCycle,
-      subscribe,
+      subscribe: (productId: string) => {
+        // billingCycle に応じて basePlanId を決定
+        const plan = PLANS.find((p) => p.androidProductId === productId);
+        const basePlanId = billingCycle === 'monthly'
+          ? plan?.androidMonthlyBasePlanId ?? ''
+          : plan?.androidYearlyBasePlanId ?? '';
+        return subscribe(productId, basePlanId);
+      },
     }}>
       {children}
     </IAPContext.Provider>

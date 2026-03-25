@@ -84,8 +84,7 @@ export default function GumiInfoModal({
             {
               backgroundColor: colors.background,
               height: height * (84 / 100),
-              maxWidth: width * (88 / 100),
-              width: height * (64 / 100),
+              width: width * (84 / 100),
             },
           ]}
         >

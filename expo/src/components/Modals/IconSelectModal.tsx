@@ -30,7 +30,7 @@ export default function IconSelectorModal({
   currentIconIndex,
 }: Props) {
   const { t } = useTranslation();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const iconSize: number = 96;
   const imageSize: number = iconSize * (5 / 6);
   const { colors } = useTheme();
@@ -57,8 +57,8 @@ export default function IconSelectorModal({
             styles.modalContainer,
             {
               backgroundColor: colors.background,
-              maxHeight: height * (72 / 100),
-              maxWidth: height * (72 / 100),
+              height: height * (48 / 100),
+              width: width * (84 / 100),
             },
           ]}
           onStartShouldSetResponder={() => true}
@@ -134,10 +134,6 @@ const styles = StyleSheet.create({
     margin: 24,
     borderRadius: 20,
     padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
   },
   header: {
     flexDirection: "row",
@@ -153,7 +149,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   scrollView: {
-    flex: 1,
+    // flex: 1,
   },
   iconGrid: {
     flexDirection: "row",

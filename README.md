@@ -7,12 +7,9 @@
 
 ## ✨ 主な機能
 
-- 9路盤オンライン対戦 / 自動マッチング
-- 自動地計算、地の表示
-- ぐみシステム
-- ポイントシステム
-- マイ棋譜
-- 観戦機能
+- オンライン対局
+- 観戦
+- 棋譜見返し
 
 ---
 
@@ -37,24 +34,3 @@
 - 分析機能
 - サブスクプランの拡充
 - 他、機能/UI/UXの充実
-
----
-
-## 🤝 コントリビューション
-
-Issue・Pull Request歓迎です！
-
----
-
-## 📄 ライセンス
-
-MIT License
-
-This project uses icons from Font Awesome Free.
-Icons are licensed under CC BY 4.0.
-
----
-
-## 👤 Author
-
-mokuyoubi

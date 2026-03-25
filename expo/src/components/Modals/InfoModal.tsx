@@ -72,7 +72,7 @@ export function InfoModal({ visible, onClose }: Props) {
 
           {/* Scroll Area */}
           <ScrollView
-            style={styles.modalScroll}
+            // style={styles.modalScroll}
             contentContainerStyle={styles.modalScrollContent}
             showsVerticalScrollIndicator
           >
@@ -116,10 +116,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderWidth: 1.5,
     borderColor: "rgba(200,214,230,0.3)",
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
     overflow: "hidden",
   },
 
@@ -149,10 +145,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "300",
     color: CHOCOLATE_SUB,
-  },
-
-  modalScroll: {
-    maxHeight: 500,
   },
 
   modalScrollContent: {

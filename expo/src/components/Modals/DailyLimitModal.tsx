@@ -1,6 +1,7 @@
 // import CustomPaywallScreen from "@/src/components/Sheets/CustomPayWallSheet";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
-import React, { useState } from "react";
+import { router } from "expo-router";
+import React from "react";
 import {
   Modal,
   StyleSheet,
@@ -33,14 +34,11 @@ export function DailyLimitModal({
   dailyLimit = 10,
   customMessage,
 }: Props) {
-  const [showPaywall, setShowPaywall] = useState(false);
   const { t } = useTranslation();
 
   const handleGoToPaywall = () => {
     onClose();
-    // router.push("/CustomPayWall");
-
-    setShowPaywall(true); // ステートを更新して、Modalを表示させる
+    router.push("/Subscription");
   };
 
   return (
@@ -100,20 +98,8 @@ export function DailyLimitModal({
                 {t("DailyLimitModal.upgrade")}
               </Text>
             </TouchableOpacity>
-
-            {/* 下部のテキストボタンは削除しました */}
           </View>
         </TouchableOpacity>
-      </Modal>
-
-      {/* 🆕 Paywall Modal */}
-      <Modal
-        visible={showPaywall}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowPaywall(false)}
-      >
-        {/* <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} /> */}
       </Modal>
     </View>
   );

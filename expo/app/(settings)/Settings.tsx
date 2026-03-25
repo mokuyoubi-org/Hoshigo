@@ -4,7 +4,6 @@ import { StatusBar } from "expo-status-bar";
 import React, { useContext, useState } from "react";
 import {
   Linking,
-  StatusBar as RNStatusBar,
   ScrollView,
   StyleSheet,
   Text,
@@ -73,12 +72,8 @@ export default function Settings() {
   // ── UI ──
   return (
     <SafeAreaView style={styles.container}>
-      <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
-      {/* <StarBackground /> */}
-
       <ScrollView
-        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
@@ -113,7 +108,9 @@ export default function Settings() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => {router.push("/(subscription)/Subscription")}}
+              onPress={() => {
+                router.push("/(subscription)/Subscription");
+              }}
             >
               <View style={styles.menuItemInner}>
                 <View style={styles.menuItemLeft}>
@@ -216,24 +213,6 @@ export default function Settings() {
           onClose={() => setIsLoginModalVisible(false)}
           message={t("Settings.loginRequired")}
         />
-        {/* <Modal
-          visible={showPaywall}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => setShowPaywall(false)}
-        >
-          <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} />
-        </Modal>
-        <Modal
-          visible={showCustomerCenter}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => setShowCustomerCenter(false)}
-        >
-          <CustomCustomerCenterScreen
-            onDismiss={() => setShowCustomerCenter(false)}
-          />
-        </Modal> */}
 
         <LoadingModal text={t("common.loading")} visible={loading} />
 
@@ -254,23 +233,6 @@ const styles = StyleSheet.create({
     backgroundColor: BACKGROUND,
   },
 
-  // 背景グリッド（優しい色に）
-  bgLineV: {
-    position: "absolute",
-    top: 0,
-    width: 1,
-    height: "100%",
-    backgroundColor: "rgba(200,214,230,0.08)",
-  },
-  bgLineH: {
-    position: "absolute",
-    left: 0,
-    width: "100%",
-    height: 1,
-    backgroundColor: "rgba(200,214,230,0.08)",
-  },
-
-  scrollView: { flex: 1 },
   content: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -282,6 +244,7 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
   },
+
   backButton: {
     marginBottom: 16,
     alignSelf: "flex-start",

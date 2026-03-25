@@ -44,9 +44,9 @@ export const RecordCard = ({
   isPlayerBlack,
 }: Props) => {
   const { width } = useWindowDimensions();
-  const boardSize = Math.min(width * 0.72);
+  const boardWidth = cardHeight * 0.4;
   const playerColor = isPlayerBlack ? "black" : "white";
-  const [currentIndex, setReplayIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const isReady = !isPlaceholder(record) && !!territoryBoard;
   const moveHistory = moves?.slice(0, currentIndex + 1) ?? [];
   const currentMove = moveHistory[currentIndex - 1];
@@ -195,7 +195,7 @@ export const RecordCard = ({
       {/* ── 碁盤 ── */}
       <View style={styles.boardWrapper}>
         <GoBoard
-          boardWidth={boardSize}
+          boardWidth={cardHeight * 0.5}
           matchType={matchType}
           agehamaHistory={agehamaHistory}
           board={boardHistory[currentIndex] ?? {}}
@@ -209,14 +209,13 @@ export const RecordCard = ({
         />
       </View>
 
+
       {/* ── リプレイコントロール ── */}
-      <View style={[styles.controlsWrapper, theme.controls]}>
         <ReplayControls
-          onCurrentIndexChange={setReplayIndex}
+          onCurrentIndexChange={setCurrentIndex}
           currentIndex={currentIndex}
           maxIndex={boardHistory.length - 1}
         />
-      </View>
     </View>
   );
 };
@@ -228,10 +227,6 @@ const themes = {
       backgroundColor: "#F3FAF0",
       borderColor: "rgba(80,160,60,0.25)",
       borderWidth: 0.5,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
     },
     divider: { borderBottomColor: "rgba(80,160,60,0.1)" },
     controls: { borderTopColor: "rgba(80,160,60,0.1)" },
@@ -372,12 +367,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#fafaf8",
-  },
-
-  // ── コントロール ──
-  controlsWrapper: {
-    width: "100%",
-    borderTopWidth: 0.5,
-    backgroundColor: "transparent",
   },
 });

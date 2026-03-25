@@ -15,8 +15,11 @@ import {
   View,
 } from "react-native";
 
+import { STRAWBERRY } from "@/src/constants/colors";
 import { PLANS } from "@/src/constants/plans";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { UidContext } from "@/src/contexts/UserContexts";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type BillingCycle = "monthly" | "yearly";
@@ -37,8 +40,10 @@ type StripePriceInfo = {
   formatted: string;
 };
 
-export default function SubscriptionWebScreen() {
+export default function SubscriptionScreen() {
   const uid = useContext(UidContext);
+  const { t } = useTranslation();
+
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [priceMap, setPriceMap] = useState<Record<string, StripePriceInfo>>({});
   const [pricesLoading, setPricesLoading] = useState(true);
@@ -109,6 +114,17 @@ export default function SubscriptionWebScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
+        {/* ─── ヘッダー ─── */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.push("/Settings")}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backButtonText}>‹ {t("common.back")}</Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.heading}>プランを選択</Text>
         <Text style={styles.sub}>
           すべてのプランは30日間の無料トライアル付き
@@ -266,8 +282,26 @@ const ACCENT = "#111";
 const HIGHLIGHT = "#2563eb";
 
 const styles = StyleSheet.create({
+  header: {
+    width: "100%",
+    flexDirection: "row",
+  },
+  backButton: {
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: STRAWBERRY,
+    letterSpacing: 0.3,
+  },
   safe: { flex: 1, backgroundColor: "#fafafa" },
-  container: { paddingHorizontal: 20, paddingBottom: 60, alignItems: "center" },
+  container: {
+    paddingHorizontal: 20,
+    paddingBottom: 60,
+    paddingTop: 16,
+    alignItems: "center",
+  },
   heading: {
     fontSize: 28,
     fontWeight: "800",
