@@ -1,4 +1,4 @@
-import CustomPaywallScreen from "@/src/components/Sheets/CustomPayWallSheet";
+// import CustomPaywallScreen from "@/src/components/Sheets/CustomPayWallSheet";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
 import React, { useState } from "react";
 import {
@@ -113,7 +113,7 @@ export function DailyLimitModal({
         presentationStyle="pageSheet"
         onRequestClose={() => setShowPaywall(false)}
       >
-        <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} />
+        {/* <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} /> */}
       </Modal>
     </View>
   );
@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5,
     minWidth: 300,
     // position: "relative" は標準で有効ですが、絶対配置の親として機能します
   } as ViewStyle,
@@ -186,7 +185,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-    elevation: 2,
     paddingHorizontal: 10,
     // marginBottom は不要になったので削除（一番下のため）
   } as ViewStyle,

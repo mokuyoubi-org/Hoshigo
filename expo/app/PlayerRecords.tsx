@@ -4,7 +4,14 @@ import { RecordCard } from "@/src/components/Cards/RecordCard";
 import { BACKGROUND, CHOCOLATE, STRAWBERRY } from "@/src/constants/colors";
 import { Agehama, MatchArchive } from "@/src/constants/goConstants";
 import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
-import { intArrayToStringArray } from "@/src/lib/goUtils";
+import { PlanIdContext, UidContext } from "@/src/contexts/UserContexts";
+import { Board } from "@/src/lib/goLogics";
+import {
+  intArrayToStringArray,
+  makeTerritoryBoard,
+  movesToBoardHistory,
+} from "@/src/lib/goUtils";
+import { supabase } from "@/src/services/supabase";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, {
@@ -25,11 +32,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CustomPaywallScreen from "../src/components/Sheets/CustomPayWallSheet";
-import { IsPremiumContext, UidContext } from "../src/contexts/UserContexts";
-import { Board } from "../src/lib/goLogics";
-import { makeTerritoryBoard, movesToBoardHistory } from "../src/lib/goUtils";
-import { supabase } from "../src/services/supabase";
 
 // ─── 定数 ────────────────────────────────────────────────
 const FETCH_COUNT = 10;
@@ -46,14 +48,13 @@ const isPlaceholder = (r: MatchArchive) => (r.id as number) < 0;
 // ─── メイン ──────────────────────────────────────────────
 export default function MyRecords() {
   const uid = useContext(UidContext);
-  const { isPremium, setIsPremium } = useContext(IsPremiumContext)!;
-  console.log("PlayerRecords isPremium: ", isPremium);
+  const { planId, setPlanId } = useContext(PlanIdContext)!;
   const { lang, setLang } = useContext(LangContext)!;
   const { t } = useTranslation();
   const { height } = useWindowDimensions();
 
-  const CARD_HEIGHT = height * 0.72;
-  const SNAP_INTERVAL = CARD_HEIGHT + 18;
+  const CARD_HEIGHT = height * 0.64;
+  const SNAP_INTERVAL = 18;
 
   const [records, setRecords] = useState<MatchArchive[]>(
     makePlaceholders(FETCH_COUNT),
@@ -78,7 +79,7 @@ export default function MyRecords() {
 
   useEffect(() => {
     if (uid) fetchRecords(0);
-  }, [uid, isPremium]);
+  }, [uid, planId]);
 
   const processRecords = useCallback((list: MatchArchive[]) => {
     list.forEach((record, i) =>
@@ -141,8 +142,8 @@ export default function MyRecords() {
         processRecords(fetched);
       }
 
-      setHasMore(!reachedEnd && !!isPremium);
-      if (!isPremium) setShowGhost(true);
+      setHasMore(!reachedEnd && planId !== null && planId >= 1);
+      if (planId !== 0) setShowGhost(true);
     } catch (e) {
       console.error(e);
     } finally {
@@ -264,7 +265,7 @@ export default function MyRecords() {
           presentationStyle="pageSheet"
           onRequestClose={() => setShowPaywall(false)}
         >
-          <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} />
+          {/* <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} /> */}
         </Modal>
       </View>
     </SafeAreaView>
@@ -295,10 +296,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.5)",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
   },
   emptyIconInner: {
     width: 48,

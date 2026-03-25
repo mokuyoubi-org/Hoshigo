@@ -7,7 +7,7 @@ import {
 } from "@react-oauth/google";
 import { SignInWithIdTokenCredentials } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../services/supabase";
+import { supabase } from "@/src/services/supabase";
 import { router } from "expo-router";
 
 export default function GoogleSignInButton() {

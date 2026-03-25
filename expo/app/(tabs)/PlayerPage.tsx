@@ -292,10 +292,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
   },
 
   // スクロール
@@ -330,9 +326,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 2.5,
     borderColor: BACKGROUND,
-    shadowColor: STRAWBERRY,
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
   },
 
   displayName: {
@@ -358,10 +351,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 7,
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
   },
   pointsValue: {
     fontSize: 22,
@@ -377,7 +366,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "rgba(200,214,230,0.3)",
     overflow: "hidden",
-    elevation: 6,
   },
   gumiCardInner: {
     padding: 28,
@@ -447,8 +435,6 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 4,
     opacity: 0.3,
-    shadowOpacity: 1,
-    shadowRadius: 6,
   },
 
   // ─── メニュー ───
@@ -462,11 +448,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
   },
   menuItemLeft: {
     flexDirection: "row",

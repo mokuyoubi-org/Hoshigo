@@ -1,12 +1,9 @@
 import LoginNeededModal from "@/src/components/Modals/LoginNeededModal";
-import CustomCustomerCenterScreen from "@/src/components/Sheets/CustomCustomerCenterSheet";
-import CustomPaywallScreen from "@/src/components/Sheets/CustomPayWallSheet";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useState } from "react";
 import {
   Linking,
-  Modal,
   StatusBar as RNStatusBar,
   ScrollView,
   StyleSheet,
@@ -29,14 +26,13 @@ import {
 import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import {
   EmailContext,
+  PlanIdContext,
   UidContext,
-  UsernameContext,
 } from "@/src/contexts/UserContexts";
-import { useRevenueCat } from "@/src/hooks/useRevenueCat";
-import { logoutRevenueCat } from "@/src/services/RevenueCat";
 import { supabase } from "@/src/services/supabase";
 
 export default function Settings() {
+  const { planId, setPlanId } = useContext(PlanIdContext)!;
   const { lang, setLang } = useContext(LangContext)!;
   const { t } = useTranslation();
   // ── ロジック（変更なし） ──
@@ -44,15 +40,10 @@ export default function Settings() {
   const email = useContext<string | null>(EmailContext);
   const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
   const uid = useContext(UidContext);
-  const { isPremium } = useRevenueCat();
-  const [showPaywall, setShowPaywall] = useState(false);
-  const [showCustomerCenter, setShowCustomerCenter] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const { username, setUsername } = useContext(UsernameContext)!;
 
   const onLogout = async () => {
     setLoading(true);
-    await logoutRevenueCat();
     await supabase.auth.signOut();
     setLoading(false);
   };
@@ -63,22 +54,6 @@ export default function Settings() {
     } else {
       router.push("/Delete");
     }
-  };
-
-  const onPremium = () => {
-    if (!uid || !username) {
-      setIsLoginModalVisible(true);
-    } else {
-      if (isPremium) {
-        setShowCustomerCenter(true);
-      } else {
-        setShowPaywall(true);
-      }
-    }
-  };
-
-  const onDesignChange = () => {
-    router.push("/Design");
   };
 
   const openURL = (url: string) => {
@@ -136,20 +111,19 @@ export default function Settings() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t("common.plan")}</Text>
             <TouchableOpacity
-              style={[styles.menuItem, isPremium && styles.menuItemPro]}
+              style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={onPremium}
+              onPress={() => {router.push("/(subscription)/Subscription")}}
             >
-              {isPremium && <View style={[{ backgroundColor: GOLD }]} />}
               <View style={styles.menuItemInner}>
                 <View style={styles.menuItemLeft}>
                   <View>
-                    <Text
-                      style={[styles.planValue, isPremium && { color: GOLD }]}
-                    >
-                      {isPremium
-                        ? t("Settings.premiumPlan")
-                        : t("Settings.startPlan")}
+                    <Text style={styles.planValue}>
+                      {planId === null || planId <= 0
+                        ? t("Settings.startPlan")
+                        : planId <= 1
+                          ? t("Settings.plusPlan")
+                          : t("Settings.ultraPlan")}
                     </Text>
                   </View>
                 </View>
@@ -236,13 +210,13 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* ─── モーダル類（変更なし） ─── */}
+        {/* ─── モーダル類 ─── */}
         <LoginNeededModal
           visible={isLoginModalVisible}
           onClose={() => setIsLoginModalVisible(false)}
           message={t("Settings.loginRequired")}
         />
-        <Modal
+        {/* <Modal
           visible={showPaywall}
           animationType="slide"
           presentationStyle="pageSheet"
@@ -259,7 +233,7 @@ export default function Settings() {
           <CustomCustomerCenterScreen
             onDismiss={() => setShowCustomerCenter(false)}
           />
-        </Modal>
+        </Modal> */}
 
         <LoadingModal text={t("common.loading")} visible={loading} />
 

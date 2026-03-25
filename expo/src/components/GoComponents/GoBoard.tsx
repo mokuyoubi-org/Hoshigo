@@ -307,7 +307,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 6,
     position: "relative",
   },
 
@@ -333,17 +332,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 3,
-    elevation: 3,
     opacity: 1,
   },
   noShadow: {
     shadowOpacity: 0,
-    elevation: 0,
   },
   emptyGrid: {
     opacity: 0.32,
     shadowOpacity: 0,
-    elevation: 1,
   },
   transparent: {
     opacity: 0,

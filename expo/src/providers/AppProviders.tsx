@@ -12,30 +12,22 @@ import {
   GamesContext,
   GumiIndexContext,
   IconIndexContext,
-  IsPremiumContext,
   JwtContext,
+  PlanIdContext,
   PointsContext,
-  RefreshRevenueCatContext,
-  RevenueCatCustomerInfoContext,
   RtContext,
   TsumegoProgressContext,
   TutorialProgressContext,
   UidContext,
   UsernameContext,
 } from "@/src/contexts/UserContexts";
-import {
-  checkSubscriptionStatus,
-  initializePurchases,
-  loginRevenueCat,
-  logoutRevenueCat,
-} from "@/src/services/RevenueCat";
+import { IAPProvider } from "@/src/providers/IAPProvider";
 import { langStore, themeStore } from "@/src/services/storage";
 import { supabase } from "@/src/services/supabase";
 import { Lang } from "@/src/services/translations";
 import { useRouter } from "expo-router";
 import React, { ReactNode, useEffect, useState } from "react";
 import { Linking } from "react-native";
-import type { CustomerInfo } from "react-native-purchases";
 // ------------------------------------------------------------------ //
 // AppProviders
 // ------------------------------------------------------------------ //
@@ -50,15 +42,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [displayname, setDisplayname] = useState<string | null>(null); // 表示名
   const [points, setPoints] = useState<number>(10); // ポイント
   const [iconIndex, setIconIndex] = useState<number>(0); // アイコン
-  const [isPremium, setIsPremium] = useState<boolean>(false); // プレミアムか否か
   const [gumiIndex, setGumiIndex] = useState<number>(0); // ぐみ
   const [games, setGames] = useState<number>(0); // 対局数
+  const [planId, setPlanId] = useState<number>(0); // 対局数
   const [tutorialProgress, setTutorialProgress] = useState<number>(0); // 講座はどこまで進んだか
   const [tsumegoProgress, setTsumegoProgress] = useState<number[]>([]); // 講座はどこまで進んだか
   const [acquiredIcons, setAcquiredIcons] = useState<number[]>([]); // 講座はどこまで進んだか
   const [theme, setTheme] = useState<"standard">("standard"); // テーマ
-  const [revenueCatCustomerInfo, setRevenueCatCustomerInfo] =
-    useState<CustomerInfo | null>(null);
   const [maintenance, setMaintenance] = useState<boolean>(false); // メンテナンス中か否か
   const [maintenanceMessage, setMaintenanceMessage] = useState<string | null>(
     null,
@@ -66,21 +56,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>(defaultLang); // 言語
   const router = useRouter();
 
-  // サブスク状態を再チェックする関数
-  const refreshRevenueCat = async () => {
-    const { isPro, customerInfo } = await checkSubscriptionStatus();
-    setRevenueCatCustomerInfo(customerInfo);
-    setIsPremium(isPro);
-  };
-
   // -------------- 初期化 --------------
 
   // 順番
   // 1. ローカル系(言語、テーマ)
-  // 2. rc(プレミアムか否かの確認)
-  // 3. auth(ログイン)
-  // 4. メンテ中か確認
-  // 5. プロフィール取得
+  // 2. auth(ログイン)
+  // 3. メンテ中か確認
+  // 4. プロフィール取得
 
   // 1. 言語とテーマを取ってくる(ローカル)
   useEffect(() => {
@@ -98,10 +80,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     // テーマとってくる
     const loadTheme = async () => {
       const saved = await themeStore.get();
-      if (
-        saved !== null &&
-        (saved === "standard")
-      ) {
+      if (saved !== null && saved === "standard") {
         setTheme(saved);
         themeStore.set(saved);
       } else {
@@ -113,33 +92,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     loadTheme();
   }, []);
 
-  // 2. RevenueCatを初期化 & プレミアムかチェック
-  useEffect(() => {
-    const initRevenueCat = async () => {
-      try {
-        await initializePurchases();
-        console.log("✅ RevenueCat initialized");
-
-        const { isPro, customerInfo } = await checkSubscriptionStatus();
-        setRevenueCatCustomerInfo(customerInfo);
-        console.log("📊 Initial subscription status:", isPro);
-
-        // 初期化完了後にユーザーセッションを設定
-        if (uid) {
-          console.log("🔑 Logging in to RevenueCat with uid:", uid);
-          loginRevenueCat(uid);
-        } else {
-          logoutRevenueCat().catch(() => {});
-        }
-      } catch (error) {
-        console.error("❌ RevenueCat initialization failed:", error);
-      }
-    };
-
-    initRevenueCat();
-  }, [uid]);
-
-  // 3. ログインチェック
+  // 2. ログインチェック
   useEffect(() => {
     const initAuth = async () => {
       // メールからurlを踏んでアプリに飛んだ時
@@ -203,8 +156,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         setTutorialProgress(0);
         setTsumegoProgress([]);
         setAcquiredIcons([]);
-        setIsPremium(false);
-        setRevenueCatCustomerInfo(null);
+        setPlanId(0);
+        // setIsPremium(false);
+        // setRevenueCatCustomerInfo(null);
         router.replace("/Login");
       }
       setCheckingAuth(false);
@@ -285,8 +239,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           setTutorialProgress(0);
           setTsumegoProgress([]);
           setAcquiredIcons([]);
-          setIsPremium(false);
-          setRevenueCatCustomerInfo(null);
+          setPlanId(0);
           setCheckingAuth(false);
           router.replace("/Login");
         }
@@ -299,7 +252,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // 4. メンテナンス中かどうか、app_statusの確認
+  // 3. メンテナンス中かどうかの確認
   useEffect(() => {
     const fetchAppStatus = async () => {
       const { data, error } = await supabase
@@ -326,7 +279,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     fetchAppStatus();
   }, []);
 
-  // 5. profileテーブルを取得
+  // 4. profileテーブルを取得
   useEffect(() => {
     if (checkingAuth) return;
     if (!uid) return;
@@ -348,21 +301,17 @@ export function AppProviders({ children }: { children: ReactNode }) {
       }
 
       const profile = data;
-      console.log("fetch profile ok");
-      console.log("profile.icon_index: ", profile.icon_index);
-
-      setUsername(profile.username);
-      setDisplayname(profile.displayname);
-      setPoints(profile.points);
-      setIconIndex(profile.icon_index);
-      setGumiIndex(profile.gumi_index);
-      setGames(profile.games);
-      setTutorialProgress(profile.tutorial_progress);
-      setTsumegoProgress(profile.tsumego_progress);
-      setAcquiredIcons(profile.acquired_icons);
-
-      await refreshRevenueCat();
-
+      setUsername(profile.username); // ユーザ名
+      setDisplayname(profile.displayname); // 表示名
+      setPoints(profile.points); // ポイント
+      setIconIndex(profile.icon_index); // アイコン
+      setGumiIndex(profile.gumi_index); // ぐみ
+      setGames(profile.games); // 対局数
+      setTutorialProgress(profile.tutorial_progress); // 講座
+      setTsumegoProgress(profile.tsumego_progress); // 詰碁
+      setAcquiredIcons(profile.acquired_icons); // 獲得済アイコン
+      setPlanId(profile.plan_id);
+      // 遷移
       router.replace("/(tabs)/Home");
     };
 
@@ -375,43 +324,30 @@ export function AppProviders({ children }: { children: ReactNode }) {
     [EmailContext, email],
     [JwtContext, jwt],
     [RtContext, rt],
-    [RefreshRevenueCatContext, refreshRevenueCat],
     [UsernameContext, { username, setUsername }],
     [DisplaynameContext, { displayname, setDisplayname }],
     [PointsContext, { points, setPoints }],
     [ThemeContext, { theme, setTheme }],
     [IconIndexContext, { iconIndex, setIconIndex }],
-    [IsPremiumContext, { isPremium, setIsPremium }],
-    [
-      RevenueCatCustomerInfoContext,
-      { revenueCatCustomerInfo, setRevenueCatCustomerInfo },
-    ],
     [GumiIndexContext, { gumiIndex, setGumiIndex }],
     [GamesContext, { games, setGames }],
     [TutorialProgressContext, { tutorialProgress, setTutorialProgress }],
-    [
-      TsumegoProgressContext,
-      {
-        tsumegoProgress,
-        setTsumegoProgress,
-      },
-    ],
-    [
-      AcquiredIconsContext,
-      {
-        acquiredIcons,
-        setAcquiredIcons,
-      },
-    ],
+    [TsumegoProgressContext, { tsumegoProgress, setTsumegoProgress }],
+    [AcquiredIconsContext, { acquiredIcons, setAcquiredIcons }],
+    [PlanIdContext, { planId, setPlanId }],
     [MaintenanceContext, { maintenance, setMaintenance }],
     [MaintenanceMessageContext, { maintenanceMessage, setMaintenanceMessage }],
     [LangContext, { lang, setLang }],
   ];
 
-  return providers.reduceRight(
-    (children, [Context, value]) => (
-      <Context.Provider value={value}>{children}</Context.Provider>
-    ),
-    <>{children}</>,
+  return (
+    <IAPProvider>
+      {providers.reduceRight(
+        (children, [Context, value]) => (
+          <Context.Provider value={value}>{children}</Context.Provider>
+        ),
+        children,
+      )}
+    </IAPProvider>
   );
 }

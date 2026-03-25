@@ -2,24 +2,28 @@ import { STRAWBERRY } from "@/src/constants/colors";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
-export const SkeletonCard = ({ height: h }: { height: number }) => (
-  <View style={[styles.card, { overflow: "hidden" }]}>
-    <View style={[styles.accentLine, { backgroundColor: "rgba(200,214,230,0.4)" }]} />
-    <View style={styles.recordHeader}>
-      {[72, 56, 72].map((w, i) => (
-        <View key={i} style={{ width: w, height: 48, borderRadius: 10, backgroundColor: "rgba(200,214,230,0.3)" }} />
-      ))}
+export const SkeletonCard = ({ height }: { height: number }) => {
+  return (
+    <View style={[styles.card, { height }]}>
+      <View style={styles.overlay} />
+
+      <View style={styles.header}>
+        <View style={styles.headerBoxLarge} />
+        <View style={styles.headerBoxSmall} />
+        <View style={styles.headerBoxLarge} />
+      </View>
+
+      <View style={[styles.body, { height }]}>
+        <View style={styles.bodyInner} />
+      </View>
     </View>
-    <View style={{ height: h, alignItems: "center", justifyContent: "center", backgroundColor: "#fafbfc" }}>
-      <View style={{ width: 200, height: 200, borderRadius: 6, backgroundColor: "rgba(200,214,230,0.3)" }} />
-    </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   card: {
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: "rgba(200,214,230,0.3)",
@@ -27,14 +31,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
-    elevation: 6,
+    overflow: "hidden",
   },
-  accentLine: {
-    height: 2.5,
-    width: "100%",
-    opacity: 0.6,
+
+  overlay: {
+    backgroundColor: "rgba(200,214,230,0.4)",
   },
-  recordHeader: {
+
+  header: {
     flexDirection: "row",
     justifyContent: "space-evenly",
     alignItems: "center",
@@ -44,5 +48,31 @@ const styles = StyleSheet.create({
     borderBottomColor: "rgba(200,214,230,0.15)",
     backgroundColor: "rgba(249,250,251,0.8)",
     width: "100%",
+  },
+
+  headerBoxLarge: {
+    width: 72,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "rgba(200,214,230,0.3)",
+  },
+
+  headerBoxSmall: {
+    width: 56,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "rgba(200,214,230,0.3)",
+  },
+
+  body: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fafbfc",
+  },
+
+  bodyInner: {
+    borderRadius: 6,
+    backgroundColor: "rgba(200,214,230,0.3)",
   },
 });

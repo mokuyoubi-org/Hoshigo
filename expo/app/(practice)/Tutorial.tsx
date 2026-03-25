@@ -585,7 +585,6 @@
 //     shadowOffset: { width: 0, height: 4 },
 //     shadowOpacity: 0.1,
 //     shadowRadius: 12,
-//     elevation: 5,
 //   },
 //   boardWrapper: {
 //     marginBottom: 24,
@@ -617,7 +616,6 @@
 //     shadowOffset: { width: 0, height: 2 },
 //     shadowOpacity: 0.08,
 //     shadowRadius: 8,
-//     elevation: 3,
 //     borderWidth: 2,
 //     borderColor: "#e8f4f8",
 //     position: "relative",
@@ -660,7 +658,6 @@
 //     shadowOffset: { width: 0, height: 2 },
 //     shadowOpacity: 0.1,
 //     shadowRadius: 4,
-//     elevation: 3,
 //   },
 //   buttonComplete: {
 //     backgroundColor: "#27ae60",
@@ -668,7 +665,6 @@
 //   },
 //   buttonDisabled: {
 //     backgroundColor: "#bdc3c7",
-//     elevation: 0,
 //   },
 //   navButtonText: {
 //     color: "#fff",
@@ -692,7 +688,6 @@
 //     shadowOffset: { width: 0, height: 2 },
 //     shadowOpacity: 0.1,
 //     shadowRadius: 4,
-//     elevation: 3,
 //   },
 //   quizButtonText: {
 //     color: "#fff",

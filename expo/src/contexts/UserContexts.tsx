@@ -1,6 +1,5 @@
 // @/src/contexts/UserContexts.tsx
 import { createContext } from "react";
-import { CustomerInfo } from "react-native-purchases";
 // メアド
 export const EmailContext = createContext<string | null>(null);
 // uid
@@ -28,6 +27,12 @@ export const GamesContext = createContext<{
   setGames: ((v: number) => void) | null;
 } | null>(null);
 
+// プランid
+export const PlanIdContext = createContext<{
+  planId: number | null;
+  setPlanId: ((v: number) => void) | null;
+} | null>(null);
+
 // アイコン
 export const IconIndexContext = createContext<{
   iconIndex: number | null;
@@ -52,12 +57,6 @@ export const AcquiredIconsContext = createContext<{
   setAcquiredIcons: ((v: number[]) => void) | null;
 } | null>(null);
 
-// プレミアム会員か否か
-export const IsPremiumContext = createContext<{
-  isPremium: boolean | null;
-  setIsPremium: ((v: boolean) => void) | null;
-} | null>(null);
-
 // ポイント
 export const PointsContext = createContext<{
   points: number | null;
@@ -69,16 +68,3 @@ export const GumiIndexContext = createContext<{
   gumiIndex: number | null;
   setGumiIndex: ((v: number) => void) | null;
 } | null>(null);
-
-// RC
-export const RevenueCatCustomerInfoContext = createContext<{
-  revenueCatCustomerInfo: CustomerInfo | null;
-  setRevenueCatCustomerInfoContext: React.Dispatch<
-    React.SetStateAction<CustomerInfo | null>
-  > | null;
-} | null>(null);
-
-//
-export const RefreshRevenueCatContext = createContext<
-  (() => Promise<void>) | null
->(null);

@@ -1,7 +1,7 @@
 import { GhostCard } from "@/src/components/Cards/GhostCard";
 import { GoBoard } from "@/src/components/GoComponents/GoBoard";
 import LoadingModal from "@/src/components/Modals/LoadingModal";
-import CustomPaywallScreen from "@/src/components/Sheets/CustomPayWallSheet";
+// import CustomPaywallScreen from "@/src/components/Sheets/CustomPayWallSheet";
 import {
   BACKGROUND,
   CHOCOLATE,
@@ -10,7 +10,7 @@ import {
 } from "@/src/constants/colors";
 import { Agehama } from "@/src/constants/goConstants";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
-import { IsPremiumContext } from "@/src/contexts/UserContexts";
+import { PlanIdContext } from "@/src/contexts/UserContexts";
 import { Board, initializeBoard } from "@/src/lib/goLogics";
 import {
   intArrayToStringArray,
@@ -155,7 +155,7 @@ function buildCardData(match: WatchMatch): MatchCardData {
 // ─── メインコンポーネント ───────────────────────────────
 export default function Watch() {
   const { t } = useTranslation();
-  const isPremium = useContext(IsPremiumContext);
+  const { planId, setPlanId } = useContext(PlanIdContext)!;
   const { height } = useWindowDimensions();
   const CARD_HEIGHT = height * 0.72;
   const SNAP_INTERVAL = CARD_HEIGHT + 18;
@@ -273,13 +273,13 @@ export default function Watch() {
         setCards(next);
       }
 
-      setHasMore(!reachedEnd && !!isPremium);
-      if (!isPremium && !reachedEnd) setShowGhost(true);
+      setHasMore(!reachedEnd && planId !== null && planId >= 1);
+      if (planId === 0 && !reachedEnd) setShowGhost(true);
       setLoading(false);
       setRefreshing(false);
       isFetchingMore.current = false;
     },
-    [isPremium, subscribeToMatch],
+    [planId, subscribeToMatch],
   );
 
   // ─── 表示中の局が変わったらsubscribe切り替え ───────────
@@ -404,9 +404,9 @@ export default function Watch() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowPaywall(false)}
       >
-        <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} />
+        {/* <CustomPaywallScreen onDismiss={() => setShowPaywall(false)} /> */}
       </Modal>
-        <LoadingModal text={t("common.loading")} visible={loading} />
+      <LoadingModal text={t("common.loading")} visible={loading} />
     </SafeAreaView>
   );
 }
@@ -454,7 +454,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
-    elevation: 6,
   },
   cardAccentLine: {
     height: 2.5,

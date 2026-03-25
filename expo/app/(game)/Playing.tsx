@@ -206,6 +206,25 @@ export default function Playing() {
 
   const [isDailyLimitReached, setIsDailyLimitReached] = useState(false);
 
+  const currentMove = movesRef.current[currentIndexRef.current - 1];
+  const isCurrentMovePass = currentMove === "p";
+  const isBlackPass =
+    isCurrentMovePass &&
+    ((currentIndexRef.current % 2 === 1 &&
+      (matchType === 0 || matchType === 1)) ||
+      (currentIndexRef.current % 2 === 0 &&
+        matchType !== 0 &&
+        matchType !== 1));
+  const isWhitePass =
+    isCurrentMovePass &&
+    ((currentIndexRef.current % 2 === 0 &&
+      (matchType === 0 || matchType === 1)) ||
+      (currentIndexRef.current % 2 === 1 &&
+        matchType !== 0 &&
+        matchType !== 1));
+
+  const boardWidth = Math.min(width * 0.82, height * 0.5);
+
   // ─── gameチャンネルのmoveイベント: 対局中の盤面情報 ──────────────────────────
   // 受け取るもの:
   // move: 最新の手。intとして受け取る
@@ -606,127 +625,108 @@ export default function Playing() {
     boardRef.current = boardHistoryRef.current[finalIndex];
   }, []);
 
-  const currentMove = movesRef.current[currentIndexRef.current - 1];
-  const isCurrentMovePass = currentMove === "p";
-  const isBlackPass =
-    isCurrentMovePass &&
-    ((currentIndexRef.current % 2 === 1 &&
-      (matchType === 0 || matchType === 1)) ||
-      (currentIndexRef.current % 2 === 0 &&
-        matchType !== 0 &&
-        matchType !== 1));
-  const isWhitePass =
-    isCurrentMovePass &&
-    ((currentIndexRef.current % 2 === 0 &&
-      (matchType === 0 || matchType === 1)) ||
-      (currentIndexRef.current % 2 === 1 &&
-        matchType !== 0 &&
-        matchType !== 1));
-
   // ─── UI ──────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
       <View style={styles.content}>
-        <View style={{ justifyContent: "center" }}>
-          {/* 相手情報 */}
-          <View style={styles.playerCell}>
-            <View style={styles.passSlot}>
-              <Pass
-                visible={oppColor === "black" ? isBlackPass : isWhitePass}
-                isLeft={true}
-              />
-            </View>
-            <View style={styles.playerMain}>
-              <Avatar
-                gumiIndex={oppGumiIndex}
-                iconIndex={oppIconIndex}
-                size={40}
-                color={oppColor}
-              />
-              <View style={styles.playerInfo}>
-                <Text
-                  style={[styles.playerName]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {oppDisplayname}
-                </Text>
-                <View style={{ flexDirection: "row" }}>
-                  <AgehamaDisplay
-                    count={
-                      oppColor === "black"
-                        ? agehamaHistory[currentIndexRef.current].black
-                        : agehamaHistory[currentIndexRef.current].white
-                    }
-                  />
-                  <Text style={styles.timeText}>
-                    {secondsToMinutes(oppSeconds)}
-                  </Text>
-                </View>
-              </View>
-            </View>
+        {/* 相手情報 */}
+        <View style={styles.playerCell}>
+          <View style={styles.passSlot}>
+            <Pass
+              visible={oppColor === "black" ? isBlackPass : isWhitePass}
+              isLeft={true}
+            />
           </View>
-
-          {/* 碁盤 */}
-          <GoBoard
-            matchType={matchType}
-            agehamaHistory={agehamaHistory}
-            board={board}
-            onPutStone={handlePutStone}
-            moveHistory={movesRef.current}
-            territoryBoard={territoryBoardRef.current}
-            disabled={!isMyTurn || isGameEnded}
-            isGameEnded={isGameEnded}
-            boardHistory={boardHistoryRef.current}
-            currentIndex={currentIndexRef.current}
-            boardWidth={width * 0.82}
-          />
-
-          {/* 自分情報 */}
-          <View style={styles.playerCell}>
-            <View style={styles.passSlot}>
-              <Pass
-                visible={myColor === "black" ? isBlackPass : isWhitePass}
-                isLeft={true}
-              />
-            </View>
-            <View style={styles.playerMain}>
-              <Avatar
-                gumiIndex={gumiIndex ?? 0}
-                iconIndex={iconIndex ?? 0}
-                size={40}
-                color={myColor}
-              />
-              <View style={styles.playerInfo}>
-                <Text
-                  style={[styles.playerName]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {displayname}
+          <View style={styles.playerMain}>
+            <Avatar
+              gumiIndex={oppGumiIndex}
+              iconIndex={oppIconIndex}
+              size={40}
+              color={oppColor}
+            />
+            <View style={styles.playerInfo}>
+              <Text
+                style={[styles.playerName]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {oppDisplayname}
+              </Text>
+              <View style={{ flexDirection: "row" }}>
+                <AgehamaDisplay
+                  count={
+                    oppColor === "black"
+                      ? agehamaHistory[currentIndexRef.current].black
+                      : agehamaHistory[currentIndexRef.current].white
+                  }
+                />
+                <Text style={styles.timeText}>
+                  {secondsToMinutes(oppSeconds)}
                 </Text>
-                <View style={{ flexDirection: "row" }}>
-                  <AgehamaDisplay
-                    count={
-                      myColor === "black"
-                        ? agehamaHistory[currentIndexRef.current].black
-                        : agehamaHistory[currentIndexRef.current].white
-                    }
-                  />
-                  <Text style={styles.timeText}>
-                    {secondsToMinutes(mySeconds)}
-                  </Text>
-                </View>
               </View>
             </View>
           </View>
         </View>
 
-        {/* アクション */}
+        {/* 碁盤 */}
+        <GoBoard
+          matchType={matchType}
+          agehamaHistory={agehamaHistory}
+          board={board}
+          onPutStone={handlePutStone}
+          moveHistory={movesRef.current}
+          territoryBoard={territoryBoardRef.current}
+          disabled={!isMyTurn || isGameEnded}
+          isGameEnded={isGameEnded}
+          boardHistory={boardHistoryRef.current}
+          currentIndex={currentIndexRef.current}
+          boardWidth={boardWidth}
+        />
+
+        {/* 自分情報 */}
+        <View style={[styles.playerCell, styles.playerCellRight]}>
+          <View style={[styles.passSlot, styles.passSlotRight]}>
+            <Pass
+              visible={myColor === "black" ? isBlackPass : isWhitePass}
+              isLeft={true}
+            />
+          </View>
+          <View style={[styles.playerMain, styles.playerMainRight]}>
+            <Avatar
+              gumiIndex={gumiIndex ?? 0}
+              iconIndex={iconIndex ?? 0}
+              size={40}
+              color={myColor}
+            />
+            <View style={[styles.playerInfo, styles.playerInfoRight]}>
+              <Text
+                style={[styles.playerName, styles.playerNameRight]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {displayname}
+              </Text>
+              <View style={{ flexDirection: "row" }}>
+                <AgehamaDisplay
+                  count={
+                    myColor === "black"
+                      ? agehamaHistory[currentIndexRef.current].black
+                      : agehamaHistory[currentIndexRef.current].white
+                  }
+                />
+                <Text style={styles.timeText}>
+                  {secondsToMinutes(mySeconds)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         {!isGameEnded ? (
           <View style={styles.actionsContainer}>
+            {/* パスボタン */}
             <TouchableOpacity
               style={[
                 styles.actionButton,
@@ -746,6 +746,7 @@ export default function Playing() {
               </Text>
             </TouchableOpacity>
 
+            {/* 投了ボタン */}
             <TouchableOpacity
               style={[
                 styles.resignButton,
@@ -823,13 +824,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingVertical: 20,
-    justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
   },
   playerInfo: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     width: "100%",
     paddingHorizontal: 8,
@@ -900,7 +899,6 @@ const styles = StyleSheet.create({
   },
 
   playerCell: {
-    flex: 1,
     flexDirection: "column",
     alignItems: "flex-start",
   },

@@ -111,7 +111,6 @@ const styles = StyleSheet.create({
     borderWidth: 2.5,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 3,
     position: "relative",
   },
   starWrapper: {

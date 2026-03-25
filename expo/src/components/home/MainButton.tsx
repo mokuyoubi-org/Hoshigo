@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.45,
     shadowRadius: 25,
-    elevation: 20,
   },
 
   glowWrapper: {
@@ -87,7 +86,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 40,
-    elevation: 30,
   },
 
   btnLabel: {

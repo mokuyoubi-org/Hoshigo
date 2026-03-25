@@ -10,7 +10,6 @@ import {
 } from "@/src/constants/colors";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { UidContext } from "@/src/contexts/UserContexts";
-import { logoutRevenueCat } from "@/src/services/RevenueCat";
 import { clearAllStorage } from "@/src/services/storage";
 import { supabase } from "@/src/services/supabase";
 import { router } from "expo-router";
@@ -49,7 +48,6 @@ export default function Delete() {
     // ② ローカルストレージを完全クリア
     await clearAllStorage();
 
-    await logoutRevenueCat();
     setLoading(false);
     router.replace("/Goodbye");
   };

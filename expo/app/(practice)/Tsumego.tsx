@@ -474,7 +474,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     paddingHorizontal: 8,
-    elevation: 5,
   },
   boardWrapper: {
     alignItems: "center",
@@ -486,7 +485,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#daa520",
     padding: 8,
     borderRadius: 8,
-    elevation: 4,
   },
   explanationContainer: {
     flexDirection: "row",
@@ -518,7 +516,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
     minWidth: 120,
   },
   buttonReset: {

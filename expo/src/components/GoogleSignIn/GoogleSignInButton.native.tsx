@@ -5,7 +5,7 @@ import { Text } from "@react-navigation/elements";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
 import { Image, TouchableOpacity } from "react-native";
-import { supabase } from "../../services/supabase";
+import { supabase } from "@/src/services/supabase";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -114,7 +114,6 @@ export default function GoogleSignInButton() {
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
-        elevation: 2, // For Android shadow
       }}
       activeOpacity={0.8}
     >

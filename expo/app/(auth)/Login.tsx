@@ -423,7 +423,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 1,
   },
   socialIcon: {
     width: 20,

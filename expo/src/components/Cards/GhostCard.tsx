@@ -9,11 +9,7 @@ type Props = {
   setShowPaywall: (v: boolean) => void;
 };
 
-export const GhostCard = ({
-  cardHeight,
-  t,
-  setShowPaywall,
-}: Props) => (
+export const GhostCard = ({ cardHeight, t, setShowPaywall }: Props) => (
   <View style={{ height: cardHeight, marginHorizontal: 16 }}>
     <SkeletonCard height={cardHeight} />
     <View style={StyleSheet.absoluteFillObject}>

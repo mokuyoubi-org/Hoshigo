@@ -122,7 +122,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 8,
     overflow: "hidden",
   },
   topLine: {
@@ -196,7 +195,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 4,
   },
   ctaText: {
     fontSize: 14,

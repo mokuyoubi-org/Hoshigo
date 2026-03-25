@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 999,
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#98c99a",
     paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 8,

@@ -306,7 +306,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
   },
   limitModalIcon: {
     width: 72,
@@ -345,7 +344,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 4,
   },
   limitModalButtonText: {
     fontSize: 16,

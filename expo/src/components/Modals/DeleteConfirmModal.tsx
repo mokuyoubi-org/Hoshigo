@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
-    elevation: 8,
   },
   header: {
     flexDirection: "row",
@@ -166,7 +165,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderWidth: 2,
     borderColor: "rgba(224,92,92,0.5)",
-    elevation: 5,
   },
   primaryText: {
     fontSize: 16,

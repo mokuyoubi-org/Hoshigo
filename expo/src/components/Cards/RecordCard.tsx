@@ -43,8 +43,9 @@ export const RecordCard = ({
   playerWin,
   isPlayerBlack,
 }: Props) => {
+  const { width } = useWindowDimensions();
+  const boardSize = Math.min(width * 0.72);
   const playerColor = isPlayerBlack ? "black" : "white";
-  const { height } = useWindowDimensions();
   const [currentIndex, setReplayIndex] = useState(0);
   const isReady = !isPlaceholder(record) && !!territoryBoard;
   const moveHistory = moves?.slice(0, currentIndex + 1) ?? [];
@@ -82,8 +83,6 @@ export const RecordCard = ({
     : record.white_gumi_index;
 
   if (!isReady) return <SkeletonCard height={cardHeight} />;
-
-  const boardSize = (height * 36) / 100;
 
   // 結果
   const resultText =
@@ -282,10 +281,10 @@ const PASS_OVERLAP = 10;
 
 const styles = StyleSheet.create({
   card: {
+    justifyContent: "space-between",
     alignItems: "center",
     borderRadius: 16,
     overflow: "hidden",
-    elevation: 3,
   },
 
   // ── プレイヤー行 ──
@@ -350,7 +349,6 @@ const styles = StyleSheet.create({
   // ── 中央メタスロット ──
   metaSlot: {
     paddingTop: 12,
-    height: "100%",
     width: 72,
     flexDirection: "column",
     alignItems: "center",
@@ -370,7 +368,6 @@ const styles = StyleSheet.create({
 
   // ── 碁盤 ──
   boardWrapper: {
-    flex: 1,
     width: "100%",
     alignItems: "center",
     justifyContent: "center",

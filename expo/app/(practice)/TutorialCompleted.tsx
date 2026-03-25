@@ -163,7 +163,6 @@
 //     shadowOffset: { width: 0, height: 8 },
 //     shadowOpacity: 0.15,
 //     shadowRadius: 16,
-//     elevation: 8,
 //     alignItems: "center",
 //   },
 //   iconContainer: {
@@ -180,7 +179,6 @@
 //     shadowOffset: { width: 0, height: 4 },
 //     shadowOpacity: 0.3,
 //     shadowRadius: 8,
-//     elevation: 6,
 //   },
 //   iconText: {
 //     fontSize: 60,
@@ -258,7 +256,6 @@
 //     shadowOffset: { width: 0, height: 2 },
 //     shadowOpacity: 0.1,
 //     shadowRadius: 4,
-//     elevation: 3,
 //   },
 //   buttonPrimary: {
 //     backgroundColor: "#3498db",

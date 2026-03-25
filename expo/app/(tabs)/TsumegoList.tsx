@@ -206,11 +206,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
     borderWidth: 2,
     borderColor: "#e8f4f8",
     position: "relative",
@@ -246,11 +241,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderLeftWidth: 5,
     padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -261,11 +251,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { flex: 1, fontSize: 20, fontWeight: "700", color: "#2c3e50" },
 
-  // カードのshadowは親コンテナに任せるので少し軽くしてもOK
   card: {
     flex: 1,
     margin: 4,
-    backgroundColor: "#f8f9fa", // 親の白と差をつけて少し沈んで見える
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
     padding: 8,
   },

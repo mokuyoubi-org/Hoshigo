@@ -101,7 +101,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
-    elevation: 8,
   },
   modalHeader: {
     flexDirection: "row",
@@ -143,7 +142,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
   },
   primaryButtonText: {
     fontSize: 16,

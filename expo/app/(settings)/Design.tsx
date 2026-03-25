@@ -236,7 +236,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
-    elevation: 4,
   },
   gobanContainer: {
     padding: 20,
@@ -246,7 +245,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 2,
     marginBottom: 16,
   },
   gobanWrapper: {
@@ -277,7 +275,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 2,
   },
   blackStone: {
     backgroundColor: "#2d3748",
@@ -309,7 +306,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
   },
   selectedBadgeText: {
     color: "#ffffff",
