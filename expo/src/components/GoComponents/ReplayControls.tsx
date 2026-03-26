@@ -38,7 +38,6 @@ export function ReplayControls({
     <View
       style={[
         styles.container,
-        { backgroundColor: colors.card, borderColor: colors.borderColor},
       ]}
     >
       <TouchableOpacity
@@ -107,7 +106,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderRadius: 16,
-    borderWidth: 1,
   },
   button: {
     width: 48,

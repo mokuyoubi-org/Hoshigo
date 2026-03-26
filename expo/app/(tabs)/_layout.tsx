@@ -61,14 +61,9 @@ export default function TabsLayout() {
           backgroundColor: BACKGROUND,
           borderTopWidth: 1.5,
           borderTopColor: STRAWBERRY_DIM,
-          height: Platform.OS === "ios" ? 88 : 72,
+          height: Platform.OS === "ios" ? 88 : 80,
           paddingBottom: Platform.OS === "ios" ? 24 : 10,
           paddingTop: 10,
-          // 柔らかい影
-          shadowColor: STRAWBERRY,
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 16,
         },
         tabBarLabelStyle: {
           fontSize: 10,
@@ -166,10 +161,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: "rgba(232,164,184,0.08)",
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
   },
   iconActive: {
     alignItems: "center",
@@ -189,9 +180,5 @@ const styles = StyleSheet.create({
     height: 2,
     borderRadius: 1,
     backgroundColor: STRAWBERRY,
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 8,
   },
 });

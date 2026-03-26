@@ -377,26 +377,44 @@ export default function Playing() {
   // new_points: 対局後のポイント
   // new_gumi_index: 対局後のぐみ
   // new_acquired_icons: 新たに獲得したアイコンの配列。なければ空配列
-  const user_finished = useCallback((payload: any) => {
-    const data = payload.payload ?? payload;
+  const pointsRef = useRef(points);
+  const gumiIndexRef = useRef(gumiIndex);
 
-    setLoading(false);
+  // state が変わったら ref にもコピー
+  useEffect(() => {
+    pointsRef.current = points;
+    gumiIndexRef.current = gumiIndex;
+  }, [points, gumiIndex]);
 
-    // points / gumiIndex を更新
-    const newPoints = Number(data.new_points);
-    const newGumiIndex = Number(data.new_gumi_index);
+const user_finished = useCallback((payload: any) => {
+  const data = payload.payload ?? payload;
 
-    setPointsAfter(newPoints);
-    setGumiIndexAfter(newGumiIndex);
-    setPoints?.(newPoints); // グローバルstate
-    setGumiIndex?.(newGumiIndex); // グローバルstate
-    // 結果モーダルの表示
-    console.log("setShowResult");
-    setShowResult(true);
-    // ユーザチャンネルサブスク解除
-    clearUserChannel();
+  setLoading(false);
+
+  // new_points と new_gumi_index が数字じゃなかったら無視
+  const maybePoints = Number(data.new_points);
+  const maybeGumiIndex = Number(data.new_gumi_index);
+
+  if (isNaN(maybePoints) || isNaN(maybeGumiIndex)) {
+    console.warn("invalid payload:", data);
     return;
-  }, []);
+  }
+
+  const oldPoints = points ?? 0;
+  const oldGumiIndex = gumiIndex ?? 0;
+
+  setPointsBefore(oldPoints);
+  setGumiIndexBefore(oldGumiIndex);
+
+  setPointsAfter(maybePoints);
+  setGumiIndexAfter(maybeGumiIndex);
+
+  setPoints?.(maybePoints);
+  setGumiIndex?.(maybeGumiIndex);
+
+  setShowResult(true);
+  clearUserChannel();
+}, [points, gumiIndex, setPoints, setGumiIndex]);
 
   // ─── 初期化 ───────────────────────────────────────────
   // 一番最初に行うこと
@@ -817,12 +835,7 @@ export default function Playing() {
 
         {/* ── リプレイコントロール ── */}
         {isGameEnded && (
-          <View
-            style={[
-              styles.controlsWrapper,
-              // theme.controls
-            ]}
-          >
+          <View style={[styles.controlsWrapper, { width: boardWidth * 1.2 }]}>
             <ReplayControls
               onCurrentIndexChange={setCurrentIndex}
               currentIndex={currentIndex}
@@ -1001,7 +1014,6 @@ const styles = StyleSheet.create({
   // ── コントロール ──
   controlsWrapper: {
     width: "100%",
-    borderTopWidth: 0.5,
     backgroundColor: "transparent",
   },
 });

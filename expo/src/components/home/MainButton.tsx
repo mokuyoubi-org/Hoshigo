@@ -11,7 +11,7 @@ import {
 
 type Props = {
   onPress: () => void;
-}
+};
 
 export function MainButton({ onPress }: Props) {
   const pressScale = useRef(new Animated.Value(1)).current;
@@ -59,7 +59,7 @@ export function MainButton({ onPress }: Props) {
 
 const styles = StyleSheet.create({
   buttonArea: {
-    flex: 1.2,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -73,19 +73,10 @@ const styles = StyleSheet.create({
     borderColor: STRAWBERRY,
     justifyContent: "center",
     alignItems: "center",
-
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 25,
   },
 
   glowWrapper: {
     borderRadius: 100,
-    shadowColor: "white",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 40,
   },
 
   btnLabel: {

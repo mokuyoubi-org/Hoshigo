@@ -118,7 +118,7 @@ export default function SubscriptionScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.push("/Settings")}
+            onPress={() => router.back()}
             activeOpacity={0.7}
           >
             <Text style={styles.backButtonText}>‹ {t("common.back")}</Text>
@@ -126,9 +126,6 @@ export default function SubscriptionScreen() {
         </View>
 
         <Text style={styles.heading}>プランを選択</Text>
-        <Text style={styles.sub}>
-          すべてのプランは30日間の無料トライアル付き
-        </Text>
 
         {/* 月払い / 年払い トグル */}
         <View style={styles.toggle}>
@@ -257,9 +254,9 @@ export default function SubscriptionScreen() {
                   </TouchableOpacity>
                 )}
 
-                {!isFree && (
+                {/* {!isFree && (
                   <Text style={styles.trialNote}>30日間無料トライアル</Text>
-                )}
+                )} */}
               </View>
             );
           })}

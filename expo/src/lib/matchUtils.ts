@@ -38,10 +38,12 @@ export const useStartMatching = () => {
       }
 
       if (!data.can_play) {
+        // メンテナンス中なのでプレイできない
         if (data.reason === "maintenance") {
           setMaintenance?.(true);
           setMaintenanceMessage?.(data.message ?? null);
           router.replace("/Home");
+          // 対局数制限に達したのでプレイできない
         } else if (data.reason === "daily_limit") {
           setIsDailyLimitReached(true);
         }
@@ -50,7 +52,6 @@ export const useStartMatching = () => {
 
       // 遊べる場合
       router.replace("/Matching");
-      
     } catch (err) {
       setLoading(false);
       console.error(err);

@@ -1,12 +1,11 @@
 // src/components/GoogleSignInButton.native.tsx
 
-import { expo } from "@/app.json";
+import { useTranslation } from "@/src/contexts/LocaleContexts";
+import { supabase } from "@/src/services/supabase";
 import { Text } from "@react-navigation/elements";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect } from "react";
 import { Image, TouchableOpacity } from "react-native";
-import { supabase } from "@/src/services/supabase";
-import { useTranslation } from "@/src/contexts/LocaleContexts";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -33,7 +32,7 @@ export default function GoogleSignInButton() {
     const res = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${expo.scheme}://google-auth`,
+        redirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://google-auth`,
         queryParams: { prompt: "consent" },
         skipBrowserRedirect: true,
       },
@@ -48,7 +47,7 @@ export default function GoogleSignInButton() {
 
     const result = await WebBrowser.openAuthSessionAsync(
       googleOAuthUrl,
-      `${expo.scheme}://google-auth`,
+      `${process.env.EXPO_PUBLIC_SCHEME!}://google-auth`,
       { showInRecents: true },
     ).catch((err) => {
       console.error("onSignInButtonPress - openAuthSessionAsync - error", {

@@ -1,7 +1,6 @@
 // supabase.ts
 import { createClient } from "@supabase/supabase-js";
 import { Platform } from "react-native";
-import "react-native-url-polyfill/auto";
 import { storage } from "./storage";
 
 export const supabase = createClient(

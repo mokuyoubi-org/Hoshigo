@@ -1411,6 +1411,28 @@ export const translations = {
       example: "xxx",
     },
   },
+  GhostCard: {
+  ja: {
+    title: "続きを見るには",
+    subtitle: "プラスプランにアップグレードすると、すべての棋譜を閲覧できます。",
+    button: "プランを見る",
+  },
+  en: {
+    title: "Want to see more?",
+    subtitle: "Upgrade to the Plus Plan to access all your game records.",
+    button: "View Plans",
+  },
+  zh: {
+    title: "想查看更多？",
+    subtitle: "升级到Plus套餐，即可浏览所有棋谱。",
+    button: "查看套餐",
+  },
+  ko: {
+    title: "더 보고 싶으신가요?",
+    subtitle: "플러스 플랜으로 업그레이드하면 모든 기보를 열람할 수 있습니다。",
+    button: "플랜 보기",
+  },
+},
   BotsName: {
     ja: {
       bot1displayname: "うどん",

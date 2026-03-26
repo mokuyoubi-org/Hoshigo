@@ -20,7 +20,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 8,
-    alignSelf: "flex-start",
   },
   badgeZero: {
     opacity: 0.25,

@@ -481,24 +481,8 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 16,
   },
-  boardContainer: {
-    backgroundColor: "#daa520",
-    padding: 8,
-    borderRadius: 8,
-  },
-  explanationContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 16,
-    gap: 12,
-    paddingHorizontal: 8,
-  },
-  characterContainer: {
-    width: 80,
-    height: 80,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+
+
   navigationButtons: {
     flexDirection: "row",
     justifyContent: "center",
@@ -507,32 +491,21 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   navButton: {
-    backgroundColor: "#3498db",
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     minWidth: 120,
   },
   buttonReset: {
     backgroundColor: "#95a5a6",
   },
   buttonComplete: {
-    backgroundColor: "#27ae60",
+    backgroundColor: "#7ccd9e",
   },
   navButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
-  },
-  errorText: {
-    fontSize: 18,
-    color: "#e74c3c",
-    textAlign: "center",
-    marginTop: 40,
   },
 });

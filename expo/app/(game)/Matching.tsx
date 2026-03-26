@@ -5,6 +5,7 @@ import LoadingModal from "@/src/components/Modals/LoadingModal";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { UidContext } from "@/src/contexts/UserContexts";
 import {
+  clearGameChannel,
   clearUserChannel,
   game_finished_ref,
   game_move_ref,
@@ -25,6 +26,8 @@ export default function Matching() {
   const uid = useContext(UidContext);
   useEffect(() => {
     if (!uid) return;
+    clearUserChannel();
+    clearGameChannel();
 
     joinWaiting();
   }, [uid]);

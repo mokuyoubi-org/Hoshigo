@@ -1,3 +1,4 @@
+import { FloatingToggle } from "@/src/components/FloatingToggle";
 import { MainButton } from "@/src/components/home/MainButton";
 import { MainTitle } from "@/src/components/home/MainTitle";
 import { DailyLimitModal } from "@/src/components/Modals/DailyLimitModal";
@@ -16,13 +17,7 @@ import { useTheme } from "@/src/hooks/useTheme";
 import { useStartMatching } from "@/src/lib/matchUtils";
 import { StatusBar } from "expo-status-bar";
 import React, { useContext, useState } from "react";
-import {
-  StatusBar as RNStatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ─── メイン ───────────────────────────────────────────
@@ -49,9 +44,18 @@ export default function Home() {
     startMatching(setLoading, setIsDailyLimitReached);
   };
 
+  const [boardSize, setBoardSize] = useState<number>(9);
+
+  const handleToggle = (boardSize: number) => {
+    setBoardSize(boardSize);
+    if (boardSize === 9) {
+      console.log("9路の処理"); // 9路の初期化など
+    } else {
+      console.log("13路の処理"); // 13路の初期化など
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
-      <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
 
       {/* 🆕 メンテナンスオーバーレイ（最前面） */}
@@ -60,6 +64,8 @@ export default function Home() {
       <View style={styles.content}>
         {/* ヘッダー */}
         <View style={styles.header}>
+          {/* <FloatingToggle boardSize={boardSize} onToggle={handleToggle} /> */}
+
           <TouchableOpacity
             style={styles.infoButton}
             onPress={() => setIsModalVisible(true)}
@@ -115,7 +121,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between", // ← これだけ！
     paddingTop: 8,
   },
   infoButton: {

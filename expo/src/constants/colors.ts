@@ -21,10 +21,10 @@ export const THEME_COLORS = {
     warningBorder: "#feebc8",
     shirogumi: "#d7d7d7",
     momogumi: "#dcadd3",
-    orangegumi: "#dcc4ad",
+    orangegumi: "#f0ad81",
     kiirogumi: "#d9dcad",
     midorigumi: "#addcba",
-    aogumi: "#adb6dc",
+    aogumi: "#8aa5eb",
     soragumi: "#add7dc",
     nijigumi: "#ceaddc",
     tsukigumi: "#8d8d8d",
@@ -34,7 +34,6 @@ export const THEME_COLORS = {
 } as const;
 
 export type ThemeType = keyof typeof THEME_COLORS;
-
 
 export const STRAWBERRY = "#c8d6e6";
 export const BACKGROUND = "#f9fafb";

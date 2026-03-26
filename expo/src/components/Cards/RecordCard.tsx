@@ -1,30 +1,30 @@
 // RecordCard.tsx
-import { SkeletonCard } from "@/src/components/Cards/SkeletonCard";
+import {
+  isSkeletonCard,
+  SkeletonCard,
+} from "@/src/components/Cards/SkeletonCard";
 import { AgehamaDisplay } from "@/src/components/GoComponents/Agehama";
 import { Avatar } from "@/src/components/GoComponents/Avatar";
 import { GoBoard } from "@/src/components/GoComponents/GoBoard";
 import { Pass } from "@/src/components/GoComponents/Pass";
 import { ReplayControls } from "@/src/components/GoComponents/ReplayControls";
 import { CHOCOLATE, CHOCOLATE_SUB } from "@/src/constants/colors";
-import { Agehama, MatchArchive } from "@/src/constants/goConstants";
+import { Agehama, RecordType } from "@/src/constants/goConstants";
+import { LangContext, useTranslation } from "@/src/contexts/LocaleContexts";
 import { Board } from "@/src/lib/goLogics";
 import { resultToSelfComment } from "@/src/lib/goUtils";
 import { wrapBotDisplayname } from "@/src/lib/utils";
-import React, { useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
-
-const isPlaceholder = (r: MatchArchive) => (r.id as number) < 0;
+import React, { useContext, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 export type Props = {
-  record: MatchArchive;
+  record: RecordType;
   boardHistory: Board[];
   moves: string[];
   agehamaHistory: Agehama[];
   territoryBoard: number[][] | undefined;
   matchType: number;
   cardHeight: number;
-  t: any;
-  currentLocale: string;
   /** 自分が勝ったか負けたか。未定義の場合はニュートラル表示 */
   playerWin?: boolean;
   isPlayerBlack: boolean;
@@ -38,16 +38,15 @@ export const RecordCard = ({
   territoryBoard,
   matchType,
   cardHeight,
-  t,
-  currentLocale,
   playerWin,
   isPlayerBlack,
 }: Props) => {
-  const { width } = useWindowDimensions();
-  const boardWidth = cardHeight * 0.4;
+  const { lang } = useContext(LangContext)!;
+  const { t } = useTranslation();
+
   const playerColor = isPlayerBlack ? "black" : "white";
   const [currentIndex, setCurrentIndex] = useState(0);
-  const isReady = !isPlaceholder(record) && !!territoryBoard;
+  const isReady = !isSkeletonCard(record) && !!territoryBoard;
   const moveHistory = moves?.slice(0, currentIndex + 1) ?? [];
   const currentMove = moveHistory[currentIndex - 1];
   const isCurrentMovePass = currentMove === "p";
@@ -82,13 +81,14 @@ export const RecordCard = ({
     ? record.black_gumi_index
     : record.white_gumi_index;
 
+  // 準備ができてなかったらスケルトンカード
   if (!isReady) return <SkeletonCard height={cardHeight} />;
 
   // 結果
   const resultText =
     resultToSelfComment(result ?? "", playerColor, t) ?? t("MyRecords.unknown");
   // 日付
-  const dateText = new Date(createdAt).toLocaleDateString(currentLocale, {
+  const dateText = new Date(createdAt).toLocaleDateString(lang, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -104,8 +104,8 @@ export const RecordCard = ({
 
   return (
     <View style={[styles.card, { height: cardHeight }, theme.card]}>
-      {/* ── プレイヤー行 ── */}
-      <View style={[styles.playersRow, theme.divider]}>
+      {/* ヘッダー */}
+      <View style={[styles.playersRow]}>
         {/* 自分（左） */}
         <View style={styles.playerCell}>
           <View style={styles.passSlot}>
@@ -192,30 +192,27 @@ export const RecordCard = ({
         </View>
       </View>
 
-      {/* ── 碁盤 ── */}
-      <View style={styles.boardWrapper}>
-        <GoBoard
-          boardWidth={cardHeight * 0.5}
-          matchType={matchType}
-          agehamaHistory={agehamaHistory}
-          board={boardHistory[currentIndex] ?? {}}
-          onPutStone={() => {}}
-          moveHistory={moveHistory}
-          territoryBoard={territoryBoard}
-          disabled={true}
-          isGameEnded={true}
-          boardHistory={boardHistory}
-          currentIndex={currentIndex}
-        />
-      </View>
+      {/* 本体部分: 碁盤 */}
+      <GoBoard
+        boardWidth={cardHeight * 0.5}
+        matchType={matchType}
+        agehamaHistory={agehamaHistory}
+        board={boardHistory[currentIndex] ?? {}}
+        onPutStone={() => {}}
+        moveHistory={moveHistory}
+        territoryBoard={territoryBoard}
+        disabled={true}
+        isGameEnded={true}
+        boardHistory={boardHistory}
+        currentIndex={currentIndex}
+      />
 
-
-      {/* ── リプレイコントロール ── */}
-        <ReplayControls
-          onCurrentIndexChange={setCurrentIndex}
-          currentIndex={currentIndex}
-          maxIndex={boardHistory.length - 1}
-        />
+      {/* リプレイコントロール */}
+      <ReplayControls
+        onCurrentIndexChange={setCurrentIndex}
+        currentIndex={currentIndex}
+        maxIndex={boardHistory.length - 1}
+      />
     </View>
   );
 };
@@ -239,10 +236,6 @@ const themes = {
       backgroundColor: "#FAF5F5",
       borderColor: "rgba(160,80,80,0.18)",
       borderWidth: 0.5,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
     },
     divider: { borderBottomColor: "rgba(160,80,80,0.08)" },
     controls: { borderTopColor: "rgba(160,80,80,0.08)" },
@@ -256,10 +249,6 @@ const themes = {
       backgroundColor: "#ffffff",
       borderColor: "rgba(0,0,0,0.08)",
       borderWidth: 0.5,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
     },
     divider: { borderBottomColor: "rgba(0,0,0,0.06)" },
     controls: { borderTopColor: "rgba(0,0,0,0.06)" },
@@ -290,7 +279,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingTop: 10,
     paddingBottom: 8,
-    borderBottomWidth: 0.5,
   },
 
   playerCell: {
@@ -326,6 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
   },
   playerInfo: {
+    alignItems: "flex-start",
     flexDirection: "column",
     gap: 4,
     flex: 1,
@@ -359,13 +348,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: "center",
     lineHeight: 14,
-  },
-
-  // ── 碁盤 ──
-  boardWrapper: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fafaf8",
   },
 });

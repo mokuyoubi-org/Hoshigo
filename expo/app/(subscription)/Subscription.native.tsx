@@ -36,15 +36,13 @@ export default function SubscriptionScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* ─── ヘッダー ─── */}
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.push("/Settings")}
+              onPress={() => router.back()}
               activeOpacity={0.7}
             >
               <Text style={styles.backButtonText}>‹ {t("common.back")}</Text>

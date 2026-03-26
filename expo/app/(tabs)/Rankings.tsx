@@ -1,3 +1,4 @@
+import { FloatingToggle } from "@/src/components/FloatingToggle";
 import LoadingModal from "@/src/components/Modals/LoadingModal";
 import { Profile, RankingCard } from "@/src/components/RankingCard";
 import {
@@ -10,12 +11,7 @@ import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { supabase } from "@/src/services/supabase";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import {
-  FlatList,
-  StatusBar as RNStatusBar,
-  StyleSheet,
-  View,
-} from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ─── メインコンポーネント ──────────────────────────────
@@ -42,11 +38,21 @@ export default function Rankings() {
     fetchTopProfiles();
   }, []);
 
+  const [boardSize, setBoardSize] = useState<number>(9);
+
+  const handleToggle = (boardSize: number) => {
+    setBoardSize(boardSize);
+    if (boardSize === 9) {      console.log("9路の処理"); // 9路の初期化など
+    } else {
+      console.log("13路の処理"); // 13路の初期化など
+    }
+  };
   // ── UI ──
   return (
     <SafeAreaView style={styles.container}>
-      <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
+      {/* <FloatingToggle boardSize={boardSize} onToggle={handleToggle} /> */}
+
       <View style={styles.content}>
         {/* リスト */}
         <FlatList
@@ -115,5 +121,4 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     gap: 10,
   },
-
 });

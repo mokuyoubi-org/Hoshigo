@@ -1,3 +1,4 @@
+import { FloatingToggle } from "@/src/components/FloatingToggle";
 import { Avatar } from "@/src/components/GoComponents/Avatar";
 import GumiInfoModal from "@/src/components/Modals/GumiInfoModal";
 import IconSelectorModal from "@/src/components/Modals/IconSelectModal";
@@ -5,22 +6,6 @@ import LoadingModal from "@/src/components/Modals/LoadingModal";
 import LoginNeededModal from "@/src/components/Modals/LoginNeededModal";
 import { BACKGROUND, CHOCOLATE, STRAWBERRY } from "@/src/constants/colors";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
-import { pointsToWins } from "@/src/lib/utils";
-import { supabase } from "@/src/services/supabase";
-import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import {
-  Animated,
-  StatusBar as RNStatusBar,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   DisplaynameContext,
   GumiIndexContext,
@@ -31,6 +16,21 @@ import {
 } from "@/src/contexts/UserContexts";
 import { useTheme } from "@/src/hooks/useTheme";
 import { calculateGumiProgress, getGumiByIndex } from "@/src/lib/gumiUtils";
+import { pointsToWins } from "@/src/lib/utils";
+import { supabase } from "@/src/services/supabase";
+import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PlayerPage() {
   const { colors } = useTheme();
@@ -103,14 +103,26 @@ export default function PlayerPage() {
   const winsNeeded = pointsToWins(progressInfo.pointsNeeded);
   const winText = lang === "en" ? (winsNeeded === 1 ? "win" : "wins") : ""; // 他言語は空でOK
 
+  const [boardSize, setBoardSize] = useState<number>(9);
+
+  const handleToggle = (boardSize: number) => {
+    setBoardSize(boardSize);
+    if (boardSize === 9) {
+      console.log("9路の処理"); // 9路の初期化など
+    } else {
+      console.log("13路の処理"); // 13路の初期化など
+    }
+  };
   // ── UI ──
   return (
     <SafeAreaView style={styles.container}>
-      <RNStatusBar barStyle="dark-content" backgroundColor={BACKGROUND} />
       <StatusBar style="dark" />
+
       <View style={styles.content}>
         {/* ヘッダーバー */}
         <View style={styles.headerBar}>
+          {/* <FloatingToggle boardSize={boardSize} onToggle={handleToggle} /> */}
+
           <TouchableOpacity
             style={styles.settingsButton}
             activeOpacity={0.7}
@@ -278,7 +290,7 @@ const styles = StyleSheet.create({
   // ヘッダーバー
   headerBar: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     paddingHorizontal: 28,
     paddingTop: 12,
     paddingBottom: 14,
