@@ -23,7 +23,6 @@ jobs:
       - name: Pull schema and functions
         run: |
           cd supabase
-          rm -rf migrations
           supabase db pull
           supabase functions download
         env:
