@@ -43,6 +43,9 @@ jobs:
       - name: EAS Build (ストア提出)
         if: steps.pkg.outputs.changed == 'true'
         working-directory: expo
-        env: 
+        env:
+          EXPO_PUBLIC_SLUG: ${{ secrets.EXPO_PUBLIC_SLUG }}
+          EXPO_PUBLIC_NAME: ${{ secrets.EXPO_PUBLIC_NAME }}
+          EXPO_PUBLIC_SCHEME: ${{ secrets.EXPO_PUBLIC_SCHEME }}
           EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
         run: eas build --platform android --profile production --auto-submit
