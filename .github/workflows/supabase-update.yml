@@ -54,16 +54,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      # 6. dev の RPC SQL を本番に反映（データには触れない）
+      # 6. 最新の dev マイグレーションから RPC を本番に反映（データは触らない）
       - name: Deploy dev RPCs to prod
         run: |
-          mkdir -p supabase/functions/sql
-          # dev 側の RPC SQL ファイルをコピーする想定
-          # 例: cp ../dev_repo/sql/*.sql supabase/functions/sql/
-          
-          for sql_file in supabase/functions/sql/*.sql; do
-            echo "Applying $sql_file to prod..."
-            psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$sql_file"
-          done
+          MIGRATION_FILE=$(ls -t supabase/migrations/*_remote_schema.sql | head -1)
+          echo "Applying RPCs from $MIGRATION_FILE to prod..."
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$MIGRATION_FILE"
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
