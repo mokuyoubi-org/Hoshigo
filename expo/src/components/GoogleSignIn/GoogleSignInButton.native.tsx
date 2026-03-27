@@ -109,10 +109,6 @@ export default function GoogleSignInButton() {
         paddingVertical: 10,
         paddingHorizontal: 15,
         justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
       }}
       activeOpacity={0.8}
     >

@@ -25,6 +25,8 @@ export const setUserChannel = (ch: RealtimeChannel) => {
 
 // ─── サブスク解除 ───────────────────────────
 export const clearGameChannel = () => {
+  console.log("clearGameChannel実行");
+
   if (gameChannel) {
     supabase.removeChannel(gameChannel);
     console.log("gameチャンネル サブスク解除");
@@ -33,6 +35,8 @@ export const clearGameChannel = () => {
 };
 
 export const clearUserChannel = () => {
+  console.log("clearUserChannel実行");
+
   if (userChannel) {
     supabase.removeChannel(userChannel);
     console.log("userチャンネル サブスク解除");

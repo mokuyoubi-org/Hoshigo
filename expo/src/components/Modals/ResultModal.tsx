@@ -299,13 +299,6 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     paddingHorizontal: 24,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   limitModalIcon: {
     width: 72,
@@ -337,13 +330,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "100%",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
   },
   limitModalButtonText: {
     fontSize: 16,

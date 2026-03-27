@@ -50,10 +50,6 @@ const styles = StyleSheet.create({
   },
   toggleBtnActive: {
     backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   toggleText: {
     fontSize: 13,

@@ -1,5 +1,7 @@
 // Watch.tsx
+// お約束
 import { GhostCard } from "@/src/components/Cards/GhostCard";
+import { SkeletonCard } from "@/src/components/Cards/SkeletonCard";
 import { GoBoard } from "@/src/components/GoComponents/GoBoard";
 import { ReplayControls } from "@/src/components/GoComponents/ReplayControls";
 import LoadingModal from "@/src/components/Modals/LoadingModal";
@@ -27,6 +29,7 @@ import {
   movesToBoardHistory,
   resultToComment,
 } from "@/src/lib/goUtils";
+import { SetState } from "@/src/lib/utils";
 import { supabase } from "@/src/services/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -40,8 +43,6 @@ import React, {
 } from "react";
 import {
   FlatList,
-  Platform,
-  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -51,14 +52,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ─── 定数 ─────────────────────────────────────────────
-const FETCH_COUNT = 10;
-const FREE_PLAN_LIMIT = 10;
+const FREE_PLAN_LIMIT = 10; // 無料ユーザは10局まで観戦可能
 
 // ─── 型定義 ────────────────────────────────────────────
+// Supabaseからそのまま取得する「対局情報そのもの」。対局の生データのイメージ
 type WatchMatch = {
-  id: number;
-  status?: string;
-  moves?: number[];
+  id: number; // matchId
+  status?: string; // playingか、finishedか
+  moves?: number[]; //
   result?: string;
   turn?: string;
   black_seconds?: number;
@@ -75,7 +76,13 @@ type WatchMatch = {
   white_gumi_index?: number;
 };
 
-type MatchCardData = {
+// カードの状態。
+// null=ロード中, MatchCardData=表示可能
+type CardState = null | WatchCardData;
+
+// WatchMatchを整形して、カードで表示しやすくしたもの
+// WatchMatchに対して、こちらは画面表示用に加工済みのデータ
+type WatchCardData = {
   id: number;
   moves: string[];
   boardHistory: Board[];
@@ -85,8 +92,8 @@ type MatchCardData = {
   match: WatchMatch;
 };
 
-// ─── buildCardData ──────────────────────────────────────
-function buildCardData(match: WatchMatch): MatchCardData {
+// WatchMatch(生データ)を元に、WatchCardData(画面表示用に加工済みのデータ)を作る関数
+const buildCardData = (match: WatchMatch): WatchCardData => {
   const moves = intArrayToStringArray(match.moves ?? []);
   const matchType = match.match_type ?? 0;
   const { boardHistory, agehamaHistory } = movesToBoardHistory(
@@ -94,10 +101,8 @@ function buildCardData(match: WatchMatch): MatchCardData {
     matchType,
     moves,
   );
-
   let territoryBoard = Array.from({ length: 9 }, () => Array(9).fill(0));
   const isFinished = match.status === "finished" && !!match.result;
-
   if (isFinished && match.result) {
     const suffix = match.result[2];
     if (suffix !== "R" && suffix !== "T" && suffix !== "C") {
@@ -116,7 +121,6 @@ function buildCardData(match: WatchMatch): MatchCardData {
       }
     }
   }
-
   return {
     id: match.id,
     match,
@@ -126,40 +130,25 @@ function buildCardData(match: WatchMatch): MatchCardData {
     territoryBoard,
     isFinished,
   };
-}
+};
 
-// ─── PlaceholderCard ───────────────────────────────────
-const PlaceholderCard = ({ cardHeight }: { cardHeight: number }) => (
-  <View style={[styles.card, styles.placeholderCard, { height: cardHeight }]}>
-    <View style={styles.cardAccentLine} />
-    <View style={styles.placeholderContent}>
-      <View style={styles.placeholderBadge} />
-      <View style={styles.placeholderBoard} />
-      <View style={styles.placeholderControls} />
-    </View>
-  </View>
-);
-
-// ─── MatchCard ─────────────────────────────────────────
-const MatchCard = React.memo(
+// WatchCard本体。
+const WatchCard = React.memo(
   ({
-    data,
-    t,
-    cardHeight,
-    boardWidth,
-    onMove,
-    onFinished,
-    isActive,
+    data, // 表示用の加工済みデータ
+    t, // 翻訳機
+    cardHeight, // 高さ
+    boardWidth, // 碁盤サイズ
+    onMove, // 手が来るたび盤面や履歴を更新する関数
+    onFinished, // 終局データが来たら盤面のテリトリーとか状態を更新する関数
   }: {
-    data: MatchCardData;
+    data: WatchCardData;
     t: any;
     cardHeight: number;
     boardWidth: number;
-    onMove: (matchId: number, handler: (payload: any) => void) => void;
-    onFinished: (matchId: number, handler: (payload: any) => void) => void;
-    isActive: boolean;
+    onMove: (handler: (payload: any) => void) => void;
+    onFinished: (handler: (payload: any) => void) => void;
   }) => {
-    const matchId = data.match.id;
     const matchType = data.match.match_type ?? 0;
 
     const [boardHistory, setBoardHistory] = useState<Board[]>(
@@ -182,52 +171,47 @@ const MatchCard = React.memo(
     const boardHistoryRef = useRef<Board[]>(data.boardHistory);
     const agehamaHistoryRef = useRef<Agehama[]>(data.agehamaHistory);
     const movesRef = useRef<string[]>(data.moves);
-    const isAtLatestRef = useRef(true);
+    const isAtLatestRef = useRef(true); // 観戦者が今最新の手を見ているかどうか
 
-    const wrappedSetCurrentIndex: React.Dispatch<React.SetStateAction<number>> =
-      useCallback((value) => {
-        setCurrentIndex((prev) => {
-          const next = typeof value === "function" ? value(prev) : value;
-          isAtLatestRef.current = next === boardHistoryRef.current.length - 1;
-          return next;
-        });
-      }, []);
+    // currentIndex を更新するときに 「最新手かどうか」を自動でチェックして反映する関数
+    // 要はsetCurrentIndexだと考えればok
+    const wrappedSetCurrentIndex: SetState<number> = useCallback((value) => {
+      setCurrentIndex((prev) => {
+        // valueが関数ならprevをそれに適用してnextに格納する、valueが変数ならそのままnextに格納する
+        // 要はnextは新しいstate
+        const next = typeof value === "function" ? value(prev) : value;
+        // 一番最新の手を見ているかどうか
+        isAtLatestRef.current = next === boardHistoryRef.current.length - 1;
+        return next;
+      });
+    }, []);
 
-    const handleMove = useCallback(
-      (payload: any) => {
+    // moveハンドラをonMoveで登録
+    useEffect(() => {
+      onMove((payload: any) => {
         if (isFinished) return;
         const d = payload.payload ?? payload;
         const moveRaw: number = d.move;
         const moveCount: number = d.move_count;
         const move = intArrayToStringArray([moveRaw])[0];
-
-        const isNewMove = moveCount === movesRef.current.length + 1;
-        if (!isNewMove) return;
-
+        if (moveCount !== movesRef.current.length + 1) return;
         const colors: Color[] =
           matchType >= 2 ? ["white", "black"] : ["black", "white"];
         const moverColor: Color = colors[(moveCount - 1) % 2];
         const lastBoard =
           boardHistoryRef.current[boardHistoryRef.current.length - 1];
-
         if (move === "p") {
-          const newBoardHistory = [
-            ...boardHistoryRef.current,
-            cloneBoard(lastBoard),
-          ];
-          const lastAgehama =
+          const nb = [...boardHistoryRef.current, cloneBoard(lastBoard)];
+          const la =
             agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
-          const newAgehamaHistory = [
-            ...agehamaHistoryRef.current,
-            { ...lastAgehama },
-          ];
-          const newMoves = [...movesRef.current, "p"];
-          boardHistoryRef.current = newBoardHistory;
-          agehamaHistoryRef.current = newAgehamaHistory;
-          movesRef.current = newMoves;
-          setBoardHistory(newBoardHistory);
-          setAgehamaHistory(newAgehamaHistory);
-          setMoves(newMoves);
+          const na = [...agehamaHistoryRef.current, { ...la }];
+          const nm = [...movesRef.current, "p"];
+          boardHistoryRef.current = nb;
+          agehamaHistoryRef.current = na;
+          movesRef.current = nm;
+          setBoardHistory(nb);
+          setAgehamaHistory(na);
+          setMoves(nm);
         } else {
           const grid = stringToGrid(move);
           const { board: newBoard, agehama } = applyMove(
@@ -236,71 +220,60 @@ const MatchCard = React.memo(
             cloneBoard(lastBoard),
             moverColor,
           );
-          const newBoardHistory = [...boardHistoryRef.current, newBoard];
-          const lastAgehama =
+          const nb = [...boardHistoryRef.current, newBoard];
+          const la =
             agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
-          const newAgehamaHistory = [
+          const na = [
             ...agehamaHistoryRef.current,
             moverColor === "black"
-              ? { ...lastAgehama, black: lastAgehama.black + agehama }
-              : { ...lastAgehama, white: lastAgehama.white + agehama },
+              ? { ...la, black: la.black + agehama }
+              : { ...la, white: la.white + agehama },
           ];
-          const newMoves = [...movesRef.current, stringifyGrid(grid)];
-          boardHistoryRef.current = newBoardHistory;
-          agehamaHistoryRef.current = newAgehamaHistory;
-          movesRef.current = newMoves;
-          setBoardHistory(newBoardHistory);
-          setAgehamaHistory(newAgehamaHistory);
-          setMoves(newMoves);
+          const nm = [...movesRef.current, stringifyGrid(grid)];
+          boardHistoryRef.current = nb;
+          agehamaHistoryRef.current = na;
+          movesRef.current = nm;
+          setBoardHistory(nb);
+          setAgehamaHistory(na);
+          setMoves(nm);
         }
-
-        if (isAtLatestRef.current) {
+        if (isAtLatestRef.current)
           setCurrentIndex(boardHistoryRef.current.length - 1);
-          isAtLatestRef.current = true;
-        }
-      },
-      [isFinished, matchType],
-    );
+      });
+    }, [onMove, isFinished, matchType]);
 
-    const handleFinished = useCallback(
-      (payload: any) => {
+    // finishedハンドラをonFinishedで登録
+    useEffect(() => {
+      onFinished((payload: any) => {
         const d = payload.payload ?? payload;
         const resultStr: string = d.result;
         const suffix = resultStr[2];
         const deadStones = intArrayToStringArray(d.dead_stones ?? []);
-
         if (suffix !== "R" && suffix !== "T" && suffix !== "C") {
           const lastBoard =
             boardHistoryRef.current[boardHistoryRef.current.length - 1];
-          const lastAgehama =
+          const la =
             agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
           if (lastBoard) {
-            const tb = makeTerritoryBoard(
-              9,
-              lastBoard,
-              deadStones,
-              matchType,
-              lastAgehama.black,
-              lastAgehama.white,
-            ).territoryBoard;
-            setTerritoryBoard(tb);
+            setTerritoryBoard(
+              makeTerritoryBoard(
+                9,
+                lastBoard,
+                deadStones,
+                matchType,
+                la.black,
+                la.white,
+              ).territoryBoard,
+            );
           }
         }
         setResult(resultStr);
         setStatus("finished");
         setIsFinished(true);
-        if (isAtLatestRef.current) {
+        if (isAtLatestRef.current)
           setCurrentIndex(boardHistoryRef.current.length - 1);
-        }
-      },
-      [matchType],
-    );
-
-    useEffect(() => {
-      if (!isActive) return;
-      onMove(matchId, handleMove);
-      onFinished(matchId, handleFinished);
-    }, [isActive, matchId, handleMove, handleFinished, onMove, onFinished]);
+      });
+    }, [onFinished, matchType]);
 
     const board = boardHistory[currentIndex] ?? initializeBoard(9);
 
@@ -358,370 +331,315 @@ export default function Watch() {
   const CARD_HEIGHT = height * 0.78;
   const SNAP_INTERVAL = CARD_HEIGHT + 18;
   const boardWidth = (height * 36) / 100;
-
   const isFree = planId === 0;
 
-  // cards: number = プレースホルダー(ID), MatchCardData = 表示可能
-  const [cards, setCards] = useState<(number | MatchCardData)[]>([]);
+  // 現在表示中のカード（1枚のみ管理）
+  const [currentCard, setCurrentCard] = useState<CardState>(null);
+  // 現在のindex
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showGhost, setShowGhost] = useState(false);
+  // スクロール可否（サブスク・RPC待ち中はfalse）
+  const [scrollEnabled, setScrollEnabled] = useState(false);
+  // 対局が存在するか（0件なら空画面）
+  const [hasMatches, setHasMatches] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const isMountedRef = useRef(true);
-  const channelsRef = useRef<Map<number, RealtimeChannel>>(new Map());
-  const moveHandlersRef = useRef<Map<number, (payload: any) => void>>(
-    new Map(),
-  );
-  const finishedHandlersRef = useRef<Map<number, (payload: any) => void>>(
-    new Map(),
-  );
+  // 現在サブスク中のチャンネル（1つだけ）
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  // moveイベントのハンドラ
+  const moveHandlerRef = useRef<((payload: any) => void) | null>(null);
+  // finishedイベントのハンドラ
+  const finishedHandlerRef = useRef<((payload: any) => void) | null>(null);
   const activeIndexRef = useRef(0);
-  const isFetchingRef = useRef(false);
-  // cardsのrefコピー（コールバック内で最新を参照するため）
-  const cardsRef = useRef<(number | MatchCardData)[]>([]);
+  const isLoadingCardRef = useRef(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      channelsRef.current.forEach((ch) => supabase.removeChannel(ch));
-      channelsRef.current.clear();
+      cleanupChannel();
     };
   }, []);
 
   useEffect(() => {
-    if (planId !== null) initialFetch();
+    if (planId !== null) loadCardAt(0, true);
   }, [planId]);
 
-  // cardsのstate更新と同時にrefも更新
-  const updateCards = useCallback(
-    (
-      updater: (prev: (number | MatchCardData)[]) => (number | MatchCardData)[],
-    ) => {
-      setCards((prev) => {
-        const next = updater(prev);
-        cardsRef.current = next;
-        return next;
-      });
-    },
-    [],
-  );
+  // ─── チャンネルクリーンアップ ──────────────────────────
+  const cleanupChannel = useCallback(() => {
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    moveHandlerRef.current = null;
+    finishedHandlerRef.current = null;
+  }, []);
 
-  // ─── ハンドラ登録 ──────────────────────────────────────
-  const registerMoveHandler = useCallback(
-    (matchId: number, handler: (payload: any) => void) => {
-      moveHandlersRef.current.set(matchId, handler);
-    },
-    [],
-  );
+  // ─── MatchCardへのハンドラ登録コールバック ─────────────
+  const registerMoveHandler = useCallback((handler: (payload: any) => void) => {
+    moveHandlerRef.current = handler;
+  }, []);
 
   const registerFinishedHandler = useCallback(
-    (matchId: number, handler: (payload: any) => void) => {
-      finishedHandlersRef.current.set(matchId, handler);
+    (handler: (payload: any) => void) => {
+      finishedHandlerRef.current = handler;
     },
     [],
   );
 
-  // ─── 単体: サブスク完了 → RPC → カード差し替え ─────────
-  const subscribeAndFetch = useCallback(
-    async (matchId: number) => {
-      if (!isMountedRef.current) return;
-      if (channelsRef.current.has(matchId)) return;
+  // ─── 指定indexのカードを読み込む ──────────────────────
+  // isInitial=trueのときはloading表示
+  const loadCardAt = useCallback(
+    async (requestedIndex: number, isInitial = false) => {
+      if (isLoadingCardRef.current) return;
+      isLoadingCardRef.current = true;
 
+      if (isInitial) setLoading(true);
+
+      // 無料ユーザーの上限チェック
+      const clampedIndex = isFree
+        ? Math.min(requestedIndex, FREE_PLAN_LIMIT - 1)
+        : requestedIndex;
+
+      // 前のチャンネルを解除
+      cleanupChannel();
+      // ロード中はスクロール不可・カードをクリア
+      setScrollEnabled(false);
+      setCurrentCard(null);
+
+      // ① 検索段階: get_watch_match_id_at でindexとidを取得
+      const { data: idData, error: idError } = await supabase
+        .schema("game")
+        .rpc("get_watch_match_id_at", { p_index: clampedIndex });
+
+      if (!isMountedRef.current) {
+        isLoadingCardRef.current = false;
+        return;
+      }
+
+      if (idError || !idData || idData.length === 0) {
+        // 対局が1件もない
+        setHasMatches(false);
+        setLoading(false);
+        isLoadingCardRef.current = false;
+        return;
+      }
+
+      setHasMatches(true);
+      const { actual_index, id } = idData[0] as {
+        actual_index: number;
+        id: number;
+      };
+
+      // actual_indexが要求と違う場合は強制スクロール
+      if (actual_index !== requestedIndex) {
+        flatListRef.current?.scrollToIndex({
+          index: actual_index,
+          animated: true,
+        });
+      }
+      activeIndexRef.current = actual_index;
+      setActiveIndex(actual_index);
+
+      // ② サブスク（完了まで待つ）
       await new Promise<void>((resolve) => {
         const ch = supabase
-          .channel(`game:${matchId}`)
+          .channel(`game:${id}`)
           .on("broadcast", { event: "move" }, (payload) => {
             if (!isMountedRef.current) return;
-            moveHandlersRef.current.get(matchId)?.(payload);
+            moveHandlerRef.current?.(payload);
           })
           .on("broadcast", { event: "finished" }, (payload) => {
             if (!isMountedRef.current) return;
-            finishedHandlersRef.current.get(matchId)?.(payload);
+            finishedHandlerRef.current?.(payload);
           })
           .subscribe((status) => {
             if (status === "SUBSCRIBED") resolve();
           });
-        channelsRef.current.set(matchId, ch);
+        channelRef.current = ch;
       });
-
-      if (!isMountedRef.current) return;
-
-      const { data, error } = await supabase
-        .schema("game")
-        .rpc("get_watch_match", { p_match_id: matchId });
-
-      if (!isMountedRef.current) return;
-      if (error || !data || data.length === 0) {
-        console.error(`[Watch] get_watch_match failed id=${matchId}`, error);
-        // 取得失敗したIDはリストから除去
-        updateCards((prev) => prev.filter((c) => c !== matchId));
-        return;
-      }
-
-      const cardData = buildCardData(data[0] as WatchMatch);
-      updateCards((prev) => prev.map((c) => (c === matchId ? cardData : c)));
-    },
-    [updateCards],
-  );
-
-  // ─── IDフェッチ → プレースホルダー追加 → サブスク&RPC ──
-  // offset指定で先読み。取得結果を元にcardsを更新し、
-  // 必要なら強制スクロールを行う。
-  const fetchFromIndex = useCallback(
-    async (offset: number) => {
-      if (isFetchingRef.current) return;
-      isFetchingRef.current = true;
-
-      const { data, error } = await supabase
-        .schema("game")
-        .rpc("get_watch_match_ids", {
-          p_limit: FETCH_COUNT,
-          p_offset: offset,
-        });
 
       if (!isMountedRef.current) {
-        isFetchingRef.current = false;
-        return;
-      }
-      if (error) {
-        console.error("[Watch] get_watch_match_ids error", error);
-        isFetchingRef.current = false;
+        isLoadingCardRef.current = false;
         return;
       }
 
-      const ids: number[] = (data ?? []).map((row: { id: number }) => row.id);
+      // ③ get_watch_match で棋譜取得
+      const { data: matchData, error: matchError } = await supabase
+        .schema("game")
+        .rpc("get_watch_match", { p_match_id: id });
 
-      // offset=0 から取得した結果でcardsを再構築
-      // （対局が増減している可能性があるので、offset以降は常に最新IDで上書き）
-      updateCards((prev) => {
-        // offset以前のカードはそのまま保持
-        const before = prev.slice(0, offset);
-
-        // offset以降: 新しいIDリストに合わせて更新
-        // 既存のMatchCardDataはidが一致すれば再利用、なければプレースホルダー
-        const existingMap = new Map<number, MatchCardData>();
-        prev.forEach((c) => {
-          if (typeof c !== "number") existingMap.set(c.id, c);
-        });
-
-        const after = ids.map((id) => existingMap.get(id) ?? id);
-        return [...before, ...after];
-      });
-
-      // 無料ユーザー: offset+ids.length >= FREE_PLAN_LIMIT ならゴースト準備
-      if (isFree) {
-        setShowGhost(offset + ids.length >= FREE_PLAN_LIMIT);
-      }
-
-      isFetchingRef.current = false;
-
-      // 新規IDのみサブスク&フェッチ
-      ids.forEach((id) => subscribeAndFetch(id));
-
-      // ─── 強制スクロール判定 ────────────────────────────
-      // スクロールによってoffset=activeIndexで呼ばれた場合、
-      // 取得結果の件数によってはactiveIndexが範囲外になり得る。
-      const currentActive = activeIndexRef.current;
-      if (currentActive < offset) {
-        // offset未満は関係ない呼び出し（初回fetchなど）
+      if (!isMountedRef.current) {
+        isLoadingCardRef.current = false;
         return;
       }
 
-      // offset以降で有効なカード数
-      const validCountAfterOffset = ids.length;
-      const maxValidIndex = offset + validCountAfterOffset - 1;
-
-      if (validCountAfterOffset === 0) {
-        // offset以降が全滅 → offset=0から取り直して先頭へ
-        if (offset > 0) {
-          // 先頭へ強制スクロール
-          flatListRef.current?.scrollToIndex({ index: 0, animated: true });
-          setActiveIndex(0);
-          activeIndexRef.current = 0;
-        }
-        // offset=0でも0件なら空画面（cardsが[]になるので自然に空表示）
-      } else if (currentActive > maxValidIndex) {
-        // 現在のインデックスが範囲外 → 最大有効インデックスへ
-        const targetIndex = maxValidIndex;
-        flatListRef.current?.scrollToIndex({
-          index: targetIndex,
-          animated: true,
-        });
-        setActiveIndex(targetIndex);
-        activeIndexRef.current = targetIndex;
+      if (matchError || !matchData || matchData.length === 0) {
+        // 取得失敗（終局済みなど）→ 同じindexで再試行
+        console.error(`[Watch] get_watch_match failed id=${id}`, matchError);
+        isLoadingCardRef.current = false;
+        loadCardAt(actual_index);
+        return;
       }
-      // currentActive <= maxValidIndex なら何もしない（正常）
+
+      const cardData = buildCardData(matchData[0] as WatchMatch);
+      setCurrentCard(cardData);
+      // ロード完了 → スクロール可
+      setScrollEnabled(true);
+      setLoading(false);
+      isLoadingCardRef.current = false;
     },
-    [isFree, subscribeAndFetch, updateCards],
+    [isFree, cleanupChannel],
   );
 
-  // ─── 初回フェッチ ──────────────────────────────────────
-  const initialFetch = useCallback(async () => {
-    setLoading(true);
-    setCards([]);
-    cardsRef.current = [];
-    setActiveIndex(0);
-    activeIndexRef.current = 0;
-    setShowGhost(false);
+  // ─── FlatList用のdata ──────────────────────────────────
+  // activeIndexの数だけダミー + 現在カード + 次へのダミーでリストを構成。
+  // FlatListはindexベースで動かすためのダミー配列。
+  // 実際の描画は activeIndex の位置だけ MatchCard、他は空View。
+  //
+  // ただしこの方式だとgetItemLayoutが複雑になるため、
+  // シンプルに「カードは常に1枚だけ表示、スワイプはScrollViewで制御」する方針に変更。
+  // → FlatListをやめてScrollView + 手動スワイプ検知に切り替える。
+  //
+  // 実装: activeIndexを中心に前後1枚ずつの計3枚をFlatListに持たせる。
+  // [前ダミー or 前カード, 現在カード, 次ダミー]
+  // スワイプで前後に移動したらloadCardAtを呼ぶ。
 
-    channelsRef.current.forEach((ch) => supabase.removeChannel(ch));
-    channelsRef.current.clear();
-    moveHandlersRef.current.clear();
-    finishedHandlersRef.current.clear();
+  // FlatListのdata: [prev_slot, current_slot, next_slot]
+  // スロットの種類: "prev" | "current" | "next"
+  type Slot = "prev" | "current" | "next";
+  const listData: Slot[] = ["prev", "current", "next"];
 
-    await fetchFromIndex(0);
-    if (isMountedRef.current) setLoading(false);
-  }, [fetchFromIndex]);
-
-  // ─── スクロール時 ──────────────────────────────────────
-  const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: any) => {
-      if (viewableItems.length === 0) return;
-
-      const newIndex: number = viewableItems[0].index ?? 0;
-      activeIndexRef.current = newIndex;
-      setActiveIndex(newIndex);
-
-      // 無料ユーザーは FREE_PLAN_LIMIT 枚目（index = FREE_PLAN_LIMIT - 1）
-      // に達したらこれ以上fetchしない（ゴースト表示のみ）
-      if (isFree && newIndex >= FREE_PLAN_LIMIT - 1) return;
-
-      // 現在インデックスを offset として先読み
-      fetchFromIndex(newIndex);
-    },
-    [isFree, fetchFromIndex],
-  );
-
-  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 });
-
-  // ─── リフレッシュ（空のときのみ） ──────────────────────
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await initialFetch();
-    if (isMountedRef.current) setRefreshing(false);
-  }, [initialFetch]);
-
-  // ─── renderItem ──────────────────────────────────────────
   const renderItem = useCallback(
-    ({ item, index }: { item: number | MatchCardData; index: number }) => {
-      if (typeof item === "number") {
-        return <PlaceholderCard cardHeight={CARD_HEIGHT} />;
+    ({ item }: { item: Slot }) => {
+      if (item === "current") {
+        if (currentCard === null) {
+          return <SkeletonCard height={CARD_HEIGHT} />;
+        }
+        return (
+          <WatchCard
+            data={currentCard}
+            t={t}
+            cardHeight={CARD_HEIGHT}
+            boardWidth={boardWidth}
+            onMove={registerMoveHandler}
+            onFinished={registerFinishedHandler}
+          />
+        );
       }
-      return (
-        <MatchCard
-          data={item}
-          t={t}
-          cardHeight={CARD_HEIGHT}
-          boardWidth={boardWidth}
-          onMove={registerMoveHandler}
-          onFinished={registerFinishedHandler}
-          isActive={index === activeIndex}
-        />
-      );
+      // prev/next はスワイプ用の空スロット
+      return <View style={{ height: CARD_HEIGHT }} />;
     },
     [
+      currentCard,
       t,
       CARD_HEIGHT,
       boardWidth,
       registerMoveHandler,
       registerFinishedHandler,
-      activeIndex,
     ],
   );
 
-  const keyExtractor = useCallback(
-    (item: number | MatchCardData) =>
-      typeof item === "number" ? `ph-${item}` : `card-${item.id}`,
-    [],
+  // ─── スワイプ検知 ──────────────────────────────────────
+  // FlatListは常にindex=1（current）を表示。
+  // スワイプでindex=0(prev)かindex=2(next)に移動したら対応するindexのカードを読み込み、
+  // FlatListをindex=1に戻す。
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: any) => {
+      if (viewableItems.length === 0) return;
+      const slot: Slot = viewableItems[0].item;
+      if (slot === "current") return;
+
+      const direction = slot === "next" ? 1 : -1;
+      let nextIndex = activeIndexRef.current + direction;
+
+      // 無料ユーザー上限
+      if (isFree && nextIndex >= FREE_PLAN_LIMIT) {
+        // ゴーストへ進もうとした → currentに戻す
+        flatListRef.current?.scrollToIndex({ index: 1, animated: false });
+        return;
+      }
+
+      // 0未満には行けない
+      if (nextIndex < 0) {
+        // flatListRef.current?.scrollToIndex({ index: 1, animated: false });
+        // return;
+        nextIndex = 0;
+      }
+
+      // FlatListをcurrentに即戻し（ユーザーには見えない）
+      flatListRef.current?.scrollToIndex({ index: 1, animated: false });
+
+      loadCardAt(nextIndex);
+    },
+    [isFree, loadCardAt],
   );
 
-  // プレースホルダー中はスクロール不可（ただし空のときは除く）
-  // 対局がある限り常にスクロール可能にするため、
-  // 「全カードがreadyかどうか」ではなく
-  // 「今見ているカードがreadyかどうか」でのみ制限する
-  const currentCard = cards[activeIndex];
-  const isCurrentReady =
-    currentCard !== undefined && typeof currentCard !== "number";
-  const scrollEnabled = cards.length === 0 || isCurrentReady;
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 });
 
-  const isEmpty = cards.length === 0 && !loading;
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadCardAt(0, true);
+    if (isMountedRef.current) setRefreshing(false);
+  }, [loadCardAt]);
+
+  const keyExtractor = useCallback((item: Slot) => item, []);
+
+  const isEmpty = hasMatches === false && !loading;
   const isFreeLimitReached = isFree && activeIndex >= FREE_PLAN_LIMIT - 1;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      {/* リフレッシュボタン: web & 空のときのみ */}
-      {Platform.OS === "web" && isEmpty && (
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={onRefresh}
-          disabled={refreshing}
-        >
-          <Ionicons
-            name="refresh-circle"
-            size={32}
-            color={refreshing ? CHOCOLATE_SUB : STRAWBERRY}
-          />
-        </TouchableOpacity>
-      )}
-
-      <FlatList
-        ref={flatListRef}
-        pagingEnabled
-        data={cards}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        snapToInterval={SNAP_INTERVAL}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        scrollEnabled={scrollEnabled}
-        getItemLayout={(_, i) => ({
-          length: CARD_HEIGHT,
-          offset: SNAP_INTERVAL * i,
-          index: i,
-        })}
-        contentContainerStyle={
-          isEmpty
-            ? { flex: 1, alignItems: "center", justifyContent: "center" }
-            : styles.listContent
-        }
-        showsVerticalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig.current}
-        // プルリフレッシュ: 空のときのみ
-        refreshControl={
-          Platform.OS !== "web" && isEmpty ? (
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={STRAWBERRY}
-              titleColor={CHOCOLATE_SUB}
-              colors={[STRAWBERRY]}
+      {isEmpty ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>{t("Watch.noMatches")}</Text>
+          <Text style={styles.emptyHint}>{t("Watch.pushToRefreshHint")}</Text>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={onRefresh}
+            disabled={refreshing}
+          >
+            <Ionicons
+              name="refresh-circle"
+              size={32}
+              color={refreshing ? CHOCOLATE_SUB : STRAWBERRY}
             />
-          ) : undefined
-        }
-        ListEmptyComponent={
-          isEmpty ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>{t("Watch.noMatches")}</Text>
-              <Text style={styles.emptyHint}>
-                {Platform.OS !== "web"
-                  ? t("Watch.pullToRefreshHint")
-                  : t("Watch.pushToRefreshHint")}
-              </Text>
-            </View>
-          ) : null
-        }
-        ListFooterComponent={
-          showGhost && isFreeLimitReached ? (
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <FlatList
+            ref={flatListRef}
+            pagingEnabled
+            data={listData}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            horizontal={false}
+            snapToInterval={SNAP_INTERVAL}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            scrollEnabled={scrollEnabled}
+            initialScrollIndex={1}
+            getItemLayout={(_, i) => ({
+              length: CARD_HEIGHT,
+              offset: SNAP_INTERVAL * i,
+              index: i,
+            })}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig.current}
+          />
+          {/* 無料ユーザーが上限に達したらGhostCardをオーバーレイ */}
+          {isFreeLimitReached && !scrollEnabled === false && (
             <GhostCard cardHeight={CARD_HEIGHT} t={t} />
-          ) : null
-        }
-      />
+          )}
+        </>
+      )}
 
       <LoadingModal text={t("common.loading")} visible={loading} />
     </SafeAreaView>
@@ -738,9 +656,9 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   emptyContainer: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 120,
     gap: 16,
   },
   emptyText: {
@@ -749,13 +667,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     fontWeight: "600",
   },
-  emptyHint: {
-    fontSize: 12,
-    color: CHOCOLATE_SUB,
-    letterSpacing: 0.5,
-  },
+  emptyHint: { fontSize: 12, color: CHOCOLATE_SUB, letterSpacing: 0.5 },
   refreshButton: {
-    alignSelf: "flex-end",
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 16,
@@ -772,39 +685,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 16,
   },
-  placeholderCard: {
-    opacity: 0.5,
-  },
-  placeholderContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "space-evenly",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-  },
-  placeholderBadge: {
-    width: 100,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(200,214,230,0.35)",
-  },
-  placeholderBoard: {
-    width: "80%",
-    aspectRatio: 1,
-    borderRadius: 12,
-    backgroundColor: "rgba(200,214,230,0.25)",
-  },
-  placeholderControls: {
-    width: "60%",
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: "rgba(200,214,230,0.2)",
-  },
-  cardAccentLine: {
-    height: 2.5,
-    backgroundColor: STRAWBERRY,
-    opacity: 0.6,
-  },
+  cardAccentLine: { height: 2.5, backgroundColor: STRAWBERRY, opacity: 0.6 },
   matchHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -813,10 +694,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     backgroundColor: "rgba(249,250,251,0.8)",
   },
-  centerBadgeArea: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  centerBadgeArea: { alignItems: "center", justifyContent: "center" },
   liveBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -828,12 +706,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  liveDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: "#48bb78",
-  },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#48bb78" },
   liveText: {
     fontSize: 11,
     fontWeight: "700",
@@ -860,8 +733,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#fafbfc",
   },
-  controlsWrapper: {
-    alignSelf: "center",
-    paddingVertical: 8,
-  },
+  controlsWrapper: { alignSelf: "center", paddingVertical: 8 },
 });

@@ -116,10 +116,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: "100%",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
   },
   header: {
     flexDirection: "row",
@@ -161,10 +157,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   primaryText: {
     fontSize: 16,

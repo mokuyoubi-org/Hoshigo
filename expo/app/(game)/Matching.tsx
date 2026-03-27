@@ -26,7 +26,9 @@ export default function Matching() {
   const uid = useContext(UidContext);
   useEffect(() => {
     if (!uid) return;
+    console.log("uid: ", uid);
     clearUserChannel();
+
     clearGameChannel();
 
     joinWaiting();
