@@ -7,7 +7,7 @@
 ## goscorer
 
 **ライセンス:** MIT License  
-**詳細:** [https://github.com/lightvector/goscorer/blob/main/LICENSE.txt](https://github.com/lightvector/goscorer/blob/main/LICENSE.txt)
+**詳細:** [`lightvector: goscorer/LICENSE`](https://github.com/lightvector/goscorer/blob/main/LICENSE.txt)
 
 js製のgoscorerをアプリに同梱しています。
 
@@ -36,7 +36,7 @@ IN THE SOFTWARE.
 ## @expo/vector-icons (Ionicons)
 
 **ライセンス:** MIT License  
-**詳細:** [https://github.com/expo/vector-icons/blob/master/LICENSE](https://github.com/expo/vector-icons/blob/master/LICENSE)
+**詳細:** [`expo: vector-icons/LICENSE`](https://github.com/expo/vector-icons/blob/master/LICENSE)
 
 一部のアイコンを PNG としてアプリに同梱しています。
 
