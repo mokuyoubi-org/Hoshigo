@@ -28,7 +28,12 @@ export const PLANS: Plan[] = [
     planId: 0,
     name: "Start",
     description: "囲碁を始めるあなたに",
-    features: ["1日10局", "10棋譜までクラウドに保存", "広告なし"],
+    features: [
+      "1日10局",
+      "10棋譜までクラウドに保存",
+      "10局まで観戦可能",
+      "広告なし",
+    ],
     androidProductId: "",
     androidMonthlyBasePlanId: "",
     androidYearlyBasePlanId: "",
@@ -40,7 +45,12 @@ export const PLANS: Plan[] = [
     planId: 1,
     name: "Plus",
     description: "囲碁をもっと楽しみたいあなたに",
-    features: ["対局無制限", "全棋譜をクラウドに保存", "広告なし"],
+    features: [
+      "対局無制限",
+      "全棋譜をクラウドに保存",
+      "全対局を観戦可能",
+      "広告なし",
+    ],
     androidProductId: process.env.EXPO_PUBLIC_HOSHIGO_PLUS_ANDROID_PRODUCT_ID!,
     androidMonthlyBasePlanId:
       process.env.EXPO_PUBLIC_HOSHIGO_PLUS_ANDROID_MONTHLY_BASE_PLAN_ID!,
