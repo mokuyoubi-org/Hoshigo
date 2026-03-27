@@ -1,13 +1,11 @@
-name: Supabase Update
+name: Sync Prod Functions Safely
 
 on:
   workflow_dispatch:
 
 jobs:
-  promote:
+  sync-functions:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -15,18 +13,8 @@ jobs:
         with:
           version: latest
 
-      - name: Dump dev schema
-        run: |
-          rm -rf supabase/migrations/
-          mkdir -p supabase/migrations/
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          supabase db dump \
-            --db-url "${{ secrets.SUPABASE_DB_URL_DEV }}" \
-            -f supabase/migrations/${TIMESTAMP}_remote_schema.sql
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Download dev edge functions
+      # dev の関数をダウンロード
+      - name: Download dev functions
         run: |
           rm -rf supabase/functions/
           mkdir -p supabase/functions/
@@ -35,48 +23,26 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Commit and push
+      # 本番の関数一覧を取得して、dev にないものを削除
+      - name: Delete functions removed in dev
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add supabase/migrations/ supabase/functions/
-          git diff --staged --quiet || git commit -m "chore: promote dev schema and functions to production"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push schema to production
-        run: |
-          MIGRATION_FILE=$(ls -t supabase/migrations/*.sql | head -1)
-          
-          # 本番DBの独自スキーマをリセット
-          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -c "
-            DROP SCHEMA IF EXISTS public CASCADE;
-            CREATE SCHEMA public;
-            DROP SCHEMA IF EXISTS system CASCADE;
-            DROP SCHEMA IF EXISTS game CASCADE;
-            DROP SCHEMA IF EXISTS users CASCADE;
-          "
-          
-          # スキーマを流し込む
-          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$MIGRATION_FILE"
-
-      - name: Delete all prod functions
-        run: |
-          supabase functions list \
+          PROD_FUNCS=$(supabase functions list \
             --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-            --output json \
-            | jq -r '.[].name' \
-            | while read fn; do
-                echo "Deleting $fn"
-                supabase functions delete "$fn" \
-                  --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-                  --yes
-              done
+            --output json | jq -r '.[].name')
+          
+          for fn in $PROD_FUNCS; do
+            if [ ! -d "supabase/functions/$fn" ]; then
+              echo "Deleting $fn (not in dev)"
+              supabase functions delete "$fn" \
+                --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
+                --yes
+            fi
+          done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Deploy edge functions to production
+      # dev の関数を本番にデプロイ
+      - name: Deploy dev functions to prod
         run: |
           cd supabase
           supabase functions deploy --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}"
