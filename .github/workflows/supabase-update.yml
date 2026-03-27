@@ -71,6 +71,15 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      - name: Delete all prod functions
+        run: |
+          cd supabase
+          for fn in $(supabase functions list --linked --json | jq -r '.[].name'); do
+            supabase functions delete $fn --linked --yes
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Deploy edge functions to production
         run: |
           cd supabase
