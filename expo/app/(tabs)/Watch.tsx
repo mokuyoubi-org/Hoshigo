@@ -459,7 +459,7 @@ export default function Watch() {
             if (status === "SUBSCRIBED") resolve();
           });
         channelRef.current = ch;
-      });
+      }); 
       if (!isMountedRef.current) {
         isLoadingCardRef.current = false;
         return;
