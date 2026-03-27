@@ -8,7 +8,6 @@ import {
 import { SignInWithIdTokenCredentials } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/src/services/supabase";
-import { router } from "expo-router";
 
 export default function GoogleSignInButton() {
   // Generate secure, random values for state and nonce
@@ -36,7 +35,6 @@ export default function GoogleSignInButton() {
 
 if (data) {
   console.log("Google sign in successful:", data);
-  router.replace("/Home"); // 追加
 }
     }
   }
