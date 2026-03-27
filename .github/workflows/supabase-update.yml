@@ -210,6 +210,71 @@ jobs:
           result = re.sub(r'(ALTER TABLE[^;]+ADD COLUMN)\s+(?!IF\s+NOT\s+EXISTS)', r'\1 IF NOT EXISTS ', result, flags=re.IGNORECASE)
           result = wrap_identity_blocks(result)
 
+          # ADD CONSTRAINT (PRIMARY KEY / UNIQUE / FOREIGN KEY / CHECK) を
+          # 制約名が既に存在する場合スキップするよう DO $$ でラップ
+          def wrap_constraint_blocks(text):
+              import re as _re
+              result = []
+              i = 0
+              while i < len(text):
+                  stmt_start = i
+                  depth = 0
+                  in_str = False
+                  stmt_end = -1
+                  while i < len(text):
+                      ch = text[i]
+                      if ch == "'" and not in_str:
+                          in_str = True
+                      elif ch == "'" and in_str:
+                          in_str = False
+                      elif ch == '(' and not in_str:
+                          depth += 1
+                      elif ch == ')' and not in_str:
+                          depth -= 1
+                      elif ch == ';' and not in_str and depth == 0:
+                          stmt_end = i
+                          i += 1
+                          break
+                      i += 1
+                  if stmt_end == -1:
+                      result.append(text[stmt_start:])
+                      break
+                  stmt = text[stmt_start:stmt_end+1]
+                  # ADD CONSTRAINT <name> PRIMARY KEY / UNIQUE / FOREIGN KEY / CHECK
+                  m = _re.search(
+                      r'ADD CONSTRAINT\s+"?([^"\s]+)"?\s+(PRIMARY KEY|UNIQUE|FOREIGN KEY|CHECK)\b',
+                      stmt, _re.IGNORECASE
+                  )
+                  if m:
+                      constraint_name = m.group(1)
+                      # テーブル名を取得（schema.table 形式）
+                      tm = _re.search(
+                          r'ALTER TABLE\s+(?:ONLY\s+)?"?([^"\s]+)"?\."?([^"\s]+)"?',
+                          stmt, _re.IGNORECASE
+                      )
+                      if tm:
+                          tbl_schema = tm.group(1)
+                          tbl_name   = tm.group(2)
+                          wrapped = (
+                              f"DO $constraint_guard$\n"
+                              f"BEGIN\n"
+                              f"  IF NOT EXISTS (\n"
+                              f"    SELECT 1 FROM pg_constraint c\n"
+                              f"    JOIN pg_namespace n ON n.oid = c.connamespace\n"
+                              f"    WHERE n.nspname = '{tbl_schema}'\n"
+                              f"      AND c.conname = '{constraint_name}'\n"
+                              f"  ) THEN\n"
+                              f"    {stmt.strip()}\n"
+                              f"  END IF;\n"
+                              f"END $constraint_guard$;\n"
+                          )
+                          result.append(wrapped)
+                          continue
+                  result.append(stmt)
+              return "".join(result)
+
+          result = wrap_constraint_blocks(result)
+
           with open(dst, "w", encoding="utf-8") as f:
               f.write(result)
 
