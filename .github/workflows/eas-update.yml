@@ -36,10 +36,12 @@ jobs:
             || echo "changed=false" >> $GITHUB_OUTPUT
 
       - name: Setup EAS config
-        working-directory: expo
         run: |
-          mkdir -p .eas
-          echo "{\"projectId\": \"${{ secrets.EAS_PROJECT_ID }}\"}" > .eas/config.json
+          mkdir -p $GITHUB_WORKSPACE/expo/.eas
+          echo "{\"projectId\": \"${{ secrets.EAS_PROJECT_ID }}\"}" > $GITHUB_WORKSPACE/expo/.eas/config.json
+
+      - name: Debug EAS config
+        run: cat $GITHUB_WORKSPACE/expo/.eas/config.json
 
       - name: EAS Update (OTA)
         if: steps.pkg.outputs.changed == 'false'
@@ -47,6 +49,7 @@ jobs:
         run: eas update --branch production --message "${{ github.event.head_commit.message }}"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_UPDATE_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
 
       - name: EAS Build (ストア提出)
         if: steps.pkg.outputs.changed == 'true'
