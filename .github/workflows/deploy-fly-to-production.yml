@@ -1,4 +1,5 @@
-name: Deploy Fly
+# Dev用flyを本番用に格上げしたい時に、ローカルのflyフォルダを更新することで、自動でデプロイするワークフロウ。
+name: Deploy Fly to Production
 
 on:
   push:
@@ -15,7 +16,7 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Deploy to Fly
+      - name: Deploy to production
         run: flyctl deploy --remote-only
         working-directory: fly
         env:

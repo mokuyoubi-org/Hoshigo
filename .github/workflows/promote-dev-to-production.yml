@@ -1,7 +1,8 @@
+# webで開発したdev用supabaseを本番用に格上げしたい時に手動で実行するワークフロウ
 name: Promote Dev to Production
 
 on:
-  workflow_dispatch: # 手動実行
+  workflow_dispatch:
 
 jobs:
   promote:

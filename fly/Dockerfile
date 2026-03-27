@@ -6,12 +6,12 @@ FROM python:3.11-slim
 ENV DATA_DIR=/usr/local/share/pachi
 WORKDIR /app
 
-# goscorer: GitHubから直接DL
-RUN wget https://raw.githubusercontent.com/lightvector/goscorer/main/python/goscorer.py
-
 # 1. gnugo: aptで用意 うどん
 RUN apt-get update && apt-get install -y gnugo unzip wget && \
     rm -rf /var/lib/apt/lists/*
+
+# goscorer: GitHubから直接DL
+RUN wget https://raw.githubusercontent.com/lightvector/goscorer/main/python/goscorer.py
 
 # 2. pachi くるみ
 RUN apt-get update && apt-get install -y \

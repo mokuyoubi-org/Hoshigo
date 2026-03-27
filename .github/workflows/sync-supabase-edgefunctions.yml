@@ -1,3 +1,5 @@
+# webで開発した本番用supabaseをgithubに同期したい時に手動で実行するワークフロウ
+# メンテ中にして工事する。課金周りのedgefunctions。
 name: Sync Supabase EdgeFunctions
 
 on:
