@@ -35,10 +35,18 @@ jobs:
             && echo "changed=true" >> $GITHUB_OUTPUT \
             || echo "changed=false" >> $GITHUB_OUTPUT
 
+      - name: Setup EAS config
+        working-directory: expo
+        run: |
+          mkdir -p .eas
+          echo "{\"projectId\": \"${{ secrets.EAS_PROJECT_ID }}\"}" > .eas/config.json
+
       - name: EAS Update (OTA)
         if: steps.pkg.outputs.changed == 'false'
         working-directory: expo
         run: eas update --branch production --message "${{ github.event.head_commit.message }}"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_UPDATE_TOKEN }}
 
       - name: EAS Build (ストア提出)
         if: steps.pkg.outputs.changed == 'true'
