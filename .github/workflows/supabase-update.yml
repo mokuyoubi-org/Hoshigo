@@ -16,7 +16,7 @@ jobs:
           version: latest
 
       - name: Link dev project
-        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF_DEV }}
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF_DEV }}"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -27,7 +27,6 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           supabase db dump \
             --db-url "${{ secrets.SUPABASE_DB_URL_DEV }}" \
-            --clean \
             -f supabase/migrations/${TIMESTAMP}_remote_schema.sql
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -53,11 +52,22 @@ jobs:
 
       - name: Push schema to production
         run: |
-          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -c "DELETE FROM supabase_migrations.schema_migrations;"
-          supabase db push --db-url "${{ secrets.SUPABASE_DB_URL_PROD }}" --yes
+          MIGRATION_FILE=$(ls supabase/migrations/*.sql | head -1)
+          
+          # 本番DBの独自スキーマをリセット
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -c "
+            DROP SCHEMA IF EXISTS public CASCADE;
+            CREATE SCHEMA public;
+            DROP SCHEMA IF EXISTS system CASCADE;
+            DROP SCHEMA IF EXISTS game CASCADE;
+            DROP SCHEMA IF EXISTS users CASCADE;
+          "
+          
+          # スキーマを流し込む
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$MIGRATION_FILE"
 
       - name: Link prod project
-        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF_PROD }}
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

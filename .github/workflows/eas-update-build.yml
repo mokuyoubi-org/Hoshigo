@@ -1,6 +1,6 @@
 # Expo部分を更新したときに自動でUpdateするワークフロウ。
 # package.jsonが変わっていればビルドして本番用に提出する。
-name: EAS Update / Build
+name: Auto EAS Update / Build
 
 on:
   push:
