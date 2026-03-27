@@ -22,14 +22,19 @@ jobs:
 
       - name: Dump dev schema
         run: |
+          rm -rf supabase/migrations/
+          mkdir -p supabase/migrations/
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
           supabase db dump \
             --db-url "${{ secrets.SUPABASE_DB_URL_DEV }}" \
-            -f supabase/migrations/20260327031305_remote_schema.sql
+            -f supabase/migrations/${TIMESTAMP}_remote_schema.sql
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Download dev edge functions
         run: |
+          rm -rf supabase/functions/
+          mkdir -p supabase/functions/
           cd supabase
           supabase functions download
         env:
@@ -49,6 +54,7 @@ jobs:
         run: |
           supabase db push \
             --db-url "${{ secrets.SUPABASE_DB_URL_PROD }}"
+            --include-all
 
       - name: Link prod project
         run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF_PROD }}
