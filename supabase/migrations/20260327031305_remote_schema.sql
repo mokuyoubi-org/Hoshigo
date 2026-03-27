@@ -2357,13 +2357,3 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 
-
-  create policy "Anyone can receive broadcasts"
-  on "realtime"."messages"
-  as permissive
-  for select
-  to anon, authenticated
-using (true);
-
-
-

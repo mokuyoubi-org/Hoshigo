@@ -9,15 +9,15 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'), {
   httpClient: Stripe.createFetchHttpClient()
 });
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://hoshigo.app',
+  'Access-Control-Allow-Origin': Deno.env.get("ALLOWED_ORIGIN"),
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
 const ALLOWED_PRICE_IDS = new Set([
-  'price_1TERr4HB6HAtRQbPFhUJrMjA',
-  'price_1TERr3HB6HAtRQbPdr9olppJ',
-  'price_1TES2mHB6HAtRQbPUXlbqn6z',
-  'price_1TES2lHB6HAtRQbPHqw2palY'
+  Deno.env.get("STRIPE_PRICE_PLUS_MONTHLY"),
+  Deno.env.get("STRIPE_PRICE_PLUS_YEARLY"),
+  Deno.env.get("STRIPE_PRICE_ULTRA_MONTHLY"),
+  Deno.env.get("STRIPE_PRICE_ULTRA_YEARLY")
 ]);
 Deno.serve(async (req)=>{
   if (req.method === 'OPTIONS') {

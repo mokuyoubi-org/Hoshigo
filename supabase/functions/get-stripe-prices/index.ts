@@ -51,10 +51,10 @@ const CORS_HEADERS = {
 };
 // 取得対象の Price ID（ホワイトリスト）
 const PRICE_IDS = [
-  'price_1TERr4HB6HAtRQbPFhUJrMjA',
-  'price_1TERr3HB6HAtRQbPdr9olppJ',
-  'price_1TES2mHB6HAtRQbPUXlbqn6z',
-  'price_1TES2lHB6HAtRQbPHqw2palY'
+  Deno.env.get("STRIPE_PRICE_PLUS_MONTHLY"),
+  Deno.env.get("STRIPE_PRICE_PLUS_YEARLY"),
+  Deno.env.get("STRIPE_PRICE_ULTRA_MONTHLY"),
+  Deno.env.get("STRIPE_PRICE_ULTRA_YEARLY")
 ];
 /* 金額を通貨に応じてフォーマット 
 price.unit_amount = 300
