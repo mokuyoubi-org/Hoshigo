@@ -466,7 +466,7 @@ export default function Watch() {
         return;
       }
 
-      // ③ get_watch_match で棋譜取得
+      // ③ 実際にマッチを取ってくる: get_watch_match で棋譜取得
       const { data: matchData, error: matchError } = await supabase
         .schema("game")
         .rpc("get_watch_match", { p_match_id: id });
