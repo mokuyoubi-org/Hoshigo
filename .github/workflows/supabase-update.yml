@@ -1,24 +1,167 @@
-name: Supabase Safe Full Sync (EF + PostgreSQL)
+name: Supabase Update
 
 on:
   workflow_dispatch:
 
 jobs:
-  sync-ef-and-rpc:
+  promote:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      # 1. コードをチェックアウト
       - uses: actions/checkout@v4
 
-      # 2. supabase CLI をセットアップ
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
-      # 3. dev の Edge Functions をダウンロード
+      - name: Install psql client
+        run: sudo apt-get install -y postgresql-client
+
+      # ──────────────────────────────────────────────
+      # 1. DEVから「スキーマ定義のみ」をダンプ
+      # ──────────────────────────────────────────────
+      - name: Dump dev schema (structure only)
+        run: |
+          mkdir -p supabase/migrations/
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          supabase db dump \
+            --db-url "${{ secrets.SUPABASE_DB_URL_DEV }}" \
+            --schema public,system,game,users \
+            -f supabase/migrations/${TIMESTAMP}_schema_only.sql
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      # ──────────────────────────────────────────────
+      # 2. DEVとPRODを比較して差分DDLを生成
+      #    削除系: DROP FUNCTION / DROP TRIGGER / DROP VIEW / DROP COLUMN
+      #    テーブル丸ごとDROPは警告のみ（実行しない）
+      # ──────────────────────────────────────────────
+      - name: Generate diff DDL (safe - no DROP TABLE)
+        run: |
+          python3 - <<'PYEOF'
+          import subprocess, os, re
+
+          DEV_URL  = os.environ["SUPABASE_DB_URL_DEV"]
+          PROD_URL = os.environ["SUPABASE_DB_URL_PROD"]
+          OUT      = "supabase/migrations/diff_apply.sql"
+
+          def query(url, sql):
+              r = subprocess.run(
+                  ["psql", url, "-At", "-c", sql],
+                  capture_output=True, text=True, check=True
+              )
+              return {row for row in r.stdout.strip().splitlines() if row}
+
+          SCHEMAS   = ("public", "system", "game", "users")
+          schema_in = "'" + "','".join(SCHEMAS) + "'"
+
+          lines    = ["-- Auto-generated diff DDL (data-safe)\n", "BEGIN;\n\n"]
+          warnings = []
+
+          # ── Functions / Procedures ─────────────────
+          sql_funcs = (
+              f"SELECT n.nspname||'.'||p.proname"
+              f"||'('||pg_get_function_identity_arguments(p.oid)||')' "
+              f"FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace "
+              f"WHERE n.nspname IN ({schema_in}) AND p.prokind IN ('f','p')"
+          )
+          for fn in sorted(query(PROD_URL, sql_funcs) - query(DEV_URL, sql_funcs)):
+              lines.append(f"DROP FUNCTION IF EXISTS {fn} CASCADE;\n")
+
+          # ── Triggers ───────────────────────────────
+          sql_trg = (
+              f"SELECT trigger_schema||'.'||trigger_name||'@'||event_object_table "
+              f"FROM information_schema.triggers "
+              f"WHERE trigger_schema IN ({schema_in})"
+          )
+          for t in sorted(query(PROD_URL, sql_trg) - query(DEV_URL, sql_trg)):
+              schema_name, rest = t.split(".", 1)
+              trg_name, tbl     = rest.split("@", 1)
+              lines.append(f"DROP TRIGGER IF EXISTS {trg_name} ON {schema_name}.{tbl} CASCADE;\n")
+
+          # ── Views ──────────────────────────────────
+          sql_view = (
+              f"SELECT table_schema||'.'||table_name FROM information_schema.views "
+              f"WHERE table_schema IN ({schema_in})"
+          )
+          for v in sorted(query(PROD_URL, sql_view) - query(DEV_URL, sql_view)):
+              lines.append(f"DROP VIEW IF EXISTS {v} CASCADE;\n")
+
+          # ── Tables: DROP は警告のみ ─────────────────
+          sql_tbl = (
+              f"SELECT table_schema||'.'||table_name FROM information_schema.tables "
+              f"WHERE table_schema IN ({schema_in}) AND table_type='BASE TABLE'"
+          )
+          for t in sorted(query(PROD_URL, sql_tbl) - query(DEV_URL, sql_tbl)):
+              warnings.append(f"Table '{t}' exists in PROD but not in DEV. Manual DROP required if intended.")
+
+          # ── Columns: 削除 ──────────────────────────
+          sql_col = (
+              f"SELECT table_schema||'.'||table_name||'.'||column_name "
+              f"FROM information_schema.columns "
+              f"WHERE table_schema IN ({schema_in})"
+          )
+          for c in sorted(query(PROD_URL, sql_col) - query(DEV_URL, sql_col)):
+              parts      = c.rsplit(".", 1)
+              tbl, col   = parts[0], parts[1]
+              # そのテーブルが両方に存在する場合のみ DROP COLUMN を発行
+              # (テーブル自体がPRODにしかない場合は上の警告で対応済み)
+              lines.append(f"ALTER TABLE IF EXISTS {tbl} DROP COLUMN IF EXISTS {col};\n")
+
+          lines.append("\nCOMMIT;\n")
+
+          with open(OUT, "w") as f:
+              f.writelines(lines)
+
+          for w in warnings:
+              print(f"::warning::{w}")
+
+          print(f"Diff DDL written to {OUT}")
+          PYEOF
+        env:
+          SUPABASE_DB_URL_DEV:  ${{ secrets.SUPABASE_DB_URL_DEV }}
+          SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL_PROD }}
+
+      # ──────────────────────────────────────────────
+      # 3. DEVスキーマを安全な形に変換
+      #    (DROP TABLE/TRUNCATE/DELETE除去、IF NOT EXISTS付与)
+      # ──────────────────────────────────────────────
+      - name: Extract safe DDL from dev dump
+        run: |
+          DUMP_FILE=$(ls -t supabase/migrations/*_schema_only.sql | head -1)
+          SAFE_FILE="${DUMP_FILE%.sql}_safe.sql"
+
+          python3 - <<'PYEOF' "$DUMP_FILE" "$SAFE_FILE"
+          import sys, re
+
+          src, dst = sys.argv[1], sys.argv[2]
+
+          with open(src, "r", encoding="utf-8") as f:
+              content = f.read()
+
+          output = []
+          for line in content.splitlines(keepends=True):
+              if re.match(r'^\s*(DROP\s+TABLE|TRUNCATE|DELETE\s+FROM|DROP\s+SCHEMA)', line, re.IGNORECASE):
+                  continue
+              line = re.sub(r'\bCREATE TABLE\b(?!\s+IF\s+NOT\s+EXISTS)',      'CREATE TABLE IF NOT EXISTS',       line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE SCHEMA\b(?!\s+IF\s+NOT\s+EXISTS)',     'CREATE SCHEMA IF NOT EXISTS',      line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)(?!\s+CONCURRENTLY)', 'CREATE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE UNIQUE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)', 'CREATE UNIQUE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
+              output.append(line)
+
+          result = "".join(output)
+          result = re.sub(r'(ALTER TABLE[^;]+ADD COLUMN)\s+(?!IF\s+NOT\s+EXISTS)', r'\1 IF NOT EXISTS ', result, flags=re.IGNORECASE)
+
+          with open(dst, "w", encoding="utf-8") as f:
+              f.write(result)
+
+          print(f"Safe DDL written to {dst}")
+          PYEOF
+
+      # ──────────────────────────────────────────────
+      # 4. Edge Functions をDEVからダウンロード
+      # ──────────────────────────────────────────────
       - name: Download dev edge functions
         run: |
           rm -rf supabase/functions/
@@ -28,40 +171,61 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      # 4. dev に存在しない EF を本番から削除
-      - name: Delete functions removed in dev
+      # ──────────────────────────────────────────────
+      # 5. コミット & プッシュ
+      # ──────────────────────────────────────────────
+      - name: Commit and push
         run: |
-          PROD_FUNCS=$(supabase functions list \
-            --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-            --output json | jq -r '.[].name')
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add supabase/migrations/ supabase/functions/
+          git diff --staged --quiet || git commit -m "chore: promote dev schema (safe) and functions to production"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          for fn in $PROD_FUNCS; do
-            if [ ! -d "supabase/functions/$fn" ]; then
-              echo "Deleting $fn (not in dev)"
-              supabase functions delete "$fn" \
-                --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-                --yes
-            fi
-          done
+      # ──────────────────────────────────────────────
+      # 6. 差分DDL適用（削除系: DROP FUNCTION/TRIGGER/VIEW/COLUMN）
+      # ──────────────────────────────────────────────
+      - name: Apply diff DDL to production (deletions)
+        run: |
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" \
+            --single-transaction \
+            --set ON_ERROR_STOP=1 \
+            -f supabase/migrations/diff_apply.sql
+
+      # ──────────────────────────────────────────────
+      # 7. DEVスキーマを本番に適用（追加・更新系）
+      # ──────────────────────────────────────────────
+      - name: Apply safe schema to production (additions/updates)
+        run: |
+          SAFE_FILE=$(ls -t supabase/migrations/*_safe.sql | head -1)
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" \
+            --single-transaction \
+            --set ON_ERROR_STOP=1 \
+            -f "$SAFE_FILE"
+
+      # ──────────────────────────────────────────────
+      # 8. Edge Functions: 全削除 → 再デプロイ（DEVで消したものも消える）
+      # ──────────────────────────────────────────────
+      - name: Delete all prod edge functions
+        run: |
+          supabase functions list \
+            --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
+            --output json \
+            | jq -r '.[].name' \
+            | while read fn; do
+                echo "Deleting $fn"
+                supabase functions delete "$fn" \
+                  --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
+                  --yes
+              done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      # 5. dev の EF を本番にデプロイ
-      - name: Deploy dev functions to prod
+      - name: Deploy edge functions to production
         run: |
           cd supabase
           supabase functions deploy --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      # 6. PostgreSQL 関数・トリガー・タイプ定義のみ本番に同期（データは触らない）
-      - name: Deploy dev PostgreSQL RPC & triggers to prod
-        run: |
-          # 最新の dev マイグレーション SQL ファイルを選択
-          RPC_FILE=$(ls -t supabase/migrations/*_remote_schema.sql | head -1)
-
-          echo "Applying PostgreSQL functions, triggers, and types from $RPC_FILE to prod..."
-          # 本番 DB に流す（データは untouched）
-          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$RPC_FILE"
-        env:
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
