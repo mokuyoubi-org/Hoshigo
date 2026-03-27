@@ -71,16 +71,34 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Delete all prod functions
+      - name: Delete all prod functions (SUPER ULTIMATE)
         run: |
-          cd supabase
+          echo "=== LIST BEFORE DELETE ==="
           supabase functions list \
+            --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" || true
+
+          echo "=== FETCH JSON ==="
+          JSON=$(supabase functions list \
             --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-            --json \
-            | jq -r '.[].name' \
-            | xargs -I {} supabase functions delete {} \
-                --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-                --yes
+            --json)
+
+          echo "$JSON"
+
+          echo "=== DELETE START ==="
+          echo "$JSON" \
+            | jq -r '.functions[].name // .[].name' \
+            | while read fn; do
+                if [ -n "$fn" ]; then
+                  echo "Deleting function: $fn"
+                  supabase functions delete "$fn" \
+                    --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
+                    --yes || true
+                fi
+              done
+
+          echo "=== LIST AFTER DELETE ==="
+          supabase functions list \
+            --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" || true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
