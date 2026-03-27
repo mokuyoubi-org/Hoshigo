@@ -1,5 +1,5 @@
 # Dev用flyを本番用に格上げしたい時に、ローカルのflyフォルダを更新することで、自動でデプロイするワークフロウ。
-name: Deploy Fly to Production
+name: Fly Deploy
 
 on:
   push:
