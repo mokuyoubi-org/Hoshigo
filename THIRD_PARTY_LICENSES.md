@@ -1,3 +1,5 @@
+**最終更新日:** 2026-03-27
+
 # Third Party Licenses
 
 このプロジェクトには、以下のサードパーティライブラリが含まれています。
@@ -6,10 +8,7 @@
 
 ## goscorer
 
-**ライセンス:** MIT License  
-**詳細:** [`lightvector: goscorer/LICENSE`](https://github.com/lightvector/goscorer/blob/main/LICENSE.txt)
-
-js製のgoscorerをアプリに同梱しています。
+https://github.com/lightvector/goscorer/blob/main/LICENSE.txt
 
 Copyright 2024 David J Wu ("lightvector").
 
@@ -33,12 +32,9 @@ IN THE SOFTWARE.
 
 ---
 
-## @expo/vector-icons (Ionicons)
+## @expo/vector-icons
 
-**ライセンス:** MIT License  
-**詳細:** [`expo: vector-icons/LICENSE`](https://github.com/expo/vector-icons/blob/master/LICENSE)
-
-一部のアイコンを PNG としてアプリに同梱しています。
+https://github.com/expo/vector-icons/blob/master/LICENSE
 
 The MIT License (MIT)
 

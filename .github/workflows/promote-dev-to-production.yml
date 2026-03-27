@@ -1,0 +1,35 @@
+name: Promote Dev to Production
+
+on:
+  workflow_dispatch: # 手動実行
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump dev schema
+        run: |
+          supabase db dump --db-url "postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD_DEV }}@db.${{ secrets.SUPABASE_PROJECT_REF_DEV }}.supabase.co:5432/postgres" \
+            > supabase/migrations/20260327031305_remote_schema.sql
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add supabase/migrations/
+          git diff --staged --quiet || git commit -m "chore: promote dev schema to production"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push schema to production
+        run: |
+          supabase db push --db-url "postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD_PROD }}@db.${{ secrets.SUPABASE_PROJECT_REF_PROD }}.supabase.co:5432/postgres"
