@@ -1,20 +1,25 @@
-name: Sync Prod Functions Safely
+name: Sync Dev → Prod (EF + RPC Safe)
 
 on:
   workflow_dispatch:
 
 jobs:
-  sync-functions:
+  sync-functions-and-rpc:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
+      # 1. コードをチェックアウト
       - uses: actions/checkout@v4
 
+      # 2. supabase CLI セットアップ
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
-      # dev の関数をダウンロード
-      - name: Download dev functions
+      # 3. dev の Edge Functions をダウンロード
+      - name: Download dev edge functions
         run: |
           rm -rf supabase/functions/
           mkdir -p supabase/functions/
@@ -23,7 +28,7 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      # 本番の関数一覧を取得して、dev にないものを削除
+      # 4. dev にない EF は本番から削除
       - name: Delete functions removed in dev
         run: |
           PROD_FUNCS=$(supabase functions list \
@@ -41,10 +46,20 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      # dev の関数を本番にデプロイ
+      # 5. dev の Edge Functions を本番にデプロイ
       - name: Deploy dev functions to prod
         run: |
           cd supabase
           supabase functions deploy --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      # 6. dev の RPC (SQL) を本番に反映
+      - name: Deploy dev RPCs to prod
+        run: |
+          for sql_file in supabase/functions/sql/*.sql; do
+            echo "Applying $sql_file to prod..."
+            psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$sql_file"
+          done
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
