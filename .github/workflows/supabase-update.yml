@@ -120,7 +120,7 @@ jobs:
           print(f"Diff DDL written to {OUT}")
           PYEOF
         env:
-          SUPABASE_DB_URL_DEV:  ${{ secrets.SUPABASE_DB_URL_DEV }}
+          SUPABASE_DB_URL_DEV: ${{ secrets.SUPABASE_DB_URL_DEV }}
           SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL_PROD }}
 
       # ──────────────────────────────────────────────
@@ -140,19 +140,75 @@ jobs:
           with open(src, "r", encoding="utf-8") as f:
               content = f.read()
 
+          def wrap_identity_blocks(text):
+              """ADD GENERATED AS IDENTITY (...SEQUENCE NAME...) ブロックを
+              シーケンス重複エラー回避のため DO $$ IF NOT EXISTS $$ でラップする"""
+              import re as _re
+              result = []
+              i = 0
+              while i < len(text):
+                  stmt_start = i
+                  depth = 0
+                  in_str = False
+                  stmt_end = -1
+                  while i < len(text):
+                      ch = text[i]
+                      if ch == "\'" and not in_str:
+                          in_str = True
+                      elif ch == "\'" and in_str:
+                          in_str = False
+                      elif ch == '(' and not in_str:
+                          depth += 1
+                      elif ch == ')' and not in_str:
+                          depth -= 1
+                      elif ch == ';' and not in_str and depth == 0:
+                          stmt_end = i
+                          i += 1
+                          break
+                      i += 1
+                  if stmt_end == -1:
+                      result.append(text[stmt_start:])
+                      break
+                  stmt = text[stmt_start:stmt_end+1]
+                  if _re.search(r'ADD GENERATED\b', stmt, _re.IGNORECASE) and \
+                     _re.search(r'SEQUENCE NAME', stmt, _re.IGNORECASE):
+                      m = _re.search(
+                          r'SEQUENCE NAME\s+"?([^"\s.]+)"?\.?"?([^"\s;)]+)"?',
+                          stmt, _re.IGNORECASE
+                      )
+                      if m:
+                          seq_schema = m.group(1)
+                          seq_name   = m.group(2)
+                          wrapped = (
+                              f"DO $identity_guard$\n"
+                              f"BEGIN\n"
+                              f"  IF NOT EXISTS (\n"
+                              f"    SELECT 1 FROM pg_sequences\n"
+                              f"    WHERE schemaname = '{seq_schema}' AND sequencename = '{seq_name}'\n"
+                              f"  ) THEN\n"
+                              f"    {stmt.strip()}\n"
+                              f"  END IF;\n"
+                              f"END $identity_guard$;\n"
+                          )
+                          result.append(wrapped)
+                          continue
+                  result.append(stmt)
+              return "".join(result)
+
           output = []
           for line in content.splitlines(keepends=True):
               if re.match(r'^\s*(DROP\s+TABLE|TRUNCATE|DELETE\s+FROM|DROP\s+SCHEMA)', line, re.IGNORECASE):
                   continue
-              line = re.sub(r'\bCREATE TABLE\b(?!\s+IF\s+NOT\s+EXISTS)',        'CREATE TABLE IF NOT EXISTS',         line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE SEQUENCE\b(?!\s+IF\s+NOT\s+EXISTS)',    'CREATE SEQUENCE IF NOT EXISTS',      line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE SCHEMA\b(?!\s+IF\s+NOT\s+EXISTS)',      'CREATE SCHEMA IF NOT EXISTS',        line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE TABLE\b(?!\s+IF\s+NOT\s+EXISTS)',         'CREATE TABLE IF NOT EXISTS',         line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE SEQUENCE\b(?!\s+IF\s+NOT\s+EXISTS)',       'CREATE SEQUENCE IF NOT EXISTS',      line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE SCHEMA\b(?!\s+IF\s+NOT\s+EXISTS)',         'CREATE SCHEMA IF NOT EXISTS',        line, flags=re.IGNORECASE)
               line = re.sub(r'\bCREATE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)(?!\s+CONCURRENTLY)', 'CREATE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE UNIQUE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)', 'CREATE UNIQUE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE UNIQUE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)',   'CREATE UNIQUE INDEX IF NOT EXISTS',  line, flags=re.IGNORECASE)
               output.append(line)
 
           result = "".join(output)
           result = re.sub(r'(ALTER TABLE[^;]+ADD COLUMN)\s+(?!IF\s+NOT\s+EXISTS)', r'\1 IF NOT EXISTS ', result, flags=re.IGNORECASE)
+          result = wrap_identity_blocks(result)
 
           with open(dst, "w", encoding="utf-8") as f:
               f.write(result)
