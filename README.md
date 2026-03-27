@@ -40,5 +40,4 @@
 ## ⚖️ ライセンスについて
 
 このプロジェクト本体は **MIT License** (Copyright 2026 mokuyoubi-org) で公開されています。  
-一部の画像・アイコンなどのアセットも同梱しています。  
-同梱されているサードパーティ製のプロジェクトのライセンスの詳細は `THIRD_PARTY_LICENSES.md` を参照してください。
+同梱されているサードパーティ製のプロジェクトのライセンスの詳細は [`THIRD_PARTY_LICENSES.md`](https://github.com/mokuyoubi-org/Hoshigo/blob/main/THIRD_PARTY_LICENSES.md) を参照してください。
