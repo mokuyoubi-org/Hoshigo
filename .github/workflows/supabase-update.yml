@@ -144,8 +144,9 @@ jobs:
           for line in content.splitlines(keepends=True):
               if re.match(r'^\s*(DROP\s+TABLE|TRUNCATE|DELETE\s+FROM|DROP\s+SCHEMA)', line, re.IGNORECASE):
                   continue
-              line = re.sub(r'\bCREATE TABLE\b(?!\s+IF\s+NOT\s+EXISTS)',      'CREATE TABLE IF NOT EXISTS',       line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE SCHEMA\b(?!\s+IF\s+NOT\s+EXISTS)',     'CREATE SCHEMA IF NOT EXISTS',      line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE TABLE\b(?!\s+IF\s+NOT\s+EXISTS)',        'CREATE TABLE IF NOT EXISTS',         line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE SEQUENCE\b(?!\s+IF\s+NOT\s+EXISTS)',    'CREATE SEQUENCE IF NOT EXISTS',      line, flags=re.IGNORECASE)
+              line = re.sub(r'\bCREATE SCHEMA\b(?!\s+IF\s+NOT\s+EXISTS)',      'CREATE SCHEMA IF NOT EXISTS',        line, flags=re.IGNORECASE)
               line = re.sub(r'\bCREATE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)(?!\s+CONCURRENTLY)', 'CREATE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
               line = re.sub(r'\bCREATE UNIQUE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)', 'CREATE UNIQUE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
               output.append(line)
