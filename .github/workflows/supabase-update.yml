@@ -1,4 +1,4 @@
-name: Supabase Safe Sync (EF + RPC)
+name: Supabase Safe Full Sync (EF + PostgreSQL)
 
 on:
   workflow_dispatch:
@@ -34,7 +34,7 @@ jobs:
           PROD_FUNCS=$(supabase functions list \
             --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
             --output json | jq -r '.[].name')
-          
+
           for fn in $PROD_FUNCS; do
             if [ ! -d "supabase/functions/$fn" ]; then
               echo "Deleting $fn (not in dev)"
@@ -54,11 +54,14 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      # 6. 最新の dev マイグレーションから RPC を本番に反映（データは触らない）
-      - name: Deploy dev RPCs to prod
+      # 6. PostgreSQL 関数・トリガー・タイプ定義のみ本番に同期（データは触らない）
+      - name: Deploy dev PostgreSQL RPC & triggers to prod
         run: |
-          MIGRATION_FILE=$(ls -t supabase/migrations/*_remote_schema.sql | head -1)
-          echo "Applying RPCs from $MIGRATION_FILE to prod..."
-          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$MIGRATION_FILE"
+          # 最新の dev マイグレーション SQL ファイルを選択
+          RPC_FILE=$(ls -t supabase/migrations/*_remote_schema.sql | head -1)
+
+          echo "Applying PostgreSQL functions, triggers, and types from $RPC_FILE to prod..."
+          # 本番 DB に流す（データは untouched）
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" -f "$RPC_FILE"
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
