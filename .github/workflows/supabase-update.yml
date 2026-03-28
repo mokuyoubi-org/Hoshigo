@@ -382,18 +382,18 @@ jobs:
           # 古いバックアップを削除してから新しいものをアップロード
           # Supabase Storage REST API を使用
           STORAGE_URL="${{ secrets.SUPABASE_URL_PROD }}/storage/v1/object"
-          AUTH_HEADER="Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}"
+          KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}"
           BUCKET="backups"
           OBJECT_NAME="db/latest_backup.sql"
 
           # バケットが存在しない場合は作成
-          curl -s -X POST             "${{ secrets.SUPABASE_URL_PROD }}/storage/v1/bucket"             -H "$AUTH_HEADER"             -H "Content-Type: application/json"             -d '{"id":"backups","name":"backups","public":false}'             || true  # 既に存在する場合はエラーを無視
+          curl -s -X POST             "${{ secrets.SUPABASE_URL_PROD }}/storage/v1/bucket"             -H "apikey: ${KEY}"             -H "Authorization: Bearer ${KEY}"             -H "Content-Type: application/json"             -d '{"id":"backups","name":"backups","public":false}'             || true  # 既に存在する場合はエラーを無視
 
           # 既存ファイルを削除
-          curl -s -X DELETE             "${STORAGE_URL}/${BUCKET}/${OBJECT_NAME}"             -H "$AUTH_HEADER"             || true  # 存在しない場合はエラーを無視
+          curl -s -X DELETE             "${STORAGE_URL}/${BUCKET}/${OBJECT_NAME}"             -H "apikey: ${KEY}"             -H "Authorization: Bearer ${KEY}"             || true  # 存在しない場合はエラーを無視
 
           # 新しいバックアップをアップロード
-          curl -s -X POST             "${STORAGE_URL}/${BUCKET}/${OBJECT_NAME}"             -H "$AUTH_HEADER"             -H "Content-Type: application/octet-stream"             --data-binary "@${BACKUP_FILE}"             --fail
+          curl -s -X POST             "${STORAGE_URL}/${BUCKET}/${OBJECT_NAME}"             -H "apikey: ${KEY}"             -H "Authorization: Bearer ${KEY}"             -H "Content-Type: application/octet-stream"             --data-binary "@${BACKUP_FILE}"             --fail
 
           echo "Backup uploaded to Supabase Storage: ${BUCKET}/${OBJECT_NAME}"
           rm -f "$BACKUP_FILE"
