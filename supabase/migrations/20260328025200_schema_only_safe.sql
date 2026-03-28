@@ -401,6 +401,7 @@ begin
   );
 
   -- ─── game.playingからdelete ───────────────────────
+  delete from game.playing where id = new.id;
 
   return null;
 end;
@@ -444,6 +445,7 @@ begin
   end if;
 
   -- ② playing にいない場合、waiting を削除する
+  delete from game.waiting
   where player_uid = v_player_uid;
 
   -- ③ playing にも waiting にもいなくても、とりあえず正常終了
@@ -948,6 +950,7 @@ begin
       )
       returning id into v_match_id;
 
+      delete from game.waiting where player_uid = v_waiter.player_uid;
       continue;
     end if;
 
@@ -980,6 +983,7 @@ begin
         )
         returning id into v_match_id;
 
+        delete from game.waiting
         where player_uid in (v_waiter.player_uid, v_opponent.player_uid);
       end;
     else
@@ -1013,6 +1017,7 @@ ALTER FUNCTION "game"."update_last_seen"("p_color" "text", "p_match_id" integer)
 CREATE OR REPLACE FUNCTION "public"."cleanup_cron_logs"() RETURNS "void"
     LANGUAGE "sql"
     AS $$
+  TRUNCATE cron.job_run_details;
 $$;
 
 
@@ -1034,8 +1039,10 @@ BEGIN
   END IF;
 
   -- profiles削除（RLSがあっても SECURITY DEFINERなので通る）
+  DELETE FROM users.profiles WHERE uid = calling_uid;
 
   -- auth.usersを削除
+  DELETE FROM auth.users WHERE id = calling_uid;
 END;
 $$;
 
