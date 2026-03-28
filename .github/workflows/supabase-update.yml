@@ -120,7 +120,7 @@ jobs:
           print(f"Diff DDL written to {OUT}")
           PYEOF
         env:
-          SUPABASE_DB_URL_DEV: ${{ secrets.SUPABASE_DB_URL_DEV }}
+          SUPABASE_DB_URL_DEV:  ${{ secrets.SUPABASE_DB_URL_DEV }}
           SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL_PROD }}
 
       # ──────────────────────────────────────────────
@@ -274,6 +274,52 @@ jobs:
               return "".join(result)
 
           result = wrap_constraint_blocks(result)
+
+          # CREATE POLICY を DROP IF EXISTS + CREATE OR REPLACE で冪等化
+          # pg_dump は CREATE POLICY を出力するが IF NOT EXISTS がないため
+          def wrap_policy_blocks(text):
+              import re as _re
+              result = []
+              i = 0
+              while i < len(text):
+                  stmt_start = i
+                  depth = 0
+                  in_str = False
+                  stmt_end = -1
+                  while i < len(text):
+                      ch = text[i]
+                      if ch == "'" and not in_str:
+                          in_str = True
+                      elif ch == "'" and in_str:
+                          in_str = False
+                      elif ch == '(' and not in_str:
+                          depth += 1
+                      elif ch == ')' and not in_str:
+                          depth -= 1
+                      elif ch == ';' and not in_str and depth == 0:
+                          stmt_end = i
+                          i += 1
+                          break
+                      i += 1
+                  if stmt_end == -1:
+                      result.append(text[stmt_start:])
+                      break
+                  stmt = text[stmt_start:stmt_end+1]
+                  m = _re.match(
+                      r'\s*CREATE POLICY\s+"?([^"\s]+)"?\s+ON\s+"?([^"\s.]+)"?\."?([^"\s]+)"?',
+                      stmt, _re.IGNORECASE
+                  )
+                  if m:
+                      policy_name = m.group(1)
+                      tbl_schema  = m.group(2)
+                      tbl_name    = m.group(3)
+                      drop = f"DROP POLICY IF EXISTS \"{policy_name}\" ON \"{tbl_schema}\".\"{tbl_name}\";"
+                      result.append(f"{drop}\n{stmt.strip()}\n")
+                      continue
+                  result.append(stmt)
+              return "".join(result)
+
+          result = wrap_policy_blocks(result)
 
           with open(dst, "w", encoding="utf-8") as f:
               f.write(result)
