@@ -361,7 +361,38 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ──────────────────────────────────────────────
-      # 6. 差分DDL適用（削除系: DROP FUNCTION/TRIGGER/VIEW/COLUMN）
+      # 6. PRODのフルバックアップをSupabase Storageに保存
+      #    （データ含む、最新1ファイルのみ保持）
+      # ──────────────────────────────────────────────
+      - name: Backup prod database to Supabase Storage
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          BACKUP_FILE="/tmp/prod_backup_${TIMESTAMP}.sql"
+
+          # フルダンプ（スキーマ＋データ）
+          pg_dump "${{ secrets.SUPABASE_DB_URL_PROD }}"             --schema public,system,game,users             -f "$BACKUP_FILE"
+
+          # 古いバックアップを削除してから新しいものをアップロード
+          # Supabase Storage REST API を使用
+          STORAGE_URL="${{ secrets.SUPABASE_URL_PROD }}/storage/v1/object"
+          AUTH_HEADER="Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}"
+          BUCKET="backups"
+          OBJECT_NAME="db/latest_backup.sql"
+
+          # バケットが存在しない場合は作成
+          curl -s -X POST             "${{ secrets.SUPABASE_URL_PROD }}/storage/v1/bucket"             -H "$AUTH_HEADER"             -H "Content-Type: application/json"             -d '{"id":"backups","name":"backups","public":false}'             || true  # 既に存在する場合はエラーを無視
+
+          # 既存ファイルを削除
+          curl -s -X DELETE             "${STORAGE_URL}/${BUCKET}/${OBJECT_NAME}"             -H "$AUTH_HEADER"             || true  # 存在しない場合はエラーを無視
+
+          # 新しいバックアップをアップロード
+          curl -s -X POST             "${STORAGE_URL}/${BUCKET}/${OBJECT_NAME}"             -H "$AUTH_HEADER"             -H "Content-Type: application/octet-stream"             --data-binary "@${BACKUP_FILE}"             --fail
+
+          echo "Backup uploaded to Supabase Storage: ${BUCKET}/${OBJECT_NAME}"
+          rm -f "$BACKUP_FILE"
+
+      # ──────────────────────────────────────────────
+      # 7. 差分DDL適用（削除系: DROP FUNCTION/TRIGGER/VIEW/COLUMN）
       # ──────────────────────────────────────────────
       - name: Apply diff DDL to production (deletions)
         run: |
@@ -371,7 +402,7 @@ jobs:
             -f supabase/migrations/diff_apply.sql
 
       # ──────────────────────────────────────────────
-      # 7. DEVスキーマを本番に適用（追加・更新系）
+      # 8. DEVスキーマを本番に適用（追加・更新系）
       # ──────────────────────────────────────────────
       - name: Apply safe schema to production (additions/updates)
         run: |
@@ -382,7 +413,7 @@ jobs:
             -f "$SAFE_FILE"
 
       # ──────────────────────────────────────────────
-      # 8. Edge Functions: 全削除 → 再デプロイ（DEVで消したものも消える）
+      # 9. Edge Functions: 全削除 → 再デプロイ（DEVで消したものも消える）
       # ──────────────────────────────────────────────
       - name: Delete all prod edge functions
         run: |
