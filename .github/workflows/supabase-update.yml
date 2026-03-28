@@ -204,6 +204,10 @@ jobs:
               line = re.sub(r'\bCREATE SCHEMA\b(?!\s+IF\s+NOT\s+EXISTS)',         'CREATE SCHEMA IF NOT EXISTS',        line, flags=re.IGNORECASE)
               line = re.sub(r'\bCREATE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)(?!\s+CONCURRENTLY)', 'CREATE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
               line = re.sub(r'\bCREATE UNIQUE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)',   'CREATE UNIQUE INDEX IF NOT EXISTS',  line, flags=re.IGNORECASE)
+              # CREATE TYPE → IF NOT EXISTS（Enum値の変更は破壊的なのでスキップのみ）
+              line = re.sub(r'\bCREATE TYPE\b(?!\s+IF\s+NOT\s+EXISTS)',            'CREATE TYPE IF NOT EXISTS',          line, flags=re.IGNORECASE)
+              # CREATE TRIGGER → CREATE OR REPLACE TRIGGER（PG14以降、Supabaseは対応済み）
+              line = re.sub(r'\bCREATE TRIGGER\b(?!\s+OR\s+REPLACE)',               'CREATE OR REPLACE TRIGGER',          line, flags=re.IGNORECASE)
               output.append(line)
 
           result = "".join(output)
