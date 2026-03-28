@@ -377,7 +377,6 @@ jobs:
 
           # フルダンプ（スキーマ＋データ）
           /usr/lib/postgresql/17/bin/pg_dump "${{ secrets.SUPABASE_DB_URL_PROD }}" \
-            --schema public,system,game,users \
             -f "$BACKUP_FILE"
 
           # 古いバックアップを削除してから新しいものをアップロード
