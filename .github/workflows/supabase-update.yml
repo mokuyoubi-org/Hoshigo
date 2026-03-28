@@ -23,6 +23,8 @@ jobs:
       # ──────────────────────────────────────────────
       - name: Dump dev schema (structure only)
         run: |
+          # 古いファイルを全削除して常に最新1ファイルだけ残す
+          rm -rf supabase/migrations/
           mkdir -p supabase/migrations/
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           supabase db dump \
@@ -120,7 +122,7 @@ jobs:
           print(f"Diff DDL written to {OUT}")
           PYEOF
         env:
-          SUPABASE_DB_URL_DEV:  ${{ secrets.SUPABASE_DB_URL_DEV }}
+          SUPABASE_DB_URL_DEV: ${{ secrets.SUPABASE_DB_URL_DEV }}
           SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL_PROD }}
 
       # ──────────────────────────────────────────────
