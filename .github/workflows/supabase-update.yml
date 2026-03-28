@@ -66,18 +66,26 @@ jobs:
 
           # db/ フォルダ内のファイル一覧を取得し、古いものを削除（10件超え分）
           FILES=$(curl -s -X POST \
-            "${LIST_URL}/${BUCKET}" \
+            "${{ secrets.SUPABASE_URL_PROD }}/storage/v1/object/list/${BUCKET}" \
             -H "apikey: ${KEY}" \
             -H "Authorization: Bearer ${KEY}" \
             -H "Content-Type: application/json" \
             -d '{"prefix":"db/","limit":100,"sortBy":{"column":"name","order":"asc"}}')
 
+          echo "File list response: $FILES"
+
           # ファイル名を古い順に並べて10件を超えた分を削除
           echo "$FILES" | python3 - <<'PYEOF'
           import sys, json, subprocess, os
 
-          files = json.loads(sys.stdin.read())
-          names = sorted([f["name"] for f in files if f["name"].startswith("prod_backup_")])
+          raw = sys.stdin.read().strip()
+          if not raw:
+              print("No files found, skipping cleanup.")
+              sys.exit(0)
+
+          files = json.loads(raw)
+          names = sorted([f["name"] for f in files if f.get("name", "").startswith("prod_backup_")])
+          print(f"Found {len(names)} backup(s): {names}")
 
           max_backups = int(os.environ.get("MAX_BACKUPS", 10))
           to_delete = names[:-max_backups] if len(names) > max_backups else []
