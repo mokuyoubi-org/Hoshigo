@@ -1721,8 +1721,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_namespace n ON n.oid = c.connamespace
-    WHERE n.nspname = 'game'
-      AND c.conname = 'matches_pkey'
+    WHERE n.nspname = 'game' AND c.conname = 'matches_pkey'
   ) THEN
     ALTER TABLE ONLY "game"."playing"
     ADD CONSTRAINT "matches_pkey" PRIMARY KEY ("id");
@@ -1733,8 +1732,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_namespace n ON n.oid = c.connamespace
-    WHERE n.nspname = 'game'
-      AND c.conname = 'records_pkey'
+    WHERE n.nspname = 'game' AND c.conname = 'records_pkey'
   ) THEN
     ALTER TABLE ONLY "game"."records"
     ADD CONSTRAINT "records_pkey" PRIMARY KEY ("id");
@@ -1745,8 +1743,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_namespace n ON n.oid = c.connamespace
-    WHERE n.nspname = 'game'
-      AND c.conname = 'waiting_pkey'
+    WHERE n.nspname = 'game' AND c.conname = 'waiting_pkey'
   ) THEN
     ALTER TABLE ONLY "game"."waiting"
     ADD CONSTRAINT "waiting_pkey" PRIMARY KEY ("player_uid");
@@ -1757,8 +1754,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_namespace n ON n.oid = c.connamespace
-    WHERE n.nspname = 'system'
-      AND c.conname = 'app_status_pkey'
+    WHERE n.nspname = 'system' AND c.conname = 'app_status_pkey'
   ) THEN
     ALTER TABLE ONLY "system"."app_status"
     ADD CONSTRAINT "app_status_pkey" PRIMARY KEY ("id");
@@ -1769,8 +1765,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_namespace n ON n.oid = c.connamespace
-    WHERE n.nspname = 'system'
-      AND c.conname = 'rate_limit_pkey'
+    WHERE n.nspname = 'system' AND c.conname = 'rate_limit_pkey'
   ) THEN
     ALTER TABLE ONLY "system"."rate_limit"
     ADD CONSTRAINT "rate_limit_pkey" PRIMARY KEY ("id");
@@ -1781,8 +1776,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_namespace n ON n.oid = c.connamespace
-    WHERE n.nspname = 'users'
-      AND c.conname = 'profiles_pkey'
+    WHERE n.nspname = 'users' AND c.conname = 'profiles_pkey'
   ) THEN
     ALTER TABLE ONLY "users"."profiles"
     ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("uid");
@@ -1817,8 +1811,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint c
     JOIN pg_namespace n ON n.oid = c.connamespace
-    WHERE n.nspname = 'users'
-      AND c.conname = 'profiles_uid_fkey'
+    WHERE n.nspname = 'users' AND c.conname = 'profiles_uid_fkey'
   ) THEN
     ALTER TABLE ONLY "users"."profiles"
     ADD CONSTRAINT "profiles_uid_fkey" FOREIGN KEY ("uid") REFERENCES "auth"."users"("id");
