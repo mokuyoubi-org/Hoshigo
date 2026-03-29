@@ -115,8 +115,10 @@ def run_gtp(sgf_content: str, commands: str, engine: str = "gnugo") -> str:
             text=True
         )
         out, err = gtp.communicate(gtp_input, timeout=30)
-        print(f"GTP stderr: [{err}]", flush=True)  # 空でも必ず出力
+        print(f"GTP returncode: {gtp.returncode}", flush=True)
+        print(f"GTP stderr: [{err}]", flush=True)
         print(f"GTP stdout: [{out}]", flush=True)
+        print(f"GTP input was: [{gtp_input}]", flush=True)  # 送ったコマンドも確認
         return out
 
     except subprocess.TimeoutExpired:
