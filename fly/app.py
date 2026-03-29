@@ -29,9 +29,8 @@ GO_ENGINES = {
     # 2. くるみ
     "pachi": [
         "pachi",
-        "-t", "=5000", # 500が最低
+        "-t", "=5000,threads=1",  # カンマでつなぐ
         "--nojoseki",
-        "threads=1",
     ],
     # 3. せな
     "katago-b6c96": [
