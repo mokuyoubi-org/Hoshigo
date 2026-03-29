@@ -3,7 +3,7 @@ import os
 
 DEV_URL  = os.environ["SUPABASE_DB_URL_DEV"]
 PROD_URL = os.environ["SUPABASE_DB_URL_PROD"]
-OUT      = "supabase/migrations/diff_deletions.sql"
+OUT      = "/tmp/diff_deletions.sql"
 
 SCHEMAS   = ("public", "system", "game", "users")
 schema_in = "'" + "','".join(SCHEMAS) + "'"

@@ -87,6 +87,8 @@ jobs:
         run: |
           rm -rf supabase/migrations/
           mkdir -p supabase/migrations/
+          # ステップ2で生成した削除DDLをmigrationsフォルダに移動
+          mv /tmp/diff_deletions.sql supabase/migrations/diff_deletions.sql
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           supabase db dump \
             --db-url "${{ secrets.SUPABASE_DB_URL_DEV }}" \
