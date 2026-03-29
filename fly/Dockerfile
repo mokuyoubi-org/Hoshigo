@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN git clone --depth 1 --branch pachi-12.88 https://github.com/pasky/pachi.git && \
     cd pachi && \
-    make DCNN=0 JOSEKIFIX=0 && \
+    make DCNN=0 JOSEKIFIX=0 CFLAGS="-O2 -march=x86-64" && \
     cp pachi /usr/local/bin/pachi && \
     mkdir -p /usr/local/share/pachi && \
     cp patterns_mm.spat patterns_mm.gamma /usr/local/share/pachi/
