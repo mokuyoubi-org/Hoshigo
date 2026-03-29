@@ -35,7 +35,6 @@ jobs:
           BUCKET="${{ secrets.R2_BUCKET_NAME }}"
           ENDPOINT="https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
 
-          # aws CLI をR2向けに設定
           pip install awscli --quiet
           export AWS_ACCESS_KEY_ID="${{ secrets.R2_ACCESS_KEY_ID }}"
           export AWS_SECRET_ACCESS_KEY="${{ secrets.R2_SECRET_ACCESS_KEY }}"
@@ -55,7 +54,6 @@ jobs:
             echo "Backup uploaded: ${OBJECT_KEY}"
             rm -f "$BACKUP_FILE"
 
-            # 10件を超えた古いバックアップを削除
             aws s3 ls "s3://${BUCKET}/${FOLDER}/" \
               --endpoint-url "$ENDPOINT" \
               | sort \
@@ -75,96 +73,11 @@ jobs:
       # ──────────────────────────────────────────────
       # 2. DEVとPRODを比較して削除系DDLを生成
       #    DEVから消えたものをPRODからも削除する
-      #    ただしテーブル丸ごとのDROPはデータが消えるため除外
       # ──────────────────────────────────────────────
       - name: Generate deletion DDL from diff
-        run: |
-          python3 - <<'PYEOF'
-          import subprocess, os
-
-          DEV_URL  = os.environ["SUPABASE_DB_URL_DEV"]
-          PROD_URL = os.environ["SUPABASE_DB_URL_PROD"]
-          OUT      = "supabase/migrations/diff_deletions.sql"
-
-          def query(url, sql):
-              r = subprocess.run(
-                  ["psql", url, "-At", "-c", sql],
-                  capture_output=True, text=True, check=True
-              )
-              return {row for row in r.stdout.strip().splitlines() if row}
-
-          SCHEMAS   = ("public", "system", "game", "users")
-          schema_in = "'" + "','".join(SCHEMAS) + "'"
-
-          lines = ["-- Auto-generated deletion DDL", "BEGIN;"]
-
-          # ── Functions / Procedures ─────────────────
-          sql_funcs = (
-              f"SELECT n.nspname||'.'||p.proname"
-              f"||'('||pg_get_function_identity_arguments(p.oid)||')' "
-              f"FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace "
-              f"WHERE n.nspname IN ({schema_in}) AND p.prokind IN ('f','p')"
-          )
-          for fn in sorted(query(PROD_URL, sql_funcs) - query(DEV_URL, sql_funcs)):
-              lines.append(f"DROP FUNCTION IF EXISTS {fn} CASCADE;")
-
-          # ── Triggers ───────────────────────────────
-          sql_trg = (
-              f"SELECT trigger_schema||'.'||trigger_name||'@'||event_object_table "
-              f"FROM information_schema.triggers "
-              f"WHERE trigger_schema IN ({schema_in})"
-          )
-          for t in sorted(query(PROD_URL, sql_trg) - query(DEV_URL, sql_trg)):
-              schema_name, rest = t.split(".", 1)
-              trg_name, tbl     = rest.split("@", 1)
-              lines.append(f"DROP TRIGGER IF EXISTS {trg_name} ON {schema_name}.{tbl} CASCADE;")
-
-          # ── Views ──────────────────────────────────
-          sql_view = (
-              f"SELECT table_schema||'.'||table_name FROM information_schema.views "
-              f"WHERE table_schema IN ({schema_in})"
-          )
-          for v in sorted(query(PROD_URL, sql_view) - query(DEV_URL, sql_view)):
-              lines.append(f"DROP VIEW IF EXISTS {v} CASCADE;")
-
-          # ── Policies ───────────────────────────────
-          sql_pol = (
-              f"SELECT n.nspname||'.'||p.polname||'@'||c.relname "
-              f"FROM pg_policy p "
-              f"JOIN pg_class c ON c.oid = p.polrelid "
-              f"JOIN pg_namespace n ON n.oid = c.relnamespace "
-              f"WHERE n.nspname IN ({schema_in})"
-          )
-          for p in sorted(query(PROD_URL, sql_pol) - query(DEV_URL, sql_pol)):
-              schema_name, rest = p.split(".", 1)
-              pol_name, tbl     = rest.split("@", 1)
-              lines.append(f'DROP POLICY IF EXISTS "{pol_name}" ON "{schema_name}"."{tbl}";')
-
-          # ── Columns ────────────────────────────────
-          sql_col = (
-              f"SELECT table_schema||'.'||table_name||'.'||column_name "
-              f"FROM information_schema.columns "
-              f"WHERE table_schema IN ({schema_in})"
-          )
-          for c in sorted(query(PROD_URL, sql_col) - query(DEV_URL, sql_col)):
-              tbl, col = c.rsplit(".", 1)
-              lines.append(f"ALTER TABLE IF EXISTS {tbl} DROP COLUMN IF EXISTS {col};")
-
-          # ── Tables ─────────────────────────────────
-          sql_tbl = (
-              f"SELECT table_schema||'.'||table_name FROM information_schema.tables "
-              f"WHERE table_schema IN ({schema_in}) AND table_type='BASE TABLE'"
-          )
-          for t in sorted(query(PROD_URL, sql_tbl) - query(DEV_URL, sql_tbl)):
-              lines.append(f"DROP TABLE IF EXISTS {t} CASCADE;")
-
-          lines.append("COMMIT;")
-          with open(OUT, "w") as f:
-              f.writelines(lines)
-          print(f"Deletion DDL written to {OUT}")
-          PYEOF
+        run: python3 .github/scripts/generate_deletion_ddl.py
         env:
-          SUPABASE_DB_URL_DEV: ${{ secrets.SUPABASE_DB_URL_DEV }}
+          SUPABASE_DB_URL_DEV:  ${{ secrets.SUPABASE_DB_URL_DEV }}
           SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL_PROD }}
 
       # ──────────────────────────────────────────────
@@ -183,7 +96,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       # ──────────────────────────────────────────────
-      # 3. ダンプを冪等なSQLに変換
+      # 4. ダンプを冪等なSQLに変換
       #    pg_dumpは「空DBへの流し込み」前提で書かれているため
       #    既存DBに安全に適用できる形に変換する
       # ──────────────────────────────────────────────
@@ -191,109 +104,10 @@ jobs:
         run: |
           DUMP_FILE=$(ls -t supabase/migrations/*_schema_only.sql | head -1)
           SAFE_FILE="${DUMP_FILE%.sql}_safe.sql"
-
-          python3 - <<'PYEOF' "$DUMP_FILE" "$SAFE_FILE"
-          import sys, re
-
-          src, dst = sys.argv[1], sys.argv[2]
-
-          with open(src, "r", encoding="utf-8") as f:
-              content = f.read()
-
-          # ── 行単位の変換 ───────────────────────────
-          output = []
-          for line in content.splitlines(keepends=True):
-              line = re.sub(r'\bCREATE TABLE\b(?!\s+IF\s+NOT\s+EXISTS)',          'CREATE TABLE IF NOT EXISTS',         line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE SEQUENCE\b(?!\s+IF\s+NOT\s+EXISTS)',        'CREATE SEQUENCE IF NOT EXISTS',      line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE SCHEMA\b(?!\s+IF\s+NOT\s+EXISTS)',          'CREATE SCHEMA IF NOT EXISTS',        line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)(?!\s+CONCURRENTLY)', 'CREATE INDEX IF NOT EXISTS', line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE UNIQUE INDEX\b(?!\s+IF\s+NOT\s+EXISTS)',    'CREATE UNIQUE INDEX IF NOT EXISTS',  line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE TYPE\b(?!\s+IF\s+NOT\s+EXISTS)',            'CREATE TYPE IF NOT EXISTS',          line, flags=re.IGNORECASE)
-              line = re.sub(r'\bCREATE TRIGGER\b(?!\s+OR\s+REPLACE)',              'CREATE OR REPLACE TRIGGER',          line, flags=re.IGNORECASE)
-              output.append(line)
-
-          result = "".join(output)
-
-          # ── ADD COLUMN → IF NOT EXISTS ─────────────
-          result = re.sub(
-              r'(ALTER TABLE[^;]+ADD COLUMN)\s+(?!IF\s+NOT\s+EXISTS)',
-              r'\1 IF NOT EXISTS ', result, flags=re.IGNORECASE
-          )
-
-          # ── ADD GENERATED AS IDENTITY: DO $$ でラップ ──
-          def wrap_blocks(text, detect_fn, wrap_fn):
-              """文単位でテキストを走査し、detect_fnが真の文をwrap_fnで変換する"""
-              import re as _re
-              result = []
-              i = 0
-              while i < len(text):
-                  stmt_start = i
-                  depth, in_str, stmt_end = 0, False, -1
-                  while i < len(text):
-                      ch = text[i]
-                      if ch == "'" and not in_str:   in_str = True
-                      elif ch == "'" and in_str:     in_str = False
-                      elif ch == '(' and not in_str: depth += 1
-                      elif ch == ')' and not in_str: depth -= 1
-                      elif ch == ';' and not in_str and depth == 0:
-                          stmt_end = i; i += 1; break
-                      i += 1
-                  if stmt_end == -1:
-                      result.append(text[stmt_start:]); break
-                  stmt = text[stmt_start:stmt_end+1]
-                  wrapped = wrap_fn(stmt)
-                  result.append(wrapped if wrapped is not None else stmt)
-              return "".join(result)
-
-          def wrap_identity(stmt):
-              import re as _re
-              if not (_re.search(r'ADD GENERATED\b', stmt, _re.IGNORECASE) and
-                      _re.search(r'SEQUENCE NAME', stmt, _re.IGNORECASE)):
-                  return None
-              m = _re.search(r'SEQUENCE NAME\s+"?([^"\s.]+)"?\.?"?([^"\s;)]+)"?', stmt, _re.IGNORECASE)
-              if not m: return None
-              return (
-                  f"DO $identity_guard$\nBEGIN\n"
-                  f"  IF NOT EXISTS (\n    SELECT 1 FROM pg_sequences\n"
-                  f"    WHERE schemaname = '{m.group(1)}' AND sequencename = '{m.group(2)}'\n"
-                  f"  ) THEN\n    {stmt.strip()}\n  END IF;\n"
-                  f"END $identity_guard$;\n"
-              )
-
-          def wrap_constraint(stmt):
-              import re as _re
-              m = _re.search(r'ADD CONSTRAINT\s+"?([^"\s]+)"?\s+(PRIMARY KEY|UNIQUE|FOREIGN KEY|CHECK)\b', stmt, _re.IGNORECASE)
-              if not m: return None
-              tm = _re.search(r'ALTER TABLE\s+(?:ONLY\s+)?"?([^"\s]+)"?\."?([^"\s]+)"?', stmt, _re.IGNORECASE)
-              if not tm: return None
-              return (
-                  f"DO $constraint_guard$\nBEGIN\n"
-                  f"  IF NOT EXISTS (\n    SELECT 1 FROM pg_constraint c\n"
-                  f"    JOIN pg_namespace n ON n.oid = c.connamespace\n"
-                  f"    WHERE n.nspname = '{tm.group(1)}' AND c.conname = '{m.group(1)}'\n"
-                  f"  ) THEN\n    {stmt.strip()}\n  END IF;\n"
-                  f"END $constraint_guard$;\n"
-              )
-
-          def wrap_policy(stmt):
-              import re as _re
-              m = _re.match(r'\s*CREATE POLICY\s+"?([^"\s]+)"?\s+ON\s+"?([^"\s.]+)"?\."?([^"\s]+)"?', stmt, _re.IGNORECASE)
-              if not m: return None
-              drop = f'DROP POLICY IF EXISTS "{m.group(1)}" ON "{m.group(2)}"."{m.group(3)}";'
-              return f"{drop}\n{stmt.strip()}\n"
-
-          result = wrap_blocks(result, None, wrap_identity)
-          result = wrap_blocks(result, None, wrap_constraint)
-          result = wrap_blocks(result, None, wrap_policy)
-
-          with open(dst, "w", encoding="utf-8") as f:
-              f.write(result)
-
-          print(f"Safe DDL written to {dst}")
-          PYEOF
+          python3 .github/scripts/convert_to_idempotent.py "$DUMP_FILE" "$SAFE_FILE"
 
       # ──────────────────────────────────────────────
-      # 4. Edge Functions をDEVからダウンロード
+      # 5. Edge Functions をDEVからダウンロード
       # ──────────────────────────────────────────────
       - name: Download dev edge functions
         run: |
@@ -305,8 +119,8 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       # ──────────────────────────────────────────────
-      # 5. 中間ファイルを削除してコミット & プッシュ
-      #    リポジトリには safe.sql のみ残す
+      # 6. 中間ファイルを削除してコミット & プッシュ
+      #    リポジトリには safe.sql と diff_deletions.sql のみ残す
       # ──────────────────────────────────────────────
       - name: Commit and push
         run: |
@@ -320,15 +134,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ──────────────────────────────────────────────
-      # 6. 削除系DDLをPRODに適用
-      #    DEVから消えた関数・トリガー・ビュー・ポリシー・カラムを削除
+      # 7. 削除系DDLをPRODに適用
+      #    DEVから消えた関数・トリガー・ビュー・ポリシー・カラム・テーブルを削除
       # ──────────────────────────────────────────────
       - name: Apply deletion DDL to production
         run: |
-          psql "${{ secrets.SUPABASE_DB_URL_PROD }}"             --single-transaction             --set ON_ERROR_STOP=1             -f supabase/migrations/diff_deletions.sql
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}" \
+            --single-transaction \
+            --set ON_ERROR_STOP=1 \
+            -f supabase/migrations/diff_deletions.sql
 
       # ──────────────────────────────────────────────
-      # 7. スキーマをPRODに適用
+      # 8. スキーマをPRODに適用
       # ──────────────────────────────────────────────
       - name: Apply schema to production
         run: |
@@ -339,7 +156,7 @@ jobs:
             -f "$SAFE_FILE"
 
       # ──────────────────────────────────────────────
-      # 8. Edge Functions: 全削除 → 再デプロイ
+      # 9. Edge Functions: 全削除 → 再デプロイ
       # ──────────────────────────────────────────────
       - name: Delete all prod edge functions
         run: |
