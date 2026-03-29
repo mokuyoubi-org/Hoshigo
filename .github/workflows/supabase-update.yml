@@ -28,85 +28,44 @@ jobs:
       # 1. PRODのフルバックアップをSupabase Storageに保存
       #    （最新1ファイルのみ保持）
       # ──────────────────────────────────────────────
-      - name: Backup prod database to Supabase Storage
+      - name: Backup prod database to Cloudflare R2
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           BACKUP_FILE="/tmp/prod_backup_${TIMESTAMP}.sql"
           MAX_BACKUPS=10
+          BUCKET="${{ secrets.R2_BUCKET_NAME }}"
+          ENDPOINT="https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          OBJECT_KEY="db/prod_backup_${TIMESTAMP}.sql"
 
+          # pg_dump
           /usr/lib/postgresql/17/bin/pg_dump "${{ secrets.SUPABASE_DB_URL_PROD }}" \
             -f "$BACKUP_FILE"
 
-          KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}"
-          STORAGE_URL="${{ secrets.SUPABASE_URL_PROD }}/storage/v1/object"
-          LIST_URL="${{ secrets.SUPABASE_URL_PROD }}/storage/v1/object/list"
-          BUCKET="backups"
-          OBJECT_NAME="db/prod_backup_${TIMESTAMP}.sql"
+          # aws CLI をR2向けに設定
+          pip install awscli --quiet
+          export AWS_ACCESS_KEY_ID="${{ secrets.R2_ACCESS_KEY_ID }}"
+          export AWS_SECRET_ACCESS_KEY="${{ secrets.R2_SECRET_ACCESS_KEY }}"
+          export AWS_DEFAULT_REGION="auto"
 
-          # バケットが存在しない場合は作成
-          curl -s -X POST \
-            "${{ secrets.SUPABASE_URL_PROD }}/storage/v1/bucket" \
-            -H "apikey: ${KEY}" \
-            -H "Authorization: Bearer ${KEY}" \
-            -H "Content-Type: application/json" \
-            -d '{"id":"backups","name":"backups","public":false}' \
-            || true
+          # アップロード
+          aws s3 cp "$BACKUP_FILE" "s3://${BUCKET}/${OBJECT_KEY}" \
+            --endpoint-url "$ENDPOINT"
 
-          # 新しいバックアップをアップロード
-          curl -s -X POST \
-            "${STORAGE_URL}/${BUCKET}/${OBJECT_NAME}" \
-            -H "apikey: ${KEY}" \
-            -H "Authorization: Bearer ${KEY}" \
-            -H "Content-Type: application/octet-stream" \
-            --data-binary "@${BACKUP_FILE}" \
-            --fail
-
-          echo "Backup uploaded: ${OBJECT_NAME}"
+          echo "Backup uploaded: ${OBJECT_KEY}"
           rm -f "$BACKUP_FILE"
 
-          # db/ フォルダ内のファイル一覧を取得し、古いものを削除（10件超え分）
-          FILES=$(curl -s -X POST \
-            "${{ secrets.SUPABASE_URL_PROD }}/storage/v1/object/list/${BUCKET}" \
-            -H "apikey: ${KEY}" \
-            -H "Authorization: Bearer ${KEY}" \
-            -H "Content-Type: application/json" \
-            -d '{"prefix":"db/","limit":100,"sortBy":{"column":"name","order":"asc"}}')
-
-          echo "File list response: $FILES"
-
-          # ファイル名を古い順に並べて10件を超えた分を削除
-          echo "$FILES" | python3 - <<'PYEOF'
-          import sys, json, subprocess, os
-
-          raw = sys.stdin.read().strip()
-          if not raw:
-              print("No files found, skipping cleanup.")
-              sys.exit(0)
-
-          files = json.loads(raw)
-          names = sorted([f["name"] for f in files if f.get("name", "").startswith("prod_backup_")])
-          print(f"Found {len(names)} backup(s): {names}")
-
-          max_backups = int(os.environ.get("MAX_BACKUPS", 10))
-          to_delete = names[:-max_backups] if len(names) > max_backups else []
-
-          key  = os.environ["KEY"]
-          base = os.environ["SUPABASE_URL_PROD"]
-          bucket = "backups"
-
-          for name in to_delete:
-              url = f"{base}/storage/v1/object/{bucket}/db/{name}"
-              r = subprocess.run([
-                  "curl", "-s", "-X", "DELETE", url,
-                  "-H", f"apikey: {key}",
-                  "-H", f"Authorization: Bearer {key}",
-              ], capture_output=True, text=True)
-              print(f"Deleted old backup: db/{name}")
-          PYEOF
-        env:
-          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_PROD }}
-          SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD }}
-          MAX_BACKUPS: 10
+          # 10件を超えた古いバックアップを削除
+          aws s3 ls "s3://${BUCKET}/db/" \
+            --endpoint-url "$ENDPOINT" \
+            | sort \
+            | awk '{print $4}' \
+            | grep "^prod_backup_" \
+            | head -n -${MAX_BACKUPS} \
+            | while read KEY_NAME; do
+                aws s3 rm "s3://${BUCKET}/db/${KEY_NAME}" \
+                  --endpoint-url "$ENDPOINT"
+                echo "Deleted old backup: db/${KEY_NAME}"
+              done
 
       # ──────────────────────────────────────────────
       # 2. DEVから「スキーマ定義のみ」をダンプ
