@@ -9,6 +9,7 @@ import type { ProductSubscriptionAndroid } from 'expo-iap';
 import { IAPContext } from '@/src/contexts/IAPContext';
 import { UidContext } from '@/src/contexts/UserContexts';
 import { PLANS } from '@/src/constants/plans';
+import { supabase } from '@/src/services/supabase';
 
 type BillingCycle = 'monthly' | 'yearly';
 
@@ -37,6 +38,42 @@ export function IAPProvider({ children }: { children: ReactNode }) {
   return <IAPProviderNative>{children}</IAPProviderNative>;
 }
 
+// ============================================================
+// Google Play の購入をバックエンドで検証して plan_id を更新する
+// ============================================================
+async function verifyPlaystorePurchase(
+  purchaseToken: string,
+  subscriptionId: string
+): Promise<boolean> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.error('[IAP] セッションがありません');
+      return false;
+    }
+
+    const res = await fetch(
+      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/verify-playstore-purchase`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ purchaseToken, subscriptionId }),
+      }
+    );
+
+    const result = await res.json();
+    console.log('[IAP] verify-playstore-purchase レスポンス:', result);
+
+    return result.success === true;
+  } catch (e) {
+    console.error('[IAP] verify-playstore-purchase エラー:', e);
+    return false;
+  }
+}
+
 function IAPProviderNative({ children }: { children: ReactNode }) {
   const uid = useContext(UidContext);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
@@ -54,8 +91,24 @@ function IAPProviderNative({ children }: { children: ReactNode }) {
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
       try {
+        // 1. Google Play にトランザクション完了を通知
         await finishTransaction({ purchase, isConsumable: false });
+
+        // 2. バックエンドで購入を検証して plan_id を更新
+        if (Platform.OS === 'android' && purchase.purchaseToken) {
+          const verified = await verifyPlaystorePurchase(
+            purchase.purchaseToken,
+            purchase.productId
+          );
+          if (!verified) {
+            console.warn('[IAP] 購入の検証に失敗しました');
+            setError('購入の確認に失敗しました。サポートにお問い合わせください');
+            return;
+          }
+        }
+
         setActivePlanId(purchase.productId);
+        console.log('[IAP] 購入完了・検証OK:', purchase.productId);
       } catch (e) {
         console.error('[IAP] finishTransaction error:', e);
       } finally {

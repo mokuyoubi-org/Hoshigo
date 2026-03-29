@@ -1,7 +1,4 @@
-// ============================================================
-// screens/SubscriptionScreen.tsx
-// Android / iOS 用サブスクリプション画面
-// ============================================================
+// /Subscription.native.tsx
 
 import { BACKGROUND, STRAWBERRY } from "@/src/constants/colors";
 import { PLANS } from "@/src/constants/plans";
