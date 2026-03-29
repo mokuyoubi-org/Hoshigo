@@ -5,7 +5,7 @@ import {
   BACKGROUND,
   CHOCOLATE,
   CHOCOLATE_SUB,
-  DANGER,
+  DANGER, 
   STRAWBERRY,
 } from "@/src/constants/colors";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
