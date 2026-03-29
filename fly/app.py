@@ -92,13 +92,14 @@ def run_gtp(sgf_content: str, commands: str, engine: str = "gnugo") -> str:
             
             play_cmds = [f"boardsize {board_size}"]
             for colour, move in plays:
+                colour_gtp = "black" if colour == "b" else "white"
                 if move is None:
-                    play_cmds.append(f"play {colour} pass")
+                    play_cmds.append(f"play {colour_gtp} pass")
                 else:
                     row, col = move  # sgfmillはrow=下から, col=左から
                     gtp_col = letters_gtp[col]
                     gtp_row = row + 1
-                    play_cmds.append(f"play {colour} {gtp_col}{gtp_row}")
+                    play_cmds.append(f"play {colour_gtp} {gtp_col}{gtp_row}")
             
             gtp_input = "\n".join(play_cmds) + f"\n{commands}\nquit\n"
         else:
