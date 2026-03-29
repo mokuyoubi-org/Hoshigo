@@ -1050,16 +1050,14 @@ $$;
 ALTER FUNCTION "public"."delete_user_account"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."hello_test"() RETURNS "text"
+CREATE OR REPLACE FUNCTION "public"."hello test 2"() RETURNS "text"
     LANGUAGE "plpgsql"
-    AS $$
-begin
-  return 'Hello from RPC test!';
-end;
-$$;
+    AS $$begin
+  return 'Hello from RPC test2!';
+end;$$;
 
 
-ALTER FUNCTION "public"."hello_test"() OWNER TO "postgres";
+ALTER FUNCTION "public"."hello test 2"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."register_profile"("p_username" "text", "p_displayname" "text") RETURNS "void"
@@ -1920,9 +1918,9 @@ GRANT ALL ON FUNCTION "public"."delete_user_account"() TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."hello_test"() TO "anon";
-GRANT ALL ON FUNCTION "public"."hello_test"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."hello_test"() TO "service_role";
+GRANT ALL ON FUNCTION "public"."hello test 2"() TO "anon";
+GRANT ALL ON FUNCTION "public"."hello test 2"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."hello test 2"() TO "service_role";
 
 
 
