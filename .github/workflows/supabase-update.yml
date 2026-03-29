@@ -25,21 +25,15 @@ jobs:
           sudo apt-get install -y postgresql-client-17
 
       # ──────────────────────────────────────────────
-      # 1. PRODのフルバックアップをCloudflare R2に保存
-      #    （最新10件を保持、超えた分は古い順に削除）
+      # 1. PROD・DEVのフルバックアップをCloudflare R2に保存
+      #    （各環境ごとに最新10件を保持、超えた分は古い順に削除）
       # ──────────────────────────────────────────────
-      - name: Backup prod database to Cloudflare R2
+      - name: Backup databases to Cloudflare R2
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          BACKUP_FILE="/tmp/prod_backup_${TIMESTAMP}.sql"
           MAX_BACKUPS=10
           BUCKET="${{ secrets.R2_BUCKET_NAME }}"
           ENDPOINT="https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
-          OBJECT_KEY="db/prod_backup_${TIMESTAMP}.sql"
-
-          # pg_dump
-          /usr/lib/postgresql/17/bin/pg_dump "${{ secrets.SUPABASE_DB_URL_PROD }}" \
-            -f "$BACKUP_FILE"
 
           # aws CLI をR2向けに設定
           pip install awscli --quiet
@@ -47,28 +41,134 @@ jobs:
           export AWS_SECRET_ACCESS_KEY="${{ secrets.R2_SECRET_ACCESS_KEY }}"
           export AWS_DEFAULT_REGION="auto"
 
-          # アップロード
-          aws s3 cp "$BACKUP_FILE" "s3://${BUCKET}/${OBJECT_KEY}" \
-            --endpoint-url "$ENDPOINT"
+          backup_and_rotate() {
+            local DB_URL=$1
+            local FOLDER=$2
+            local BACKUP_FILE="/tmp/${FOLDER}_backup_${TIMESTAMP}.sql"
+            local OBJECT_KEY="${FOLDER}/${FOLDER}_backup_${TIMESTAMP}.sql"
 
-          echo "Backup uploaded: ${OBJECT_KEY}"
-          rm -f "$BACKUP_FILE"
+            /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" -f "$BACKUP_FILE"
 
-          # 10件を超えた古いバックアップを削除
-          aws s3 ls "s3://${BUCKET}/db/" \
-            --endpoint-url "$ENDPOINT" \
-            | sort \
-            | awk '{print $4}' \
-            | grep "^prod_backup_" \
-            | head -n -${MAX_BACKUPS} \
-            | while read KEY_NAME; do
-                aws s3 rm "s3://${BUCKET}/db/${KEY_NAME}" \
-                  --endpoint-url "$ENDPOINT"
-                echo "Deleted old backup: db/${KEY_NAME}"
-              done
+            aws s3 cp "$BACKUP_FILE" "s3://${BUCKET}/${OBJECT_KEY}" \
+              --endpoint-url "$ENDPOINT"
+
+            echo "Backup uploaded: ${OBJECT_KEY}"
+            rm -f "$BACKUP_FILE"
+
+            # 10件を超えた古いバックアップを削除
+            aws s3 ls "s3://${BUCKET}/${FOLDER}/" \
+              --endpoint-url "$ENDPOINT" \
+              | sort \
+              | awk '{print $4}' \
+              | grep "^${FOLDER}_backup_" \
+              | head -n -${MAX_BACKUPS} \
+              | while read KEY_NAME; do
+                  aws s3 rm "s3://${BUCKET}/${FOLDER}/${KEY_NAME}" \
+                    --endpoint-url "$ENDPOINT"
+                  echo "Deleted old backup: ${FOLDER}/${KEY_NAME}"
+                done
+          }
+
+          backup_and_rotate "${{ secrets.SUPABASE_DB_URL_PROD }}" "prod"
+          backup_and_rotate "${{ secrets.SUPABASE_DB_URL_DEV }}"  "dev"
 
       # ──────────────────────────────────────────────
-      # 2. DEVから「スキーマ定義のみ」をダンプ
+      # 2. DEVとPRODを比較して削除系DDLを生成
+      #    DEVから消えたものをPRODからも削除する
+      #    ただしテーブル丸ごとのDROPはデータが消えるため除外
+      # ──────────────────────────────────────────────
+      - name: Generate deletion DDL from diff
+        run: |
+          python3 - <<'PYEOF'
+          import subprocess, os
+
+          DEV_URL  = os.environ["SUPABASE_DB_URL_DEV"]
+          PROD_URL = os.environ["SUPABASE_DB_URL_PROD"]
+          OUT      = "supabase/migrations/diff_deletions.sql"
+
+          def query(url, sql):
+              r = subprocess.run(
+                  ["psql", url, "-At", "-c", sql],
+                  capture_output=True, text=True, check=True
+              )
+              return {row for row in r.stdout.strip().splitlines() if row}
+
+          SCHEMAS   = ("public", "system", "game", "users")
+          schema_in = "'" + "','".join(SCHEMAS) + "'"
+
+          lines = ["-- Auto-generated deletion DDL", "BEGIN;"]
+
+          # ── Functions / Procedures ─────────────────
+          sql_funcs = (
+              f"SELECT n.nspname||'.'||p.proname"
+              f"||'('||pg_get_function_identity_arguments(p.oid)||')' "
+              f"FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace "
+              f"WHERE n.nspname IN ({schema_in}) AND p.prokind IN ('f','p')"
+          )
+          for fn in sorted(query(PROD_URL, sql_funcs) - query(DEV_URL, sql_funcs)):
+              lines.append(f"DROP FUNCTION IF EXISTS {fn} CASCADE;")
+
+          # ── Triggers ───────────────────────────────
+          sql_trg = (
+              f"SELECT trigger_schema||'.'||trigger_name||'@'||event_object_table "
+              f"FROM information_schema.triggers "
+              f"WHERE trigger_schema IN ({schema_in})"
+          )
+          for t in sorted(query(PROD_URL, sql_trg) - query(DEV_URL, sql_trg)):
+              schema_name, rest = t.split(".", 1)
+              trg_name, tbl     = rest.split("@", 1)
+              lines.append(f"DROP TRIGGER IF EXISTS {trg_name} ON {schema_name}.{tbl} CASCADE;")
+
+          # ── Views ──────────────────────────────────
+          sql_view = (
+              f"SELECT table_schema||'.'||table_name FROM information_schema.views "
+              f"WHERE table_schema IN ({schema_in})"
+          )
+          for v in sorted(query(PROD_URL, sql_view) - query(DEV_URL, sql_view)):
+              lines.append(f"DROP VIEW IF EXISTS {v} CASCADE;")
+
+          # ── Policies ───────────────────────────────
+          sql_pol = (
+              f"SELECT n.nspname||'.'||p.polname||'@'||c.relname "
+              f"FROM pg_policy p "
+              f"JOIN pg_class c ON c.oid = p.polrelid "
+              f"JOIN pg_namespace n ON n.oid = c.relnamespace "
+              f"WHERE n.nspname IN ({schema_in})"
+          )
+          for p in sorted(query(PROD_URL, sql_pol) - query(DEV_URL, sql_pol)):
+              schema_name, rest = p.split(".", 1)
+              pol_name, tbl     = rest.split("@", 1)
+              lines.append(f'DROP POLICY IF EXISTS "{pol_name}" ON "{schema_name}"."{tbl}";')
+
+          # ── Columns ────────────────────────────────
+          sql_col = (
+              f"SELECT table_schema||'.'||table_name||'.'||column_name "
+              f"FROM information_schema.columns "
+              f"WHERE table_schema IN ({schema_in})"
+          )
+          for c in sorted(query(PROD_URL, sql_col) - query(DEV_URL, sql_col)):
+              tbl, col = c.rsplit(".", 1)
+              lines.append(f"ALTER TABLE IF EXISTS {tbl} DROP COLUMN IF EXISTS {col};")
+
+          # ── Tables ─────────────────────────────────
+          sql_tbl = (
+              f"SELECT table_schema||'.'||table_name FROM information_schema.tables "
+              f"WHERE table_schema IN ({schema_in}) AND table_type='BASE TABLE'"
+          )
+          for t in sorted(query(PROD_URL, sql_tbl) - query(DEV_URL, sql_tbl)):
+              lines.append(f"DROP TABLE IF EXISTS {t} CASCADE;")
+
+          lines.append("COMMIT;")
+          with open(OUT, "w") as f:
+              f.writelines(lines)
+          print(f"Deletion DDL written to {OUT}")
+          PYEOF
+        env:
+          SUPABASE_DB_URL_DEV: ${{ secrets.SUPABASE_DB_URL_DEV }}
+          SUPABASE_DB_URL_PROD: ${{ secrets.SUPABASE_DB_URL_PROD }}
+
+      # ──────────────────────────────────────────────
+      # 3. DEVから「スキーマ定義のみ」をダンプ
       # ──────────────────────────────────────────────
       - name: Dump dev schema (structure only)
         run: |
@@ -220,7 +320,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ──────────────────────────────────────────────
-      # 6. スキーマをPRODに適用
+      # 6. 削除系DDLをPRODに適用
+      #    DEVから消えた関数・トリガー・ビュー・ポリシー・カラムを削除
+      # ──────────────────────────────────────────────
+      - name: Apply deletion DDL to production
+        run: |
+          psql "${{ secrets.SUPABASE_DB_URL_PROD }}"             --single-transaction             --set ON_ERROR_STOP=1             -f supabase/migrations/diff_deletions.sql
+
+      # ──────────────────────────────────────────────
+      # 7. スキーマをPRODに適用
       # ──────────────────────────────────────────────
       - name: Apply schema to production
         run: |
@@ -231,7 +339,7 @@ jobs:
             -f "$SAFE_FILE"
 
       # ──────────────────────────────────────────────
-      # 7. Edge Functions: 全削除 → 再デプロイ
+      # 8. Edge Functions: 全削除 → 再デプロイ
       # ──────────────────────────────────────────────
       - name: Delete all prod edge functions
         run: |
