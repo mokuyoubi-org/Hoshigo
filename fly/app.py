@@ -29,7 +29,7 @@ GO_ENGINES = {
     # 2. くるみ
     "pachi": [
         "pachi",
-        "-t", "=5000",
+        "-t", "=1000",
         "--nojoseki",
         "threads=1",
     ],

@@ -276,7 +276,7 @@ export default function SubscriptionScreen() {
 }
 
 const ACCENT = "#111";
-const HIGHLIGHT = "#2563eb";
+const HIGHLIGHT = "#5c85de";
 
 const styles = StyleSheet.create({
   header: {
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: "#f3f4f6", marginVertical: 16 },
   features: { gap: 8, marginBottom: 20 },
   featureRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  check: { color: "#16a34a", fontWeight: "700", fontSize: 14 },
+  check: { color: "#37a861", fontWeight: "700", fontSize: 14 },
   featureText: { fontSize: 14, color: "#374151" },
   button: {
     borderWidth: 2,

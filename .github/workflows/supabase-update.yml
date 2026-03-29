@@ -156,22 +156,57 @@ jobs:
             --single-transaction \
             --set ON_ERROR_STOP=1 \
             -f "$SAFE_FILE"
-
       # ──────────────────────────────────────────────
-      # 9. Edge Functions: 全削除 → 再デプロイ
+      # 9. Edge Functions: 内容比較して差分のある関数のみ再デプロイ
       # ──────────────────────────────────────────────
-      - name: Delete all prod edge functions
+      - name: Deploy changed edge functions to production
         run: |
-          supabase functions list \
-            --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-            --output json \
-            | jq -r '.[].name' \
-            | while read fn; do
-                echo "Deleting $fn"
-                supabase functions delete "$fn" \
-                  --project-ref "${{ secrets.SUPABASE_PROJECT_REF_PROD }}" \
-                  --yes
-              done
+          PROD_REF="${{ secrets.SUPABASE_PROJECT_REF_PROD }}"
+          FUNCTIONS_DIR="supabase/functions"
+
+          # PRODの関数を一時ディレクトリにダウンロード
+          PROD_TMP=$(mktemp -d)
+          supabase functions download \
+            --project-ref "$PROD_REF" \
+            --output-dir "$PROD_TMP" 2>/dev/null || true
+
+          # PRODに存在してDEVに存在しない関数を削除
+          for prod_fn_dir in "$PROD_TMP"/*/; do
+            fn=$(basename "$prod_fn_dir")
+            if [ ! -d "$FUNCTIONS_DIR/$fn" ]; then
+              echo "Deleting removed function: $fn"
+              supabase functions delete "$fn" \
+                --project-ref "$PROD_REF" \
+                --yes
+            fi
+          done
+
+          # DEVの各関数をPRODと内容比較してデプロイ
+          for dev_fn_dir in "$FUNCTIONS_DIR"/*/; do
+            fn=$(basename "$dev_fn_dir")
+
+            # PRODに存在しない → 新規デプロイ
+            if [ ! -d "$PROD_TMP/$fn" ]; then
+              echo "New function, deploying: $fn"
+              supabase functions deploy "$fn" \
+                --project-ref "$PROD_REF"
+              continue
+            fi
+
+            # ディレクトリ内の全ファイルをまとめてハッシュ計算して比較
+            DEV_HASH=$(find "$dev_fn_dir" -type f | sort | xargs sha256sum | sha256sum | awk '{print $1}')
+            PROD_HASH=$(find "$PROD_TMP/$fn" -type f | sort | xargs sha256sum | sha256sum | awk '{print $1}')
+
+            if [ "$DEV_HASH" != "$PROD_HASH" ]; then
+              echo "Changed function, deploying: $fn"
+              supabase functions deploy "$fn" \
+                --project-ref "$PROD_REF"
+            else
+              echo "No change, skipping: $fn"
+            fi
+          done
+
+          rm -rf "$PROD_TMP"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
