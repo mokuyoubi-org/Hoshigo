@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useContext } from "react";
 import {
   ActivityIndicator,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -155,6 +156,23 @@ export default function SubscriptionScreen() {
                       )}
                     </TouchableOpacity>
                   )}
+
+                  {/* ↓ これを追加 */}
+                  {isActive && (
+                    <TouchableOpacity
+                      style={styles.cancelLink}
+                      onPress={() =>
+                        Linking.openURL(
+                          "https://play.google.com/store/account/subscriptions",
+                        )
+                      }
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.cancelLinkText}>
+                        サブスクをキャンセルする
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             })
@@ -173,6 +191,15 @@ export default function SubscriptionScreen() {
 const ACCENT = "#111";
 
 const styles = StyleSheet.create({
+  cancelLink: {
+    marginTop: 10,
+    alignItems: "center",
+  },
+  cancelLinkText: {
+    fontSize: 12,
+    color: "#aaa",
+    textDecorationLine: "underline",
+  },
   container: {
     flex: 1,
     backgroundColor: BACKGROUND,

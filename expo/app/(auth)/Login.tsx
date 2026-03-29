@@ -7,10 +7,9 @@ import { supabase } from "@/src/services/supabase";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
-  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -32,48 +31,6 @@ export default function Login() {
   const canLogin = isValidEmail(email) && isValidPassword(password);
   const { t } = useTranslation();
 
-  useEffect(() => {
-    const handleDeepLink = async (url: string) => {
-      console.log("📱 Login screen - Deep link:", url);
-
-      const [path, fragment] = url.split("#");
-      if (!fragment) return;
-
-      const params = new URLSearchParams(fragment);
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-      const type = params.get("type");
-
-      if (type === "signup" && accessToken && refreshToken) {
-        setLoading(true);
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        setLoading(false);
-
-        if (error) {
-          setError("セッションの確立に失敗しました");
-        }
-      }
-    };
-
-    if (Platform.OS === "web") {
-      // Webはwindow.locationから直接取得
-      handleDeepLink(window.location.href);
-    } else {
-      // モバイルはLinkingを使用
-      Linking.getInitialURL().then((url) => {
-        if (url) handleDeepLink(url);
-      });
-
-      const subscription = Linking.addEventListener("url", (event) => {
-        handleDeepLink(event.url);
-      });
-
-      return () => subscription.remove();
-    }
-  }, []);
   const onLogin = async () => {
     setLoading(true);
     setError("");
@@ -93,8 +50,6 @@ export default function Login() {
       }
       return;
     }
-
-    router.replace("/");
   };
 
   const handleGuestLogin = async () => {

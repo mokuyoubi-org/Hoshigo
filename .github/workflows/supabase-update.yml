@@ -109,7 +109,7 @@ jobs:
           python3 .github/scripts/convert_to_idempotent.py "$DUMP_FILE" "$SAFE_FILE"
 
       # ──────────────────────────────────────────────
-      # 6. 中間ファイルを削除してコミット & プッシュ
+      # 5. 中間ファイルを削除してコミット & プッシュ
       #    リポジトリには safe.sql と diff_deletions.sql のみ残す
       # ──────────────────────────────────────────────
       - name: Commit and push
@@ -124,7 +124,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ──────────────────────────────────────────────
-      # 7. 削除系DDLをPRODに適用
+      # 6. 削除系DDLをPRODに適用
       #    DEVから消えた関数・トリガー・ビュー・ポリシー・カラム・テーブルを削除
       # ──────────────────────────────────────────────
       - name: Apply deletion DDL to production
@@ -135,7 +135,7 @@ jobs:
             -f supabase/migrations/diff_deletions.sql
 
       # ──────────────────────────────────────────────
-      # 8. スキーマをPRODに適用
+      # 7. スキーマをPRODに適用
       # ──────────────────────────────────────────────
       - name: Apply schema to production
         run: |

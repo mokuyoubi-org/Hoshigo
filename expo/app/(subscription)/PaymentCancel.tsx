@@ -3,7 +3,7 @@
 // 支払いキャンセルページ（hoshigo.app/cancel へのルート）
 // ============================================================
 
-import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -15,9 +15,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PaymentCancelScreen() {
-  const navigation = useNavigation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
+  const goHome = () => {
+    router.replace("/(tabs)/Home");
+  };
+  const goSubscription = () => {
+    router.replace("/(subscription)/Subscription");
+  };
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -45,7 +49,7 @@ export default function PaymentCancelScreen() {
         <View style={styles.buttons}>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => navigation.navigate("Subscription" as never)}
+            onPress={goSubscription}
             activeOpacity={0.8}
           >
             <Text style={styles.primaryButtonText}>プランを見る</Text>
@@ -53,7 +57,7 @@ export default function PaymentCancelScreen() {
 
           <TouchableOpacity
             style={styles.secondaryButton}
-            onPress={() => navigation.navigate("Home" as never)}
+            onPress={goHome}
             activeOpacity={0.8}
           >
             <Text style={styles.secondaryButtonText}>ホームへ戻る</Text>

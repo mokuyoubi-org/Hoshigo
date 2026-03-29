@@ -32,7 +32,7 @@ export default function GoogleSignInButton() {
     const res = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://google-auth`,
+        redirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://`,
         queryParams: { prompt: "consent" },
         skipBrowserRedirect: true,
       },
@@ -47,7 +47,7 @@ export default function GoogleSignInButton() {
 
     const result = await WebBrowser.openAuthSessionAsync(
       googleOAuthUrl,
-      `${process.env.EXPO_PUBLIC_SCHEME!}://google-auth`,
+      `${process.env.EXPO_PUBLIC_SCHEME!}://`,
       { showInRecents: true },
     ).catch((err) => {
       console.error("onSignInButtonPress - openAuthSessionAsync - error", {

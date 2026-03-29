@@ -83,8 +83,6 @@ export default function SubscriptionScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           priceId,
-          successUrl: `${HOSHIGO_APP_URL}/success`,
-          cancelUrl: `${HOSHIGO_APP_URL}/cancel`,
           uid,
         }),
       });

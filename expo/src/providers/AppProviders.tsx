@@ -25,9 +25,9 @@ import { IAPProvider } from "@/src/providers/IAPProvider";
 import { langStore, themeStore } from "@/src/services/storage";
 import { supabase } from "@/src/services/supabase";
 import { Lang } from "@/src/services/translations";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import React, { ReactNode, useEffect, useState } from "react";
-import { Linking } from "react-native";
+import { Linking, Platform } from "react-native";
 // ------------------------------------------------------------------ //
 // AppProviders
 // ------------------------------------------------------------------ //
@@ -55,6 +55,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   ); // メンテナンスメッセージ
   const [lang, setLang] = useState<Lang>(defaultLang); // 言語
   const router = useRouter();
+  const pathname = usePathname();
 
   // -------------- 初期化 --------------
 
@@ -95,6 +96,38 @@ export function AppProviders({ children }: { children: ReactNode }) {
   // 2. ログインチェック
   useEffect(() => {
     const initAuth = async () => {
+      // --- Web対応 ---
+      if (Platform.OS === "web") {
+        const url = window.location.href;
+        const [path, fragment] = url.split("#");
+        if (fragment) {
+          const params = new URLSearchParams(fragment);
+          const accessToken = params.get("access_token");
+          const refreshToken = params.get("refresh_token");
+          const type = params.get("type");
+
+          if (
+            (type === "signup" || type === "recovery") &&
+            accessToken &&
+            refreshToken
+          ) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (data.session) {
+              setUid(data.session.user.id);
+              setEmail(data.session.user.email!);
+              setJwt(data.session.access_token);
+              setRt(data.session.refresh_token);
+              setCheckingAuth(false);
+              return;
+            }
+          }
+        }
+      }
+
       // メールからurlを踏んでアプリに飛んだ時
       const initialUrl = await Linking.getInitialURL();
       if (initialUrl) {
@@ -312,7 +345,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
       setAcquiredIcons(profile.acquired_icons); // 獲得済アイコン
       setPlanId(profile.plan_id);
       // 遷移
-      router.replace("/(tabs)/Home");
+      // profile取得後
+      if (pathname === "/PaymentSuccess") {
+        router.replace("/(subscription)/PaymentSuccess");
+      } else if (pathname === "/PaymentCancel") {
+        router.replace("/(subscription)/PaymentCancel");
+      } else {
+        router.replace("/(tabs)/Home");
+      }
     };
 
     fetchProfile();
