@@ -115,9 +115,8 @@ def run_gtp(sgf_content: str, commands: str, engine: str = "gnugo") -> str:
             text=True
         )
         out, err = gtp.communicate(gtp_input, timeout=30)
-        if err:
-            print(f"GTP stderr: {err}", flush=True)
-        print(f"GTP stdout: {out}", flush=True)
+        print(f"GTP stderr: [{err}]", flush=True)  # 空でも必ず出力
+        print(f"GTP stdout: [{out}]", flush=True)
         return out
 
     except subprocess.TimeoutExpired:
