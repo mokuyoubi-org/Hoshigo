@@ -1,3 +1,4 @@
+# generate_deletion_ddl.py
 import subprocess
 import os
 
@@ -61,7 +62,34 @@ for p in sorted(query(PROD_URL, sql_pol) - query(DEV_URL, sql_pol)):
     pol_name, tbl     = rest.split("@", 1)
     lines.append(f'DROP POLICY IF EXISTS "{pol_name}" ON "{schema_name}"."{tbl}";\n')
 
-# ── Columns ────────────────────────────────────────────────────────────────
+# ── Columns（追加） ────────────────────────────────────────────────────────
+sql_col_detail = (
+    f"SELECT table_schema||'.'||table_name||'.'||column_name"
+    f"||'|'||data_type"
+    f"||'|'||COALESCE(column_default, 'NULL')"
+    f"||'|'||is_nullable "
+    f"FROM information_schema.columns "
+    f"WHERE table_schema IN ({schema_in})"
+)
+dev_cols  = {row.split('|')[0]: row for row in query(DEV_URL,  sql_col_detail)}
+prod_cols = {row.split('|')[0]: row for row in query(PROD_URL, sql_col_detail)}
+
+for key in sorted(dev_cols.keys() - prod_cols.keys()):
+    tbl, col  = key.rsplit(".", 1)
+    parts     = dev_cols[key].split("|")
+    dtype     = parts[1]
+    default   = parts[2]
+    nullable  = parts[3]
+
+    default_clause  = f" DEFAULT {default}" if default != "NULL" else ""
+    nullable_clause = " NOT NULL" if nullable == "NO" else ""
+
+    lines.append(
+        f"ALTER TABLE IF EXISTS {tbl} "
+        f"ADD COLUMN IF NOT EXISTS {col} {dtype}{default_clause}{nullable_clause};\n"
+    )
+
+# ── Columns（削除） ────────────────────────────────────────────────────────
 sql_col = (
     f"SELECT table_schema||'.'||table_name||'.'||column_name "
     f"FROM information_schema.columns "

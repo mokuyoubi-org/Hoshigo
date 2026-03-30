@@ -46,6 +46,7 @@ import React, {
 } from "react";
 import {
   FlatList,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -723,16 +724,20 @@ export default function Watch() {
 
       {isEmpty ? (
         <View style={styles.emptyContainer}>
+          <Image
+            source={require("@/assets/images/21.png")}
+            style={styles.characterImage}
+            resizeMode="contain"
+          />
           <Text style={styles.emptyText}>{t("Watch.noMatches")}</Text>
           <Text style={styles.emptyHint}>{t("Watch.pushToRefreshHint")}</Text>
           <TouchableOpacity
-            style={styles.refreshButton}
             onPress={onRefresh}
             disabled={refreshing}
           >
             <Ionicons
               name="refresh-circle"
-              size={32}
+              size={64}
               color={refreshing ? CHOCOLATE_SUB : STRAWBERRY}
             />
           </TouchableOpacity>
@@ -800,12 +805,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   emptyHint: { fontSize: 12, color: CHOCOLATE_SUB, letterSpacing: 0.5 },
-  refreshButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 16,
-    marginBottom: 8,
-  },
+  characterImage: { width: 80, height: 80, borderRadius: 12 },
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 20,

@@ -9,7 +9,7 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'), {
   httpClient: Stripe.createFetchHttpClient()
 });
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': Deno.env.get("ALLOWED_ORIGIN"),
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
@@ -38,11 +38,11 @@ Deno.serve(async (req)=>{
     });
   }
   try {
-    const { priceId, successUrl, cancelUrl, uid } = await req.json();
+    const { priceId, uid } = await req.json();
     // バリデーション
-    if (!priceId || !successUrl || !cancelUrl || !uid) {
+    if (!priceId || !uid) {
       return new Response(JSON.stringify({
-        error: 'priceId, successUrl, cancelUrl, uid は必須です'
+        error: 'priceId, uid は必須です'
       }), {
         status: 400,
         headers: {
@@ -70,8 +70,10 @@ Deno.serve(async (req)=>{
           quantity: 1
         }
       ],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      // success_url: "http://localhost:8081/PaymentSuccess", // dev
+      // cancel_url: "http://localhost:8081/PaymentCancel", // dev
+      success_url: "http://hoshigo.app/PaymentSuccess", // prod
+      cancel_url: "http://hoshigo.app/PaymentCancel", // prod
       // uid を metadata に埋め込む → webhook で取り出してDBを更新する
       metadata: {
         supabase_uid: uid

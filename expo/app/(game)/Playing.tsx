@@ -717,8 +717,8 @@ export default function Playing() {
           <AgehamaDisplay
             count={
               oppColor === "black"
-                ? agehamaHistory[currentIndexRef.current].black
-                : agehamaHistory[currentIndexRef.current].white
+                ? agehamaHistory[currentIndex].black
+                : agehamaHistory[currentIndex].white
             }
           />
           <Text style={styles.timeText}>{secondsToMinutes(oppSeconds)}</Text>
@@ -759,8 +759,8 @@ export default function Playing() {
           <AgehamaDisplay
             count={
               myColor === "black"
-                ? agehamaHistory[currentIndexRef.current].black
-                : agehamaHistory[currentIndexRef.current].white
+                ? agehamaHistory[currentIndex].black
+                : agehamaHistory[currentIndex].white
             }
           />
           <Text style={styles.timeText}>{secondsToMinutes(mySeconds)}</Text>
@@ -973,7 +973,9 @@ const styles = StyleSheet.create({
   },
 
   playerMain: {
+    width: "100%",
     flexDirection: "row",
+    justifyContent: "flex-start",
     alignItems: "center",
     gap: 6,
   },
