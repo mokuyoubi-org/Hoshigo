@@ -232,7 +232,7 @@ begin
 
   -- 負けた⚪️側の処理
   v_white_giantkill := 0; -- まず連勝はこれでストップ
-  if v_black_games <= 20 then -- 相手の⚫️が対局数の少ない強い人だったら
+  if not v_is_black_bot and v_black_games <= 20 then -- 相手の⚫️が対局数の少ない強い人だったら
     v_white_delta := 0; -- 減るpointは0
   else
     v_white_delta := -v_base_delta; -- そうでなければ、普通に減らされる
@@ -262,7 +262,7 @@ begin
 
     -- 負けた⚫️側の処理
     v_black_giantkill := 0; -- まず連勝はこれでストップ
-    if v_white_games <= 20 then -- 相手の⚪️が対局数の少ない強い人だったら
+    if not v_is_white_bot and v_white_games <= 20 then -- 相手の⚪️が対局数の少ない強い人だったら
       v_black_delta := 0; -- 減るpointは0
     else -- そうでなければ、普通に減らされる
       v_black_delta := -v_base_delta;
@@ -1707,7 +1707,8 @@ CREATE TABLE IF NOT EXISTS "users"."profiles" (
     "gumi_index" smallint DEFAULT '0'::smallint,
     "is_bot" boolean DEFAULT false,
     "acquired_icons" smallint[],
-    "plan_id" smallint DEFAULT '0'::smallint
+    "plan_id" smallint DEFAULT '0'::smallint,
+    "purchase_token" "text"
 );
 
 
