@@ -1,3 +1,4 @@
+// ForgotPassword.tsx
 import LoadingModal from "@/src/components/Modals/LoadingModal";
 import { useTranslation } from "@/src/contexts/LocaleContexts";
 import { isValidEmail } from "@/src/lib/utils";
