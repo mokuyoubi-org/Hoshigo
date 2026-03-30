@@ -1,5 +1,3 @@
-# Expo部分を更新したときに自動でUpdateするワークフロウ。
-# package.jsonが変わっていればビルドして本番用に提出する。
 name: Auto EAS Update / Build
 
 on:
@@ -41,33 +39,23 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_UPDATE_TOKEN }}
 
-      - name: Check if package.json changed
-        id: pkg
-        run: |
-          git diff HEAD~1 HEAD --name-only | grep -q 'expo/package.json' \
-            && echo "changed=true" >> $GITHUB_OUTPUT \
-            || echo "changed=false" >> $GITHUB_OUTPUT
-
       - name: Setup EAS config
         run: |
           mkdir -p $GITHUB_WORKSPACE/expo/.eas
           echo "{\"projectId\": \"${{ secrets.EAS_PROJECT_ID }}\"}" > $GITHUB_WORKSPACE/expo/.eas/config.json
 
-      - name: Debug EAS config
-        run: cat $GITHUB_WORKSPACE/expo/.eas/config.json
-      
-      - name: Debug env
-        working-directory: expo
-        run: |
-          echo "GOOGLE_IOS: $EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID"
-          npx expo config --json 2>&1 | head -5
+      - name: Check fingerprint
+        id: fingerprint
+        uses: expo/expo-github-action/fingerprint@v8
+        with:
+          working-directory: expo
 
       - name: EAS Update (OTA)
-        if: steps.pkg.outputs.changed == 'false'
+        if: steps.fingerprint.outputs.fingerprint-diff == ''
         working-directory: expo
         run: eas update --branch production --message "${{ github.event.head_commit.message }}"
 
       - name: EAS Build (ストア提出)
-        if: steps.pkg.outputs.changed == 'true'
+        if: steps.fingerprint.outputs.fingerprint-diff != ''
         working-directory: expo
         run: eas build --platform android --profile production --auto-submit
