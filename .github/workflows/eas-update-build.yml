@@ -55,6 +55,12 @@ jobs:
 
       - name: Debug EAS config
         run: cat $GITHUB_WORKSPACE/expo/.eas/config.json
+      
+      - name: Debug env
+        working-directory: expo
+        run: |
+          echo "GOOGLE_IOS: $EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID"
+          npx expo config --json 2>&1 | head -5
 
       - name: EAS Update (OTA)
         if: steps.pkg.outputs.changed == 'false'
