@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#2d3748",
+    backgroundColor: "#91a5b9",
   },
 
   whiteStone: {
@@ -146,6 +146,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: "#ffffff",
+    borderWidth: 2.5,
+    borderColor: "#cbd5e0",
   },
 
   emptyPoint: {

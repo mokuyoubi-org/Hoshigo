@@ -1,7 +1,7 @@
 // SkeletonCard.tsx
 import { RecordType } from "@/src/constants/goConstants";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
 // makePlaceholdersは、例えばmakePlaceholders(10)なら
 // [{id: -1}, {id: -2}, ... {id: -10}]
@@ -19,22 +19,18 @@ export const makeSkeletonCard = (fetchCount: number): RecordType[] => {
 
 // idが負の数ならSkeletonCard。
 export const isSkeletonCard = (r: RecordType) => (r.id as number) < 0;
-
-// SkeletonCardコンポーネント
 export const SkeletonCard = ({ height }: { height: number }) => {
   return (
     <View style={[styles.card, { height }]}>
+      {/* overlayは絶対配置のまま背景として敷く */}
       <View style={styles.overlay} />
 
-      <View style={styles.header}>
-        <View style={styles.headerBoxLarge} />
-        <View style={styles.headerBoxSmall} />
-        <View style={styles.headerBoxLarge} />
-      </View>
-
-      <View style={[styles.body, { height }]}>
-        <View style={styles.bodyInner} />
-      </View>
+      {/* Flexフローに乗せるだけで中央に来る */}
+      <Image
+        source={require("@/assets/images/21.png")}
+        style={styles.characterImage}
+        resizeMode="contain"
+      />
     </View>
   );
 };
@@ -42,6 +38,7 @@ export const SkeletonCard = ({ height }: { height: number }) => {
 const styles = StyleSheet.create({
   card: {
     alignItems: "center",
+    justifyContent: "center", // これだけで中央
     backgroundColor: "#fff",
     borderRadius: 20,
     borderWidth: 1.5,
@@ -50,44 +47,15 @@ const styles = StyleSheet.create({
   },
 
   overlay: {
-    backgroundColor: "rgba(200,214,230,0.4)",
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(240, 247, 255, 1)",
   },
 
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(200,214,230,0.15)",
-    backgroundColor: "rgba(249,250,251,0.8)",
-    width: "100%",
-  },
-
-  headerBoxLarge: {
+  characterImage: {
     width: 72,
-    height: 48,
-    borderRadius: 10,
-    backgroundColor: "rgba(200,214,230,0.3)",
-  },
-
-  headerBoxSmall: {
-    width: 56,
-    height: 48,
-    borderRadius: 10,
-    backgroundColor: "rgba(200,214,230,0.3)",
-  },
-
-  body: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fafbfc",
-  },
-
-  bodyInner: {
-    borderRadius: 6,
-    backgroundColor: "rgba(200,214,230,0.3)",
+    height: 72,
+    borderRadius: 12,
+    opacity: 0.5,
+    zIndex: 1, // overlayより前面に出すだけ
   },
 });

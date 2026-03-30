@@ -30,6 +30,7 @@ export const translations = {
       later: "またあとで",
       play: "対局",
       settings: "設定",
+      playing: "対局中",
     },
     en: {
       pass: "Pass",
@@ -60,6 +61,7 @@ export const translations = {
       later: "Maybe Later",
       play: "PLAY",
       settings: "SETTINGS",
+       playing: "Playing",
     },
     zh: {
       pass: "虚手",
@@ -90,6 +92,7 @@ export const translations = {
       later: "稍后再说",
       play: "对局",
       settings: "设置",
+       playing: "对局中",
     },
     ko: {
       pass: "패스",
@@ -120,6 +123,7 @@ export const translations = {
       later: "나중에",
       play: "대국",
       settings: "설정",
+       playing: "대국 중",
     },
   },
   goCommon: {

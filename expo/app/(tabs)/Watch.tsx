@@ -2,6 +2,8 @@
 // お約束
 import { GhostCard } from "@/src/components/Cards/GhostCard";
 import { SkeletonCard } from "@/src/components/Cards/SkeletonCard";
+import { AgehamaDisplay } from "@/src/components/GoComponents/Agehama";
+import { AvatarWithPass } from "@/src/components/GoComponents/AvatarWithPass";
 import { GoBoard } from "@/src/components/GoComponents/GoBoard";
 import { ReplayControls } from "@/src/components/GoComponents/ReplayControls";
 import LoadingModal from "@/src/components/Modals/LoadingModal";
@@ -28,8 +30,9 @@ import {
   makeTerritoryBoard,
   movesToBoardHistory,
   resultToComment,
+  secondsToMinutes,
 } from "@/src/lib/goUtils";
-import { SetState } from "@/src/lib/utils";
+import { SetState, wrapBotDisplayname } from "@/src/lib/utils";
 import { supabase } from "@/src/services/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -90,6 +93,20 @@ type WatchCardData = {
   territoryBoard: number[][];
   isFinished: boolean;
   match: WatchMatch;
+  status?: string; // playingか、finishedか
+  turn?: string;
+  black_seconds?: number;
+  white_seconds?: number;
+  black_points?: number;
+  white_points?: number;
+  dead_stones?: number[];
+  black_icon_index?: number;
+  white_icon_index?: number;
+  match_type?: number;
+  black_displayname?: string;
+  white_displayname?: string;
+  black_gumi_index?: number;
+  white_gumi_index?: number;
 };
 
 // WatchMatch(生データ)を元に、WatchCardData(画面表示用に加工済みのデータ)を作る関数
@@ -129,6 +146,18 @@ const buildCardData = (match: WatchMatch): WatchCardData => {
     agehamaHistory,
     territoryBoard,
     isFinished,
+    black_seconds: match.black_seconds,
+    white_seconds: match.white_seconds,
+    black_points: match.black_seconds,
+    white_points: match.white_points,
+    dead_stones: match.dead_stones,
+    black_icon_index: match.black_icon_index,
+    white_icon_index: match.white_icon_index,
+    match_type: match.match_type,
+    black_displayname: match.black_displayname,
+    white_displayname: match.white_displayname,
+    black_gumi_index: match.black_gumi_index,
+    white_gumi_index: match.white_gumi_index,
   };
 };
 
@@ -173,6 +202,14 @@ const WatchCard = React.memo(
     const movesRef = useRef<string[]>(data.moves);
     const isAtLatestRef = useRef(true); // 観戦者が今最新の手を見ているかどうか
 
+    // ─── 時間・手番 State ─────────────────────────────────
+    const [blackSeconds, setBlackSeconds] = useState(Number(180));
+    const [whiteSeconds, setWhiteSeconds] = useState(Number(180));
+    const turnRef = useRef<"black" | "white">("black");
+    const blackSecondsRef = useRef(180);
+    const whiteSecondsRef = useRef(180);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     // currentIndex を更新するときに 「最新手かどうか」を自動でチェックして反映する関数
     // 要はsetCurrentIndexだと考えればok
     const wrappedSetCurrentIndex: SetState<number> = useCallback((value) => {
@@ -190,9 +227,14 @@ const WatchCard = React.memo(
     useEffect(() => {
       onMove((payload: any) => {
         if (isFinished) return;
-        const d = payload.payload ?? payload;
-        const moveRaw: number = d.move;
-        const moveCount: number = d.move_count;
+        const payloadData = payload.payload ?? payload;
+        blackSecondsRef.current = payloadData.black_seconds;
+        setBlackSeconds(blackSecondsRef.current);
+        whiteSecondsRef.current = payloadData.white_seconds;
+        setWhiteSeconds(whiteSecondsRef.current);
+        turnRef.current = payloadData.turn;
+        const moveRaw: number = payloadData.move;
+        const moveCount: number = payloadData.move_count;
         const move = intArrayToStringArray([moveRaw])[0];
         if (moveCount !== movesRef.current.length + 1) return;
         const colors: Color[] =
@@ -201,17 +243,23 @@ const WatchCard = React.memo(
         const lastBoard =
           boardHistoryRef.current[boardHistoryRef.current.length - 1];
         if (move === "p") {
-          const nb = [...boardHistoryRef.current, cloneBoard(lastBoard)];
-          const la =
+          const newBoardHistory = [
+            ...boardHistoryRef.current,
+            cloneBoard(lastBoard),
+          ];
+          const lastAgehama =
             agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
-          const na = [...agehamaHistoryRef.current, { ...la }];
-          const nm = [...movesRef.current, "p"];
-          boardHistoryRef.current = nb;
-          agehamaHistoryRef.current = na;
-          movesRef.current = nm;
-          setBoardHistory(nb);
-          setAgehamaHistory(na);
-          setMoves(nm);
+          const newAgehamaHistory = [
+            ...agehamaHistoryRef.current,
+            { ...lastAgehama },
+          ];
+          const newMoves = [...movesRef.current, "p"];
+          boardHistoryRef.current = newBoardHistory;
+          agehamaHistoryRef.current = newAgehamaHistory;
+          movesRef.current = newMoves;
+          setBoardHistory(newBoardHistory);
+          setAgehamaHistory(newAgehamaHistory);
+          setMoves(newMoves);
         } else {
           const grid = stringToGrid(move);
           const { board: newBoard, agehama } = applyMove(
@@ -220,22 +268,22 @@ const WatchCard = React.memo(
             cloneBoard(lastBoard),
             moverColor,
           );
-          const nb = [...boardHistoryRef.current, newBoard];
-          const la =
+          const newBoardHistory = [...boardHistoryRef.current, newBoard];
+          const lastAgehama =
             agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
-          const na = [
+          const newAgehamaHistory = [
             ...agehamaHistoryRef.current,
             moverColor === "black"
-              ? { ...la, black: la.black + agehama }
-              : { ...la, white: la.white + agehama },
+              ? { ...lastAgehama, black: lastAgehama.black + agehama }
+              : { ...lastAgehama, white: lastAgehama.white + agehama },
           ];
-          const nm = [...movesRef.current, stringifyGrid(grid)];
-          boardHistoryRef.current = nb;
-          agehamaHistoryRef.current = na;
-          movesRef.current = nm;
-          setBoardHistory(nb);
-          setAgehamaHistory(na);
-          setMoves(nm);
+          const newMoves = [...movesRef.current, stringifyGrid(grid)];
+          boardHistoryRef.current = newBoardHistory;
+          agehamaHistoryRef.current = newAgehamaHistory;
+          movesRef.current = newMoves;
+          setBoardHistory(newBoardHistory);
+          setAgehamaHistory(newAgehamaHistory);
+          setMoves(newMoves);
         }
         if (isAtLatestRef.current)
           setCurrentIndex(boardHistoryRef.current.length - 1);
@@ -275,25 +323,119 @@ const WatchCard = React.memo(
       });
     }, [onFinished, matchType]);
 
+    // タイマー開始
+    useEffect(() => {
+      timerRef.current = setInterval(() => {
+        if (isFinished) return;
+
+        if (turnRef.current === "black") {
+          blackSecondsRef.current = Math.max(0, blackSecondsRef.current - 1);
+          setBlackSeconds(blackSecondsRef.current);
+          return;
+        }
+
+        whiteSecondsRef.current = Math.max(0, whiteSecondsRef.current - 1);
+        setWhiteSeconds(whiteSecondsRef.current);
+      }, 1000);
+
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    }, [isFinished]);
+
     const board = boardHistory[currentIndex] ?? initializeBoard(9);
+
+    const moveHistory = moves?.slice(0, currentIndex + 1) ?? [];
+    const currentMove = moveHistory[currentIndex - 1];
+    const isCurrentMovePass = currentMove === "p";
+    const isBlackPass =
+      isCurrentMovePass &&
+      ((currentIndex % 2 === 1 && (matchType === 0 || matchType === 1)) ||
+        (currentIndex % 2 === 0 && matchType !== 0 && matchType !== 1));
+    const isWhitePass =
+      isCurrentMovePass &&
+      ((currentIndex % 2 === 0 && (matchType === 0 || matchType === 1)) ||
+        (currentIndex % 2 === 1 && matchType !== 0 && matchType !== 1));
 
     return (
       <View style={[styles.card, { height: cardHeight }]}>
-        <View style={styles.cardAccentLine} />
         <View style={styles.matchHeader}>
-          <View style={styles.centerBadgeArea}>
-            {isFinished && result ? (
-              <View style={styles.resultContainer}>
-                <Text style={styles.resultText}>
-                  {resultToComment(result, t)}
-                </Text>
+          {/* ヘッダー */}
+          <View style={[styles.playersRow]}>
+            {/* 黒（左） */}
+            <View style={styles.playerCell}>
+              <View style={styles.playerMain}>
+                <AvatarWithPass
+                  gumiIndex={data.black_gumi_index ?? 0}
+                  iconIndex={data.black_icon_index ?? 0}
+                  size={48}
+                  color="black"
+                  isLeft={true}
+                  showPass={isBlackPass}
+                />
+                <View style={styles.playerInfo}>
+                  <Text
+                    style={[styles.playerName]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {wrapBotDisplayname(data.black_displayname ?? "", t)}
+                  </Text>
+                  <AgehamaDisplay count={agehamaHistory[currentIndex].black} />
+                  <Text style={styles.timeText}>
+                    {secondsToMinutes(blackSeconds)}
+                  </Text>
+                </View>
               </View>
-            ) : status === "playing" ? (
-              <View style={styles.liveBadge}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>{t("Watch.playing")}</Text>
+            </View>
+
+            {/* 中央メタスロット */}
+            <View style={styles.metaSlot}>
+              <View style={styles.centerBadgeArea}>
+                {isFinished && result ? (
+                  <View style={styles.resultContainer}>
+                    <Text style={styles.resultText}>
+                      {resultToComment(result, t)}
+                    </Text>
+                  </View>
+                ) : status === "playing" ? (
+                  <View style={styles.liveBadge}>
+                    <Text style={styles.liveText}>{t("common.playing")}</Text>
+                  </View>
+                ) : null}
               </View>
-            ) : null}
+            </View>
+
+            {/* 白（右） */}
+            <View style={[styles.playerCell, styles.playerCellRight]}>
+              <View style={[styles.playerMain, styles.playerMainRight]}>
+                <AvatarWithPass
+                  gumiIndex={data.white_gumi_index ?? 0}
+                  iconIndex={data.white_icon_index ?? 0}
+                  size={48}
+                  color="white"
+                  isLeft={false}
+                  showPass={isWhitePass}
+                />
+                <View style={[styles.playerInfo, styles.playerInfoRight]}>
+                  <Text
+                    style={[
+                      styles.playerName,
+                      styles.playerNameRight,
+                      { flexShrink: 1 },
+                    ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {wrapBotDisplayname(data.white_displayname ?? "", t)}
+                  </Text>
+                  <AgehamaDisplay count={agehamaHistory[currentIndex].white} />
+                  <Text style={styles.timeText}>
+                    {secondsToMinutes(whiteSeconds)}
+                  </Text>
+                </View>
+              </View>
+            </View>
           </View>
         </View>
         <View style={styles.boardWrapper}>
@@ -328,9 +470,9 @@ export default function Watch() {
   const { t } = useTranslation();
   const { planId } = useContext(PlanIdContext)!;
   const { height } = useWindowDimensions();
-  const CARD_HEIGHT = height * 0.78;
+  const CARD_HEIGHT = height * 0.68;
   const SNAP_INTERVAL = CARD_HEIGHT + 18;
-  const boardWidth = (height * 36) / 100;
+  const boardWidth = (CARD_HEIGHT * 50) / 100;
   const isFree = planId === 0;
 
   // 現在表示中のカード（1枚のみ管理）
@@ -494,20 +636,6 @@ export default function Watch() {
   );
 
   // ─── FlatList用のdata ──────────────────────────────────
-  // activeIndexの数だけダミー + 現在カード + 次へのダミーでリストを構成。
-  // FlatListはindexベースで動かすためのダミー配列。
-  // 実際の描画は activeIndex の位置だけ MatchCard、他は空View。
-  //
-  // ただしこの方式だとgetItemLayoutが複雑になるため、
-  // シンプルに「カードは常に1枚だけ表示、スワイプはScrollViewで制御」する方針に変更。
-  // → FlatListをやめてScrollView + 手動スワイプ検知に切り替える。
-  //
-  // 実装: activeIndexを中心に前後1枚ずつの計3枚をFlatListに持たせる。
-  // [前ダミー or 前カード, 現在カード, 次ダミー]
-  // スワイプで前後に移動したらloadCardAtを呼ぶ。
-
-  // FlatListのdata: [prev_slot, current_slot, next_slot]
-  // スロットの種類: "prev" | "current" | "next"
   type Slot = "prev" | "current" | "next";
   const listData: Slot[] = ["prev", "current", "next"];
 
@@ -645,6 +773,11 @@ export default function Watch() {
   );
 }
 
+// ===== 位置調整用定数 =====
+const PASS_SLOT_HEIGHT = 28;
+const PASS_OVERLAP = 10;
+const PASS_SLOT_WIDTH = 40;
+// ==========================
 // ─── スタイル ───────────────────────────────────────────
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BACKGROUND },
@@ -679,12 +812,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "rgba(200,214,230,0.3)",
     overflow: "hidden",
-    shadowColor: STRAWBERRY,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
   },
-  cardAccentLine: { height: 2.5, backgroundColor: STRAWBERRY, opacity: 0.6 },
   matchHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -705,11 +833,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#48bb78" },
   liveText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#48bb78",
+    color: "#6fbd80",
     letterSpacing: 1.2,
   },
   resultContainer: {
@@ -733,4 +860,88 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafbfc",
   },
   controlsWrapper: { alignSelf: "center", paddingVertical: 8 },
+
+  // ── プレイヤー行 ──
+  playersRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingHorizontal: 8,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
+
+  playerCell: {
+    flex: 1,
+    flexDirection: "column",
+    alignItems: "flex-start",
+  },
+  playerCellRight: {
+    alignItems: "flex-end",
+  },
+
+  passSlot: {
+    height: PASS_SLOT_HEIGHT,
+    marginBottom: -PASS_OVERLAP,
+    justifyContent: "flex-end",
+    width: PASS_SLOT_WIDTH, // ← 固定幅に変更
+    zIndex: 1,
+  },
+  passSlotRight: {
+    alignItems: "flex-end",
+  },
+
+  hidden: {
+    opacity: 0,
+  },
+
+  playerMain: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  playerMainRight: {
+    flexDirection: "row-reverse",
+  },
+  playerInfo: {
+    alignItems: "flex-start",
+    flexDirection: "column",
+    gap: 4,
+    flex: 1,
+  },
+  playerInfoRight: {
+    alignItems: "flex-end",
+  },
+  playerName: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  playerNameRight: {
+    textAlign: "right",
+  },
+
+  // ── 中央メタスロット ──
+  metaSlot: {
+    paddingTop: 12,
+    width: 72,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
+  metaResult: {
+    fontSize: 11,
+    fontWeight: "600",
+    textAlign: "center",
+    lineHeight: 15,
+  },
+  metaDate: {
+    fontSize: 10,
+    textAlign: "center",
+    lineHeight: 14,
+  },
+  timeText: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#2d3748",
+  },
 });

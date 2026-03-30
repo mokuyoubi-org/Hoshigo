@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   upgradeButton: {
     width: "100%",
-    paddingVertical: 14,
+    padding: 14,
     borderRadius: 12,
   },
   upgradeButtonText: {

@@ -22,6 +22,11 @@
     "production": {
       "android": {
         "track": "production"
+      },
+      "ios": {
+        "appleId": "your@apple.com", // あとで
+        "ascAppId": "123456789", // あとで
+        "appleTeamId": "XXXXXXXXXX" // あとで
       }
     }
   },

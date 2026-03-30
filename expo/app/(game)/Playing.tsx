@@ -1,8 +1,7 @@
 // Playing.tsx
 import { AgehamaDisplay } from "@/src/components/GoComponents/Agehama";
-import { Avatar } from "@/src/components/GoComponents/Avatar";
+import { AvatarWithPass } from "@/src/components/GoComponents/AvatarWithPass";
 import { GoBoard } from "@/src/components/GoComponents/GoBoard";
-import { Pass } from "@/src/components/GoComponents/Pass";
 import { ReplayControls } from "@/src/components/GoComponents/ReplayControls";
 import { DailyLimitModal } from "@/src/components/Modals/DailyLimitModal";
 import LoadingModal from "@/src/components/Modals/LoadingModal";
@@ -15,7 +14,6 @@ import {
   GumiIndexContext,
   IconIndexContext,
   PointsContext,
-  UidContext,
 } from "@/src/contexts/UserContexts";
 import { useTheme } from "@/src/hooks/useTheme";
 import {
@@ -67,17 +65,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Playing() {
+  // グローバルstate
+  const { points, setPoints } = useContext(PointsContext)!;
+  const { gumiIndex, setGumiIndex } = useContext(GumiIndexContext)!;
+  const { iconIndex, setIconIndex } = useContext(IconIndexContext)!;
+  const { displayname, setDisplayname } = useContext(DisplaynameContext)!;
+  //
   const { t } = useTranslation();
   const { height, width } = useWindowDimensions();
-  const uid = useContext(UidContext);
-  const { points, setPoints } = useContext(PointsContext)!;
+  //
   const [pointsBefore, setPointsBefore] = useState(0);
   const [gumiIndexBefore, setGumiIndexBefore] = useState(0);
   const [pointsAfter, setPointsAfter] = useState(0);
   const [gumiIndexAfter, setGumiIndexAfter] = useState(0);
-  const { gumiIndex, setGumiIndex } = useContext(GumiIndexContext)!;
-  const { iconIndex, setIconIndex } = useContext(IconIndexContext)!;
-  const { displayname, setDisplayname } = useContext(DisplaynameContext)!;
+
   const { colors } = useTheme();
   // ─── パラメータ ───────────────────────────────────────
   type Params = {
@@ -100,8 +101,6 @@ export default function Playing() {
   const oppDisplayname = wrapBotDisplayname(params.oppDisplayname, t);
   const oppGumiIndex = Number(params.oppGumiIndex);
   const oppIconIndex = Number(params.oppIconIndex);
-  const [mySeconds, setMySeconds] = useState(Number(params.mySeconds));
-  const [oppSeconds, setOppSeconds] = useState(Number(params.oppSeconds));
 
   // ─── 盤面 State ───────────────────────────────────────
   const buildInitialState = () => {
@@ -182,26 +181,25 @@ export default function Playing() {
     initialState.moves.length,
   );
 
-  // ─── 時間・手番 State ─────────────────────────────────
+  // ─── 時間系 ─────────────────────────────────
   const [isMyTurn, setIsMyTurn] = useState<boolean>(
     myColor === initialState.currentTurn,
   );
   const turnRef = useRef<"black" | "white">(initialState.currentTurn);
   const mySecondsRef = useRef(180);
   const oppSecondsRef = useRef(180);
+  const [mySeconds, setMySeconds] = useState(Number(params.mySeconds));
+  const [oppSeconds, setOppSeconds] = useState(Number(params.oppSeconds));
+  // 表示用のタイマー
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // ハートビート用のタイマー
+  const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ─── 結果 State ───────────────────────────────────────
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [resultComment, setResultComment] = useState<string>("");
   const [showResult, setShowResult] = useState(false);
   const [loading, setLoading] = useState(false);
-  //
-
-  // ─── タイマー ─────────────────────────────────────────
-  // 表示用のタイマー
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // ハートビート用のタイマー
-  const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ─── 音 ──────────────────────────────────────────────
   const soundFile = require("@/assets/sounds/stone.mp3");
@@ -219,18 +217,13 @@ export default function Playing() {
   const isCurrentMovePass = currentMove === "p";
   const isBlackPass =
     isCurrentMovePass &&
-    ((currentIndexRef.current % 2 === 1 &&
-      (matchType === 0 || matchType === 1)) ||
-      (currentIndexRef.current % 2 === 0 &&
-        matchType !== 0 &&
-        matchType !== 1));
+    ((currentIndex % 2 === 1 && (matchType === 0 || matchType === 1)) ||
+      (currentIndex % 2 === 0 && matchType !== 0 && matchType !== 1));
+
   const isWhitePass =
     isCurrentMovePass &&
-    ((currentIndexRef.current % 2 === 0 &&
-      (matchType === 0 || matchType === 1)) ||
-      (currentIndexRef.current % 2 === 1 &&
-        matchType !== 0 &&
-        matchType !== 1));
+    ((currentIndex % 2 === 0 && (matchType === 0 || matchType === 1)) ||
+      (currentIndex % 2 === 1 && matchType !== 0 && matchType !== 1));
 
   const boardWidth = Math.min(width * 0.82, height * 0.5);
 
@@ -386,35 +379,39 @@ export default function Playing() {
     gumiIndexRef.current = gumiIndex;
   }, [points, gumiIndex]);
 
-const user_finished = useCallback((payload: any) => {
-  const data = payload.payload ?? payload;
+  const user_finished = useCallback(
+    (payload: any) => {
+      const data = payload.payload ?? payload;
 
-  setLoading(false);
+      setLoading(false);
 
-  // new_points と new_gumi_index が数字じゃなかったら無視
-  const maybePoints = Number(data.new_points);
-  const maybeGumiIndex = Number(data.new_gumi_index);
+      // new_points と new_gumi_index が数字じゃなかったら無視
+      const maybePoints = Number(data.new_points);
+      const maybeGumiIndex = Number(data.new_gumi_index);
 
-  if (isNaN(maybePoints) || isNaN(maybeGumiIndex)) {
-    console.warn("invalid payload:", data);
-    return;
-  }
+      if (isNaN(maybePoints) || isNaN(maybeGumiIndex)) {
+        console.warn("invalid payload:", data);
+        return;
+      }
 
-  const oldPoints = points ?? 0;
-  const oldGumiIndex = gumiIndex ?? 0;
+      const oldPoints = points ?? 0;
+      const oldGumiIndex = gumiIndex ?? 0;
 
-  setPointsBefore(oldPoints);
-  setGumiIndexBefore(oldGumiIndex);
+      setPointsBefore(oldPoints);
+      setGumiIndexBefore(oldGumiIndex);
 
-  setPointsAfter(maybePoints);
-  setGumiIndexAfter(maybeGumiIndex);
+      setPointsAfter(maybePoints);
+      setGumiIndexAfter(maybeGumiIndex);
 
-  setPoints?.(maybePoints);
-  setGumiIndex?.(maybeGumiIndex);
+      // グローバルstateもset
+      setPoints?.(maybePoints);
+      setGumiIndex?.(maybeGumiIndex);
 
-  setShowResult(true);
-  clearUserChannel();
-}, [points, gumiIndex, setPoints, setGumiIndex]);
+      setShowResult(true);
+      clearUserChannel();
+    },
+    [points, gumiIndex, setPoints, setGumiIndex],
+  );
 
   // ─── 初期化 ───────────────────────────────────────────
   // 一番最初に行うこと
@@ -668,6 +665,10 @@ const user_finished = useCallback((payload: any) => {
   }, []);
 
   // ─── UI ──────────────────────────────────────────────
+
+  if (!matchId) {
+    return;
+  }
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -697,42 +698,30 @@ const user_finished = useCallback((payload: any) => {
         </View>
 
         {/* 相手情報 */}
-        <View style={styles.playerCell}>
-          <View style={styles.passSlot}>
-            <Pass
-              visible={oppColor === "black" ? isBlackPass : isWhitePass}
-              isLeft={true}
-            />
-          </View>
-          <View style={styles.playerMain}>
-            <Avatar
-              gumiIndex={oppGumiIndex}
-              iconIndex={oppIconIndex}
-              size={40}
-              color={oppColor}
-            />
-            <View style={styles.playerInfo}>
-              <Text
-                style={[styles.playerName]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {oppDisplayname}
-              </Text>
-              <View style={{ flexDirection: "row" }}>
-                <AgehamaDisplay
-                  count={
-                    oppColor === "black"
-                      ? agehamaHistory[currentIndexRef.current].black
-                      : agehamaHistory[currentIndexRef.current].white
-                  }
-                />
-                <Text style={styles.timeText}>
-                  {secondsToMinutes(oppSeconds)}
-                </Text>
-              </View>
-            </View>
-          </View>
+        <View style={styles.playerMain}>
+          <AvatarWithPass
+            gumiIndex={oppGumiIndex ?? 0}
+            iconIndex={oppIconIndex ?? 0}
+            size={48}
+            color={oppColor}
+            isLeft={true}
+            showPass={oppColor === "black" ? isBlackPass : isWhitePass}
+          />
+          <Text
+            style={[styles.playerName]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {oppDisplayname}
+          </Text>
+          <AgehamaDisplay
+            count={
+              oppColor === "black"
+                ? agehamaHistory[currentIndexRef.current].black
+                : agehamaHistory[currentIndexRef.current].white
+            }
+          />
+          <Text style={styles.timeText}>{secondsToMinutes(oppSeconds)}</Text>
         </View>
 
         {/* 碁盤 */}
@@ -751,42 +740,30 @@ const user_finished = useCallback((payload: any) => {
         />
 
         {/* 自分情報 */}
-        <View style={[styles.playerCell, styles.playerCellRight]}>
-          <View style={[styles.passSlot, styles.passSlotRight]}>
-            <Pass
-              visible={myColor === "black" ? isBlackPass : isWhitePass}
-              isLeft={true}
-            />
-          </View>
-          <View style={[styles.playerMain, styles.playerMainRight]}>
-            <Avatar
-              gumiIndex={gumiIndex ?? 0}
-              iconIndex={iconIndex ?? 0}
-              size={40}
-              color={myColor}
-            />
-            <View style={[styles.playerInfo, styles.playerInfoRight]}>
-              <Text
-                style={[styles.playerName, styles.playerNameRight]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {displayname}
-              </Text>
-              <View style={{ flexDirection: "row" }}>
-                <AgehamaDisplay
-                  count={
-                    myColor === "black"
-                      ? agehamaHistory[currentIndexRef.current].black
-                      : agehamaHistory[currentIndexRef.current].white
-                  }
-                />
-                <Text style={styles.timeText}>
-                  {secondsToMinutes(mySeconds)}
-                </Text>
-              </View>
-            </View>
-          </View>
+        <View style={[styles.playerMain, styles.playerMainRight]}>
+          <AvatarWithPass
+            gumiIndex={gumiIndex ?? 0}
+            iconIndex={iconIndex ?? 0}
+            size={48}
+            color={myColor}
+            isLeft={false}
+            showPass={myColor === "black" ? isBlackPass : isWhitePass}
+          />
+          <Text
+            style={[styles.playerName, styles.playerNameRight]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {displayname}
+          </Text>
+          <AgehamaDisplay
+            count={
+              myColor === "black"
+                ? agehamaHistory[currentIndexRef.current].black
+                : agehamaHistory[currentIndexRef.current].white
+            }
+          />
+          <Text style={styles.timeText}>{secondsToMinutes(mySeconds)}</Text>
         </View>
 
         {!isGameEnded && (
@@ -908,12 +885,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   playerName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: "#2d3748",
   },
   timeText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "700",
     color: "#2d3748",
   },

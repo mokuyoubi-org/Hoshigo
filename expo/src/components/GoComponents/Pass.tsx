@@ -3,16 +3,15 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 type Props = {
-  visible: boolean;
+  visible?: boolean;
   isLeft: boolean;
 };
 
 export function Pass({ visible = true, isLeft }: Props) {
-  if (!visible) return null; // 非表示なら何も描画しない
   const { t } = useTranslation();
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { opacity: visible ? 1 : 0 }]}>
       <View style={styles.bubble}>
         <Text style={styles.label}>{t("common.pass")}</Text>
       </View>

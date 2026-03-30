@@ -6,7 +6,11 @@ import { PLANS } from "@/src/constants/plans";
 import { IAPContext } from "@/src/contexts/IAPContext";
 import { UidContext } from "@/src/contexts/UserContexts";
 import { supabase } from "@/src/services/supabase";
-import type { ProductSubscriptionAndroid } from "expo-iap";
+import type {
+  ProductSubscriptionAndroid,
+  ProductSubscriptionIOS,
+  PurchaseIOS,
+} from "expo-iap";
 import { useIAP } from "expo-iap";
 import { router } from "expo-router";
 import React, {
@@ -20,9 +24,16 @@ import { Platform } from "react-native";
 
 type BillingCycle = "monthly" | "yearly";
 
-// fetchProducts に渡すのは Product ID だけ（basePlanId は不要）
-const getProductIds = (): string[] =>
-  PLANS.map((p) => p.androidProductId).filter(Boolean);
+// プラットフォームに応じて fetchProducts に渡す Product ID を返す
+const getProductIds = (): string[] => {
+  if (Platform.OS === "ios") {
+    return PLANS.flatMap((p) =>
+      [p.iosMonthlyProductId, p.iosYearlyProductId].filter(Boolean),
+    );
+  }
+  // android
+  return PLANS.map((p) => p.androidProductId).filter(Boolean);
+};
 
 export function IAPProvider({ children }: { children: ReactNode }) {
   if (Platform.OS === "web") {
@@ -85,6 +96,44 @@ async function verifyPlaystorePurchase(
   }
 }
 
+// ============================================================
+// Apple の購入をバックエンドで検証して plan_id を更新する
+// ============================================================
+async function verifyApplePurchase(
+  originalTransactionId: string,
+  productId: string,
+): Promise<boolean> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      console.error("[IAP] セッションがありません");
+      return false;
+    }
+
+    const res = await fetch(
+      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/verify-apple-purchase`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ originalTransactionId, productId }),
+      },
+    );
+
+    const result = await res.json();
+    console.log("[IAP] verify-apple-purchase レスポンス:", result);
+
+    return result.success === true;
+  } catch (e) {
+    console.error("[IAP] verify-apple-purchase エラー:", e);
+    return false;
+  }
+}
+
 function IAPProviderNative({ children }: { children: ReactNode }) {
   const uid = useContext(UidContext);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
@@ -102,13 +151,27 @@ function IAPProviderNative({ children }: { children: ReactNode }) {
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
       try {
-        // 1. Google Play にトランザクション完了を通知
+        // 1. ストアにトランザクション完了を通知
         await finishTransaction({ purchase, isConsumable: false });
 
         // 2. バックエンドで購入を検証して plan_id を更新
         if (Platform.OS === "android" && purchase.purchaseToken) {
           const verified = await verifyPlaystorePurchase(
             purchase.purchaseToken,
+            purchase.productId,
+          );
+          if (!verified) {
+            console.warn("[IAP] 購入の検証に失敗しました");
+            setError(
+              "購入の確認に失敗しました。サポートにお問い合わせください",
+            );
+            return;
+          }
+        } else if (Platform.OS === "ios") {
+          const iosPurchase = purchase as PurchaseIOS;
+          const verified = await verifyApplePurchase(
+            iosPurchase.originalTransactionIdentifierIOS ??
+              iosPurchase.transactionId,
             purchase.productId,
           );
           if (!verified) {
@@ -166,45 +229,55 @@ function IAPProviderNative({ children }: { children: ReactNode }) {
 
   const subscribe = useCallback(
     async (productId: string, basePlanId: string) => {
-          console.log("[IAP] uid at purchase time:", uid); // ← 追加
+      console.log("[IAP] uid at purchase time:", uid);
 
       try {
         setPurchasing(productId);
         setError(null);
 
-        // productId に一致するサブスク商品を取得
-        const subscription = subscriptions.find((s) => s.id === productId);
+        if (Platform.OS === "android") {
+          // Android: offerToken を選択して購入リクエスト
+          const subscription = subscriptions.find((s) => s.id === productId);
+          const subscriptionOffers =
+            subscription?.platform === "android"
+              ? (
+                  (subscription as ProductSubscriptionAndroid)
+                    .subscriptionOfferDetailsAndroid ?? []
+                )
+                  .filter((offer) => offer.basePlanId === basePlanId)
+                  .map((offer) => ({
+                    sku: productId,
+                    offerToken: offer.offerToken,
+                  }))
+              : [];
 
-        // basePlanId に一致する offerToken を選択
-        const subscriptionOffers =
-          subscription?.platform === "android"
-            ? (
-                (subscription as ProductSubscriptionAndroid)
-                  .subscriptionOfferDetailsAndroid ?? []
-              )
-                .filter((offer) => offer.basePlanId === basePlanId)
-                .map((offer) => ({
-                  sku: productId,
-                  offerToken: offer.offerToken,
-                }))
-            : [];
+          console.log("[IAP] subscriptionOffers:", subscriptionOffers);
 
-        console.log("[IAP] subscriptionOffers:", subscriptionOffers);
-
-        await requestPurchase({
-          request: {
-            apple: {
-              sku: productId,
-              andDangerouslyFinishTransactionAutomatically: false,
+          await requestPurchase({
+            request: {
+              google: {
+                skus: [productId],
+                subscriptionOffers,
+                obfuscatedAccountId: uid ?? undefined,
+              },
             },
-            google: {
-              skus: [productId],
-              subscriptionOffers,
-              obfuscatedAccountId: uid ?? undefined,
+            type: "subs",
+          });
+        } else if (Platform.OS === "ios") {
+          // iOS: basePlanId の概念がないためそのまま sku を渡す
+          // appAccountToken に uid をセットすることで
+          // App Store Server Notifications から uid を復元できる
+          await requestPurchase({
+            request: {
+              apple: {
+                sku: productId,
+                andDangerouslyFinishTransactionAutomatically: false,
+                appAccountToken: uid ?? undefined,
+              },
             },
-          },
-          type: "subs",
-        });
+            type: "subs",
+          });
+        }
       } catch {
         setPurchasing(null);
       }
@@ -212,17 +285,22 @@ function IAPProviderNative({ children }: { children: ReactNode }) {
     [requestPurchase, subscriptions, uid],
   );
 
-  // displayPrice を月払い・年払いそれぞれで priceMap に入れる
-  // キーは "productId:basePlanId" 形式
+  // priceMap: キーは "productId:basePlanId"（Android）または "productId"（iOS）
   const priceMap = Object.fromEntries(
     subscriptions.flatMap((s) => {
-      if (s.platform !== "android") return [];
-      const android = s as ProductSubscriptionAndroid;
-      return (android.subscriptionOfferDetailsAndroid ?? []).map((offer) => [
-        `${s.id}:${offer.basePlanId}`,
-        // pricingPhases の最後のフェーズが通常価格
-        offer.pricingPhases.pricingPhaseList.at(-1)?.formattedPrice ?? "",
-      ]);
+      if (s.platform === "android") {
+        const android = s as ProductSubscriptionAndroid;
+        return (android.subscriptionOfferDetailsAndroid ?? []).map((offer) => [
+          `${s.id}:${offer.basePlanId}`,
+          offer.pricingPhases.pricingPhaseList.at(-1)?.formattedPrice ?? "",
+        ]);
+      }
+      if (s.platform === "ios") {
+        const ios = s as ProductSubscriptionIOS;
+        // iOSはproductIdをそのままキーにする
+        return [[s.id, ios.displayPrice ?? ""]];
+      }
+      return [];
     }),
   );
 
@@ -239,7 +317,11 @@ function IAPProviderNative({ children }: { children: ReactNode }) {
         billingCycle,
         switchCycle,
         subscribe: (productId: string) => {
-          // billingCycle に応じて basePlanId を決定
+          if (Platform.OS === "ios") {
+            // iOSはbasePlanIdが不要なのでそのまま渡す
+            return subscribe(productId, "");
+          }
+          // Android: billingCycle に応じて basePlanId を決定
           const plan = PLANS.find((p) => p.androidProductId === productId);
           const basePlanId =
             billingCycle === "monthly"

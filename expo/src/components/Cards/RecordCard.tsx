@@ -4,9 +4,7 @@ import {
   SkeletonCard,
 } from "@/src/components/Cards/SkeletonCard";
 import { AgehamaDisplay } from "@/src/components/GoComponents/Agehama";
-import { Avatar } from "@/src/components/GoComponents/Avatar";
 import { GoBoard } from "@/src/components/GoComponents/GoBoard";
-import { Pass } from "@/src/components/GoComponents/Pass";
 import { ReplayControls } from "@/src/components/GoComponents/ReplayControls";
 import { CHOCOLATE, CHOCOLATE_SUB } from "@/src/constants/colors";
 import { Agehama, RecordType } from "@/src/constants/goConstants";
@@ -16,6 +14,7 @@ import { resultToSelfComment } from "@/src/lib/goUtils";
 import { wrapBotDisplayname } from "@/src/lib/utils";
 import React, { useContext, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { AvatarWithPass } from "../GoComponents/AvatarWithPass";
 
 export type Props = {
   record: RecordType;
@@ -27,7 +26,7 @@ export type Props = {
   cardHeight: number;
   /** 自分が勝ったか負けたか。未定義の場合はニュートラル表示 */
   playerWin?: boolean;
-  isPlayerBlack: boolean;
+  isPlayerBlack?: boolean;
 };
 
 export const RecordCard = ({
@@ -108,18 +107,14 @@ export const RecordCard = ({
       <View style={[styles.playersRow]}>
         {/* 自分（左） */}
         <View style={styles.playerCell}>
-          <View style={styles.passSlot}>
-            <Pass
-              visible={isPlayerBlack ? isBlackPass : isWhitePass}
-              isLeft={true}
-            />
-          </View>
           <View style={styles.playerMain}>
-            <Avatar
-              gumiIndex={myGumiIndex}
-              iconIndex={myIconIndex}
-              size={40}
+            <AvatarWithPass
+              gumiIndex={myGumiIndex ?? 0}
+              iconIndex={myIconIndex ?? 0}
+              size={48}
               color={isPlayerBlack ? "black" : "white"}
+              isLeft={true}
+              showPass={isPlayerBlack ? isBlackPass : isWhitePass}
             />
             <View style={styles.playerInfo}>
               <Text
@@ -154,18 +149,14 @@ export const RecordCard = ({
 
         {/* 相手（右） */}
         <View style={[styles.playerCell, styles.playerCellRight]}>
-          <View style={[styles.passSlot, styles.passSlotRight]}>
-            <Pass
-              visible={!isPlayerBlack ? isBlackPass : isWhitePass}
-              isLeft={false}
-            />
-          </View>
           <View style={[styles.playerMain, styles.playerMainRight]}>
-            <Avatar
-              gumiIndex={oppGumiIndex}
-              iconIndex={oppIconIndex}
-              size={40}
+            <AvatarWithPass
+              gumiIndex={oppGumiIndex ?? 0}
+              iconIndex={oppIconIndex ?? 0}
+              size={48}
               color={!isPlayerBlack ? "black" : "white"}
+              isLeft={false}
+              showPass={!isPlayerBlack ? isBlackPass : isWhitePass}
             />
             <View style={[styles.playerInfo, styles.playerInfoRight]}>
               <Text
@@ -323,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   playerName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "500",
   },
   playerNameRight: {

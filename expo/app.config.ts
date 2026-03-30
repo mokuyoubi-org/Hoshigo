@@ -1,5 +1,16 @@
 import { ExpoConfig } from "expo/config";
 
+import * as dotenv from "dotenv";
+import * as path from "path";
+
+dotenv.config({
+  path: [
+    path.resolve(__dirname, ".env.local"),
+    path.resolve(__dirname, ".env"),
+  ],
+  quiet: true,
+});
+
 const config: ExpoConfig = {
   name: process.env.EXPO_PUBLIC_NAME!,
   slug: process.env.EXPO_PUBLIC_SLUG!,
@@ -17,6 +28,20 @@ const config: ExpoConfig = {
       dark: "./assets/icons/ios-dark.png",
       light: "./assets/icons/ios-light.png",
       tinted: "./assets/icons/ios-tinted.png",
+    },
+    associatedDomains: ["applinks:hoshigo.app"],
+    infoPlist: {
+      CFBundleURLTypes: [
+        {
+          CFBundleURLSchemes: [
+            process.env
+              .EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID!.replace("https://", "") // https://を除去
+              .split(".")
+              .reverse()
+              .join("."),
+          ],
+        },
+      ],
     },
   },
 
