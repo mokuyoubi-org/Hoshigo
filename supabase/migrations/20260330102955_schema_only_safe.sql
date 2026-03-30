@@ -1640,7 +1640,8 @@ CREATE TABLE IF NOT EXISTS "system"."app_status" (
     "id" smallint NOT NULL,
     "maintenance" boolean DEFAULT false,
     "version" "text" DEFAULT ''::"text",
-    "message" "text" DEFAULT ''::"text"
+    "message" "text" DEFAULT ''::"text",
+    "test" "text"
 );
 
 
