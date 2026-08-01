@@ -1,43 +1,41 @@
-# 🌟 星碁 / Hoshigo
+# 🌟 Hoshigo
 
-星碁 / Hoshigo は、モバイル用の囲碁アプリです。  
-9路盤をベースに、オンライン対戦などの機能を実装しています。
-
----
-
-## ✨ 主な機能
-
-- オンライン対局
-- 観戦
-- 棋譜見返し
+Hoshigo is a mobile Go game app.
+Based on a 9x9 board, it features functions such as online matches.
 
 ---
 
-## 📱 スクリーンショット
+## ✨ Key Features
+
+* Online Matches
+* Game Record Review
+
+---
+
+## 📱 Screenshots
 
 <img width="1024" height="500" alt="Frame 2" src="https://github.com/user-attachments/assets/0369483b-cf3f-4442-acd3-4d239d78e7ad" />
 
 ---
 
-## 🛠 仕組み
+## 🛠 Tech Stack
 
-- ⛰️ **Expo**: アプリ本体
-- ⚡️ **Supabase**: データベース
-- 🪽 **Fly**: 囲碁AIのデプロイ先
-
----
-
-## 📌 今後の予定
-
-- 詰碁
-- 囲碁講座
-- 分析機能
-- サブスクプランの拡充
-- 他、機能/UI/UXの充実
+* ⛰️ **Expo**: App Frontend
+* ⚡️ **Supabase**: Database
 
 ---
 
-## ⚖️ ライセンスについて
+## 📌 Roadmap
 
-このプロジェクト本体は **MIT License** (Copyright 2026 mokuyoubi-org) で公開されています。  
-同梱されているサードパーティ製のプロジェクトのライセンスの詳細は [`THIRD_PARTY_LICENSES.md`](https://github.com/mokuyoubi-org/Hoshigo/blob/main/THIRD_PARTY_LICENSES.md) を参照してください。
+* Tsumego (Go Puzzles)
+* Go Lessons
+* Analysis Features
+* Expansion of Subscription Plans
+* Other UI/UX and Feature Enhancements
+
+---
+
+## ⚖️ License
+
+This project is released under the **MIT License** (Copyright 2026 mokuyoubi-org).
+For details on the licenses of included third-party projects, please refer to [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).

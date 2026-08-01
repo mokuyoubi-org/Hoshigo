@@ -46,7 +46,7 @@ jobs:
             local BACKUP_FILE="/tmp/${FOLDER}_backup_${TIMESTAMP}.sql"
             local OBJECT_KEY="${FOLDER}/${FOLDER}_backup_${TIMESTAMP}.sql"
 
-            /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" -f "$BACKUP_FILE"
+            /usr/logics/postgresql/17/bin/pg_dump "$DB_URL" -f "$BACKUP_FILE"
 
             aws s3 cp "$BACKUP_FILE" "s3://${BUCKET}/${OBJECT_KEY}" \
               --endpoint-url "$ENDPOINT"

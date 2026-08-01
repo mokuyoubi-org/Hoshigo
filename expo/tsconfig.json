@@ -3,8 +3,9 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "typeRoots": ["./node_modules/@types", "./src/lib"],
+    "typeRoots": ["./node_modules/@types", "src/active/logics"],
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "jsx": "react",
     "strict": true,
     "paths": {

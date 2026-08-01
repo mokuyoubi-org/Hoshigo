@@ -186,10 +186,10 @@ declare
   v_white_giantkill int; -- ⚪️の格上連勝数
   v_black_new_points smallint; -- ⚫️の新しいpoints
   v_white_new_points smallint; -- ⚪️の新しいpoints
-  v_black_old_gumi smallint; -- ⚫️の元々のgumi
-  v_white_old_gumi smallint; -- ⚪️の元々のgumi
-  v_black_new_gumi smallint; -- ⚫️の新しいgumi
-  v_white_new_gumi smallint; -- ⚪️の新しいgumi
+  v_black_old_group smallint; -- ⚫️の元々のgroup
+  v_white_old_group smallint; -- ⚪️の元々のgroup
+  v_black_new_group smallint; -- ⚫️の新しいgroup
+  v_white_new_group smallint; -- ⚪️の新しいgroup
   v_black_new_icons smallint[]; -- ⚫️の新しく獲得したiconたち
   v_white_new_icons smallint[]; -- ⚪️の新しく獲得したiconたち
 begin
@@ -275,37 +275,37 @@ begin
     end if;
   end if;
 
-  -- ─── 更新後のpoints/gumiを事前計算 ──────────────
+  -- ─── 更新後のpoints/groupを事前計算 ──────────────
   -- 自分のポイントが0を下回ることはない
   -- 更新後のpointsを一旦取得
   v_black_new_points := greatest(0, v_black_points + v_black_delta);
   v_white_new_points := greatest(0, v_white_points + v_white_delta);
 
-  -- 更新前のgumi
-  v_black_old_gumi := users.points_to_gumi(v_black_points);
-  v_white_old_gumi := users.points_to_gumi(v_white_points);
-  -- 更新後のgumi
-  v_black_new_gumi := users.points_to_gumi(v_black_new_points);
-  v_white_new_gumi := users.points_to_gumi(v_white_new_points);
+  -- 更新前のgroup
+  v_black_old_group := users.points_to_group(v_black_points);
+  v_white_old_group := users.points_to_group(v_white_points);
+  -- 更新後のgroup
+  v_black_new_group := users.points_to_group(v_black_new_points);
+  v_white_new_group := users.points_to_group(v_white_new_points);
 
-  -- もしgumiが上がれば、pointsは中央に移動!
-  -- ほし☆☆☆(gumi=17)に到達した場合は適用なし
-  if (v_black_new_gumi > v_black_old_gumi) AND (v_black_new_gumi <> 17) then
-    v_black_new_points := users.gumi_to_center_points(v_black_new_gumi);
+  -- もしgroupが上がれば、pointsは中央に移動!
+  -- ほし☆☆☆(group=17)に到達した場合は適用なし
+  if (v_black_new_group > v_black_old_group) AND (v_black_new_group <> 17) then
+    v_black_new_points := users.group_to_center_points(v_black_new_group);
   end if;
 
-  if (v_white_new_gumi > v_white_old_gumi) AND (v_white_new_gumi <> 17) then
-    v_white_new_points := users.gumi_to_center_points(v_white_new_gumi);
+  if (v_white_new_group > v_white_old_group) AND (v_white_new_group <> 17) then
+    v_white_new_points := users.group_to_center_points(v_white_new_group);
   end if;
 
-  -- もしgumiが下がった場合
-  -- 色組(gumi=0~5)に下がる場合は適用なし
-  if (v_black_new_gumi < v_black_old_gumi) AND (v_black_new_gumi NOT IN (0,1,2,3,4,5)) then
-    v_black_new_points := users.gumi_to_center_points(v_black_new_gumi);
+  -- もしgroupが下がった場合
+  -- 色組(group=0~5)に下がる場合は適用なし
+  if (v_black_new_group < v_black_old_group) AND (v_black_new_group NOT IN (0,1,2,3,4,5)) then
+    v_black_new_points := users.group_to_center_points(v_black_new_group);
   end if;
 
-  if (v_white_new_gumi < v_white_old_gumi) AND (v_white_new_gumi NOT IN (0,1,2,3,4,5)) then
-    v_white_new_points := users.gumi_to_center_points(v_white_new_gumi);
+  if (v_white_new_group < v_white_old_group) AND (v_white_new_group NOT IN (0,1,2,3,4,5)) then
+    v_white_new_points := users.group_to_center_points(v_white_new_group);
   end if;
 
 
@@ -317,7 +317,7 @@ begin
   case when plan_id = 0 then 1 else 0 end, -- 無料会員には対局制限+1
     points = v_black_new_points, -- point更新
     giantkill_stroke = v_black_giantkill, -- 格上連勝数の更新
-    gumi_index = v_black_new_gumi -- gumi更新
+    group_index = v_black_new_group -- group更新
   where uid = new.black_uid
     and is_bot = false; -- botではない
 
@@ -328,7 +328,7 @@ begin
   case when plan_id = 0 then 1 else 0 end, -- 無料会員には対局制限+1
     points = v_white_new_points, -- point更新
     giantkill_stroke = v_white_giantkill, -- 格上連勝数の更新
-    gumi_index = v_white_new_gumi -- gumi更新
+    group_index = v_white_new_group -- group更新
   where uid = new.white_uid
     and is_bot = false; -- botではない
 
@@ -359,10 +359,10 @@ begin
 
   -- ─── 獲得アイコンリストの更新 ──────────────────────────
   if not v_is_black_bot then  -- botではない場合、黒が新しくアイコンをゲットしたか調べる
-  v_black_new_icons := users.add_icons(new.black_uid, v_black_new_gumi, v_black_games+1);
+  v_black_new_icons := users.add_icons(new.black_uid, v_black_new_group, v_black_games+1);
   end if;
   if not v_is_white_bot then  -- botではない場合、白が新しくアイコンをゲットしたか調べる
-  v_white_new_icons := users.add_icons(new.white_uid, v_white_new_gumi, v_white_games+1);
+  v_white_new_icons := users.add_icons(new.white_uid, v_white_new_group, v_white_games+1);
   end if;
 
   -- ─── broadcastで終局通知 ──────────────────────────
@@ -380,7 +380,7 @@ begin
     jsonb_build_object(
       'delta',      v_black_delta,
       'new_points',     v_black_new_points,
-      'new_gumi_index', v_black_new_gumi,
+      'new_group_index', v_black_new_group,
       'new_acquired_icons', v_black_new_icons
     ),
     'finished', -- イベント名
@@ -392,7 +392,7 @@ begin
     jsonb_build_object(
       'delta',      v_white_delta,
       'new_points',     v_white_new_points,
-      'new_gumi_index', v_white_new_gumi,
+      'new_group_index', v_white_new_group,
       'new_acquired_icons', v_white_new_icons
     ),
     'finished', -- イベント名
@@ -437,7 +437,7 @@ begin
       'moves',           coalesce(to_jsonb(v_match.moves), '[]'::jsonb),
       'my_color',        case when v_is_black then 'black' else 'white' end,
       'opp_displayname', case when v_is_black then v_match.white_displayname else v_match.black_displayname end,
-      'opp_gumi_index',  CASE WHEN v_is_black THEN users.points_to_gumi(v_match.white_points)  ELSE users.points_to_gumi(v_match.black_points)  END,
+      'opp_group_index',  CASE WHEN v_is_black THEN users.points_to_group(v_match.white_points)  ELSE users.points_to_group(v_match.black_points)  END,
       'opp_icon_index',  case when v_is_black then v_match.white_icon_index  else v_match.black_icon_index  end,
       'my_seconds',      case when v_is_black then v_match.black_seconds     else v_match.white_seconds     end,
       'opp_seconds',     case when v_is_black then v_match.white_seconds     else v_match.black_seconds     end
@@ -496,7 +496,7 @@ $$;
 ALTER FUNCTION "game"."check_can_play"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "game"."get_records_with_profiles"("p_uid" "uuid", "p_limit" integer, "p_offset" integer) RETURNS TABLE("id" integer, "created_at" "date", "result" "text", "match_type" smallint, "moves" integer[], "dead_stones" integer[], "black_points" smallint, "white_points" smallint, "black_uid" "uuid", "black_username" "text", "black_displayname" "text", "black_icon_index" smallint, "black_gumi_index" smallint, "white_uid" "uuid", "white_username" "text", "white_displayname" "text", "white_icon_index" smallint, "white_gumi_index" smallint)
+CREATE OR REPLACE FUNCTION "game"."get_records_with_profiles"("p_uid" "uuid", "p_limit" integer, "p_offset" integer) RETURNS TABLE("id" integer, "created_at" "date", "result" "text", "match_type" smallint, "moves" integer[], "dead_stones" integer[], "black_points" smallint, "white_points" smallint, "black_uid" "uuid", "black_username" "text", "black_displayname" "text", "black_icon_index" smallint, "black_group_index" smallint, "white_uid" "uuid", "white_username" "text", "white_displayname" "text", "white_icon_index" smallint, "white_group_index" smallint)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'game', 'users'
     AS $$
@@ -513,12 +513,12 @@ CREATE OR REPLACE FUNCTION "game"."get_records_with_profiles"("p_uid" "uuid", "p
     bp.username,
     bp.displayname,
     bp.icon_index,
-    users.points_to_gumi(r.black_points),
+    users.points_to_group(r.black_points),
     r.white_uid,
     wp.username,
     wp.displayname,
     wp.icon_index,
-    users.points_to_gumi(r.white_points)
+    users.points_to_group(r.white_points)
   FROM game.records r
   LEFT JOIN users.profiles bp ON bp.uid = r.black_uid
   LEFT JOIN users.profiles wp ON wp.uid = r.white_uid
@@ -532,7 +532,7 @@ $$;
 ALTER FUNCTION "game"."get_records_with_profiles"("p_uid" "uuid", "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "game"."get_watch_match"("p_match_id" integer) RETURNS TABLE("id" integer, "status" "text", "moves" smallint[], "result" "text", "turn" "text", "black_seconds" smallint, "white_seconds" smallint, "black_points" smallint, "white_points" smallint, "dead_stones" smallint[], "black_icon_index" smallint, "white_icon_index" smallint, "match_type" smallint, "black_displayname" "text", "white_displayname" "text", "black_gumi_index" smallint, "white_gumi_index" smallint)
+CREATE OR REPLACE FUNCTION "game"."get_watch_match"("p_match_id" integer) RETURNS TABLE("id" integer, "status" "text", "moves" smallint[], "result" "text", "turn" "text", "black_seconds" smallint, "white_seconds" smallint, "black_points" smallint, "white_points" smallint, "dead_stones" smallint[], "black_icon_index" smallint, "white_icon_index" smallint, "match_type" smallint, "black_displayname" "text", "white_displayname" "text", "black_group_index" smallint, "white_group_index" smallint)
     LANGUAGE "sql" SECURITY DEFINER
     AS $$
   select
@@ -551,8 +551,8 @@ CREATE OR REPLACE FUNCTION "game"."get_watch_match"("p_match_id" integer) RETURN
     match_type,
     black_displayname,
     white_displayname,
-    users.points_to_gumi(black_points) as black_gumi_index,
-    users.points_to_gumi(white_points) as white_gumi_index
+    users.points_to_group(black_points) as black_group_index,
+    users.points_to_group(white_points) as white_group_index
   from game.playing
   where id = p_match_id;
 $$;
@@ -626,7 +626,7 @@ begin
         'moves',           coalesce(to_jsonb(v_match.moves), '[]'::jsonb),
         'my_color',        case when v_is_black then 'black' else 'white' end,
         'opp_displayname', CASE WHEN v_is_black THEN v_match.white_displayname ELSE v_match.black_displayname END,
-        'opp_gumi_index',  CASE WHEN v_is_black THEN users.points_to_gumi(v_match.white_points)  ELSE users.points_to_gumi(v_match.black_points)  END,
+        'opp_group_index',  CASE WHEN v_is_black THEN users.points_to_group(v_match.white_points)  ELSE users.points_to_group(v_match.black_points)  END,
         'opp_icon_index',  CASE WHEN v_is_black THEN v_match.white_icon_index  ELSE v_match.black_icon_index  END,
         'my_seconds',      CASE WHEN v_is_black THEN v_match.black_seconds     ELSE v_match.white_seconds     END,
         'opp_seconds',     CASE WHEN v_is_black THEN v_match.white_seconds     ELSE v_match.black_seconds     END
@@ -665,7 +665,7 @@ begin
     'moves',           coalesce(to_jsonb(new.moves), '[]'::jsonb),
     'my_color',        'black',
     'opp_displayname', new.white_displayname,
-    'opp_gumi_index',  users.points_to_gumi(new.white_points),
+    'opp_group_index',  users.points_to_group(new.white_points),
     'opp_icon_index',  new.white_icon_index,
     'my_seconds',      new.black_seconds,
     'opp_seconds',     new.white_seconds
@@ -677,7 +677,7 @@ begin
     'moves',           coalesce(to_jsonb(new.moves), '[]'::jsonb),
     'my_color',        'white',
     'opp_displayname', new.black_displayname,
-    'opp_gumi_index',  users.points_to_gumi(new.black_points),
+    'opp_group_index',  users.points_to_group(new.black_points),
     'opp_icon_index',  new.black_icon_index,
     'my_seconds',      new.white_seconds,
     'opp_seconds',     new.black_seconds
@@ -1304,7 +1304,7 @@ $$;
 ALTER FUNCTION "system"."get_app_status"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "users"."add_icons"("p_uid" "uuid", "p_new_gumi" smallint, "p_games" integer) RETURNS smallint[]
+CREATE OR REPLACE FUNCTION "users"."add_icons"("p_uid" "uuid", "p_new_group" smallint, "p_games" integer) RETURNS smallint[]
     LANGUAGE "plpgsql"
     AS $$
 declare
@@ -1325,8 +1325,8 @@ begin
 
   -- アイコン0~11まで。しろぐみ~にじぐみ3まで。
   for i in 0..11 loop
-    -- 例：gumi条件つきで追加したい場合
-    if p_new_gumi >= i and not (i = any(v_current)) then
+    -- 例：group条件つきで追加したい場合
+    if p_new_group >= i and not (i = any(v_current)) then
       v_current := array_append(v_current, i);
       v_added := array_append(v_added, i);
     end if;
@@ -1373,7 +1373,7 @@ end;
 $$;
 
 
-ALTER FUNCTION "users"."add_icons"("p_uid" "uuid", "p_new_gumi" smallint, "p_games" integer) OWNER TO "postgres";
+ALTER FUNCTION "users"."add_icons"("p_uid" "uuid", "p_new_group" smallint, "p_games" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "users"."get_my_profile"() RETURNS json
@@ -1400,11 +1400,11 @@ $$;
 ALTER FUNCTION "users"."get_my_profile"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "users"."get_top_profiles"("p_limit" integer DEFAULT 100) RETURNS TABLE("uid" "uuid", "displayname" "text", "points" smallint, "icon_index" smallint, "gumi_index" smallint)
+CREATE OR REPLACE FUNCTION "users"."get_top_profiles"("p_limit" integer DEFAULT 100) RETURNS TABLE("uid" "uuid", "displayname" "text", "points" smallint, "icon_index" smallint, "group_index" smallint)
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'users'
     AS $$
-  SELECT uid, displayname, points, icon_index, gumi_index
+  SELECT uid, displayname, points, icon_index, group_index
   FROM users.profiles
   WHERE is_bot = false
   ORDER BY points DESC
@@ -1415,10 +1415,10 @@ $$;
 ALTER FUNCTION "users"."get_top_profiles"("p_limit" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "users"."gumi_to_center_points"("p_gumi" smallint) RETURNS smallint
+CREATE OR REPLACE FUNCTION "users"."group_to_center_points"("p_group" smallint) RETURNS smallint
     LANGUAGE "sql" IMMUTABLE
     AS $$
-  select case p_gumi
+  select case p_group
     when 17 then 2510 -- ほし3だけは特に美味しいことなし
     when 16 then 2400
     when 15 then 2200
@@ -1441,10 +1441,10 @@ CREATE OR REPLACE FUNCTION "users"."gumi_to_center_points"("p_gumi" smallint) RE
 $$;
 
 
-ALTER FUNCTION "users"."gumi_to_center_points"("p_gumi" smallint) OWNER TO "postgres";
+ALTER FUNCTION "users"."group_to_center_points"("p_group" smallint) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "users"."points_to_gumi"("p_points" smallint) RETURNS smallint
+CREATE OR REPLACE FUNCTION "users"."points_to_group"("p_points" smallint) RETURNS smallint
     LANGUAGE "sql" IMMUTABLE
     AS $$
   select cast(greatest(0, (
@@ -1459,7 +1459,7 @@ CREATE OR REPLACE FUNCTION "users"."points_to_gumi"("p_points" smallint) RETURNS
 $$;
 
 
-ALTER FUNCTION "users"."points_to_gumi"("p_points" smallint) OWNER TO "postgres";
+ALTER FUNCTION "users"."points_to_group"("p_points" smallint) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "users"."sync_revenuecat_premium"() RETURNS "void"
@@ -1705,7 +1705,7 @@ CREATE TABLE IF NOT EXISTS "users"."profiles" (
     "tsumego_progress" smallint[],
     "giantkill_stroke" smallint DEFAULT '0'::smallint,
     "lastseen" "date",
-    "gumi_index" smallint DEFAULT '0'::smallint,
+    "group_index" smallint DEFAULT '0'::smallint,
     "is_bot" boolean DEFAULT false,
     "acquired_icons" smallint[],
     "plan_id" smallint DEFAULT '0'::smallint,

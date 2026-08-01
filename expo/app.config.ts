@@ -31,6 +31,10 @@ const config: ExpoConfig = {
     },
     associatedDomains: ["applinks:hoshigo.app"],
     infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+      NSLocalNetworkUsageDescription:
+        "ローカルネットワークにアクセス",
+      NSBonjourServices: ["_expo._tcp"],
       CFBundleURLTypes: [
         {
           CFBundleURLSchemes: [
@@ -91,7 +95,14 @@ const config: ExpoConfig = {
     "expo-asset",
     "expo-localization",
     "expo-font",
-    "expo-iap",
+    [
+      "expo-build-properties",
+      {
+        ios: {
+          deploymentTarget: "16.0",
+        },
+      },
+    ],
   ],
 
   experiments: {
