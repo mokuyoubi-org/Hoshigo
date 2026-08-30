@@ -60,6 +60,10 @@ export function useMatchSession({
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
+  // archive_matchesトリガーによる、gameチャンネルのpoints_updateイベントの通知のうち、
+  // profilePatchが"black" | "white"で、それ以外が"result"ということ。
+  // 詳しくはトリガーおよびMatchResultUpdateの型定義を見れば、一致していることがわかる。
+  // なお、MatchResultUpdate型自体は、computeMatchResultUpdate関数を経て加工されている(payloadの形そのままではない)。
   const [matchResult, setMatchResult] = useState<
     Omit<MatchResultUpdate, "profilePatch">
   >(() => {
@@ -72,11 +76,12 @@ export function useMatchSession({
       newlyAcquiredIcons: [],
     };
   });
+
   const isResyncingRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const isBotThinkingRef = useRef(false);
 
-  // -------- 関数 --------
+  // 🌟 -------- 関数 --------
 
   const handleServerSync = async (payload: ServerSyncPayload) => {
     if (isGameEnded) return;
@@ -98,7 +103,7 @@ export function useMatchSession({
     }
   };
 
-  // 🌟時計の用意！
+  // 🌟 -------- 時計の用意！ --------
   const clock = useMatchClock({
     matchId,
     myColor,
@@ -109,7 +114,8 @@ export function useMatchSession({
     handleServerSync,
   });
 
-  // 着手系(ボット着手、人間着手、人間投了)。ボットの投了は存在しないと思っていいのかな。
+  // 🌟 -------- 着手系--------
+  // ボットの投了は存在しないと思っていいのかな。
   // katagoが手を打つ
   const handleRunBotTurn = useCallback(async () => {
     await botMove.runBotTurn(
@@ -193,7 +199,7 @@ export function useMatchSession({
     }
   };
 
-  // チャンネル系
+  // 🌟 -------- チャンネル系 --------
   // gameチャンネルから手の通知が来た時の処理。
   const gameCh_move = async (payload: any) => {
     if (isGameEnded) return;
@@ -225,9 +231,10 @@ export function useMatchSession({
   };
 
   // gameチャンネルからダブルパス通知が来た時の処理。
+  // ちなみになぜダブルパス判定をサーバ側で行うかというと、ダブルパスになった時点でmatchesテーブルのstatusを即座に"playing"から"pending"にし、手を打つことを受け入れないため。また、接続や時間切れ負けも防げる。
   const gameCh_double_pass = async (payload: any) => {
     if (isGameEnded) return;
-    setLoading(true);
+    setLoading(true); // 対局関連ファイルで唯一のsetLoading。points_updateが届き、全部済んだ最後の最後でfalseに戻される。
 
     const deadStones = await endgame.analyzeTerritory(
       goBoard.boardRef.current,
@@ -237,7 +244,7 @@ export function useMatchSession({
     );
     goBoard.setDeadStones(deadStones);
 
-    const { result } = goBoard.computeTerritory();
+    const { result } = goBoard.computeTerritory(); // 🔥ここではまだ描画はしない(setStateしない)。
 
     const { data, error } = await supabase.rpc("submit_match_result", {
       p_match_id: matchId,
@@ -248,7 +255,7 @@ export function useMatchSession({
     if (error) console.error("result提出失敗:", error);
   };
 
-  // gameチャンネルからポイント更新の通知が来た時の処理。
+  // gameチャンネルからポイント更新の通知が来た時の処理。supabaseのarchive_matchesトリガーの、最後のpoints_updateイベントの部分を見るのがオススメ。
   const gameCh_points_updated = (payload: any) => {
     // 通知が届く。dataは"black"と"white"と"result"に分かれている。
     const data = payload.payload ?? payload;
@@ -258,6 +265,8 @@ export function useMatchSession({
     const myData = myColor === 1 ? data.black : data.white;
 
     if (myData) {
+      // computeMatchResultUpdateは純粋に計算だけする関数
+      // まだpointsは古い値
       const updated = computeMatchResultUpdate(
         boardSize,
         myData,
@@ -267,8 +276,8 @@ export function useMatchSession({
         t,
       );
       if (updated) {
-        const { profilePatch, ...displayResult } = updated;
-        setMatchResult(displayResult); // 表示用state
+        const { profilePatch, ...displayResult } = updated; // displayResultの中身は、pointsとrankのbefore/after、newlyAqcuiredIconsの計5つの値。
+        setMatchResult(displayResult); // 表示用にstateを更新
         updateProfile(profilePatch); // 🥶 beforeを読み終えてから書き換える(順番厳守)
       }
     }
@@ -276,17 +285,19 @@ export function useMatchSession({
     // 🌟"result"
     if (data.result) {
       const resTmp = goBoard.computeTerritory();
-      goBoard.setTerritoryBoard(resTmp.territoryBoard);
+      goBoard.setTerritoryBoard(resTmp.territoryBoard); // 🔥二回目の計算。二回計算する必要はない。
 
       setResultComment(
         resultToComment(data.result, myColor, t) ?? t("common.matchComplete"),
       );
+
+      // 🏁ゴール
+      console.log("🏁 対局中の全処理が終了！")
       // お互いの着手が終わり、そしてポイント更新まで帰ってきて、初めて対局終了となる。
-      // なぜこのような「本当の本当の終わり」のタイミングでセットしているかというと、
-      // gameResultModalの発火要因になっているから。GameScreen.tsxのuseEffect参照。
+      // なぜこのような「本当の本当の終わり」のタイミングでセットしているかというと、gameResultModalの発火要因になっているから。GameScreen.tsxのuseEffect参照。
       setIsGameEnded(true);
       clock.stopClock();
-      setLoading(false);
+      setLoading(false); // 🏁ダブルパス通知が来た時からずっとtrueになっていたisLoadingをここでfalseに戻す。対局中にオンになるのもオフになるのも、今書いた場所のみ。
     }
   };
 
