@@ -1,0 +1,10 @@
+{
+  "name": "i18n-kit",
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "react": "*",
+    "expo-localization": "*"
+  }
+}

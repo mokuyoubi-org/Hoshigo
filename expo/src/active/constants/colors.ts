@@ -1,5 +1,4 @@
-// @/src/active/lib/COLORS.ts
-
+// constants/colors.ts
 export const COLORS = {
   // 1. 基本
   foreground: "#ffffff",
@@ -9,40 +8,29 @@ export const COLORS = {
   primary: "#b4c9db",
   primaryDark: "#8e9daa",
 
-  // 2. コンポーネント
+  // 2. オブジェクト
   darkObject: "#455763",
   darkObjectAccent: "#848f97",
   lightObject: "#fcfcfc",
   lightObjectAccent: "#9db3c0",
 
-  // オーバーレイ
+  // 3. オーバーレイ
   overlay: "#00000080",
-  
-  // 3. 文字
+
+  // 4. 文字
   text: "#4e5256",
   textSub: "#95999e",
 
-  // 4. 純粋な色
+  // 5. 特殊な色
   gold: "#d4af37",
   silver: "#a8b2bc",
   bronze: "#b87333",
 
-  // 5. 状態
-  danger: "#e36a6a",
-  dangerLight: "#eda7a7",
-  safe: "#49925e",
-  safeLight: "#83b791",
-  clickable: "#879ed7",
-
-  // 6. 組（10色）
-  white: "#d7d7d7",
-  pink: "#dcadd3",
-  orange: "#f0ad81",
-  yellow: "#d9dcad",
-  green: "#addcba",
-  blue: "#8aa5eb",
-  sky: "#add7dc",
-  rainbow: "#ceaddc",
-  moon: "#8d8d8d",
-  star: "#786200",
+  // 6. 段級位の色
+  white: "#e5e5e5",
+  sky: "#add8ea",
+  green: "#a5d496",
+  yellow: "#e8d26d",
+  coral: "#f19688",
+  purple: "#c182d8",
 } as const;

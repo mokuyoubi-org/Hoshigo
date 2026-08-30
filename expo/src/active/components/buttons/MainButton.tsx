@@ -1,110 +1,87 @@
-import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/hooks/useTranslation";
-import { BoardSize } from "@/src/stable/types/goTypes";
-import React, { useRef } from "react";
-import {
-  Animated,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+// ✅active
 
-type Props = {
+/**
+ * MainButton.tsx
+ * メインボタン。
+ */
+import { useTranslation } from "@/src/active/language/i18n";
+import { BoardSize } from "expo-goband";
+import React, { useState } from "react";
+import { Animated, Text, TouchableOpacity, View } from "react-native";
+
+type MainButtonProps = {
   onPress: () => void;
   boardSize: BoardSize;
   disabled?: boolean;
 };
 
-export function MainButton({ onPress, boardSize, disabled = false }: Props) {
-  const pressScale = useRef(new Animated.Value(1)).current;
+// 🟨 アニメーションに関する定数設定
+const SCALE_PRESSED = 0.94; // 押したときの縮小サイズ
+const FRICTION_PRESS_IN = 8; // 押したときのスプリングの摩擦
+const FRICTION_PRESS_OUT = 6; // 離したときのスプリングの摩擦
 
+export function MainButton({
+  onPress,
+  boardSize,
+  disabled = false,
+}: MainButtonProps) {
+  const [pressScale] = useState(() => new Animated.Value(1));
   const t = useTranslation();
 
-  const onPressIn = () => {
+  // 指が触れたときに縮める
+  const handlePressIn = () => {
     if (disabled) return;
     Animated.spring(pressScale, {
-      toValue: 0.94,
-      friction: 8,
+      toValue: SCALE_PRESSED,
+      friction: FRICTION_PRESS_IN,
       useNativeDriver: true,
     }).start();
   };
 
-  const onPressOut = () => {
+  // 指が離れたときに元の大きさに戻す
+  const handlePressOut = () => {
     if (disabled) return;
     Animated.spring(pressScale, {
       toValue: 1,
-      friction: 6,
+      friction: FRICTION_PRESS_OUT,
       useNativeDriver: true,
     }).start();
   };
 
   return (
-    <View style={styles.buttonArea}>
+    <View className="flex-1 items-center justify-center">
       <TouchableOpacity
         onPress={onPress}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.8} // デフォルトの透明化アニメーションを無効化してAnimatedに任せる
         disabled={disabled}
       >
-        <View style={styles.glowWrapper}>
-          <Animated.View
-            style={[
-              styles.matchButton,
-              {
-                transform: [{ scale: pressScale }],
-              },
-              disabled && styles.matchButtonDisabled, // 押せないときは薄くする
-            ]}
-          >
-            <Text style={styles.btnLabel}>{t("Home.tap")}</Text>
-            <Text style={styles.btnText}>{t("common.play")}</Text>
-            <Text style={styles.btnText}>{boardSize}</Text>
+        <View className="rounded-full">
+          <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+            <View
+              className={`w-[180px] h-[180px] rounded-full bg-foreground border-[8px] border-primary justify-center items-center ${
+                disabled ? "opacity-40" : ""
+              }`}
+            >
+              {/* 上部の小さいラベル（例: "TAP" など） */}
+              <Text className="text-[9px] tracking-[4px] text-text mb-[6px] text-center">
+                {t("Home.tap")}
+              </Text>
+
+              {/* メインテキスト（例: "プレイ"） */}
+              <Text className="text-[28px] font-extrabold text-text tracking-[2px] text-center">
+                {t("common.play")}
+              </Text>
+
+              {/* 盤面サイズ表示（例: "19路"） */}
+              <Text className="text-[28px] font-extrabold text-text tracking-[2px] text-center">
+                {boardSize}
+              </Text>
+            </View>
           </Animated.View>
         </View>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  buttonArea: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  matchButton: {
-    width: 158,
-    height: 158,
-    borderRadius: 79,
-    backgroundColor: COLORS.foreground,
-    borderWidth: 8,
-    borderColor: COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  matchButtonDisabled: {
-    opacity: 0.5,
-  },
-
-  glowWrapper: {
-    borderRadius: 100,
-  },
-
-  btnLabel: {
-    fontSize: 9,
-    letterSpacing: 4,
-    color: COLORS.text,
-    marginBottom: 6,
-  },
-
-  btnText: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: COLORS.text,
-    letterSpacing: 2,
-  },
-});

@@ -1,0 +1,89 @@
+// KataGoEngine.tsx
+
+"use dom";
+
+import { useDOMImperativeHandle } from "expo/dom";
+import React, { Ref, useEffect, useRef } from "react";
+import {
+  AnalyzeBoardArgs,
+  AnalyzeResult,
+  analyzeBoard,
+  loadModel,
+} from "./web-katrain/analyzeBoard";
+import { initTf } from "./web-katrain/initTf";
+import { ModelId } from "./web-katrain/modelManager";
+
+export type KataGoEngineRef = {
+  analyzeBoard: (args: AnalyzeBoardArgs) => Promise<AnalyzeResult | null>;
+  warmupModel: (id: ModelId) => Promise<void>;
+};
+
+export type Props = {
+  ref: Ref<KataGoEngineRef>;
+  dom?: import("expo/dom").DOMProps;
+  onReady: () => void;
+  onError: (message: string) => void;
+  onAnalyzeComplete?: (result: AnalyzeResult) => void;
+};
+
+export default function KataGoEngine({
+  ref,
+  onReady,
+  onError,
+  onAnalyzeComplete,
+}: Props) {
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    initTf()
+      .then(() => onReady())
+      .catch((e: unknown) => onError(String(e)));
+  }, []);
+
+  useDOMImperativeHandle(
+    ref as any,
+    () =>
+      ({
+        analyzeBoard: async (
+          args: AnalyzeBoardArgs,
+        ): Promise<AnalyzeResult | null> => {
+          try {
+            const result = await analyzeBoard(args);
+            if (!result) return null;
+            const formattedResult: AnalyzeResult = {
+              ...result,
+              ownership: result.ownership
+                ? (Array.from(result.ownership) as any)
+                : result.ownership,
+              ownershipStdev: result.ownershipStdev
+                ? (Array.from(result.ownershipStdev) as any)
+                : result.ownershipStdev,
+              policy: result.policy
+                ? (Array.from(result.policy) as any)
+                : result.policy,
+            };
+            if (onAnalyzeComplete) onAnalyzeComplete(formattedResult);
+            return formattedResult;
+          } catch (e) {
+            console.error("🌐 [WebView内] analyzeBoard 実行エラー:", e);
+            return null;
+          }
+        },
+        warmupModel: async (id: ModelId): Promise<void> => {
+          try {
+            // 1. モデルをロード
+            await loadModel(id);
+            console.log(
+              `🔥 [KataGoEngine] ${id} のウォームアップ完了`,
+            );
+          } catch (e) {
+            console.error(`[KataGoEngine] ウォームアップ失敗: ${id}`, e);
+          }
+        },
+      }) as any,
+    [onAnalyzeComplete],
+  );
+  return <div style={{ display: "none" }} />;
+}

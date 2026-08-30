@@ -1,94 +1,68 @@
 import { COLORS } from "@/src/active/constants/colors";
-import { useMatching } from "@/src/active/contexts/MatchingContext";
-import React from "react";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { useMatching } from "../../contexts/providers/MatchingContext";
+import { useTranslation } from "../../language/i18n";
 
 export const SearchingButton = () => {
   const { isMatching, matchingBoardSize, cancelMatching } = useMatching();
-
-  // マッチング中じゃなければ何も表示しない
+  const [isCanceling, setIsCanceling] = useState(false);
+  const t = useTranslation();
   if (!isMatching) return null;
 
-  return (
-    <View style={styles.container} pointerEvents="box-none">
-      <View style={styles.card}>
-        {/* くるくるアニメーション */}
-        <ActivityIndicator
-          size="small"
-          color={COLORS.primary}
-          style={styles.spinner}
-        />
+  const boardSizeText = matchingBoardSize
+    ? `${matchingBoardSize}×${matchingBoardSize} `
+    : " ";
 
-        {/* テキスト表示 */}
-        <Text style={styles.text}>
-          searching{" "}
-          {matchingBoardSize
-            ? `${matchingBoardSize}×${matchingBoardSize} `
-            : " "}
-          ...
+  const handleCancel = async () => {
+    try {
+      setIsCanceling(true);
+      await cancelMatching();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsCanceling(false);
+    }
+  };
+
+  return (
+    <View
+      className={
+        "absolute bottom-[90px] left-[20px] right-[20px] items-center z-[99]"
+      }
+      style={{ pointerEvents: "box-none" }}
+    >
+      <View className="flex-row items-center bg-foreground py-[10px] px-[16px] rounded-[25px] border-[4px] border-backgroundDark">
+        {/* 🌟 キャンセル中で「ない」時だけ、左のクルクルを出す */}
+        {!isCanceling && (
+          <ActivityIndicator
+            size="small"
+            color={COLORS.primary}
+            className="mr-[10px]"
+          />
+        )}
+
+        {/* 検索中 / キャンセル中テキスト */}
+        <Text className="text-[14px] font-semibold text-text mr-[14px]">
+          {isCanceling
+            ? t("common.canceling")
+            : `${t("common.searching")} ${boardSizeText}...`}
         </Text>
 
-        {/* キャンセル（✕）ボタン */}
+        {/* キャンセル（×）ボタン */}
         <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => {
-            console.log("🐱 ✕ボタン押された！", new Date().toISOString());
-            cancelMatching();
-          }}
+          className="w-[32px] h-[32px] rounded-full bg-background justify-center items-center"
+          onPress={handleCancel}
           activeOpacity={0.7}
+          disabled={isCanceling}
         >
-          <Text style={styles.closeText}>✕</Text>
+          {isCanceling ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Text className="text-[16px] font-bold text-textSub">×</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    bottom: 90, // タブバーのすぐ上に浮かせる調整（お好みで調整OK！）
-    left: 20,
-    right: 20,
-    alignItems: "center",
-    zIndex: 99, // 一番手前に表示
-  },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.foreground,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    borderWidth: 4,
-    borderColor: COLORS.backgroundDark,
-  },
-  spinner: {
-    marginRight: 10,
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginRight: 12,
-  },
-  closeButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: COLORS.background,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  closeText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-});

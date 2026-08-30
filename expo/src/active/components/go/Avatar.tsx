@@ -1,26 +1,24 @@
 import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
-import { BLACK, Color, WHITE } from "@/src/stable/types/goTypes";
 import { AntDesign } from "@expo/vector-icons";
+import { BLACK, Color, WHITE } from "expo-goband";
 import React from "react";
-import { Image, StyleSheet, View } from "react-native";
-import { GROUPS } from "../../constants/groups";
+import { Image, View } from "react-native";
+import { RANKS } from "../../constants/ranks";
 
 type Props = {
-  groupIndex: number;
+  rankIndex: number;
   iconIndex: number;
   size: number;
-  color?: Color;
+  playerColor?: Color;
 };
 
-export const Avatar = ({ groupIndex, iconIndex, size, color }: Props) => {
-  const groupColor =
-    groupIndex !== 0
-      ? COLORS[GROUPS[groupIndex].color as keyof typeof COLORS]
-      : "transparent";
+export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
+  // RANKS[rankIndex] が無かったら、whiteを使う
+  const rankColor =
+    COLORS[RANKS[rankIndex]?.color as keyof typeof COLORS] ?? COLORS.white;
 
-  const starCount =
-    groupIndex >= 6 && groupIndex <= 17 ? ((groupIndex - 6) % 3) + 1 : 0;
+  const starCount = rankIndex >= 0 && rankIndex <= 17 ? (rankIndex % 3) + 1 : 0;
 
   const radius = (size / 2) * 1.05; // 円の半径
   const center = size / 2; // 中心座標
@@ -34,16 +32,14 @@ export const Avatar = ({ groupIndex, iconIndex, size, color }: Props) => {
   return (
     <View>
       <View
-        style={[
-          styles.avatarBorder,
-          {
-            width: size,
-            height: size,
-            borderRadius: radius,
-            borderColor: groupColor,
-            backgroundColor: COLORS.foreground,
-          },
-        ]}
+        className="border-[4px] justify-center items-center relative"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius,
+          borderColor: rankColor,
+          backgroundColor: COLORS.foreground,
+        }}
       >
         <Image
           source={ICONS[iconIndex]}
@@ -51,17 +47,15 @@ export const Avatar = ({ groupIndex, iconIndex, size, color }: Props) => {
           resizeMode="contain"
         />
 
-        {color && (
+        {playerColor && (
           <View
-            style={[
-              styles.stone,
-              {
-                backgroundColor:
-                  color === BLACK ? COLORS.darkObject : COLORS.lightObject,
-                borderWidth: color === WHITE ? 1 : 0,
-                borderColor: COLORS.primary,
-              },
-            ]}
+            className={`w-[20px] h-[20px] rounded-full absolute -bottom-[2px] -right-[2px] ${
+              playerColor === WHITE ? "border-[1px] border-primary" : ""
+            }`}
+            style={{
+              backgroundColor:
+                playerColor === BLACK ? COLORS.darkObject : COLORS.lightObject,
+            }}
           />
         )}
 
@@ -77,15 +71,13 @@ export const Avatar = ({ groupIndex, iconIndex, size, color }: Props) => {
           return (
             <View
               key={i}
-              style={[
-                styles.starWrapper,
-                {
-                  left: x - starOffset,
-                  top: y - starOffset,
-                },
-              ]}
+              className="absolute"
+              style={{
+                left: x - starOffset,
+                top: y - starOffset,
+              }}
             >
-              <View style={styles.starStack}>
+              <View className="justify-center items-center">
                 <AntDesign
                   name="star"
                   size={starOuterSize}
@@ -94,8 +86,8 @@ export const Avatar = ({ groupIndex, iconIndex, size, color }: Props) => {
                 <AntDesign
                   name="star"
                   size={starInnerSize}
-                  color={groupColor}
-                  style={styles.starInner}
+                  color={rankColor}
+                  className="absolute"
                 />
               </View>
             </View>
@@ -105,30 +97,3 @@ export const Avatar = ({ groupIndex, iconIndex, size, color }: Props) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  avatarBorder: {
-    borderWidth: 4,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  starWrapper: {
-    position: "absolute",
-  },
-  starStack: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  starInner: {
-    position: "absolute",
-  },
-  stone: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    position: "absolute",
-    bottom: -2,
-    right: -2,
-  },
-});

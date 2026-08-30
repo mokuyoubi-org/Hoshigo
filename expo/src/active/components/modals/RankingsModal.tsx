@@ -1,22 +1,25 @@
-import { NineThirteenButton } from "@/src/active/components/buttons/NineThirteenButton";
+// RankingsModal.tsx
 import {
   Profile,
   RankingCard,
 } from "@/src/active/components/cards/RankingCard";
-import LoadingModal from "@/src/active/components/modals/LoadingModal";
 import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/hooks/useTranslation";
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { BoardSize } from "@/src/stable/types/goTypes";
-import { StatusBar } from "expo-status-bar";
+import { BOARD_SIZE_OPTIONS, BoardSize } from "expo-goband";
+import { ModalShell } from "modal-shell";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
-  Modal,
-  StyleSheet,
-  TouchableWithoutFeedback,
   View,
+  useWindowDimensions,
 } from "react-native";
+import { SegmentedControl } from "ui-atoms";
+
+// 🐱 取得するデータに board_size も含める
+type RankingItem = Profile & {
+  board_size: number;
+};
 
 type Props = {
   visible: boolean;
@@ -24,101 +27,71 @@ type Props = {
 };
 
 export default function RankingsModal({ visible, onClose }: Props) {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [allProfiles, setAllProfiles] = useState<RankingItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const t = useTranslation();
-  const [boardSize, setBoardSize] = useState<BoardSize>(9); // あくまで初期値
+  const [boardSize, setBoardSize] = useState<BoardSize>(9);
 
+  const { height: windowHeight } = useWindowDimensions();
+
+  // 🐱 モーダルが開いた時だけ1回通信して全データを取る
   useEffect(() => {
-    if (!visible) return; // モーダルが開いてるときだけ取得
+    if (!visible) return;
 
     const fetchTopProfiles = async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc("get_top_profiles", {
-        p_board_size: boardSize,
-      });
+      const { data, error } = await supabase.rpc("get_rankings");
 
       if (error) {
         console.error(error);
       } else {
-        setProfiles(data ?? []);
+        setAllProfiles(data ?? []);
       }
       setLoading(false);
     };
 
     fetchTopProfiles();
-  }, [boardSize, visible]); // このboardSize, visibleは外さない
+  }, [visible]); // ← 引数の boardSize を外して、初回表示時だけに統一した
 
-  // ── UI ──
+  if (!visible) return null;
+
+  // 🐱 選択されている boardSize のデータだけサクッと絞り込む
+  const currentProfiles = allProfiles.filter(
+    (item) => item.board_size === boardSize,
+  );
+
   return (
-    <Modal
-      visible={visible}
-      transparent={true} // 背景を透けさせる
-      animationType="fade" // ふんわり表示させる
-      onRequestClose={onClose}
-    >
-      <StatusBar style="light" />
+    <ModalShell onClose={onClose} size="lg">
+      <View className="w-full pb-3 border-b border-backgroundDark/30 mb-3 items-start">
+        <SegmentedControl
+          value={boardSize}
+          options={BOARD_SIZE_OPTIONS}
+          onSelect={setBoardSize}
+        />
+      </View>
 
-      {/* 暗い背景部分（タップすると閉じる） */}
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          {/* カード本体（ここをタップしても閉じないようにガードする） */}
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContent}>
-              <View style={styles.header}>
-                <NineThirteenButton
-                  boardSize={boardSize}
-                  onToggle={setBoardSize}
-                />
-              </View>
-
-              {/* リスト */}
-              <FlatList
-                data={profiles}
-                keyExtractor={(item) => item.uid}
-                renderItem={({ item, index }) => (
-                  <RankingCard item={item} index={index} />
-                )}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
-          </TouchableWithoutFeedback>
+      {loading ? (
+        <View
+          className="w-full justify-center items-center"
+          style={{ height: windowHeight * 0.25 }}
+        >
+          <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
-      </TouchableWithoutFeedback>
-
-      <LoadingModal text={t("common.loading")} visible={loading} />
-    </Modal>
+      ) : (
+        <FlatList
+          data={currentProfiles}
+          keyExtractor={(item) => `${item.board_size}-${item.username}`}
+          renderItem={({ item, index }) => (
+            <RankingCard item={item} index={index} />
+          )}
+          contentContainerStyle={{
+            paddingBottom: 16,
+          }}
+          ItemSeparatorComponent={() => <View className="h-2.5" />}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={{ height: windowHeight * 0.65 }}
+        />
+      )}
+    </ModalShell>
   );
 }
-
-// ─── スタイル ──────────────────────────────────────────
-const styles = StyleSheet.create({
-  // 画面全体を覆う暗い背景
-  overlay: {
-    flex: 1,
-    backgroundColor: COLORS.overlay,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  // モーダルの中身（浮き出る小窓）
-  modalContent: {
-    width: "100%",
-    maxHeight: "80%", // 画面からはみ出さない調整
-    backgroundColor: COLORS.background,
-    borderRadius: 16,
-    paddingVertical: 12,
-    elevation: 5,
-  },
-  header: {
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    gap: 10,
-  },
-});

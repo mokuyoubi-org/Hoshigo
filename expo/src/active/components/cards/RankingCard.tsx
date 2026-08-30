@@ -1,8 +1,18 @@
+// RankingCard.tsx
+
 import { Avatar } from "@/src/active/components/go/Avatar";
 import { COLORS } from "@/src/active/constants/colors";
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { AntDesign } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo } from "react";
+import {
+  Animated,
+  Text,
+  TouchableOpacity, // 🐱 追加した
+  View,
+} from "react-native";
+import { useTranslation } from "../../language/i18n";
 
 const RANK_COLORS: Record<number, { color: string }> = {
   1: { color: COLORS.gold },
@@ -10,14 +20,35 @@ const RANK_COLORS: Record<number, { color: string }> = {
   3: { color: COLORS.bronze },
 };
 
+// 🌟 rank_index (0~17) を表示用ラベルに変換する表
+const RANK_LABELS: string[] = [
+  "10k",
+  "9k",
+  "8k",
+  "7k",
+  "6k",
+  "5k",
+  "4k",
+  "3k",
+  "2k",
+  "1k", // 0~9
+  "1D",
+  "2D",
+  "3D",
+  "4D",
+  "5D",
+  "6D",
+  "7D",
+  "8D", // 10~17
+];
+
 // ─── 型定義 ───────────────────────────────
 export type Profile = {
-  uid: string;
   username: string;
   points: number;
-  group_index: number;
   icon_index: number;
 };
+
 // ─── RankingCard ──────────────────────
 export const RankingCard = ({
   item,
@@ -26,10 +57,21 @@ export const RankingCard = ({
   item: Profile;
   index: number;
 }) => {
+  const t = useTranslation();
   const rank = index + 1;
   const rankMeta = RANK_COLORS[rank];
   const isTop3 = rank <= 3;
-  const fadeIn = useRef(new Animated.Value(0)).current;
+
+  // 🌟 自分かどうかを判定する
+  const { username } = useProfile();
+  const isMe = item.username === username || item.username === username;
+
+  // 🌟 rank_index から表示用ラベルを取得する（無効な数値のときは "-"）
+  const rankLabel = RANK_LABELS[getRankInfo(item.points, t).index] ?? "-";
+
+  // useMemo で Animated.Value を安全に生成・保持する
+  const fadeIn = useMemo(() => new Animated.Value(0), []);
+
   useEffect(() => {
     Animated.timing(fadeIn, {
       toValue: 1,
@@ -37,107 +79,62 @@ export const RankingCard = ({
       delay: index * 50, // 順番にフェードイン
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeIn, index]);
 
   return (
-    <Animated.View style={[styles.itemContainer, { opacity: fadeIn }]}>
-      <View style={[styles.card]}>
-        <View style={styles.cardContent}>
+    <Animated.View style={{ opacity: fadeIn }}>
+      {/* 🐾 社長の追記ルール適用！カード自身を TouchableOpacity (activeOpacity={1}) で包む */}
+      <TouchableOpacity
+        activeOpacity={1}
+        className={`bg-foreground rounded-[16px] overflow-hidden ${
+          isMe
+            ? "border-[3px] border-primary" // 自分：太い枠線
+            : "border-[2px] border-backgroundDark" // みんな：普通の枠線
+        }`}
+      >
+        <View className="flex-row items-center px-2 py-[14px]">
           {/* 順位 */}
           {isTop3 ? (
-            <View style={[styles.topRankBadge]}>
+            <View className="w-[42px] h-[42px] justify-center items-center mr-[12px]">
               <AntDesign name="crown" size={24} color={rankMeta.color} />
             </View>
           ) : (
-            <View style={styles.normalRank}>
-              <Text style={styles.normalRankText}>{rank}</Text>
+            <View className="w-[42px] h-[42px] justify-center items-center mr-[12px]">
+              <Text className="text-[16px] font-bold color-textSub tracking-[0.5px] opacity-60">
+                {rank}
+              </Text>
             </View>
           )}
 
           {/* アバター */}
           <Avatar
-            groupIndex={item.group_index}
+            rankIndex={getRankInfo(item.points, t).index}
             iconIndex={item.icon_index}
             size={50}
           />
 
-          <View style={{ paddingHorizontal: 8 }} />
+          <View className="px-2" />
 
           {/* 名前 */}
-          <View style={styles.infoContainer}>
+          <View className="flex-1 justify-center gap-1">
             <Text
-              style={[
-                styles.name,
-                isTop3 && { color: COLORS.text, fontWeight: "800" },
-              ]}
+              className={`text-[15px] font-bold color-text tracking-[0.3px] ${
+                isTop3 ? "color-text font-extrabold" : ""
+              }`}
               numberOfLines={1}
             >
               {item.username}
             </Text>
           </View>
+
+          {/* 🌟 右側に表示するランク*/}
+          <View className="ml-2 mr-2 px-2.5 py-1 bg-backgroundDark/50 rounded-full">
+            <Text className="text-[14px] font-bold color-textSub">
+              {rankLabel}
+            </Text>
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 };
-
-// ─── スタイル ──────────────────────────────────────────
-const styles = StyleSheet.create({
-  // アイテムコンテナ
-  itemContainer: {
-    // アニメーション用
-  },
-
-  // カード
-  card: {
-    backgroundColor: COLORS.foreground,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: COLORS.backgroundDark,
-    overflow: "hidden",
-  },
-  cardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-
-  // 上位3バッジ
-  topRankBadge: {
-    width: 42,
-    height: 42,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-  },
-
-  // 通常順位
-  normalRank: {
-    width: 42,
-    height: 42,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-  },
-  normalRankText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.textSub,
-    letterSpacing: 0.5,
-    opacity: 0.6,
-  },
-
-  // 名前・ポイント
-  infoContainer: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 4,
-  },
-  name: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: COLORS.text,
-    letterSpacing: 0.3,
-  },
-});

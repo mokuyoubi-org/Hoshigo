@@ -1,15 +1,15 @@
-// src/components/IconSelectorModal.tsx
-import { ICONS } from "@/src/active/constants/icons";
-import { useTranslation } from "@/src/active/hooks/useTranslation";
-
+// src/components/IconSelectModal.tsx
 import { COLORS } from "@/src/active/constants/colors";
+import { ICONS } from "@/src/active/constants/icons";
+import { useTranslation } from "@/src/active/language/i18n";
+
 import { MaterialIcons } from "@expo/vector-icons";
-import React from "react";
+import { ModalShell } from "modal-shell";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Image,
-  Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -19,97 +19,79 @@ import { useProfile } from "../../contexts/ProfileContexts";
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSelectIcon: (iconIndex: number) => void;
+  onSelectIcon: (iconIndex: number) => Promise<void> | void;
   currentIconIndex: number;
 };
 
-export default function IconSelectorModal({
+export default function IconSelectModal({
   visible,
   onClose,
   onSelectIcon,
   currentIconIndex,
 }: Props) {
   const t = useTranslation();
-  const { height, width } = useWindowDimensions();
+  const { height: windowHeight } = useWindowDimensions();
   const iconSize: number = 96;
   const imageSize: number = iconSize * (5 / 6);
+  const { acquiredIcons } = useProfile();
 
-  const { profile } = useProfile();
-  const { acquiredIcons } = profile;
-  const handleSelectIcon = (index: number) => {
-    onSelectIcon(index);
-    onClose();
+  const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+
+  const handleSelectIcon = async (index: number) => {
+    try {
+      setLoadingIndex(index);
+      await onSelectIcon(index);
+      onClose();
+    } finally {
+      setLoadingIndex(null);
+    }
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={onClose}
+    <ModalShell onClose={loadingIndex !== null ? undefined : onClose} size="md">
+      <View className="flex-row justify-between items-center mb-6">
+        <Text className="text-xl font-bold text-text">
+          {t("IconSelectModal.title")}
+        </Text>
+      </View>
+
+      {/* タイトルの下にScrollViewがあるので、flex-1ではなく明示的な高さを与える */}
+      <ScrollView
+        style={{ height: windowHeight * 0.32 }}
+        showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[
-            styles.modalContainer,
-            {
-              backgroundColor: COLORS.background,
-              height: height * (48 / 100),
-              width: width * (84 / 100),
-            },
-          ]}
-          onStartShouldSetResponder={() => true}
-        >
-          {/* ヘッダー */}
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: COLORS.text }]}>
-              {t("IconSelectorModal.title")}
-            </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color={COLORS.text} />
-            </TouchableOpacity>
-          </View>
+        <View className="flex-row flex-wrap justify-center gap-4">
+          {acquiredIcons?.map((iconIndex) => {
+            const icon = ICONS[iconIndex];
+            const isSelected = currentIconIndex === iconIndex;
+            const isLoadingThis = loadingIndex === iconIndex;
 
-          {/* アイコングリッド */}
-          <ScrollView style={styles.scrollView}>
-            <View style={styles.iconGrid}>
-              {acquiredIcons?.map((iconIndex) => {
-                const icon = ICONS[iconIndex];
-
-                return (
-                  <TouchableOpacity
-                    key={iconIndex}
-                    style={[
-                      styles.iconItem,
-                      {
-                        backgroundColor: COLORS.foreground,
-                        width: iconSize,
-                        height: iconSize,
-                      },
-                      currentIconIndex === iconIndex && styles.selectedIconItem,
-                      currentIconIndex !== iconIndex && {
-                        borderColor: COLORS.background,
-                      },
-                    ]}
-                    onPress={() => handleSelectIcon(iconIndex)}
-                    activeOpacity={0.7}
-                  >
+            return (
+              <TouchableOpacity
+                key={iconIndex}
+                className={`bg-foreground rounded-3xl justify-center items-center relative border-2 ${
+                  isSelected
+                    ? "border-primary border-[3px]"
+                    : "border-background"
+                }`}
+                style={{ width: iconSize, height: iconSize }}
+                onPress={() => handleSelectIcon(iconIndex)}
+                disabled={loadingIndex !== null}
+                activeOpacity={0.7}
+              >
+                {isLoadingThis ? (
+                  <ActivityIndicator size="large" color={COLORS.primary} />
+                ) : (
+                  <>
                     <Image
                       source={icon}
                       style={{ height: imageSize, width: imageSize }}
                       resizeMode="contain"
                     />
-                    {currentIconIndex === iconIndex && (
-                      <View
-                        style={[
-                          styles.checkmark,
-                          { backgroundColor: COLORS.primary },
-                        ]}
-                      >
+                    {isSelected && (
+                      <View className="absolute top-1 right-1 w-6 h-6 rounded-full bg-primary justify-center items-center">
                         <MaterialIcons
                           name="check"
                           size={16}
@@ -117,71 +99,13 @@ export default function IconSelectorModal({
                         />
                       </View>
                     )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </ScrollView>
+                  </>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      </TouchableOpacity>
-    </Modal>
+      </ScrollView>
+    </ModalShell>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: COLORS.overlay,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    margin: 24,
-    borderRadius: 20,
-    padding: 24,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  scrollView: {
-    // flex: 1,
-  },
-  iconGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 16,
-  },
-  iconItem: {
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: COLORS.primaryLight,
-    position: "relative",
-  },
-  selectedIconItem: {
-    borderWidth: 3,
-  },
-
-  checkmark: {
-    position: "absolute",
-    top: 4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

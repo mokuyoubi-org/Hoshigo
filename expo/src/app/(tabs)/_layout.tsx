@@ -1,27 +1,32 @@
+// @/src/app/(tabs)/_layout.tsx
+
 import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/hooks/useTranslation";
+import { useTranslation } from "@/src/active/language/i18n";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import * as NavigationBar from "expo-navigation-bar";
+import { NavigationBar } from "expo-navigation-bar";
 import { Tabs } from "expo-router";
 import React, { useEffect } from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, Pressable, View } from "react-native";
 
 const TabIcon = ({
   icon,
   focused,
 }: {
   icon: React.ReactNode;
-  color: string;
   focused: boolean;
 }) => {
   return (
-    <View style={styles.iconWrapper}>
+    <View className="w-11 h-9 items-center justify-center">
       {focused && (
-        <>
-          <View style={styles.iconGlow} />
-        </>
+        <View className="absolute w-12 h-8 rounded-full bg-backgroundDark" />
       )}
-      <View style={[focused ? styles.iconActive : styles.iconInactive]}>
+      <View
+        className={
+          focused
+            ? "items-center justify-center"
+            : "items-center justify-center w-10 h-8"
+        }
+      >
         {icon}
       </View>
     </View>
@@ -30,96 +35,80 @@ const TabIcon = ({
 
 export default function TabsLayout() {
   const t = useTranslation();
-  useEffect(() => {
-    async function setupNavBar() {
-      if (Platform.OS === "android") {
-        await NavigationBar.setVisibilityAsync("hidden");
-        await NavigationBar.setBehaviorAsync("overlay-swipe");
-      }
-    }
 
-    setupNavBar();
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      NavigationBar.setHidden(true);
+    }
   }, []);
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: COLORS.primaryDark,
-        tabBarInactiveTintColor: COLORS.primary,
-        tabBarStyle: {
-          backgroundColor: COLORS.foreground,
-          borderTopWidth: 2,
-          borderTopColor: COLORS.backgroundDark,
-          height: Platform.OS === "ios" ? 88 : 80,
-          paddingBottom: Platform.OS === "ios" ? 24 : 10,
-          paddingTop: 10,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "600",
-          letterSpacing: 1.2,
-          marginTop: 3,
-        },
-        tabBarItemStyle: {
-          gap: 2,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="Home"
-        options={{
-          title: t("common.play"),
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              focused={focused}
-              color={color}
-              icon={<FontAwesome6 name="fire" color={color} size={20} />}
-            />
-          ),
-        }}
-      />
+    <>
+      {Platform.OS === "android" && <NavigationBar hidden />}
 
-      <Tabs.Screen
-        name="Profile"
-        options={{
-          title: t("common.profile"),
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              focused={focused}
-              color={color}
-              icon={<MaterialIcons name="face" color={color} size={22} />}
-            />
-          ),
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: COLORS.primaryDark,
+          tabBarInactiveTintColor: COLORS.primary,
+          // 💡 Webでは標準ボタン（undefined）にしてリロードを防止
+          // ネイティブ（Android等）では Pressable を使ってリップルを非表示にする
+          // 冗長なようだが、これは絶対に必要なので簡略化などは厳禁
+          tabBarButton:
+            Platform.OS === "web"
+              ? undefined
+              : (props) => {
+                  const { ref, ...restProps } = props as any;
+                  return <Pressable {...restProps} android_ripple={null} />;
+                },
+          tabBarStyle: {
+            backgroundColor: COLORS.foreground,
+            borderTopWidth: 0,
+            borderTopColor: "transparent",
+            height: Platform.OS === "ios" ? 88 : 80,
+            paddingBottom: Platform.OS === "ios" ? 24 : 10,
+            paddingTop: 10,
+            maxWidth: 680,
+            width: "100%",
+            alignSelf: "center",
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: "600",
+            letterSpacing: 1.2,
+            marginTop: 3,
+          },
+          tabBarItemStyle: {
+            gap: 2,
+          },
         }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="HomeScreen"
+          options={{
+            title: t("common.play"),
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                focused={focused}
+                icon={<FontAwesome6 name="fire" color={color} size={20} />}
+              />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="ProfileScreen"
+          options={{
+            title: t("common.profile"),
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                focused={focused}
+                icon={<MaterialIcons name="face" color={color} size={22} />}
+              />
+            ),
+          }}
+        />
+      </Tabs>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  iconWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 44,
-    height: 36,
-  },
-  // アクティブ時の淡いグロー
-  iconGlow: {
-    position: "absolute",
-    width: 48,
-    height: 32,
-    borderRadius: 48,
-    backgroundColor: COLORS.backgroundDark,
-  },
-  iconActive: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconInactive: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 40,
-    height: 32,
-  },
-});

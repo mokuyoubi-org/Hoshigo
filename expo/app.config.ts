@@ -1,3 +1,6 @@
+// app.config.ts
+// アプリの設計図。
+
 import { ExpoConfig } from "expo/config";
 
 import * as dotenv from "dotenv";
@@ -19,7 +22,6 @@ const config: ExpoConfig = {
   icon: "./assets/images/icon.png",
   scheme: process.env.EXPO_PUBLIC_SCHEME!,
   userInterfaceStyle: "automatic",
-  newArchEnabled: true,
 
   ios: {
     supportsTablet: true,
@@ -32,18 +34,11 @@ const config: ExpoConfig = {
     associatedDomains: ["applinks:hoshigo.app"],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
-      NSLocalNetworkUsageDescription:
-        "ローカルネットワークにアクセス",
+      NSLocalNetworkUsageDescription: "ローカルネットワークにアクセス",
       NSBonjourServices: ["_expo._tcp"],
       CFBundleURLTypes: [
         {
-          CFBundleURLSchemes: [
-            process.env
-              .EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID!.replace("https://", "") // https://を除去
-              .split(".")
-              .reverse()
-              .join("."),
-          ],
+          CFBundleURLSchemes: [process.env.EXPO_PUBLIC_SCHEME!],
         },
       ],
     },
@@ -56,7 +51,6 @@ const config: ExpoConfig = {
       monochromeImage: "./assets/icons/adaptive-icon.png",
     },
 
-    edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: process.env.ANDROID_PACKAGE_NAME!,
     intentFilters: [
@@ -91,15 +85,19 @@ const config: ExpoConfig = {
       },
     ],
     "expo-secure-store",
-    ["expo-web-browser", { experimentalLauncherActivity: false }],
+    "expo-audio",
     "expo-asset",
     "expo-localization",
     "expo-font",
+    "expo-sqlite",
     [
       "expo-build-properties",
       {
         ios: {
-          deploymentTarget: "16.0",
+          deploymentTarget: "16.4", // iOS16.4以上を要求
+        },
+        android: {
+          minSdkVersion: 31, // Android12以上を要求
         },
       },
     ],

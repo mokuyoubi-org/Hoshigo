@@ -1,14 +1,12 @@
+// AvatarWithPass.tsx
+import { Color } from "expo-goband";
 import { Avatar } from "@/src/active/components/go/Avatar";
 import { Pass } from "@/src/active/components/go/Pass";
-import { Color } from "@/src/stable/types/goTypes";
 import React from "react";
-import { StyleSheet, View } from "react-native";
-
-const PASS_SLOT_HEIGHT = 28;
-const PASS_OVERLAP = 10;
+import { View } from "react-native";
 
 type Props = {
-  groupIndex: number;
+  rankIndex: number;
   iconIndex: number;
   size: number;
   color?: Color;
@@ -17,7 +15,7 @@ type Props = {
 };
 
 export const AvatarWithPass = ({
-  groupIndex,
+  rankIndex,
   iconIndex,
   size,
   color,
@@ -25,44 +23,19 @@ export const AvatarWithPass = ({
   showPass = false,
 }: Props) => {
   return (
-    <View style={isLeft ? styles.containerLeft : styles.containerRight}>
-      <View
-        style={[
-          styles.passSlot,
-          isLeft ? styles.passSlotLeft : styles.passSlotRight,
-        ]}
-      >
+    // relative をつけることで、中の absolute な Pass の基準にする
+    <View className="relative justify-center items-center">
+      {/* Pass を absolute にして、アバターの上に浮かせる */}
+      <View className={`absolute -top-5 z-10 ${isLeft ? "left-0" : "right-0"}`}>
         <Pass visible={showPass} isLeft={isLeft} />
       </View>
+
       <Avatar
-        groupIndex={groupIndex}
+        rankIndex={rankIndex}
         iconIndex={iconIndex}
         size={size}
-        color={color}
+        playerColor={color}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  containerLeft: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-  },
-  containerRight: {
-    flexDirection: "column",
-    alignItems: "flex-end",
-  },
-  passSlot: {
-    height: PASS_SLOT_HEIGHT,
-    marginBottom: -PASS_OVERLAP,
-    justifyContent: "flex-end",
-    zIndex: 1,
-  },
-  passSlotLeft: {
-    alignItems: "flex-start",
-  },
-  passSlotRight: {
-    alignItems: "flex-end",
-  },
-});

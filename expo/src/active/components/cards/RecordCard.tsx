@@ -1,37 +1,37 @@
+// ✅active
 // RecordCard.tsx
-import {
-  isSkeletonCard,
-  SkeletonCard,
-} from "@/src/active/components/cards/SkeletonCard";
-
+import { SkeletonCard } from "@/src/active/components/cards/SkeletonCard";
 import { AgehamaDisplay } from "@/src/active/components/go/Agehama";
 import { AvatarWithPass } from "@/src/active/components/go/AvatarWithPass";
-import { GoBoard } from "@/src/active/components/go/Board";
-import { ReplayControls } from "@/src/active/components/go/ReplayControls";
 import { COLORS } from "@/src/active/constants/colors";
-import { Agehama, RecordType } from "@/src/active/types/matchTypes";
+import { useLang, useTranslation } from "@/src/active/language/i18n";
+import { RecordOrSkeleton } from "@/src/active/types/record";
+import { resultToComment } from "@/src/stable/logics/resultToComment";
 import {
+  Agehama,
   BLACK,
   Board,
   BoardSize,
   Color,
+  GoBoard,
   Grid,
+  isNoOkiishi,
+  MatchType,
   PASS_GRID,
+  ReplayControls,
   WHITE,
-} from "@/src/stable/types/goTypes";
+} from "expo-goband";
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { useLang } from "../../contexts/LangContext";
-import { useTranslation } from "../../hooks/useTranslation";
-import { resultToComment } from "../../logics/utilLogics";
+import { LayoutChangeEvent, Text, View } from "react-native";
+import { isSkeletonCard } from "../../../stable/logics/recordCardLogics";
 
 export type Props = {
-  record: RecordType;
+  record: RecordOrSkeleton;
   boardHistory: Board[];
   moves: Grid[];
   agehamaHistory: Agehama[];
   territoryBoard: number[][] | undefined;
-  matchType: number;
+  matchType: MatchType;
   cardHeight: number;
   /** 自分が勝ったか負けたか。未定義の場合はニュートラル表示 */
   playerWin?: boolean;
@@ -55,7 +55,16 @@ export const RecordCard = ({
   const t = useTranslation();
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const isReady = !isSkeletonCard(record) && !!territoryBoard;
+  const [cardWidth, setCardWidth] = useState<number>(0); // 自分のwidthを保持するstate
+  if (isSkeletonCard(record) || !territoryBoard) {
+    return <SkeletonCard height={cardHeight} />;
+  }
+
+  // カードのレイアウトが確定した時にwidthを取得する
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    setCardWidth(width);
+  };
 
   // 自分が黒番なら black 側、白番なら white 側の値を選ぶヘルパー
   const self = <T,>(blackVal: T, whiteVal: T): T =>
@@ -67,15 +76,12 @@ export const RecordCard = ({
   const isCurrentMovePass = moveHistory[currentIndex - 1] === PASS_GRID;
 
   // matchType 0/1 は通常の手番順、それ以外は反転した手番順
-  const isNormalOrder = matchType === 0 || matchType === 1;
+  const isNormalOrder = isNoOkiishi(matchType);
   const lastMoveWasBlack = isNormalOrder
     ? currentIndex % 2 === 1
     : currentIndex % 2 === 0;
   const isBlackPass = isCurrentMovePass && lastMoveWasBlack;
   const isWhitePass = isCurrentMovePass && !lastMoveWasBlack;
-
-  // 準備ができてなかったらスケルトンカード
-  if (!isReady) return <SkeletonCard height={cardHeight} />;
 
   const resultText =
     resultToComment(record.result ?? "", isPlayerBlack ? BLACK : WHITE, t) ??
@@ -89,46 +95,56 @@ export const RecordCard = ({
   // 勝敗で変わるのはこの3色だけ
   const borderColor =
     playerWin === true
-      ? COLORS.safeLight
+      ? COLORS.green
       : playerWin === false
-        ? COLORS.dangerLight
+        ? COLORS.coral
         : COLORS.backgroundDark;
   const accentColor =
     playerWin === true
-      ? COLORS.safe
+      ? COLORS.green
       : playerWin === false
-        ? COLORS.danger
+        ? COLORS.coral
         : COLORS.text;
   const dateColor = playerWin === undefined ? COLORS.textSub : accentColor;
 
   const currentAgehama = agehamaHistory[currentIndex];
 
+  // カードのwidthから碁盤の幅を決定（測定前はフォールバック値）
+  // 左右に余白（合計24pxなど）を持たせたい場合は Math.max(0, cardWidth - 24) のように調整してね社長
+  const boardWidth =
+    (cardHeight > cardWidth * 1.4 ? cardWidth * 0.78 : cardHeight * 0.56) * 1.2;
   return (
-    <View style={[styles.card, { height: cardHeight, borderColor }]}>
-      <View style={styles.playersRow}>
+    <View
+      onLayout={handleLayout}
+      className="justify-between items-center rounded-3xl overflow-hidden bg-foreground border-4"
+      style={{ height: cardHeight, borderColor }}
+    >
+      <View className="w-full flex-row items-end px-2 pt-2.5 pb-2">
         <PlayerCell
           isLeft
           username={self(record.black_username, record.white_username)}
           iconIndex={
             self(record.black_icon_index, record.white_icon_index) ?? 0
           }
-          groupIndex={
-            self(record.black_group_index, record.white_group_index) ?? 0
+          rankIndex={
+            self(record.black_rank_index, record.white_rank_index) ?? 0
           }
           color={isPlayerBlack ? BLACK : WHITE}
           showPass={isPlayerBlack ? isBlackPass : isWhitePass}
           agehamaCount={self(currentAgehama.black, currentAgehama.white)}
         />
 
-        <View style={styles.metaSlot}>
+        <View className="pt-3 w-[72px] flex-col items-center justify-evenly">
           <Text
-            style={[styles.metaDate, { color: dateColor }]}
+            className="text-[10px] text-center leading-[14px]"
+            style={{ color: dateColor }}
             numberOfLines={2}
           >
             {dateText}
           </Text>
           <Text
-            style={[styles.metaResult, { color: accentColor }]}
+            className="text-[11px] font-semibold text-center leading-[15px]"
+            style={{ color: accentColor }}
             numberOfLines={2}
           >
             {resultText}
@@ -139,9 +155,7 @@ export const RecordCard = ({
           isLeft={false}
           username={opp(record.black_username, record.white_username)}
           iconIndex={opp(record.black_icon_index, record.white_icon_index) ?? 0}
-          groupIndex={
-            opp(record.black_group_index, record.white_group_index) ?? 0
-          }
+          rankIndex={opp(record.black_rank_index, record.white_rank_index) ?? 0}
           color={!isPlayerBlack ? BLACK : WHITE}
           showPass={!isPlayerBlack ? isBlackPass : isWhitePass}
           agehamaCount={opp(currentAgehama.black, currentAgehama.white)}
@@ -150,7 +164,7 @@ export const RecordCard = ({
 
       <GoBoard
         boardSize={boardSize}
-        boardWidth={cardHeight * 0.5}
+        boardWidth={boardWidth}
         agehamaHistory={agehamaHistory}
         board={boardHistory[currentIndex] ?? {}}
         onPutStone={() => {}}
@@ -176,7 +190,7 @@ type PlayerCellProps = {
   isLeft: boolean;
   username: string;
   iconIndex: number;
-  groupIndex: number;
+  rankIndex: number;
   color: Color;
   showPass: boolean;
   agehamaCount: number;
@@ -186,30 +200,35 @@ const PlayerCell = ({
   isLeft,
   username,
   iconIndex,
-  groupIndex,
+  rankIndex,
   color,
   showPass,
   agehamaCount,
 }: PlayerCellProps) => {
-  const align = isLeft ? "flex-start" : "flex-end";
   return (
-    <View style={[styles.playerCell, { alignItems: align }]}>
-      <View style={[styles.playerMain, !isLeft && styles.rowReverse]}>
+    <View className={`flex-1 flex-col ${isLeft ? "items-start" : "items-end"}`}>
+      <View
+        className={`flex-row items-center gap-1.5 ${
+          !isLeft ? "flex-row-reverse" : ""
+        }`}
+      >
         <AvatarWithPass
-          groupIndex={groupIndex}
+          rankIndex={rankIndex}
           iconIndex={iconIndex}
           size={48}
           color={color}
           isLeft={isLeft}
           showPass={showPass}
         />
-        <View style={[styles.playerInfo, { alignItems: align }]}>
+        <View
+          className={`flex-col gap-1 flex-1 ${
+            isLeft ? "items-start" : "items-end"
+          }`}
+        >
           <Text
-            style={[
-              styles.playerName,
-              { textAlign: isLeft ? "left" : "right" },
-              !isLeft && styles.shrink,
-            ]}
+            className={`text-sm font-medium text-text ${
+              isLeft ? "text-left" : "text-right flex-shrink"
+            }`}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
@@ -221,66 +240,3 @@ const PlayerCell = ({
     </View>
   );
 };
-
-// ===== スタイル =====
-const styles = StyleSheet.create({
-  card: {
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: COLORS.foreground,
-    borderWidth: 2,
-  },
-  playersRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "flex-end",
-    paddingHorizontal: 8,
-    paddingTop: 10,
-    paddingBottom: 8,
-  },
-  playerCell: {
-    flex: 1,
-    flexDirection: "column",
-  },
-  playerMain: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  rowReverse: {
-    flexDirection: "row-reverse",
-  },
-  playerInfo: {
-    flexDirection: "column",
-    gap: 4,
-    flex: 1,
-  },
-  playerName: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: COLORS.text,
-  },
-  shrink: {
-    flexShrink: 1,
-  },
-  metaSlot: {
-    paddingTop: 12,
-    width: 72,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-evenly",
-  },
-  metaResult: {
-    fontSize: 11,
-    fontWeight: "600",
-    textAlign: "center",
-    lineHeight: 15,
-  },
-  metaDate: {
-    fontSize: 10,
-    textAlign: "center",
-    lineHeight: 14,
-  },
-});

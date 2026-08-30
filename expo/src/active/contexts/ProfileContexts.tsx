@@ -1,16 +1,7 @@
-// ====================================================================================
-// 【ファイル全体の責務】
-// ⚡️コンテキストファイル⚡️
-// 何をアプリ全体で共有してるか: プロフィール情報。
-// ====================================================================================
-
-// ====================================================================================
-// 【ロジックパート】
-// ====================================================================================
-
+// ProfileContexts.tsx
 import React, { createContext, ReactNode, useContext, useState } from "react";
 
-// 1. プロフィールの型
+// 1. プロフィールの型（素のデータ）
 export type Profile = {
   uid: string | null;
   email: string | null;
@@ -21,9 +12,14 @@ export type Profile = {
   games13: number | null;
   points9: number | null;
   points13: number | null;
-  groupIndex9: number | null;
-  groupIndex13: number | null;
   allowBotMatch: boolean | null;
+  isAnonymous: boolean;
+};
+
+// Hookから返す全体の型
+export type ProfileContextValue = Profile & {
+  updateProfile: (partial: Partial<Profile>) => void;
+  replaceProfile: (next: Profile) => void;
 };
 
 // 2. 初期値
@@ -35,25 +31,22 @@ const initialProfile: Profile = {
   acquiredIcons: [0],
   games9: 0,
   games13: 0,
-  points9: 10,
-  points13: 10,
-  groupIndex9: 0,
-  groupIndex13: 0,
+  points9: 0,
+  points13: 0,
   allowBotMatch: true,
+  isAnonymous: true,
 };
 
-// 3. Context本体（外部には見せない）
-const ProfileContext = createContext<{
+type ProfileContextType = {
   profile: Profile;
-  setProfile: React.Dispatch<React.SetStateAction<Profile>>;
   updateProfile: (partial: Partial<Profile>) => void;
-} | null>(null);
+  replaceProfile: (next: Profile) => void;
+};
 
-// ====================================================================================
-// 【インターフェースパート】（仕様・説明書）
-// ====================================================================================
+// 3. 🏢Context本体
+const ProfileContext = createContext<ProfileContextType | null>(null);
 
-// 4. Provider（データ配給係）
+// 4. 📡Provider
 export const ProfileProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile>(initialProfile);
 
@@ -61,16 +54,27 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
     setProfile((prev) => ({ ...prev, ...partial }));
   };
 
+  const replaceProfile = (next: Profile) => {
+    setProfile(next);
+  };
+
   return (
-    <ProfileContext.Provider value={{ profile, setProfile, updateProfile }}>
+    <ProfileContext.Provider value={{ profile, updateProfile, replaceProfile }}>
       {children}
     </ProfileContext.Provider>
   );
 };
 
-// 5. Hook（使う側の窓口）
-export const useProfile = () => {
+// 5. Hook（identity情報だけを返す。
+export const useProfile = (): ProfileContextValue => {
   const ctx = useContext(ProfileContext);
   if (!ctx) throw new Error("useProfile must be used within a ProfileProvider");
-  return ctx;
+
+  const { profile, updateProfile, replaceProfile } = ctx;
+
+  return {
+    ...profile,
+    updateProfile,
+    replaceProfile,
+  };
 };

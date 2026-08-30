@@ -1,9 +1,17 @@
+/**
+ *  tsconfig.json
+ *
+ * 【このファイルの役割】
+ *  TSファイルを書くときの決まりごと。
+ *  例えばパスで@はどこのことだよ、とか、コードの型はどこまで厳しく見るか、とか。
+ */
+
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "typeRoots": ["./node_modules/@types", "src/active/logics"],
+    "typeRoots": ["./node_modules/@types"],
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "jsx": "react",
@@ -12,5 +20,13 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "nativewind-env.d.ts",
+    "src/active/hooks/useSettingsScreenScreen.ts"
+  ]
 }
