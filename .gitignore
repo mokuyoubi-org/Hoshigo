@@ -1,14 +1,22 @@
-# dependencies
-expo/node_modules/
+# ==========================================
+# 1. ルート（一番上）とサブフォルダ共通で無視するもの
+# ==========================================
+# Expo & VS Code & Node
+.expo/
+.vscode/
+node_modules/
+dist/
+web-build/
+expo-env.d.ts
 
-# Expo
-expo/.expo/
-expo/dist/
-expo/web-build/
-expo/expo-env.d.ts
+# generated native folders
+/ios
+/android
+/expo/ios
+/expo/android
 
-# Native
-expo/.kotlin/
+# Native & Build files
+.kotlin/
 *.orig.*
 *.jks
 *.p8
@@ -17,35 +25,34 @@ expo/.kotlin/
 *.mobileprovision
 
 # Metro
-expo/.metro-health-check*
+.metro-health-check*
 
-# debug
+# debug logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macOS
+# OS & Environment
 .DS_Store
 *.pem
-
-# local env files
-.env*.local
 .env
 .env.*
+.env*.local
 
 # typescript
 *.tsbuildinfo
 
 app-example
 
-# generated native folders
-/expo/ios
-/expo/android
-
-# vscode
-.vscode/
-
 # Fly / Python
 fly/__pycache__/
 fly/*.pyc
 fly/.venv/
+
+# ==========================================
+# 2. expo フォルダの中を直接指定する場合の保険
+# ==========================================
+expo/node_modules/
+expo/.expo/
+expo/dist/
+expo/web-build/
