@@ -1,32 +1,43 @@
 // modelManager.ts
 
-// eslint-disable-next-line no-restricted-imports
-import B6_MODEL_ASSET from "../../assets/models/b6.bin.gz";
-// eslint-disable-next-line no-restricted-imports
-import B10_MODEL_ASSET from "../../assets/models/b10.bin.gz";
-// eslint-disable-next-line no-restricted-imports
-import B18_MODEL_ASSET from "../../assets/models/b18.bin.gz";
-// @ts-ignore
-import { Asset } from "expo-asset";
+import { getModelFromIDB, saveModelToIDB } from "./modelStorage";
 
 export type ModelId = "b6" | "b10" | "b18";
 export const DEFAULT_MODEL_ID: ModelId = "b10";
 
-const MODEL_ASSETS: Record<ModelId, number> = {
-  b6: B6_MODEL_ASSET,
-  b10: B10_MODEL_ASSET,
-  b18: B18_MODEL_ASSET,
+// 社長のR2のURLだにゃ！♪
+const MODEL_URLS: Record<ModelId, string> = {
+  b6: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/g170-b6c96-s175395328-d26788732.bin.gz",
+  b10: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/g170e-b10c128-s1141046784-d204142634.bin.gz",
+  b18: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/kata1-b18c384nbt-s9996604416-d4316597426.bin.gz",
 };
 
 export async function readModelData(id: ModelId): Promise<Uint8Array> {
-  const asset = Asset.fromModule(MODEL_ASSETS[id]);
-  await asset.downloadAsync();
-
-  if (!asset.localUri) {
-    throw new Error(`Asset の localUri 取得に失敗: ${id}`);
+  // 1. まずIndexedDBにあるか確認する
+  const cachedData = await getModelFromIDB(id);
+  if (cachedData) {
+    console.log(`⚡ [modelManager] IndexedDB から ${id} を読み込んだにゃ！`);
+    return cachedData;
   }
 
-  const response = await fetch(asset.localUri);
+  // 2. なければR2からダウンロードするにゃ
+  const url = MODEL_URLS[id];
+  if (!url) {
+    throw new Error(`未定義のModelIdだにゃ: ${id}`);
+  }
+
+  console.log(`☁️ [modelManager] R2から ${id} のダウンロードを開始するにゃ...`);
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`[R2] モデルの取得に失敗したにゃ (${id}): ${response.statusText}`);
+  }
+
   const arrayBuffer = await response.arrayBuffer();
-  return new Uint8Array(arrayBuffer);
+  const uint8Array = new Uint8Array(arrayBuffer);
+
+  // 3. 次回のためにIndexedDBに保存するにゃ！
+  await saveModelToIDB(id, uint8Array);
+  console.log(`💾 [modelManager] ${id} を IndexedDB に保存したにゃ！`);
+
+  return uint8Array;
 }
