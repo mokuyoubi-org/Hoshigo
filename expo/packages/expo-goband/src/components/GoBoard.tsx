@@ -9,6 +9,7 @@ import React, {
   useState,
 } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+
 import { COLORS } from "../constants/colors";
 import {
   Agehama,
@@ -22,6 +23,7 @@ import {
 } from "../types/go";
 import { BoardGridCell } from "./BoardGridCell";
 import { BoardLines } from "./BoardLines";
+import { ReplayTapOverlay } from "./ReplayTapOverlay";
 
 type Props = {
   board: Board;
@@ -34,6 +36,7 @@ type Props = {
   isGameEnded: boolean;
   boardHistory: Board[];
   currentIndex: number;
+  onCurrentIndexChange?: (index: number) => void; // 🐱 ① インデックス変更用のコールバックを追加！
   boardBackgroundColor?: string;
   lineColor?: string;
   agehamaHistory: Agehama[];
@@ -52,6 +55,7 @@ export function GoBoard({
   isGameEnded,
   boardHistory,
   currentIndex,
+  onCurrentIndexChange, // 🐱 受け取るにゃん！
   boardWidth,
   pinPoints,
   enableDoubleTap = false,
@@ -75,7 +79,7 @@ export function GoBoard({
     setPendingGrid(null);
   }
 
-  // 🐱 サイズ計算を useMemo でキャッシュ！(boardWidth や boardSize が変わらない限り再計算しない)
+  // 🐱 サイズ計算
   const {
     innerWidth,
     cellSize,
@@ -98,9 +102,24 @@ export function GoBoard({
     };
   }, [boardWidth, boardSize]);
 
-  // ─── 音 ──────────────────────────────────────────────
+// ─── 音 ──────────────────────────────────────────────
   const stonePlayer = useAudioPlayer(require("../../assets/sounds/stone.mp3"));
   const prevIndexRef = useRef<number | null>(null);
+
+  // 🐱 音声を安全に鳴らすためのヘルパー関数
+  const playStoneSound = useCallback(async () => {
+    try {
+      // プレイヤーが存在して、再生準備が整っているかチェック
+      if (!stonePlayer) return;
+
+      // seekTo や play は Promise を返すので await で安全に待つ
+      await stonePlayer.seekTo(0);
+      await stonePlayer.play();
+    } catch (error) {
+      // ネイティブ側で再生エラーが起きてもアプリを落とさないようにキャッチする
+      console.warn("Failed to play stone sound:", error);
+    }
+  }, [stonePlayer]);
 
   useEffect(() => {
     const prevIdx = prevIndexRef.current;
@@ -112,14 +131,21 @@ export function GoBoard({
     const appliedMove = moveHistory[currentIndex - 1];
     if (appliedMove === PASS_GRID) return;
 
-    stonePlayer.seekTo(0);
-    stonePlayer.play();
-  }, [currentIndex, moveHistory]);
+    // 🐱 安全な再生関数を呼び出す
+    playStoneSound();
+  }, [currentIndex, moveHistory, playStoneSound]);
 
-  // 🐱 タップ処理を useCallback で固定（毎回新しく作られないようにする）
+
+
+
+
+
+
+
+
   const handlePressGrid = useCallback(
     (grid: Grid, goString: GoString | null) => {
-      if (disabled) return; // 🐱 自分の番じゃないならタップ全般を無視！
+      if (disabled) return;
 
       if (goString) {
         setPendingGrid(null);
@@ -140,7 +166,6 @@ export function GoBoard({
     setPendingGrid((prev) => (prev !== null ? null : null));
   }, []);
 
-  // 直近の手（着手マーク用）の計算も固定する
   const currentMoveGrid = useMemo(() => {
     if (currentIndex === 0 || moveHistory.length === 0) return null;
     const move = moveHistory[currentIndex - 1];
@@ -149,8 +174,12 @@ export function GoBoard({
 
   const showTerritory = isGameEnded && currentIndex === boardHistory.length - 1;
 
-  // 🐱 ピンポイントの検索を Set にして高速化！(O(1)で検索できる)
   const pinSet = useMemo(() => new Set(pinPoints ?? []), [pinPoints]);
+
+  // 🐱 最大手数（リプレイの最大インデックス）を算出
+  const maxIndex = useMemo(() => {
+    return Math.max(0, (boardHistory?.length ?? 1) - 1);
+  }, [boardHistory]);
 
   return (
     <View style={styles.container}>
@@ -171,7 +200,7 @@ export function GoBoard({
             height: innerWidth,
           }}
         >
-          {/* ① 盤線 (Memo化済み) */}
+          {/* ① 盤線 */}
           <BoardLines
             boardSize={boardSize}
             innerWidth={innerWidth}
@@ -179,7 +208,7 @@ export function GoBoard({
             lineWidth={lineWidth}
           />
 
-          {/* ② 各マス目 (Memo化済み) */}
+          {/* ② 各マス目 */}
           {board.map((goString, grid) => {
             const r = Math.floor(grid / boardSize);
             const c = grid % boardSize;
@@ -204,6 +233,15 @@ export function GoBoard({
               />
             );
           })}
+
+          {/* 🐱 ③ disabled の時だけ、マス目の上に透明なタップエリアを重ねる！ */}
+          {disabled && (
+            <ReplayTapOverlay
+              currentIndex={currentIndex}
+              maxIndex={maxIndex}
+              onCurrentIndexChange={onCurrentIndexChange}
+            />
+          )}
         </View>
       </Pressable>
     </View>

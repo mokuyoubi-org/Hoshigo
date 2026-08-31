@@ -90,3 +90,41 @@ export const movesToBoardHistory = (
 
   return { boardHistory, agehamaHistory };
 };
+
+// Grid[] (0~80の配列) ▶︎ 最終局面の Board & Agehama
+export const movesToFinalBoard = (
+  boardSize: BoardSize,
+  matchType: MatchType,
+  moves: Grid[],
+): { board: Board; agehama: Agehama } => {
+  let board: Board = initBoard(boardSize);
+  let color: Color = BLACK;
+
+  if (!isNoOkiishi(matchType)) {
+    board = generateOkigoBoard(matchType, boardSize);
+    color = WHITE;
+  }
+
+  let agehama: Agehama = { black: 0, white: 0 };
+
+  for (const move of moves) {
+    if (move === PASS_GRID) {
+      // パスの時は石の形もアゲハも変わらないから、手番だけ交代するにゃん！
+      color = getOppositeColor(color);
+    } else {
+      const result = applyMove(boardSize, move, cloneBoard(board), color);
+      board = result.board;
+
+      if (color === BLACK) {
+        agehama.black += result.agehama;
+      } else {
+        agehama.white += result.agehama;
+      }
+
+      color = getOppositeColor(color);
+    }
+  }
+
+  // 最後に一番新しい盤面とアゲハを返すにゃん♪
+  return { board, agehama };
+};

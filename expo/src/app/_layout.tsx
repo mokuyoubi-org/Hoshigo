@@ -4,10 +4,10 @@ import { SearchingButton } from "@/src/active/components/buttons/SearchingButton
 import { useApp } from "@/src/active/contexts/AppContexts";
 import { AuthGate } from "@/src/active/contexts/providers/AuthGate";
 import { RootProvider } from "@/src/active/contexts/providers/RootProvider";
-import { OverlayProvider } from "react-overlay";
 import { KataGoGate } from "expo-katago";
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
 import React from "react";
+import { OverlayProvider } from "react-overlay";
 import "../../global.css";
 
 import { COLORS } from "@/src/active/constants/colors";
@@ -19,8 +19,13 @@ function RoutedContent() {
   const { isInitializing, maintenance, maintenanceMessage } = useApp();
 
   return (
+    // ここでStackを使うことによって、router.back()が機能する。つまりStackがないということは履歴がないということ
     <OverlayProvider>
-      <Slot />
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* (tabs) グループ自体を1つの画面として登録 */}
+        <Stack.Screen name="(tabs)" />
+        {/* RecordsScreen / AnalyzeScreen が app/ 直下にあるならここにも明示してOK（省略しても自動登録される） */}
+      </Stack>
 
       <SearchingButton />
 
@@ -39,7 +44,7 @@ function RoutedContent() {
         />
       )}
 
-      {/* 🐱 メンテナンス画面も出現時にふわっと表示！ */}
+      {/* 🐱 メンテナンス画面 */}
       {maintenance && (
         <View
           style={{
@@ -59,8 +64,6 @@ function RoutedContent() {
 }
 
 export default function Layout() {
-  // AppProvidersにとってのchildrenは、この内側。つまり、AuthGate~RoutedContentの全部。
-  // つまり、この内側では
   return (
     <RootProvider>
       <AuthGate>

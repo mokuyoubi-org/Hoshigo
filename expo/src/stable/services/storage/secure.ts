@@ -35,6 +35,17 @@ const NativeStorageAdapter = {
   removeItem: (key: string) => SecureStore.deleteItemAsync(key),
 };
 
+// secure.ts に追加
+export const clearStorage = async () => {
+  if (Platform.OS === "web") {
+    if (typeof localStorage !== "undefined") {
+      localStorage.clear();
+    }
+  } else {
+    // SecureStore は特定のキーを消すか、Supabaseの signOut でトークンが消えるにゃ！
+  }
+};
+
 // ====================================================================================
 // 【インターフェースパート】（仕様・説明書）
 // ====================================================================================

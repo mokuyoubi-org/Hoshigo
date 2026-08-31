@@ -13,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useOverlay } from "react-overlay";
 import { IconButton, SegmentedControl } from "ui-atoms";
 
-export default function Home() {
+export default function HomeScreen() {
   const { startMatching, isMatching } = useMatching();
   const [boardSize, setBoardSize] = useState<BoardSize>(9);
   const { show, hide } = useOverlay();

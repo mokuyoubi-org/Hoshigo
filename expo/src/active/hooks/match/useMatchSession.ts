@@ -6,7 +6,7 @@ import {
   computeMatchResultUpdate,
   MatchResultUpdate,
 } from "@/src/stable/logics/resultLogics";
-import { resultToComment } from "@/src/stable/logics/resultToComment";
+import { resultToComment } from "@/src/stable/logics/textFormatter";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import {
   BoardSize,
@@ -18,10 +18,12 @@ import {
 } from "expo-goband";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useKataGo } from "@/packages/expo-katago/src";
+import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { useTranslation } from "../../language/i18n";
-import { useBotMove } from "./useBotMove";
-import { useEndgameAnalysis } from "./useEndgameAnalysis";
+import { useEndgameAnalysis } from "../bot/useBotCalculation";
+import { useBotMove } from "../bot/useBotMove";
 import { useGameChannel } from "./useGameChannel";
 import { ServerSyncPayload, useMatchClock } from "./useMatchClock";
 
@@ -50,6 +52,7 @@ export function useMatchSession({
   initialMySeconds,
   initialOppSeconds,
 }: Args) {
+  const kataGo = useKataGo();
   // -------- state --------
   const t = useTranslation();
   const goBoard = useGoBoardState({ boardSize, matchType, movesInt });
@@ -60,10 +63,7 @@ export function useMatchSession({
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
-  // archive_matchesトリガーによる、gameチャンネルのpoints_updateイベントの通知のうち、
-  // profilePatchが"black" | "white"で、それ以外が"result"ということ。
-  // 詳しくはトリガーおよびMatchResultUpdateの型定義を見れば、一致していることがわかる。
-  // なお、MatchResultUpdate型自体は、computeMatchResultUpdate関数を経て加工されている(payloadの形そのままではない)。
+
   const [matchResult, setMatchResult] = useState<
     Omit<MatchResultUpdate, "profilePatch">
   >(() => {
@@ -107,7 +107,7 @@ export function useMatchSession({
   const clock = useMatchClock({
     matchId,
     myColor,
-    initialTurn: goBoard.initialTurn, // このinitialturnは本当の一番最初とは限らない。接続復帰した時の一番最初の手の可能性もある。
+    initialTurn: goBoard.initialTurn,
     initialMySeconds,
     initialOppSeconds,
     isGameEnded,
@@ -115,7 +115,6 @@ export function useMatchSession({
   });
 
   // 🌟 -------- 着手系--------
-  // ボットの投了は存在しないと思っていいのかな。
   // katagoが手を打つ
   const handleRunBotTurn = useCallback(async () => {
     await botMove.runBotTurn(
@@ -128,9 +127,11 @@ export function useMatchSession({
           p_move: grid,
           p_is_bot: true,
         });
+        // ボットの着手成功時にハートビートタイマーをリセット
+        clock.resetHeartbeat();
       },
     );
-  }, [botMove, matchType, matchId]);
+  }, [botMove, matchType, matchId, clock]);
 
   // 人間が手を打つ
   const handlePutStone = async (grid: Grid) => {
@@ -146,7 +147,28 @@ export function useMatchSession({
       return;
     }
 
+    // 🥶 kataGo計算・RPC送信をまとめて1つのtry/catch/finallyで保護する。
+    // どちらで失敗・例外が起きても、必ず「石を戻す→自分の番に戻す→送信フラグを解放する」
+    // という後始末に辿り着けるようにするための一本化。
     try {
+      const x = goBoard.boardHistoryRef.current[goBoard.currentIndex];
+      const result = await kataGo.run({
+        board: x,
+        movesSoFar: goBoard.moves,
+        matchType,
+        boardSize,
+        modelId: "b6",
+        currentPlayer: myColor,
+      });
+
+      console.log("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓usematchsession↓↓↓↓↓↓↓↓↓↓↓↓↓↓");
+      printCustomKataGoResult(x, goBoard.moves, myColor, result);
+      console.log("↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑usematchsession↑↑↑↑↑↑↑↑↑↑↑↑↑↑");
+
+      // 🥶 ここから実際にサーバーへ送信する。以降frozenが3秒以上続いたら
+      // useMatchClock側のタイムアウト救済が働く(通信ロス等の異常検知用)。
+      clock.markWaitingForServer();
+
       // supabase送信
       const { error } = await supabase.rpc("add_move", {
         p_match_id: matchId,
@@ -161,6 +183,9 @@ export function useMatchSession({
         return;
       }
 
+      // 着手送信成功時にハートビートタイマーをリセット
+      clock.resetHeartbeat();
+
       // 🥶 自分の手がダブルパスだった場合、そのままfrozenを維持
       const moves = goBoard.movesRef.current;
       const isDoublePass =
@@ -170,7 +195,8 @@ export function useMatchSession({
         clock.unfreeze(oppColor);
       }
     } catch (e) {
-      console.error("着手送信で例外発生:", e);
+      // kataGoの計算失敗・RPC通信の例外、どちらもここでまとめて拾う
+      console.error("着手処理で例外発生:", e);
       goBoard.revertLastOwnMove();
       clock.unfreeze(myColor); // 例外でも自分の番へ戻す
     } finally {
@@ -218,6 +244,9 @@ export function useMatchSession({
       goBoard.applyRemoteMove(move, oppColor);
       isSubmittingRef.current = false;
 
+      // 相手の手を受信（相手のadd_move）したタイミングでハートビートタイマーをリセット
+      clock.resetHeartbeat();
+
       const moves = goBoard.movesRef.current;
       const isDoublePass =
         move === PASS_GRID && moves[moves.length - 2] === PASS_GRID;
@@ -231,42 +260,50 @@ export function useMatchSession({
   };
 
   // gameチャンネルからダブルパス通知が来た時の処理。
-  // ちなみになぜダブルパス判定をサーバ側で行うかというと、ダブルパスになった時点でmatchesテーブルのstatusを即座に"playing"から"pending"にし、手を打つことを受け入れないため。また、接続や時間切れ負けも防げる。
   const gameCh_double_pass = async (payload: any) => {
     if (isGameEnded) return;
-    setLoading(true); // 対局関連ファイルで唯一のsetLoading。points_updateが届き、全部済んだ最後の最後でfalseに戻される。
+    setLoading(true);
 
-    const deadStones = await endgame.analyzeTerritory(
-      goBoard.boardRef.current,
-      goBoard.movesRef.current,
-      matchType,
-      boardSize,
-    );
-    goBoard.setDeadStones(deadStones);
+    try {
+      const deadStones = await endgame.analyzeTerritory(
+        goBoard.boardRef.current,
+        goBoard.movesRef.current,
+        matchType,
+        boardSize,
+      );
+      goBoard.setDeadStones(deadStones);
 
-    const { result } = goBoard.computeTerritory(); // 🔥ここではまだ描画はしない(setStateしない)。
+      const { result } = goBoard.computeTerritory();
 
-    const { data, error } = await supabase.rpc("submit_match_result", {
-      p_match_id: matchId,
-      p_result: result,
-      p_dead_stones: deadStones,
-    });
-    if (data) console.error("result提出成功:", data);
-    if (error) console.error("result提出失敗:", error);
+      const { data, error } = await supabase.rpc("submit_match_result", {
+        p_match_id: matchId,
+        p_result: result,
+        p_dead_stones: deadStones,
+      });
+
+      if (error) {
+        console.error("result提出失敗:", error);
+        setLoading(false); // 🥶 失敗時は「読み込み中」表示のまま固まらないよう解除
+        return;
+      }
+
+      if (data) console.log("result提出成功:", data);
+      // 🥶 成功時はここでloadingを解除しない。実際の終局処理は
+      // gameCh_points_updated の data.result 受信時に setLoading(false) される想定のため。
+    } catch (e) {
+      console.error("ダブルパス処理で例外発生:", e);
+      setLoading(false); // 🥶 例外時も同様に固まらないよう解除
+    }
   };
 
-  // gameチャンネルからポイント更新の通知が来た時の処理。supabaseのarchive_matchesトリガーの、最後のpoints_updateイベントの部分を見るのがオススメ。
+  // gameチャンネルからポイント更新の通知が来た時の処理。
   const gameCh_points_updated = (payload: any) => {
-    // 通知が届く。dataは"black"と"white"と"result"に分かれている。
     const data = payload.payload ?? payload;
     if (!data) return;
 
-    // 🌟"black"もしくは"white"
     const myData = myColor === 1 ? data.black : data.white;
 
     if (myData) {
-      // computeMatchResultUpdateは純粋に計算だけする関数
-      // まだpointsは古い値
       const updated = computeMatchResultUpdate(
         boardSize,
         myData,
@@ -276,28 +313,24 @@ export function useMatchSession({
         t,
       );
       if (updated) {
-        const { profilePatch, ...displayResult } = updated; // displayResultの中身は、pointsとrankのbefore/after、newlyAqcuiredIconsの計5つの値。
-        setMatchResult(displayResult); // 表示用にstateを更新
-        updateProfile(profilePatch); // 🥶 beforeを読み終えてから書き換える(順番厳守)
+        const { profilePatch, ...displayResult } = updated;
+        setMatchResult(displayResult);
+        updateProfile(profilePatch);
       }
     }
 
-    // 🌟"result"
     if (data.result) {
       const resTmp = goBoard.computeTerritory();
-      goBoard.setTerritoryBoard(resTmp.territoryBoard); // 🔥二回目の計算。二回計算する必要はない。
+      goBoard.setTerritoryBoard(resTmp.territoryBoard);
 
       setResultComment(
         resultToComment(data.result, myColor, t) ?? t("common.matchComplete"),
       );
 
-      // 🏁ゴール
-      console.log("🏁 対局中の全処理が終了！")
-      // お互いの着手が終わり、そしてポイント更新まで帰ってきて、初めて対局終了となる。
-      // なぜこのような「本当の本当の終わり」のタイミングでセットしているかというと、gameResultModalの発火要因になっているから。GameScreen.tsxのuseEffect参照。
+      console.log("🏁 対局中の全処理が終了！");
       setIsGameEnded(true);
       clock.stopClock();
-      setLoading(false); // 🏁ダブルパス通知が来た時からずっとtrueになっていたisLoadingをここでfalseに戻す。対局中にオンになるのもオフになるのも、今書いた場所のみ。
+      setLoading(false);
     }
   };
 
@@ -312,11 +345,8 @@ export function useMatchSession({
   );
 
   // -------- useEffect --------
-  // いつ発火して欲しいか？
-  // 1. 対局が始まった時(接続復帰含む)にボットのターンだった場合。
-  // 2. ターンが変わってボットの手番になった場合。
   useEffect(() => {
-    const isBotTurn = clock.turnState === oppColor; // 🥶 本当にボットの番の時だけ発火
+    const isBotTurn = clock.turnState === oppColor;
     if (!botMatch || !isBotTurn || isGameEnded || isBotThinkingRef.current)
       return;
 
@@ -331,7 +361,7 @@ export function useMatchSession({
       }
     };
     execute();
-  }, [botMatch, clock.turnState]);
+  }, [botMatch, clock.turnState, handleRunBotTurn, oppColor, isGameEnded]);
 
   // -------- return --------
   return {
@@ -345,8 +375,8 @@ export function useMatchSession({
     territoryBoard: goBoard.territoryBoard,
     goToLatest: goBoard.goToLatest,
     // 時間・手番
-    isMyTurn: clock.isMyTurn, // GoBoardなど「自分が打てるか」だけ知りたい側向け
-    turnState: clock.turnState, // PlayerCardなど「誰の番か(frozen含む)」表示したい側向け
+    isMyTurn: clock.isMyTurn,
+    turnState: clock.turnState,
     mySeconds: clock.mySeconds,
     oppSeconds: clock.oppSeconds,
     isGameEnded,

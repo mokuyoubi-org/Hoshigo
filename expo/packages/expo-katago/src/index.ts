@@ -4,3 +4,4 @@
 export * from "./KataGoGate";
 export * from "./useKataGo";
 export * from "./web-katrain/modelManager";
+export {AnalyzeResult} from "./web-katrain/analyzeBoard"

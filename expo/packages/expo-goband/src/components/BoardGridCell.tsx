@@ -5,6 +5,7 @@ import { PreviewStone } from "./PreviewStone";
 import { Stone } from "./Stone";
 import { Territory } from "./Territory";
 
+
 const HAND_ICON = require("../../assets/icons/hand.png");
 
 type BoardGridCellProps = {

@@ -11,7 +11,6 @@ Supabaseを使うReact Native/Expoアプリでよく欲しくなる、2つの小
 ```ts
 import {
   createResilientClient,
-  parseAuthTokensFromUrl,
 } from "supabase-toolkit";
 
 export const supabase = createResilientClient({

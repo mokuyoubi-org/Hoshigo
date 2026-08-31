@@ -5,13 +5,8 @@
 // ⚙️汎用コンポーネント。
 // ====================================================================================
 
-import React, { useEffect } from "react";
-import {
-  Animated,
-  Pressable,
-  StyleSheet,
-  useAnimatedValue,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { Animated, Pressable, StyleSheet } from "react-native";
 
 // ====================================================================================
 // 【型定義・定数】
@@ -56,10 +51,13 @@ export const ToggleSwitch = ({
   onToggle,
   disabled,
 }: ToggleSwitchProps) => {
-  // 🌟 useAnimatedValueはレンダー中にref.currentを読まない安全な遅延初期化フック
-  //    (ModalShell.native.tsxのfadeAnim/scaleAnimと同じ書き方)
-  const opacityAnim = useAnimatedValue(disabled ? 0.2 : value ? 1 : 0.3);
-  const knobAnim = useAnimatedValue(value ? KNOB_TRANSLATE_X : 0);
+  // 🌟 useState の初期化関数を使うことで、ref を使わずにインスタンスを1度だけ保持するにゃん！
+  const [opacityAnim] = useState(
+    () => new Animated.Value(disabled ? 0.2 : value ? 1 : 0.3),
+  );
+  const [knobAnim] = useState(
+    () => new Animated.Value(value ? KNOB_TRANSLATE_X : 0),
+  );
 
   useEffect(() => {
     Animated.timing(opacityAnim, {

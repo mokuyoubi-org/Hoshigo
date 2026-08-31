@@ -5,7 +5,7 @@
 // 対になる存在で、こちらは常にb18(最も精度の高いモデル)を固定で使う。
 // ──────────────────────────────────────────────────
 
-import { printCleanLog } from "@/src/stable/logics/debugLogics";
+import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
 import {
   BLACK,
   Board,
@@ -48,7 +48,20 @@ export function useEndgameAnalysis() {
       currentPlayer: getNextPlayer(matchType, movesSoFar.length), // 🔥
     });
 
-    printCleanLog("[useEndgameAnalysis]katagoの返答: ", result);
+    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+
+    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+
+    printCustomKataGoResult(
+      board,
+      movesSoFar,
+      getNextPlayer(matchType, movesSoFar.length),
+      result,
+    );
+
+    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+
+    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
 
     return result ? ownershipToDeadStones(board, result.ownership) : [];
   };

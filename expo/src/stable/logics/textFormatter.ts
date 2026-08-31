@@ -1,7 +1,7 @@
-// resultToComment.ts
+// textFormatter.ts
 
 import { TranslationKey } from "@/src/active/language/lang";
-import { BLACK, Color, WHITE } from "expo-goband";
+import { BLACK, Color, MatchType, WHITE } from "expo-goband";
 
 // "B+R"のような結果を、you won by resignationのようなコメントへ変換。
 export const resultToComment = (
@@ -57,4 +57,37 @@ export const resultToComment = (
 
   // 想定外のresult文字列。undefinedではなく空文字を返す（呼び出し側がstring前提で使えるように）
   return "";
+};
+
+// "B+R"のような結果を、Reasonと勝敗を使ってシンプルに変換するにゃ！
+export const resultToCommentSimple = (
+  result: string,
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
+): string => {
+  if (result === "DRAW") return t("Reason.draw");
+
+  const [winnerStr, reasonCode] = result.split("+");
+  if (!winnerStr || !reasonCode) return "";
+
+  // 理由（Reason）のキーをマッピングするにゃ
+  const reasonMap: Record<string, string> = {
+    R: t("Reason.resignation"),
+    T: t("Reason.timeout"),
+    C: t("Reason.disconnection"),
+  };
+
+  // R, T, C の場合の処理だにゃ
+  if (reasonMap[reasonCode]) {
+    return `${reasonMap[reasonCode]}`;
+  }
+
+  // 数字（点数差）の場合の処理だにゃ
+  return `${t("Reason.points", { points: reasonCode })}`;
+};
+
+export const matchTypeToText = (
+  matchType: MatchType,
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
+): string => {
+  return t(`MatchType.matchType_${matchType}` as TranslationKey);
 };

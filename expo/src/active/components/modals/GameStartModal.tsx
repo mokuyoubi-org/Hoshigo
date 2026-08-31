@@ -6,6 +6,7 @@ import { BLACK, Color, MatchType, WHITE } from "expo-goband";
 import { ModalShell } from "modal-shell";
 import React, { useEffect } from "react";
 import { Text, View } from "react-native";
+import { TranslationKey } from "../../language/lang";
 type Props = {
   myUsername: string;
   myIconIndex: number;
@@ -40,14 +41,8 @@ export const GameStartModal = ({
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const matchTypesObj = t("MatchType.matchTypes") as unknown as Record<
-    number,
-    string
-  >;
-  const matchTypeText =
-    typeof matchTypesObj === "object" && matchTypesObj !== null
-      ? (matchTypesObj[matchType] ?? "")
-      : String(matchType);
+  // dictionary の新しいキー形式に合わせて取得するにゃ
+  const matchTypeText = t(`MatchType.matchType_${matchType}` as TranslationKey);
 
   const isMyBlack = myColor === BLACK;
   const blackPlayer = isMyBlack

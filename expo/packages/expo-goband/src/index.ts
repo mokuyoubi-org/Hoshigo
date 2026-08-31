@@ -11,7 +11,6 @@ export * from "./components/ReplayControls";
 // 4. 純粋計算・変換ロジック
 export * from "./logics/boardConverters";
 export * from "./logics/colorConverters";
-export * from "./logics/debugFunctions";
 export * from "./logics/goLogics";
 export * from "./logics/moveConverters";
 export * from "./logics/okigoLogics";

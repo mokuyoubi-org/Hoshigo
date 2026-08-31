@@ -34,7 +34,7 @@ export const dictionary = {
       playing: "Playing",
       aiModel: "AI MODEL",
       notSelected: "Not selected",
-      cloud: "Cloud",
+      records: "Records",
       local: "Local",
       or: "or",
     },
@@ -137,6 +137,15 @@ export const dictionary = {
       newIcons: "You got new icons!",
     },
   },
+  Reason: {
+    en: {
+      resignation: "Resignation",
+      timeout: "Timeout",
+      disconnection: "Disconnection",
+      points: "{{points}} points",
+      draw: "Draw",
+    },
+  },
   GameResult: {
     en: {
       // you
@@ -178,25 +187,24 @@ export const dictionary = {
       title: "Log out?",
     },
   },
-  MatchType: {
+MatchType: {
     en: {
       title: "Game Start!",
       black: "Black",
       white: "White",
       vs: "VS",
       handicapLabel: "Handicap",
-      matchTypes: {
-        0: "Even Game",
-        1: "Sen (No Komi)",
-        2: "2-Stone",
-        3: "3-Stone",
-        4: "4-Stone",
-        5: "5-Stone",
-        6: "6-Stone",
-        7: "7-Stone",
-        8: "8-Stone",
-        9: "9-Stone",
-      },
+      // matchTypes オブジェクトをやめて、キーを直接並べる
+      matchType_0: "Even Game",
+      matchType_1: "No Komi",
+      matchType_2: "2-Stone",
+      matchType_3: "3-Stone",
+      matchType_4: "4-Stone",
+      matchType_5: "5-Stone",
+      matchType_6: "6-Stone",
+      matchType_7: "7-Stone",
+      matchType_8: "8-Stone",
+      matchType_9: "9-Stone",
     },
   },
   DeleteModal: {

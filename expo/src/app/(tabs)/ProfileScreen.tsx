@@ -21,7 +21,7 @@ import { BOARD_SIZE_OPTIONS } from "expo-goband";
 import { useOverlay } from "react-overlay";
 import { IconButton, SegmentedControl } from "ui-atoms";
 
-export default function Profile() {
+export default function ProfileScreen() {
   const { t, profileData, handlers } = useProfileScreen();
   const { isMatching } = useMatching();
   const { show, hide } = useOverlay();
@@ -172,10 +172,10 @@ export default function Profile() {
             >
               <View className="flex-row items-center gap-1.5">
                 <View className="w-9 h-9 rounded-xl bg-background justify-center items-center mr-1.5">
-                  <Octicons name="cloud" size={18} color={COLORS.primary} />
+                  <Octicons name="history" size={18} color={COLORS.primary} />
                 </View>
                 <Text className="text-[15px] font-bold text-text">
-                  {t("common.cloud")}
+                  {t("common.records")}
                 </Text>
               </View>
               <Text className="text-2xl font-light text-text opacity-50">

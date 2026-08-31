@@ -11,7 +11,7 @@ export type GoString = {
 export type Board = (GoString | null)[];
 export type MoveObject = { x: number; y: number; player: Color };
 export type Agehama = { black: number; white: number };
-export type BoardSize = 9 | 13;
+export type BoardSize = 9 | 13 | 19;
 export type MatchType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 // 定数

@@ -1,4 +1,4 @@
-// skeletonCardLogics.ts
+// recordCardLogics.ts
 
 import { Skeleton, SkeletonOr } from "@/src/active/types/record";
 

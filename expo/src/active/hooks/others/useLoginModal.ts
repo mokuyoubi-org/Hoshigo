@@ -1,5 +1,5 @@
 // ✅active
-// useLoginModalModal.ts
+// useLoginModal.ts
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useTranslation } from "@/src/active/language/i18n";
 import { isValidEmail } from "@/src/stable/logics/validationLogics";

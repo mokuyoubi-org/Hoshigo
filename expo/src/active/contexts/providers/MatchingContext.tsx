@@ -72,10 +72,12 @@ export const MatchingProvider = ({
 
       console.log("[MatchingContext]data: ", data);
 
-      router.replace({
-        pathname: "/GameScreen",
-        params: formatPlayingParams(data),
-      });
+      setTimeout(() => {
+        router.replace({
+          pathname: "/GameScreen",
+          params: formatPlayingParams(data),
+        });
+      }, 0);
     });
 
     // 🐱 2. サブスクの接続完了を待って、状態を受け取る
@@ -86,15 +88,14 @@ export const MatchingProvider = ({
     });
 
     // 🐱 3. もしサブスクが失敗したら、安全にキャンセルして終わる
-// 🐱 3. もしサブスクが失敗したら、安全にキャンセルして終わる
     if (status !== "SUBSCRIBED") {
-      // CLOSED（意図的な切断）の時はエラーログを出さずに静かに終わるにゃ！
+      // CLOSED（意図的な切断）の時はエラーログを出さずに静かに終わる
       if (status !== "CLOSED") {
         console.error("🐱 サブスクの接続に失敗… status:", status);
       } else {
         console.log("🐱 接続中にキャンセルされた");
       }
-      
+
       unsubscribeUserChannel();
       setIsMatching(false);
       setMatchingBoardSize(null);
@@ -121,10 +122,12 @@ export const MatchingProvider = ({
       setIsMatching(false);
       setMatchingBoardSize(null);
 
-      router.replace({
-        pathname: "/GameScreen",
-        params: formatPlayingParams(data),
-      });
+      setTimeout(() => {
+        router.replace({
+          pathname: "/GameScreen",
+          params: formatPlayingParams(data),
+        });
+      }, 0);
     }
   };
 
@@ -138,10 +141,12 @@ export const MatchingProvider = ({
     setMatchingBoardSize(null);
 
     if (data) {
-      router.replace({
-        pathname: "/GameScreen",
-        params: formatPlayingParams(data),
-      });
+      setTimeout(() => {
+        router.replace({
+          pathname: "/GameScreen",
+          params: formatPlayingParams(data),
+        });
+      }, 0);
     }
   };
 

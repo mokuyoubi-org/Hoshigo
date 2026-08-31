@@ -7,7 +7,7 @@
 // ひとまず完成。
 import { GameResultModal } from "@/src/active/components/modals/GameResultModal";
 import LoadingModal from "@/src/active/components/modals/LoadingModal";
-import { useMatchSession } from "@/src/active/hooks/go/useMatchSession";
+import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
 import { useTranslation } from "@/src/active/language/i18n";
 import { Ionicons } from "@expo/vector-icons";
 import { BLACK, GoBoard, PASS_GRID, ReplayControls } from "expo-goband";
@@ -170,7 +170,13 @@ export default function GameScreen() {
 
   // 🛡️ガード
   useEffect(() => {
-    if (!matchId) router.replace("/(tabs)/HomeScreen");
+    if (!matchId) {
+      setTimeout(() => {
+        router.replace({
+          pathname: "/HomeScreen",
+        });
+      }, 0);
+    }
   }, []);
 
   // 【役割】開始画面を表示。
@@ -206,7 +212,13 @@ export default function GameScreen() {
           {/* ─── 戻るボタン ─── */}
           <TouchableOpacity
             className={`mb-4 self-start ${!isGameEnded ? "opacity-0" : ""}`}
-            onPress={() => router.push("/(tabs)/HomeScreen")}
+            onPress={() => {
+              setTimeout(() => {
+                router.replace({
+                  pathname: "/HomeScreen",
+                });
+              }, 0);
+            }}
             activeOpacity={0.7}
             disabled={!isGameEnded}
           >

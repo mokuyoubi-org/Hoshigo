@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { StyleSheet, View } from "react-native";
-import { BLACK, GoString } from "../types/go";
 import { COLORS } from "../constants/colors";
+import { BLACK, GoString } from "../types/go";
 
 type StoneProps = {
   goString: GoString;

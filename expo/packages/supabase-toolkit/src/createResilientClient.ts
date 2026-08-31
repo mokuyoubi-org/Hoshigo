@@ -53,7 +53,8 @@ export function createResilientClient({
 
   return new Proxy(raw, {
     get(target, prop, receiver) {
-      if (prop === "rpc") {
+      if (prop === "rpc") { // rpc()を実行したとき、その返事をこっそり横取りしている
+        // もしエラーメッセージの中に "MAINTENANCE_MODE" という文字が入っていたら、自動的にonErrorMarkerDetectedを呼び出す
         return (...args: Parameters<typeof raw.rpc>) => {
           const builder = Reflect.get(target, prop, receiver).apply(
             target,
@@ -71,14 +72,4 @@ export function createResilientClient({
       return Reflect.get(target, prop, receiver);
     },
   }) as SupabaseClient;
-}
-
-export function parseAuthTokensFromUrl(url: string) {
-  const cleanUrl = url.replace("#", "?");
-  const urlObj = new URL(cleanUrl);
-
-  return {
-    access_token: urlObj.searchParams.get("access_token"),
-    refresh_token: urlObj.searchParams.get("refresh_token"),
-  };
 }

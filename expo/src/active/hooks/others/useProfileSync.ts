@@ -4,7 +4,7 @@
 import { fetchProfileRPC } from "@/src/stable/logics/profileRPC";
 import { useApp } from "../../contexts/AppContexts";
 import { useProfile } from "../../contexts/ProfileContexts";
-
+// 要は、データベースと通信してプロフィール(メンテナンス情報もついでに)を取ってくる。そしてそれをcontextにしまっておく。
 export const useProfileSync = () => {
   const { updateProfile } = useProfile();
   const { setMaintenance, setMaintenanceMessage } = useApp();

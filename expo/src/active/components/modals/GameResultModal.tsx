@@ -194,7 +194,11 @@ export function GameResultModal({
             className="items-center justify-center"
             onPress={() => {
               onClose();
-              router.replace("/(tabs)/HomeScreen");
+              setTimeout(() => {
+                router.replace({
+                  pathname: "/HomeScreen",
+                });
+              }, 0);
             }}
           >
             <Octicons name="home" size={24} color={COLORS.textSub} />

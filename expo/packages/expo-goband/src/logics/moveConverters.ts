@@ -26,7 +26,6 @@ export const ownershipToDeadStones = (
   board: Board,
   ownership: FloatArray,
 ): Grid[] => {
-  console.log("ownership: ", ownership);
   const deadStones: Grid[] = [];
   for (const goString of getGoStrings(board)) {
     const stoneIndexes = [...goString.stones];

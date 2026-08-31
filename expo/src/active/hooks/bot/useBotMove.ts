@@ -5,6 +5,7 @@
 // 返ってきた解析結果から最善手(bestMove)だけを取り出す。
 // ──────────────────────────────────────────────────
 
+import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
 import {
   BLACK,
   Board,
@@ -99,7 +100,51 @@ export function useBotMove(
         currentPlayer: getOppositeColor(myColor),
       });
 
-      // console.log("[useBotMove]katagoの返答: ", result);
+
+          // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+      
+          // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+      
+          printCustomKataGoResult(board, movesSoFar, getOppositeColor(myColor), result);
+      
+          // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+      
+          // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       if (!result || !result.moves || result.moves.length === 0) {
         console.warn("[useBotMove] ボットの着手決定に失敗しました(Skip)");

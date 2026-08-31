@@ -13,7 +13,7 @@ import { useDoubleTapSetting } from "../active/hooks/others/useDoubleTapSetting"
 import { useSettingsScreen } from "../active/hooks/others/useSettingsScreen";
 import { openURL } from "../stable/logics/linking";
 
-export default function Settings() {
+export default function SettingsScreen() {
   const t = useTranslation();
   const { show, hide } = useOverlay();
   const { username, email, allowBotMatch, isAnonymous } = useProfile();
