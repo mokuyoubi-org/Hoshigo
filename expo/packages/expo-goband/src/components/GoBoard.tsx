@@ -55,7 +55,7 @@ export function GoBoard({
   isGameEnded,
   boardHistory,
   currentIndex,
-  onCurrentIndexChange, // 🐱 受け取るにゃん！
+  onCurrentIndexChange, // 🐱 受け取る！
   boardWidth,
   pinPoints,
   enableDoubleTap = false,
@@ -102,7 +102,7 @@ export function GoBoard({
     };
   }, [boardWidth, boardSize]);
 
-// ─── 音 ──────────────────────────────────────────────
+  // ─── 音 ──────────────────────────────────────────────
   const stonePlayer = useAudioPlayer(require("../../assets/sounds/stone.mp3"));
   const prevIndexRef = useRef<number | null>(null);
 
@@ -134,14 +134,6 @@ export function GoBoard({
     // 🐱 安全な再生関数を呼び出す
     playStoneSound();
   }, [currentIndex, moveHistory, playStoneSound]);
-
-
-
-
-
-
-
-
 
   const handlePressGrid = useCallback(
     (grid: Grid, goString: GoString | null) => {

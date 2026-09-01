@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from "react-native";
 
-// 🐱 ② 左右タップ用オーバーレイのコンポーネント（GoBoardの中に閉じ込めるにゃん）
+// 🐱 ② 左右タップ用オーバーレイのコンポーネント（GoBoardの中に閉じ込める）
 type ReplayTapOverlayProps = {
   currentIndex: number;
   maxIndex: number;

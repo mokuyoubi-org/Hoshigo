@@ -43,7 +43,7 @@ export default function TabsLayout() {
   }, []);
 
   return (
-    // 外枠のViewで全体の背景色を指定するにゃ！
+    // 外枠のViewで全体の背景色を指定する！
     <View style={{ flex: 1, backgroundColor: COLORS.foreground }}>
       {Platform.OS === "android" && <NavigationBar hidden />}
 

@@ -59,7 +59,7 @@ export const resultToComment = (
   return "";
 };
 
-// "B+R"のような結果を、Reasonと勝敗を使ってシンプルに変換するにゃ！
+// "B+R"のような結果を、Reasonと勝敗を使ってシンプルに変換する！
 export const resultToCommentSimple = (
   result: string,
   t: (key: TranslationKey, params?: Record<string, string | number>) => string,
@@ -69,19 +69,19 @@ export const resultToCommentSimple = (
   const [winnerStr, reasonCode] = result.split("+");
   if (!winnerStr || !reasonCode) return "";
 
-  // 理由（Reason）のキーをマッピングするにゃ
+  // 理由（Reason）のキーをマッピングする
   const reasonMap: Record<string, string> = {
     R: t("Reason.resignation"),
     T: t("Reason.timeout"),
     C: t("Reason.disconnection"),
   };
 
-  // R, T, C の場合の処理だにゃ
+  // R, T, C の場合の処理
   if (reasonMap[reasonCode]) {
     return `${reasonMap[reasonCode]}`;
   }
 
-  // 数字（点数差）の場合の処理だにゃ
+  // 数字（点数差）の場合の処理
   return `${t("Reason.points", { points: reasonCode })}`;
 };
 

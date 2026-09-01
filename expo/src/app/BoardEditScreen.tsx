@@ -94,7 +94,7 @@ function AnalyzeScreenContent({ record }: { record: RecordType }) {
 
   const boardSize = record.board_size as BoardSize;
 
-  // 🐱 碁盤エリア(ヘッダーとリプレイコントロールの間)の実測サイズにするにゃん！
+  // 🐱 碁盤エリア(ヘッダーとリプレイコントロールの間)の実測サイズにする！
   const [boardAreaSize, setBoardAreaSize] = useState({ width: 0, height: 0 });
 
   const handleBoardAreaLayout = (event: LayoutChangeEvent) => {
@@ -126,7 +126,7 @@ function AnalyzeScreenContent({ record }: { record: RecordType }) {
     <SafeAreaView className="flex-1 bg-background items-center">
       <StatusBar style="dark" />
 
-      {/* 🐱 外枠に max-w-[680px] w-full を指定して中央寄せにするにゃん！ */}
+      {/* 🐱 外枠に max-w-[680px] w-full を指定して中央寄せにする！ */}
       <View className="flex-1 w-full max-w-[680px] px-4 pb-6">
         {/* ヘッダ */}
         <View className="flex-row items-center py-3">
@@ -149,7 +149,7 @@ function AnalyzeScreenContent({ record }: { record: RecordType }) {
           matchType={record.match_type}
         />
 
-        {/* 🐱 碁盤エリア: items-centerを付けず、w-fullでストレッチさせたまま高さだけ実測するにゃん！ */}
+        {/* 🐱 碁盤エリア: items-centerを付けず、w-fullでストレッチさせたまま高さだけ実測する！ */}
         <View
           className="flex-1 w-full justify-center items-center"
           onLayout={handleBoardAreaLayout}

@@ -109,7 +109,7 @@ export const movesToFinalBoard = (
 
   for (const move of moves) {
     if (move === PASS_GRID) {
-      // パスの時は石の形もアゲハも変わらないから、手番だけ交代するにゃん！
+      // パスの時は石の形もアゲハも変わらないから、手番だけ交代する！
       color = getOppositeColor(color);
     } else {
       const result = applyMove(boardSize, move, cloneBoard(board), color);
@@ -125,6 +125,6 @@ export const movesToFinalBoard = (
     }
   }
 
-  // 最後に一番新しい盤面とアゲハを返すにゃん♪
+  // 最後に一番新しい盤面とアゲハを返す♪
   return { board, agehama };
 };

@@ -56,14 +56,14 @@ export function useBotAnalysis(record: RecordType) {
 
   // moveIndex(0-indexed、その手が打たれた直後の局面)を1手分析してエントリを返す
   const analyzeOneMove = async (moveIndex: number) => {
-    // 1. その手を打つ【前】の盤面を取得するにゃ（+1 をやめる）
+    // 1. その手を打つ【前】の盤面を取得する（+1 をやめる）
     const board = boardHistoryRef.current[moveIndex];
 
-    // 2. その手を打つ【前】までの履歴を取得するにゃ（sliceの範囲を変更）
+    // 2. その手を打つ【前】までの履歴を取得する（sliceの範囲を変更）
     const movesSoFar = (record.moves ?? []).slice(0, moveIndex);
 
-    // 3. これから打つ人の色（その手を打った本人の色）を計算するにゃ！
-    // 0手目(1手目)が黒なら、even(0, 2, 4...)はBLACKだにゃ！
+    // 3. これから打つ人の色（その手を打った本人の色）を計算する！
+    // 0手目(1手目)が黒なら、even(0, 2, 4...)はBLACK
     const isBlackTurn = isNormalOrder
       ? moveIndex % 2 === 0
       : moveIndex % 2 === 1;

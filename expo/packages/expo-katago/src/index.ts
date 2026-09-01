@@ -1,5 +1,5 @@
 // packages/expo-katago/src/index.ts
-// 🌟めっちゃ大事なファイル。何かうまくいかないときはここのパスなどを確認する
+// 🌟大事なファイル。何かうまくいかないときはここのパスなどを確認する
 // 外で使いたい部品をexport
 export * from "./KataGoGate";
 export * from "./useKataGo";

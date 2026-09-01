@@ -51,7 +51,7 @@ export const ToggleSwitch = ({
   onToggle,
   disabled,
 }: ToggleSwitchProps) => {
-  // 🌟 useState の初期化関数を使うことで、ref を使わずにインスタンスを1度だけ保持するにゃん！
+  // 🌟 useState の初期化関数を使うことで、ref を使わずにインスタンスを1度だけ保持する！
   const [opacityAnim] = useState(
     () => new Animated.Value(disabled ? 0.2 : value ? 1 : 0.3),
   );

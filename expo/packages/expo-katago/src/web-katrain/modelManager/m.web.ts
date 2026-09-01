@@ -16,23 +16,19 @@ export async function readModelData(id: ModelId): Promise<Uint8Array> {
   // 1. まずIndexedDBにあるか確認
   const cachedData = await getModelFromIDB(id);
   if (cachedData) {
-    console.log(
-      `⚡ [modelManager.web] IndexedDB から ${id} を読み込んだにゃ！`,
-    );
+    console.log(`⚡ [modelManager.web] IndexedDB から ${id} を読み込ん`);
     return cachedData;
   }
 
   // 2. なければR2からダウンロード
   const url = MODEL_URLS[id];
-  if (!url) throw new Error(`未定義のModelIdだにゃ: ${id}`);
+  if (!url) throw new Error(`未定義のModelId: ${id}`);
 
-  console.log(
-    `☁️ [modelManager.web] R2から ${id} のダウンロードを開始するにゃ...`,
-  );
+  console.log(`☁️ [modelManager.web] R2から ${id} のダウンロードを開始する...`);
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(
-      `[R2] モデルの取得に失敗したにゃ (${id}): ${response.statusText}`,
+      `[R2] モデルの取得に失敗した (${id}): ${response.statusText}`,
     );
   }
 
@@ -41,7 +37,7 @@ export async function readModelData(id: ModelId): Promise<Uint8Array> {
 
   // 3. 次回のためにIndexedDBに保存
   await saveModelToIDB(id, uint8Array);
-  console.log(`💾 [modelManager.web] ${id} を IndexedDB に保存したにゃ！`);
+  console.log(`💾 [modelManager.web] ${id} を IndexedDB に保存した！`);
 
   return uint8Array;
 }

@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-// ★ Path を追加したにゃ！
+// ★ Path を追加した！
 import Svg, { Circle, Line, Path } from "react-native-svg";
 
 type ScoreLeadChartProps = {
@@ -24,7 +24,7 @@ const CHART_HEIGHT = 140;
 const PADDING_Y = 16;
 const MIN_RANGE = 5;
 
-// ★ 点と点を滑らかなカーブ（曲線）でつなぐ関数だにゃ！
+// ★ 点と点を滑らかなカーブ（曲線）でつなぐ関数
 function createSmoothPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
@@ -37,7 +37,7 @@ function createSmoothPath(points: { x: number; y: number }[]): string {
     const p2 = points[i + 1];
     const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
 
-    // 滑らかにするためのコントロールポイント（ガイドの点）の計算だにゃ
+    // 滑らかにするためのコントロールポイント（ガイドの点）の計算
     const cp1x = p1.x + (p2.x - p0.x) / 6;
     const cp1y = p1.y + (p2.y - p0.y) / 6;
     const cp2x = p2.x - (p3.x - p1.x) / 6;
@@ -87,10 +87,10 @@ export function ScoreLeadChart({
   const lastX =
     validPoints.length > 0 ? validPoints[validPoints.length - 1].x : 0;
 
-  // ★ 滑らかな折れ線パスを作るにゃ！
+  // ★ 滑らかな折れ線パスを作る！
   const linePathD = createSmoothPath(validPoints);
 
-  // ★ 上下の塗りつぶし用パス（滑らかな線を通って上端・下端で閉じる）だにゃ！
+  // ★ 上下の塗りつぶし用パス（滑らかな線を通って上端・下端で閉じる）
   const topPathD =
     validPoints.length > 0 ? `${linePathD} L ${lastX},0 L ${firstX},0 Z` : "";
 

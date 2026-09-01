@@ -41,7 +41,7 @@ export const GameStartModal = ({
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  // dictionary の新しいキー形式に合わせて取得するにゃ
+  // dictionary の新しいキー形式に合わせて取得する
   const matchTypeText = t(`MatchType.matchType_${matchType}` as TranslationKey);
 
   const isMyBlack = myColor === BLACK;

@@ -2,11 +2,11 @@ SET local check_function_bodies = off;
 
 CREATE SCHEMA "private";
 
-CREATE EXTENSION "http" SCHEMA "extensions";
+CREATE EXTENSION IF NOT EXISTS "http" SCHEMA "extensions";
 
-CREATE EXTENSION "pg_cron";
+CREATE EXTENSION IF NOT EXISTS "pg_cron";
 
-CREATE EXTENSION "pg_net" SCHEMA "extensions";
+CREATE EXTENSION IF NOT EXISTS "pg_net" SCHEMA "extensions";
 
 CREATE SEQUENCE "private"."matches_archive_new_id_seq" AS integer INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1 NO CYCLE;
 

@@ -1,2 +1,14 @@
 /assets/*
   Content-Type: application/octet-stream
+
+/assets/*.ttf
+  Content-Type: font/ttf
+
+/assets/*.otf
+  Content-Type: font/otf
+
+/assets/*.woff
+  Content-Type: font/woff
+
+/assets/*.woff2
+  Content-Type: font/woff2

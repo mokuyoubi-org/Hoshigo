@@ -42,7 +42,7 @@ export const clearStorage = async () => {
       localStorage.clear();
     }
   } else {
-    // SecureStore は特定のキーを消すか、Supabaseの signOut でトークンが消えるにゃ！
+    // SecureStore は特定のキーを消すか、Supabaseの signOut でトークンが消える！
   }
 };
 
