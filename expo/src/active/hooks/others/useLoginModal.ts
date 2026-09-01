@@ -4,8 +4,10 @@ import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useTranslation } from "@/src/active/language/i18n";
 import { isValidEmail } from "@/src/stable/logics/validationLogics";
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { TurnstileHandle } from "../../TurnstileWidget";
 import { useProfileSync } from "./useProfileSync";
+import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 
 export type Step = "email" | "otp" | "selection";
 type Path = "link" | "signin" | null;
@@ -26,9 +28,10 @@ export type Selection = "guest" | "existing" | null;
 
 interface Props {
   onClose: () => void;
+  turnstileRef?: React.RefObject<TurnstileHandle | null>; // ← | null を追加だにゃ！
 }
 
-export function useLoginModal({ onClose }: Props) {
+export function useLoginModal({ onClose, turnstileRef }: Props) {
   const t = useTranslation();
   const { username, points9, points13 } = useProfile();
   const { syncProfile } = useProfileSync();
@@ -69,9 +72,20 @@ export function useLoginModal({ onClose }: Props) {
     setLoading(true);
 
     try {
+      let captchaToken: string | undefined;
+      try {
+        captchaToken = await turnstileRef?.current?.getToken();
+      } catch (err) {
+        console.error("CAPTCHAトークン取得失敗:", err);
+        setError(t("AccountLinking.errorSendFailed"));
+        return;
+      }
+
       const { error: updateError } = await supabase.auth.updateUser(
         { email },
-        { emailRedirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://` },
+        {
+          emailRedirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://`,
+        },
       );
 
       if (!updateError) {
@@ -83,7 +97,10 @@ export function useLoginModal({ onClose }: Props) {
       if (updateError.code === "email_exists") {
         const { error: signInError } = await supabase.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://` },
+          options: {
+            emailRedirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://`,
+            captchaToken,
+          },
         });
 
         if (signInError) {
@@ -170,6 +187,7 @@ export function useLoginModal({ onClose }: Props) {
         }
       }
 
+      await clearAllLocalData();
       await syncProfile();
       onClose();
     } finally {

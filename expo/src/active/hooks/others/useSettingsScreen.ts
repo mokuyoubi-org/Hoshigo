@@ -30,9 +30,8 @@ export function useSettingsScreen() {
 
   const onLogout = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    // ログアウトしたあとにお片付け！
     await clearAllLocalData();
+    await supabase.auth.signOut();
     setLoading(false);
   };
 
@@ -45,10 +44,18 @@ export function useSettingsScreen() {
       setLoading(false);
       return;
     }
-
-    await supabase.auth.signOut({ scope: "local" }).catch(() => {});
-    // アカウント消したあとにお片付け！
     await clearAllLocalData();
+    // サインアウトの結果を受け取る
+    const { error: signOutError } = await supabase.auth.signOut({
+      scope: "local",
+    });
+
+    if (signOutError) {
+      console.error("サインアウト失敗:", signOutError.message);
+    } else {
+      console.log("サインアウト成功！");
+    }
+
     setLoading(false);
   };
 

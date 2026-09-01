@@ -15,6 +15,13 @@
 // 今は直列化ロック(isAnalyzingRef)と受信箱(resultCallbackRef)を両方
 // このContext側に持たせ、runAnalysis()を通した呼び出しは呼び出し元が
 // 何であっても必ず1本の経路に収束するようにした。
+//
+// ─── 2026-09-01 変更: androidLayerType追加 ───
+// Turnstile(Cloudflare CAPTCHA)用の隠しWebViewをAndroidに追加したところ、
+// 画面全体が白くなる不具合が発生。原因はAndroidのWebView特有の
+// Surface重なりバグ(複数WebView併存時にハードウェアレイヤーが競合する)
+// と推測し、こちら側のWebViewも androidLayerType="software" に変更して
+// 検証中。
 // ──────────────────────────────────────────────────
 
 import React, {
@@ -196,6 +203,7 @@ export function KataGoEngineProvider({
           ref={engineRef}
           dom={{
             matchContents: true,
+            androidLayerType: "software",
           }}
           onReady={handleEngineReady}
           onError={(err) => {

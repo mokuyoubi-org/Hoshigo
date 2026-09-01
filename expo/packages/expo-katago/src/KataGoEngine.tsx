@@ -18,9 +18,16 @@ export type KataGoEngineRef = {
   warmupModel: (id: ModelId) => Promise<void>;
 };
 
+type DOMProps = {
+  matchContents?: boolean;
+  androidLayerType?: "none" | "software" | "hardware";
+  webviewProps?: Record<string, any>;
+  [key: string]: any; // その他のExpo DOMオプションも通るようにしておく外枠
+};
+
 export type Props = {
   ref: Ref<KataGoEngineRef>;
-  dom?: import("expo/dom").DOMProps;
+  dom?: DOMProps;
   onReady: () => void;
   onError: (message: string) => void;
   onAnalyzeComplete?: (result: AnalyzeResult) => void;

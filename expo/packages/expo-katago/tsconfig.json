@@ -4,7 +4,9 @@
     "composite": true,
     "skipLibCheck": true,
     "jsx": "react-native",
-    "moduleSuffixes": [".native", ".web", ""]
+    "moduleSuffixes": [".native", ".web", ""],
+    "moduleResolution": "bundler",
+    "module": "esnext"
   },
   "include": ["src/**/*"]
 }

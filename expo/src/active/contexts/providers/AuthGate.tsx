@@ -1,4 +1,6 @@
 // ✅2026/08/31コメント入れた。メンテナンス仕込み系、見張り猫は完全には理解していない。
+// ✅2026/09/01 Turnstile(Cloudflare CAPTCHA)によるボット対策を追加。
+//   匿名ログインの直前に必ずトークンを取得し、取れなければログインさせない(厳格モード)。
 // AuthGate.tsx
 
 import { useApp } from "@/src/active/contexts/AppContexts";
@@ -6,9 +8,11 @@ import {
   setMaintenanceHandler,
   supabase,
 } from "@/src/stable/services/supabase/supabase";
+
 import { useRouter, useSegments } from "expo-router";
-import React, { ReactNode, useEffect } from "react";
+import React, { ReactNode, useEffect, useRef } from "react";
 import { useProfileSync } from "../../hooks/others/useProfileSync";
+import { TurnstileHandle, TurnstileWidget } from "../../TurnstileWidget";
 import { useProfile } from "../ProfileContexts";
 
 export function AuthGate({ children }: { children: ReactNode }) {
@@ -17,6 +21,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const { updateProfile } = useProfile();
   const { setMaintenance, setMaintenanceMessage, setIsInitializing } = useApp();
   const { syncProfile } = useProfileSync();
+  const turnstileRef = useRef<TurnstileHandle>(null);
 
   const clearUserState = () => {
     updateProfile({
@@ -34,6 +39,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
     });
   };
 
+  // Turnstileトークンを取得する。失敗したら例外を投げる(厳格モード:
+  // トークンが無いまま匿名ログインさせることは絶対にしない)。
+  const getCaptchaToken = async (): Promise<string> => {
+    const token = await turnstileRef.current?.getToken();
+    if (!token) {
+      throw new Error("Turnstileトークンを取得できませんでした");
+    }
+    return token;
+  };
+
   // ①メンテナンス仕込み + ②initialize + ③見張り猫設置。
   useEffect(() => {
     // RPCを呼んだ時にメンテ中だった時にメッセージを表示できる設定を、あらかじめ仕込んでおく
@@ -49,8 +64,20 @@ export function AuthGate({ children }: { children: ReactNode }) {
       let session = data.session ?? null;
 
       if (!session) {
-        const { data: anonData, error } =
-          await supabase.auth.signInAnonymously();
+        let captchaToken: string;
+        try {
+          captchaToken = await getCaptchaToken();
+          console.log("取得したトークン:", captchaToken);
+        } catch (err) {
+          console.error("匿名ログイン失敗(CAPTCHA):", err);
+          clearUserState();
+          setIsInitializing(false);
+          return;
+        }
+
+        const { data: anonData, error } = await supabase.auth.signInAnonymously(
+          { options: { captchaToken } },
+        );
         if (error || !anonData.session) {
           console.error("匿名ログイン失敗:", error);
           clearUserState();
@@ -88,13 +115,25 @@ export function AuthGate({ children }: { children: ReactNode }) {
     // 詳細は、useSettingsScreen.tsxのonLogout(), handleConfirmDelete()を参照。
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("🐱 Auth event:", event, "Has session:", !!session);
+        console.log("🐱見張り猫 Auth event:", event, "Has session:", !!session);
         if (session) return;
 
         setIsInitializing(true);
         clearUserState();
 
-        const { data, error } = await supabase.auth.signInAnonymously();
+        let captchaToken: string;
+        try {
+          captchaToken = await getCaptchaToken();
+          console.log("🐱見張り猫 取得したトークン:", captchaToken);
+        } catch (err) {
+          console.error("再匿名化失敗(CAPTCHA):", err);
+          setIsInitializing(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signInAnonymously({
+          options: { captchaToken },
+        });
         if (error || !data.session) {
           console.error("再匿名化失敗:", error);
           setIsInitializing(false);
@@ -122,5 +161,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
     };
   }, []); // 初回マウント時のみ実行
 
-  return <>{children}</>;
+  return (
+    <>
+      <TurnstileWidget
+        ref={turnstileRef}
+        sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
+      />
+      {children}
+    </>
+  );
 }

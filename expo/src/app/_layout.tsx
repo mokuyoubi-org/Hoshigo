@@ -11,9 +11,12 @@ import { OverlayProvider } from "react-overlay";
 import "../../global.css";
 
 import { COLORS } from "@/src/active/constants/colors";
-import { View } from "react-native";
+import { LogBox, View } from "react-native";
 import { MaintenanceModal } from "../active/components/modals/MaintenanceModal";
 import { MatchingProvider } from "../active/contexts/providers/MatchingContext";
+
+// tfがうるさいので「is already registered」が含まれる警告を黙らせる
+LogBox.ignoreLogs([/is already registered/]);
 
 function RoutedContent() {
   const { isInitializing, maintenance, maintenanceMessage } = useApp();

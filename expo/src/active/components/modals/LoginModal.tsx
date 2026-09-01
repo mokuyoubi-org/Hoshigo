@@ -1,7 +1,7 @@
 // LoginModal.tsx
 import { COLORS } from "@/src/active/constants/colors";
 import { ModalShell } from "modal-shell";
-import React from "react";
+import React, { useRef } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,13 +12,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { TurnstileHandle, TurnstileWidget } from "../../TurnstileWidget";
 import { useLoginModal } from "../../hooks/others/useLoginModal";
+
 interface Props {
   visible: boolean;
   onClose: () => void;
 }
 
 export function LoginModal({ visible, onClose }: Props) {
+  const turnstileRef = useRef<TurnstileHandle>(null);
+
   const {
     t,
     step,
@@ -38,7 +42,7 @@ export function LoginModal({ visible, onClose }: Props) {
     onSendOtp,
     onVerifyOtp,
     onConfirmSelection,
-  } = useLoginModal({ onClose });
+  } = useLoginModal({ onClose, turnstileRef });
 
   const getTitle = () => {
     if (step === "email") return t("AccountLinking.titleEmail");
@@ -51,6 +55,10 @@ export function LoginModal({ visible, onClose }: Props) {
 
   return (
     <ModalShell size="lg">
+      <TurnstileWidget
+        ref={turnstileRef}
+        sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full"
