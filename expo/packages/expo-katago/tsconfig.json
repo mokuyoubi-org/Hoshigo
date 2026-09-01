@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "rootDir": "./src", // 👈 自分のsrcの中だけがルート
+    "rootDir": "./src",
     "composite": true,
     "skipLibCheck": true,
-    "jsx": "react-native"
+    "jsx": "react-native",
+    "moduleSuffixes": [".native", ".web", ""]
   },
-  "include": ["src/**/*"] // 👈 自分のsrcの中しか型チェックしない
+  "include": ["src/**/*"]
 }

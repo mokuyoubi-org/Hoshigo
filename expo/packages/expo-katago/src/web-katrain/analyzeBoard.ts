@@ -73,18 +73,16 @@
  *                                 例: ["pd", "dd", "qp"]
  */
 
-
-
 import * as tf from "@tensorflow/tfjs";
 import { ungzip } from "pako";
+import { BLACK, BoardSize, Color, EMPTY, MoveObject, WHITE } from "../types";
+import { Board2D } from "../utils";
 import { analyzeMcts, playerToColor } from "./analyzeMcts";
-import { initBoardArrays, SimPosition, playMove } from "./fastBoard";
+import { initBoardArrays, playMove, SimPosition } from "./fastBoard";
 import { parseKataGoModelV8 } from "./loadModelV8";
 import { ModelId, readModelData } from "./modelManager";
 import { KataGoModelV8Tf } from "./modelV8";
-import { GameRules, RegionOfInterest, FloatArray, BoardState } from "./types";
-import {  BLACK, BoardSize, Color, EMPTY, MoveObject, WHITE } from "../types";
-import { Board2D } from "../utils";
+import { BoardState, FloatArray, GameRules, RegionOfInterest } from "./types";
 
 // ================================================================
 // 型定義

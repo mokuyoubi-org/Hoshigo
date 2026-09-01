@@ -28,6 +28,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts",
-    "src/active/hooks/useSettingsScreenScreen.ts"
   ]
 }

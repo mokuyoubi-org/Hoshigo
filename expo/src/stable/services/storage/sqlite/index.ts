@@ -1,2 +1,2 @@
 // sqlite/index.ts
-export {sqliteKv} from "./sqlite"
+export { sqliteKv } from "./s";

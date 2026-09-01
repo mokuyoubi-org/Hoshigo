@@ -75,9 +75,7 @@ export default function KataGoEngine({
           try {
             // 1. モデルをロード
             await loadModel(id);
-            console.log(
-              `🔥 [KataGoEngine] ${id} のウォームアップ完了`,
-            );
+            console.log(`🔥 [KataGoEngine] ${id} のウォームアップ完了`);
           } catch (e) {
             console.error(`[KataGoEngine] ウォームアップ失敗: ${id}`, e);
           }

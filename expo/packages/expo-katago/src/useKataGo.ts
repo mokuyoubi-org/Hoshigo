@@ -15,9 +15,9 @@
 import { useKataGoEngine } from "./KataGoEngineContext";
 
 import { Board, BoardSize, Color, Grid, MatchType } from "./types";
+import { boardToBoard2D, movesToMoveObjects } from "./utils";
 import { AnalyzeResult } from "./web-katrain/analyzeBoard";
 import { ModelId } from "./web-katrain/modelManager";
-import { boardToBoard2D, movesToMoveObjects } from "./utils";
 
 export type KataGoParams = {
   board: Board;
