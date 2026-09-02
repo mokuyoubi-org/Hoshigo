@@ -109,17 +109,36 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     // isAnalyzingRef と同じ考え方)。
     const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-    const getTokenInternal = (): Promise<string> => {
-      return new Promise<string>((resolve, reject) => {
-        if (!widgetIdRef.current || !window.turnstile) {
-          reject(new Error("Turnstile widget not ready"));
-          return;
-        }
-        pendingRef.current = { resolve, reject };
-        window.turnstile.reset(widgetIdRef.current);
-        window.turnstile.execute(widgetIdRef.current);
-      });
+const getTokenInternal = (): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    if (!widgetIdRef.current || !window.turnstile) {
+      reject(new Error("Turnstile widget not ready"));
+      return;
+    }
+
+    // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
+    // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
+    const timeoutId = setTimeout(() => {
+      if (pendingRef.current) {
+        pendingRef.current = null;
+        reject(new Error("Turnstile token request timed out"));
+      }
+    }, 15000);
+
+    pendingRef.current = {
+      resolve: (token: string) => {
+        clearTimeout(timeoutId);
+        resolve(token);
+      },
+      reject: (err: Error) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      },
     };
+    window.turnstile.reset(widgetIdRef.current);
+    window.turnstile.execute(widgetIdRef.current);
+  });
+};
 
     useImperativeHandle(ref, () => ({
       getToken: () => {

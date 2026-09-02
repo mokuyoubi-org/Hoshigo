@@ -1,6 +1,4 @@
 // cleanUp.ts
-
-import { clearStorage } from "../services/storage/secure";
 import { sqliteKv } from "../services/storage/sqlite";
 import { recordsRepo } from "./records-repo";
 
@@ -10,8 +8,7 @@ export async function clearAllLocalData(): Promise<void> {
     await sqliteKv.clear();
     // 2. 棋譜データベースの削除
     await recordsRepo.clearAll();
-    // 3. 金庫・localStorageの削除
-    await clearStorage();
+    // ここで金庫・localStorageの削除はしない。
   } catch (error) {
     console.error("ストレージの消去に失敗した:", error);
   }
