@@ -289,7 +289,7 @@ ALTER TABLE "private"."matches" OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."assert_player"("p_match_id" integer, "p_allowed_statuses" "text"[] DEFAULT ARRAY['playing'::"text"], OUT "my_color" "text", OUT "match" "private"."matches") RETURNS "record"
-    LANGUAGE "plpgsql" SECURITY DEFINER
+    LANGUAGE "plpgsql" STABLE
     SET "search_path" TO ''
     AS $$
 begin
@@ -324,7 +324,7 @@ ALTER FUNCTION "private"."assert_player"("p_match_id" integer, "p_allowed_status
 
 
 CREATE OR REPLACE FUNCTION "private"."build_match_json"("p_match" "private"."matches", "p_player_uid" "uuid") RETURNS "jsonb"
-    LANGUAGE "plpgsql"
+    LANGUAGE "plpgsql" STABLE
     SET "search_path" TO ''
     AS $$
 declare
@@ -332,7 +332,7 @@ declare
   v_black_profiles private.profiles%rowtype;
   v_white_profiles private.profiles%rowtype;
   
-  -- 相手のプロフィールとポイントを入れる変数だにゃ！
+  -- 相手のプロフィールとポイントを入れる変数
   v_opp_profile    private.profiles%rowtype;
   v_opp_points     smallint;
 begin
@@ -340,18 +340,18 @@ begin
   select * into v_black_profiles from private.profiles where uid = p_match.black_uid;
   select * into v_white_profiles from private.profiles where uid = p_match.white_uid;
 
-  -- 自分が黒なら相手は白、自分が白なら相手は黒だにゃ！
+  -- 自分が黒なら相手は白、自分が白なら相手は黒
   if v_is_black then
     v_opp_profile := v_white_profiles;
   else
     v_opp_profile := v_black_profiles;
   end if;
 
-  -- 碁盤のサイズ（board_size）によってポイントの列を切り替えるにゃん！
+  -- 碁盤のサイズ（board_size）によってポイントの列を切り替える
   v_opp_points := case p_match.board_size
     when 9  then v_opp_profile.points_9
     when 13 then v_opp_profile.points_13
-    else 0 -- 万が一9や13以外が来たときの保険だにゃ
+    else 0 -- 万が一9や13以外が来たときの保険
   end;
 
   return jsonb_build_object(
@@ -360,7 +360,7 @@ begin
     'match_type',     p_match.match_type,
     'moves',          coalesce(to_jsonb(p_match.moves), '[]'::jsonb),
     'my_color',       case when v_is_black then 'black' else 'white' end,
-    'opp_points',     coalesce(v_opp_points, 0), -- ★盤サイズに応じたポイントが入るにゃ！
+    'opp_points',     coalesce(v_opp_points, 0), -- ★盤サイズに応じたポイントが入る
     'opp_username',   v_opp_profile.username,
     'opp_icon_index', v_opp_profile.icon_index,
     'my_seconds',      case when v_is_black then p_match.black_seconds else p_match.white_seconds end,
@@ -404,7 +404,7 @@ ALTER FUNCTION "private"."calculate_icons"("p_points9" smallint, "p_points13" sm
 
 
 CREATE OR REPLACE FUNCTION "private"."check_maintenance"() RETURNS "void"
-    LANGUAGE "plpgsql"
+    LANGUAGE "plpgsql" STABLE
     SET "search_path" TO ''
     AS $$
 DECLARE
@@ -440,15 +440,11 @@ CREATE OR REPLACE FUNCTION "private"."cleanup_old_anonymous_profiles"() RETURNS 
     SET "search_path" TO ''
     AS $$
 BEGIN
-  -- lastseenが30日以上前、かつ auth.users に存在せず、ボット（is_bot）でもないアカウントを削除
-  DELETE FROM private.profiles
-  WHERE lastseen < CURRENT_DATE - INTERVAL '30 days'
-    AND is_bot = false
-    AND NOT EXISTS (
-      SELECT 1 
-      FROM auth.users 
-      WHERE auth.users.id = private.profiles.uid
-    );
+  -- lastseenが14日以上前、かつ 本物（認証済み）ユーザーではなく、ボットでもないアカウントを削除
+  DELETE FROM private.profiles p
+  WHERE p.lastseen < CURRENT_DATE - INTERVAL '14 days'
+    AND p.is_bot = false
+    AND NOT private.is_authenticated_user(p.uid);
 END;
 $$;
 
@@ -528,6 +524,22 @@ $$;
 
 
 ALTER FUNCTION "private"."get_bot_match_info"("p_points" smallint, "p_board_size" smallint, OUT "o_bot_uid" "uuid", OUT "o_match_type" smallint) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "private"."is_authenticated_user"("user_id" "uuid") RETURNS boolean
+    LANGUAGE "sql" STABLE
+    SET "search_path" TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM auth.users au
+    WHERE au.id = user_id
+      AND (au.is_anonymous IS NOT TRUE OR au.email IS NOT NULL)
+  );
+$$;
+
+
+ALTER FUNCTION "private"."is_authenticated_user"("user_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."is_bot_uid"("p_uid" "uuid") RETURNS boolean
@@ -1186,7 +1198,7 @@ $$;
 ALTER FUNCTION "public"."get_own_profile_preview"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."get_rankings"() RETURNS TABLE("username" "text", "points" smallint, "icon_index" smallint, "board_size" integer)
+CREATE OR REPLACE FUNCTION "public"."get_rankings"() RETURNS TABLE("username" "text", "points" smallint, "icon_index" smallint, "board_size" integer, "is_authenticated" boolean)
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
@@ -1201,7 +1213,8 @@ BEGIN
       p.username, 
       p.points_9 AS points,
       p.icon_index,
-      9 AS board_size
+      9 AS board_size,
+      private.is_authenticated_user(p.uid) AS is_authenticated
     FROM private.profiles p
     WHERE p.is_bot = false
     ORDER BY p.points_9 DESC
@@ -1214,7 +1227,8 @@ BEGIN
       p.username, 
       p.points_13 AS points,
       p.icon_index,
-      13 AS board_size
+      13 AS board_size,
+      private.is_authenticated_user(p.uid) AS is_authenticated
     FROM private.profiles p
     WHERE p.is_bot = false
     ORDER BY p.points_13 DESC
@@ -1947,6 +1961,7 @@ GRANT ALL ON FUNCTION "public"."get_own_profile_preview"() TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."get_rankings"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."get_rankings"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_rankings"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_rankings"() TO "service_role";
