@@ -382,13 +382,13 @@ declare
   v_icons smallint[] := '{}';
   v_rank smallint;
 begin
-  -- 9路盤・13路盤の強い方のランクを採用するにゃ
+  -- 9路盤・13路盤の強い方のランクを採用する
   v_rank := greatest(
     private.points_to_rank(p_points9),
     private.points_to_rank(p_points13)
   );
 
-  -- ランクに応じたアイコン (0 〜 5) を追加するにゃ
+  -- ランクに応じたアイコン (0 〜 5) を追加する
   for i in 0..5 loop
     if v_rank >= (i * 3) then
       v_icons := array_append(v_icons, i::smallint);
@@ -480,7 +480,7 @@ begin
   where pf.username = v_bot_username
   limit 1;
 
-  -- 2. 盤の広さとランクに応じて match_type (置き石) を決めるにゃ！
+  -- 2. 盤の広さとランクに応じて match_type (置き石) を決める
   if p_board_size = 9 then
     o_match_type := case v_rank
       -- [対bot1]
@@ -1026,7 +1026,7 @@ begin
     and m.status = 'playing'
   limit 1;
 
-  -- 既に対局が始まっていれば、その対局情報を返すにゃ！
+  -- 既に対局が始まっていれば、その対局情報を返す
   if found then
     return private.build_match_json(v_match, v_player_uid);
   end if;
@@ -1340,12 +1340,12 @@ begin
     and m.status = 'playing'
   limit 1;
 
-  -- 既に対局が始まっていれば、その対局情報を返すにゃ！
+  -- 既に対局が始まっていれば、その対局情報を返す
   if found then
     return private.build_match_json(v_match, v_player_uid);
   end if;
 
-  -- 待機列に追加（既に待機中なら何もしないにゃ）
+  -- 待機列に追加（既に待機中なら何もしない）
   begin
     insert into private.waitlist (player_uid, board_size)
     values (v_player_uid, p_board_size);
@@ -1504,7 +1504,7 @@ begin
   -- 1. 本人チェック＆statusがpendingかどうかのチェック（部外者・状態不正ならここで自動エラー終了）
   perform private.assert_player(p_match_id, array['pending']);
 
-  -- 2. 排他ロック（for update）をかけながら対局情報を取得するにゃ
+  -- 2. 排他ロック（for update）をかけながら対局情報を取得する
   select *
   into v_match
   from private.matches m
@@ -1519,7 +1519,7 @@ begin
   v_white_uid := v_match.white_uid;
   v_current_result := v_match.result;
 
-  -- 3. bot戦は無条件で確定するにゃ
+  -- 3. bot戦は無条件で確定する
   if private.is_bot_uid(v_black_uid) or private.is_bot_uid(v_white_uid) then
     update private.matches
     set result = p_result, status = 'finished', dead_stones = p_dead_stones
@@ -1535,7 +1535,7 @@ begin
     return;
   end if;
 
-  -- 5. ② 二人目の結果送信 → 後着優先で確定するにゃ
+  -- 5. ② 二人目の結果送信 → 後着優先で確定する
   update private.matches
   set result = p_result, status = 'finished', dead_stones = p_dead_stones
   where id = p_match_id;
@@ -1638,19 +1638,19 @@ begin
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
   
-  -- 1. ログイン中のユーザーIDを取得するにゃ
+  -- 1. ログイン中のユーザーIDを取得する
   current_user_id := auth.uid();
   
   if current_user_id is null then
     raise exception 'Not authenticated';
   end if;
 
-  -- 2. バリデーション（3〜20文字の半角英数字・アンダースコア）だにゃ
+  -- 2. バリデーション（3〜20文字の半角英数字・アンダースコア）
   if new_username !~ '^[A-Za-z0-9_]{3,12}$' then
     raise exception 'Invalid username format';
   end if;
 
-  -- 3. ユーザー名の重複チェックだにゃ（他の人が使っていないか確認）
+  -- 3. ユーザー名の重複チェック（他の人が使っていないか確認）
   if exists (
     select 1 
     from private.profiles 
@@ -1660,7 +1660,7 @@ begin
     raise exception 'Username already taken';
   end if;
 
-  -- 4. ユーザー名を更新するにゃ
+  -- 4. ユーザー名を更新する
   update private.profiles
   set username = new_username
   where uid = current_user_id;
