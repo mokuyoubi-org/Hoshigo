@@ -53,7 +53,8 @@ export function createResilientClient({
 
   return new Proxy(raw, {
     get(target, prop, receiver) {
-      if (prop === "rpc") { // rpc()を実行したとき、その返事をこっそり横取りしている
+      if (prop === "rpc") {
+        // rpc()を実行したとき、その返事をこっそり横取りしている
         // もしエラーメッセージの中に "MAINTENANCE_MODE" という文字が入っていたら、自動的にonErrorMarkerDetectedを呼び出す
         return (...args: Parameters<typeof raw.rpc>) => {
           const builder = Reflect.get(target, prop, receiver).apply(

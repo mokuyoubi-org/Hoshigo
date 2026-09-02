@@ -16,6 +16,7 @@ export type ProfileData = {
 export type AppStatusData = {
   maintenance: boolean;
   message: string | null;
+  version: string | null;
 };
 
 export type SessionUserData = {
@@ -60,6 +61,7 @@ export async function fetchProfileRPC(): Promise<FetchProfileResult | null> {
     ? {
         maintenance: data.app_status.maintenance ?? false,
         message: data.app_status.message ?? null,
+        version: data.app_status.version ?? null,
       }
     : null;
 

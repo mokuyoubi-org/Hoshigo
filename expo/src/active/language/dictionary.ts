@@ -187,7 +187,7 @@ export const dictionary = {
       title: "Log out?",
     },
   },
-MatchType: {
+  MatchType: {
     en: {
       title: "Game Start!",
       black: "Black",
@@ -237,6 +237,14 @@ MatchType: {
     en: {
       defaultMessage:
         "The service is currently under maintenance.\nPlease wait a moment.",
+    },
+  },
+
+  ForceUpdateModal: {
+    en: {
+      message:
+        "A new version is available. Please update to the latest version to continue.",
+      updateButton: "Update",
     },
   },
   UsernameEditModal: {

@@ -17,7 +17,7 @@ dotenv.config({
 const config: ExpoConfig = {
   name: process.env.EXPO_PUBLIC_NAME!,
   slug: process.env.EXPO_PUBLIC_SLUG!,
-  version: "1.0.0",
+  version: "1.0.0", // 🌟
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: process.env.EXPO_PUBLIC_SCHEME!,

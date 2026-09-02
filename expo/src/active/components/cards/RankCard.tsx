@@ -10,12 +10,12 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { RankInfo } from "../../constants/ranks";
 
-interface RankCardProps {
+type Props = {
   rankInfo: RankInfo;
   onOpenInfo: () => void;
-}
+};
 
-export function RankCard({ rankInfo, onOpenInfo }: RankCardProps) {
+export function RankCard({ rankInfo, onOpenInfo }: Props) {
   const t = useTranslation();
   const { lang } = useLang();
 

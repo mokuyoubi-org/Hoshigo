@@ -35,7 +35,7 @@ function loadTurnstileScript(): Promise<void> {
     if (existing) {
       existing.addEventListener("load", () => resolve());
       existing.addEventListener("error", () =>
-        reject(new Error("Turnstile script failed to load"))
+        reject(new Error("Turnstile script failed to load")),
       );
       return;
     }
@@ -45,8 +45,7 @@ function loadTurnstileScript(): Promise<void> {
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error("Turnstile script failed to load"));
+    script.onerror = () => reject(new Error("Turnstile script failed to load"));
     document.head.appendChild(script);
   });
 }
@@ -65,7 +64,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     const readyPromiseRef = useRef<Promise<void>>(
       new Promise((resolve) => {
         readyResolveRef.current = resolve;
-      })
+      }),
     );
 
     useEffect(() => {
@@ -85,7 +84,9 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
               pendingRef.current = null;
             },
             "error-callback": () => {
-              pendingRef.current?.reject(new Error("Turnstile challenge failed"));
+              pendingRef.current?.reject(
+                new Error("Turnstile challenge failed"),
+              );
               pendingRef.current = null;
             },
           });
@@ -109,36 +110,36 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     // isAnalyzingRef と同じ考え方)。
     const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-const getTokenInternal = (): Promise<string> => {
-  return new Promise<string>((resolve, reject) => {
-    if (!widgetIdRef.current || !window.turnstile) {
-      reject(new Error("Turnstile widget not ready"));
-      return;
-    }
+    const getTokenInternal = (): Promise<string> => {
+      return new Promise<string>((resolve, reject) => {
+        if (!widgetIdRef.current || !window.turnstile) {
+          reject(new Error("Turnstile widget not ready"));
+          return;
+        }
 
-    // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
-    // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
-    const timeoutId = setTimeout(() => {
-      if (pendingRef.current) {
-        pendingRef.current = null;
-        reject(new Error("Turnstile token request timed out"));
-      }
-    }, 15000);
+        // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
+        // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
+        const timeoutId = setTimeout(() => {
+          if (pendingRef.current) {
+            pendingRef.current = null;
+            reject(new Error("Turnstile token request timed out"));
+          }
+        }, 15000);
 
-    pendingRef.current = {
-      resolve: (token: string) => {
-        clearTimeout(timeoutId);
-        resolve(token);
-      },
-      reject: (err: Error) => {
-        clearTimeout(timeoutId);
-        reject(err);
-      },
+        pendingRef.current = {
+          resolve: (token: string) => {
+            clearTimeout(timeoutId);
+            resolve(token);
+          },
+          reject: (err: Error) => {
+            clearTimeout(timeoutId);
+            reject(err);
+          },
+        };
+        window.turnstile.reset(widgetIdRef.current);
+        window.turnstile.execute(widgetIdRef.current);
+      });
     };
-    window.turnstile.reset(widgetIdRef.current);
-    window.turnstile.execute(widgetIdRef.current);
-  });
-};
 
     useImperativeHandle(ref, () => ({
       getToken: () => {
@@ -154,10 +155,12 @@ const getTokenInternal = (): Promise<string> => {
                 setTimeout(
                   () =>
                     reject(
-                      new Error("Turnstile widget did not become ready in time")
+                      new Error(
+                        "Turnstile widget did not become ready in time",
+                      ),
                     ),
-                  10000
-                )
+                  10000,
+                ),
               ),
             ]);
             return getTokenInternal();
@@ -175,7 +178,7 @@ const getTokenInternal = (): Promise<string> => {
         <div ref={containerRef} />
       </View>
     );
-  }
+  },
 );
 
 TurnstileWidget.displayName = "TurnstileWidget";
@@ -185,7 +188,7 @@ declare global {
     turnstile?: {
       render: (
         container: HTMLElement,
-        options: Record<string, unknown>
+        options: Record<string, unknown>,
       ) => string;
       execute: (widgetId: string) => void;
       reset: (widgetId: string) => void;

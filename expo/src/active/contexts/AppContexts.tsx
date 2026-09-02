@@ -20,6 +20,8 @@ type AppContextType = {
   setMaintenanceMessage: (v: string | null) => void;
   isInitializing: boolean;
   setIsInitializing: (v: boolean) => void;
+  needsUpdate: boolean;
+  setNeedsUpdate: (v: boolean) => void;
 };
 
 // 🟩🏢Context（外部には見せない）
@@ -40,7 +42,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     null,
   );
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
-
+  const [needsUpdate, setNeedsUpdate] = useState<boolean>(false);
 
   return (
     // AppContext.Providerは、電波塔。
@@ -53,9 +55,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setMaintenanceMessage,
         isInitializing,
         setIsInitializing,
+        needsUpdate,
+        setNeedsUpdate,
       }}
     >
-      {children} 
+      {children}
     </AppContext.Provider>
   );
 };

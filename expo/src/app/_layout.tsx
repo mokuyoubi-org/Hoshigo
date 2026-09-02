@@ -12,6 +12,7 @@ import "../../global.css";
 
 import { COLORS } from "@/src/active/constants/colors";
 import { LogBox, View } from "react-native";
+import { ForceUpdateModal } from "../active/components/modals/ForceUpdateModal";
 import { MaintenanceModal } from "../active/components/modals/MaintenanceModal";
 import { MatchingProvider } from "../active/contexts/providers/MatchingContext";
 
@@ -19,7 +20,8 @@ import { MatchingProvider } from "../active/contexts/providers/MatchingContext";
 LogBox.ignoreLogs([/is already registered/]);
 
 function RoutedContent() {
-  const { isInitializing, maintenance, maintenanceMessage } = useApp();
+  const { isInitializing, maintenance, maintenanceMessage, needsUpdate } =
+    useApp();
 
   return (
     // ここでStackを使うことによって、router.back()が機能する。つまりStackがないということは履歴がないということ
@@ -47,8 +49,24 @@ function RoutedContent() {
         />
       )}
 
+      {/* 🐱 強制アップデート画面(メンテより優先度を高くする) */}
+      {needsUpdate && !isInitializing && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 10000,
+          }}
+        >
+          <ForceUpdateModal />
+        </View>
+      )}
+
       {/* 🐱 メンテナンス画面 */}
-      {maintenance && (
+      {maintenance && !needsUpdate && (
         <View
           style={{
             position: "absolute",

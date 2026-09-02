@@ -26,7 +26,7 @@ type GuestSnapshot = {
 
 export type Selection = "guest" | "existing" | null;
 
-interface Props {
+type Props = {
   onClose: () => void;
   turnstileRef?: React.RefObject<TurnstileHandle | null>; // ← | null を追加だにゃ！
 }

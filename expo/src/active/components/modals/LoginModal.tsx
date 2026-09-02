@@ -15,7 +15,7 @@ import {
 import { TurnstileHandle, TurnstileWidget } from "../../TurnstileWidget";
 import { useLoginModal } from "../../hooks/others/useLoginModal";
 
-interface Props {
+type Props = {
   visible: boolean;
   onClose: () => void;
 }

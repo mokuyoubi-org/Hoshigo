@@ -6,12 +6,12 @@
 import React from "react";
 import { Text, View } from "react-native";
 
-interface GuestNoticeCardProps {
+type Props  = {
   title: string;
   description: string;
 }
 
-export function GuestNoticeCard({ title, description }: GuestNoticeCardProps) {
+export function GuestNoticeCard({ title, description }: Props) {
   return (
     <View className="bg-foreground rounded-3xl border-2 border-backgroundDark p-5 gap-3">
       <View className="flex-row items-center gap-2">

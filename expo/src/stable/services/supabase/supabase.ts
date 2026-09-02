@@ -17,5 +17,5 @@ export const supabase = createResilientClient({
   url: process.env.EXPO_PUBLIC_SUPABASE_URL!, // サーバの場所
   anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!, // サーバの鍵
   storage, // ローカルに用意する金庫(アクセストークンや、リフレッシュトークン)
-  onErrorMarkerDetected: (msg) => onMaintenanceTriggered?.(msg), // 
+  onErrorMarkerDetected: (msg) => onMaintenanceTriggered?.(msg), //
 });

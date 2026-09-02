@@ -15,7 +15,8 @@ import {
   View,
 } from "react-native";
 import { dictionary } from "../../language/dictionary";
-interface UsernameEditModalProps {
+
+type Props = {
   visible: boolean;
   currentUsername: string;
   onClose: () => void;
@@ -23,7 +24,7 @@ interface UsernameEditModalProps {
     newUsername: string,
   ) => Promise<string | null | void> | string | null | void;
   lang?: "en";
-}
+};
 
 export default function UsernameEditModal({
   visible,
@@ -31,7 +32,7 @@ export default function UsernameEditModal({
   onClose,
   onSubmit,
   lang = "en",
-}: UsernameEditModalProps) {
+}: Props) {
   const tTranslation = useTranslation();
   const [inputUsername, setInputUsername] = useState(currentUsername);
   const [errorMessage, setErrorMessage] = useState("");
