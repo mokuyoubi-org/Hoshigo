@@ -1,5 +1,10 @@
 // ProfileScreen.tsx
-import { FontAwesome6, MaterialIcons, Octicons } from "@expo/vector-icons";
+import {
+  FontAwesome6,
+  MaterialCommunityIcons,
+  MaterialIcons,
+  Octicons,
+} from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
@@ -17,12 +22,14 @@ import UsernameEditModal from "@/src/active/components/modals/UsernameEditModal"
 import { COLORS } from "@/src/active/constants/colors";
 import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { useProfileScreen } from "@/src/active/hooks/others/useProfileScreen";
+import { useTranslation } from "@/src/active/language/i18n";
 import { BOARD_SIZE_OPTIONS } from "expo-goband";
 import { useOverlay } from "react-overlay";
 import { IconButton, SegmentedControl } from "ui-atoms";
 
 export default function ProfileScreen() {
-  const { t, profileData, handlers } = useProfileScreen();
+  const t = useTranslation();
+  const { profileData, handlers } = useProfileScreen();
   const { isMatching } = useMatching();
   const { show, hide } = useOverlay();
 
@@ -111,40 +118,39 @@ export default function ProfileScreen() {
                   {profileData.username}
                 </Text>
                 {!profileData.isAnonymous && (
-                  <TouchableOpacity
-                    disabled={isMatching}
-                    onPress={() =>
-                      show(
-                        <UsernameEditModal
-                          visible={true}
-                          currentUsername={profileData.username ?? ""}
-                          onClose={hide}
-                          onSubmit={async (newUsername) => {
-                            // 1. 処理結果（エラー文字列、または null）を受け取る
-                            const error =
-                              await handlers.handleUpdateUsername(newUsername);
-                            if (error) {
-                              // エラーがあったら、モーダルを閉じずにエラー文字を返して画面に表示させる
-                              return error;
-                            }
-                            // エラーがなかった（成功した）時だけモーダルを閉じる
-                            hide();
-                          }}
-                        />,
-                      )
-                    }
-                    activeOpacity={0.7}
-                    className={`p-1 ${
-                      isMatching ? "opacity-40" : "opacity-100"
-                    }`}
-                  >
-                    <MaterialIcons
-                      name="edit"
-                      size={20}
-                      color={COLORS.primary}
-                    />
-                  </TouchableOpacity>
+                  <MaterialCommunityIcons
+                    name="check-decagram"
+                    size={22}
+                    color={COLORS.primary} // ブランドカラー（青など）で統一だにゃ！
+                  />
                 )}
+                <TouchableOpacity
+                  disabled={isMatching}
+                  onPress={() =>
+                    show(
+                      <UsernameEditModal
+                        visible={true}
+                        currentUsername={profileData.username ?? ""}
+                        onClose={hide}
+                        onSubmit={async (newUsername) => {
+                          // 1. 処理結果（エラー文字列、または null）を受け取る
+                          const error =
+                            await handlers.handleUpdateUsername(newUsername);
+                          if (error) {
+                            // エラーがあったら、モーダルを閉じずにエラー文字を返して画面に表示させる
+                            return error;
+                          }
+                          // エラーがなかった（成功した）時だけモーダルを閉じる
+                          hide();
+                        }}
+                      />,
+                    )
+                  }
+                  activeOpacity={0.7}
+                  className={`p-1 ${isMatching ? "opacity-40" : "opacity-100"}`}
+                >
+                  <MaterialIcons name="edit" size={20} color={COLORS.primary} />
+                </TouchableOpacity>
               </View>
             </View>
 

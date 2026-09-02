@@ -91,7 +91,7 @@ export const dictionary = {
       remaining: "About {{wins}} {{winText}}",
       guestAccount: "This is a guest account",
       guestNoticeDesc:
-        "Guest data is automatically deleted after 30 days of inactivity. Log in to keep your records.",
+        "Guest data is automatically deleted after 14 days of inactivity. Log in to keep your records.",
       iconUpdateFailed: "Failed to update icon.",
       usernameTaken: "This username is already taken.",
       usernameUpdateFailed: "Failed to update username.",

@@ -19,6 +19,7 @@ import { SegmentedControl } from "ui-atoms";
 // 🐱 取得するデータに board_size も含める
 type RankingItem = Profile & {
   board_size: number;
+  is_authenticated: boolean;
 };
 
 type Props = {

@@ -4,14 +4,9 @@ import { Avatar } from "@/src/active/components/go/Avatar";
 import { COLORS } from "@/src/active/constants/colors";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"; // 🐱 MaterialCommunityIcons を追加！
 import React, { useEffect, useMemo } from "react";
-import {
-  Animated,
-  Text,
-  TouchableOpacity, // 🐱 追加した
-  View,
-} from "react-native";
+import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { useTranslation } from "../../language/i18n";
 
 const RANK_COLORS: Record<number, { color: string }> = {
@@ -47,6 +42,7 @@ export type Profile = {
   username: string;
   points: number;
   icon_index: number;
+  is_authenticated?: boolean; // 🐱 認証済みフラグを追加！
 };
 
 // ─── RankingCard ──────────────────────
@@ -64,7 +60,7 @@ export const RankingCard = ({
 
   // 🌟 自分かどうかを判定する
   const { username } = useProfile();
-  const isMe = item.username === username || item.username === username;
+  const isMe = item.username === username;
 
   // 🌟 rank_index から表示用ラベルを取得する（無効な数値のときは "-"）
   const rankLabel = RANK_LABELS[getRankInfo(item.points, t).index] ?? "-";
@@ -83,7 +79,6 @@ export const RankingCard = ({
 
   return (
     <Animated.View style={{ opacity: fadeIn }}>
-      {/* 🐾 社長の追記ルール適用！カード自身を TouchableOpacity (activeOpacity={1}) で包む */}
       <TouchableOpacity
         activeOpacity={1}
         className={`bg-foreground rounded-[16px] overflow-hidden ${
@@ -115,8 +110,8 @@ export const RankingCard = ({
 
           <View className="px-2" />
 
-          {/* 名前 */}
-          <View className="flex-1 justify-center gap-1">
+          {/* 名前 + 認証バッジ */}
+          <View className="flex-1 flex-row items-center gap-1">
             <Text
               className={`text-[15px] font-bold color-text tracking-[0.3px] ${
                 isTop3 ? "color-text font-extrabold" : ""
@@ -125,6 +120,15 @@ export const RankingCard = ({
             >
               {item.username}
             </Text>
+
+            {/* 🐱 認証済みユーザーなら公式バッジを表示するにゃ！ */}
+            {item.is_authenticated && (
+              <MaterialCommunityIcons
+                name="check-decagram"
+                size={16}
+                color={COLORS.primary}
+              />
+            )}
           </View>
 
           {/* 🌟 右側に表示するランク*/}
