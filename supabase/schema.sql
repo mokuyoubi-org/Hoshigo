@@ -289,7 +289,7 @@ ALTER TABLE "private"."matches" OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."assert_player"("p_match_id" integer, "p_allowed_statuses" "text"[] DEFAULT ARRAY['playing'::"text"], OUT "my_color" "text", OUT "match" "private"."matches") RETURNS "record"
-    LANGUAGE "plpgsql" STABLE
+    LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
 begin
