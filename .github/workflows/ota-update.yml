@@ -3,36 +3,33 @@ name: EAS OTA Update
 on:
   push:
     branches:
-      - main # mainブランチにpushされたら実行
+      - main
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo   # 以降のrunコマンドは全部expo/内で実行される
     steps:
-      # 1. コードを取得
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Node.jsの準備
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: expo/package-lock.json   # lock fileの場所を明示
 
-      # 3. EASコマンドの準備（登録済みのEXPO_UPDATE_TOKENを使用）
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_UPDATE_TOKEN }}
 
-      # 4. npmでライブラリを入れる
       - name: Install dependencies
         run: npm ci
 
-      # 5. OTAアップデートを自動送信！
-      #    eas.jsonのproduction buildが "channel": "production" に紐付いているため、
-      #    ブランチ名(main)任せにせず --channel を明示して確実にそこへ届ける
       - name: Run EAS Update
         run: npx eas-cli update --channel production --auto --non-interactive
