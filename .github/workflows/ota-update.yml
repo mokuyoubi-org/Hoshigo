@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: expo   # 以降のrunコマンドは全部expo/内で実行される
+        working-directory: expo
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,13 +20,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: expo/package-lock.json   # lock fileの場所を明示
+          cache-dependency-path: expo/package-lock.json
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_UPDATE_TOKEN }}
+          packager: npm
 
       - name: Install dependencies
         run: npm ci

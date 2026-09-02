@@ -23,8 +23,8 @@ export const OverlayProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <OverlayContext.Provider value={{ show, hide }}>
-      {children}
       {content}
+      {children}
     </OverlayContext.Provider>
   );
 };

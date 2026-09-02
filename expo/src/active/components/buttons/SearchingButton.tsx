@@ -28,7 +28,7 @@ export const SearchingButton = () => {
   return (
     <View
       className={
-        "absolute bottom-[90px] left-[20px] right-[20px] items-center z-[99]"
+        "absolute bottom-[90px] left-[20px] right-[20px] items-center z-[100]"
       }
       style={{ pointerEvents: "box-none" }}
     >

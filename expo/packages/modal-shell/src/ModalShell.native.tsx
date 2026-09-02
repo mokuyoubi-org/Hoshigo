@@ -4,13 +4,23 @@ import {
   Animated,
   Keyboard,
   Pressable,
+  StyleProp,
   StyleSheet,
   useAnimatedValue,
   useWindowDimensions,
   View,
+  ViewStyle,
 } from "react-native";
-import { ModalShellProps } from "./ModalShell";
-import { computeModalBox } from "./modalSizing";
+import { computeModalBox, ModalSize } from "./modalSizing";
+
+type ModalShellProps = {
+  children: React.ReactNode;
+  onClose?: () => void;
+  style?: StyleProp<ViewStyle>;
+  dismissKeyboardOnPress?: boolean;
+  backgroundColor?: string;
+  size?: ModalSize;
+};
 
 export function ModalShell({
   children,
@@ -103,7 +113,7 @@ const styles = StyleSheet.create({
   },
   card: {
     position: "relative",
-    zIndex: 10,
+    zIndex: 50,
     borderRadius: 20,
     borderWidth: 4,
     borderColor: "#e1e8ed", // backgroundDark

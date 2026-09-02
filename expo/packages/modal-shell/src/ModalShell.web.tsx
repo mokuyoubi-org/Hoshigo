@@ -1,9 +1,14 @@
 // ModalShell.web.tsx
 import React, { useSyncExternalStore } from "react";
 import ReactDOM from "react-dom";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
-import { ModalShellProps } from "./ModalShell";
-import { computeModalBox } from "./modalSizing";
+import {
+  StyleProp,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from "react-native";
+import { computeModalBox, ModalSize } from "./modalSizing";
 
 const emptySubscribe = () => () => {};
 function useIsHydrated() {
@@ -13,6 +18,15 @@ function useIsHydrated() {
     () => false,
   );
 }
+
+type ModalShellProps = {
+  children: React.ReactNode;
+  onClose?: () => void;
+  style?: StyleProp<ViewStyle>;
+  dismissKeyboardOnPress?: boolean;
+  backgroundColor?: string;
+  size?: ModalSize;
+};
 
 export function ModalShell({
   children,
@@ -79,7 +93,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 99999,
+    zIndex: 50,
     display: "flex" as any,
     justifyContent: "center",
     alignItems: "center",
@@ -95,7 +109,7 @@ const styles = StyleSheet.create({
   },
   card: {
     position: "relative",
-    zIndex: 10,
+    zIndex: 50,
     borderRadius: 20,
     borderWidth: 4,
     borderColor: "#e1e8ed", // backgroundDark

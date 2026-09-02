@@ -44,25 +44,9 @@ function RoutedContent() {
             right: 0,
             bottom: 0,
             backgroundColor: COLORS.background,
-            zIndex: 999,
+            zIndex: 300,
           }}
         />
-      )}
-
-      {/* 🐱 強制アップデート画面(メンテより優先度を高くする) */}
-      {needsUpdate && !isInitializing && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 10000,
-          }}
-        >
-          <ForceUpdateModal />
-        </View>
       )}
 
       {/* 🐱 メンテナンス画面 */}
@@ -74,10 +58,26 @@ function RoutedContent() {
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 9999,
+            zIndex: 301,
           }}
         >
           <MaintenanceModal message={maintenanceMessage} />
+        </View>
+      )}
+
+      {/* 🐱 強制アップデート画面(メンテより優先度を高くする) */}
+      {needsUpdate && !isInitializing && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 302,
+          }}
+        >
+          <ForceUpdateModal />
         </View>
       )}
     </OverlayProvider>
