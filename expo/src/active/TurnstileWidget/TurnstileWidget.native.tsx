@@ -1,4 +1,4 @@
-// TurnstileWidget.tsx
+// TurnstileWidget.native.tsx
 // ネイティブ(iOS/Android)版のTurnstile実装。
 // WebView内で見えないTurnstileチャレンジを実行し、
 // postMessage経由でトークンをRN側に受け渡す。
