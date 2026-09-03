@@ -718,11 +718,21 @@ CREATE OR REPLACE FUNCTION "private"."time_connection_check"() RETURNS "void"
     SET "search_path" TO ''
     AS $$
 declare
-  rec record; -- playing内にあるmatchが一つずつ入る。
+  rec record; -- matches内にあるmatchが一つずつ入る。
   v_is_black_bot boolean; -- ⚫️がbotかどうか
   v_is_white_bot boolean; -- ⚪️がbotかどうか
 begin
-  -- playing内にあるmatchを一つずつ見ていく
+
+ -- 🛡️アーリーリターン: 対象となる試合（playing または pending）が1つもなければ即終了
+  if not exists (
+    select 1
+    from private.matches
+    where status in ('playing', 'pending')
+  ) then
+    return;
+  end if;
+
+  -- ここからが本処理: matches内にあるstatus=playingのmatchを一つずつ見ていく
   for rec in
     select *
     from private.matches m
@@ -811,7 +821,7 @@ declare
   v_match_type     smallint;
   v_human_is_black boolean;
 begin
-  -- 誰も並んでないなら何もせず終了
+  -- 🛡️アーリーリターン: 誰も並んでないなら何もせず終了
   if not exists (select 1 from private.waitlist where board_size = p_board_size) then
     return;
   end if;
