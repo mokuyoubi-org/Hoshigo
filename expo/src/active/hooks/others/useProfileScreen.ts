@@ -3,6 +3,7 @@
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useTranslation } from "@/src/active/language/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
+import { recordsRepo } from "@/src/stable/logics/records-repo";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BoardSize } from "expo-goband";
 import { useState } from "react";
@@ -38,7 +39,7 @@ export function useProfileScreen() {
     }
   };
 
-  const handleUpdateUsername = async (
+const handleUpdateUsername = async (
     newUsername: string,
   ): Promise<string | null> => {
     setLoading(true);
@@ -48,7 +49,6 @@ export function useProfileScreen() {
       });
 
       if (error) {
-        // ざわつきの元だった console.error を消して、普通のログ（log）にする
         console.log("Supabase error:", error.message);
 
         if (error.message.includes("already taken")) {
@@ -57,6 +57,13 @@ export function useProfileScreen() {
           return t("Profile.usernameUpdateFailed");
         }
       } else {
+        // 🆕 1. ログイン中の自分のUIDを取得するにゃ
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // 🆕 2. ローカルDBの対局記録のユーザー名も一括更新するにゃ！
+          await recordsRepo.updateUsername(user.id, newUsername);
+        }
+
         updateProfile({ username: newUsername });
         return null;
       }

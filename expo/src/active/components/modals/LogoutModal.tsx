@@ -40,7 +40,9 @@ export const LogoutModal = ({
 
       <View className="w-full gap-[10px] mt-2">
         <TouchableOpacity
-          className="w-full h-[48px] rounded-[12px] justify-center items-center bg-primaryDark"
+          className={`w-full h-[48px] rounded-[12px] justify-center items-center bg-primaryDark ${
+            loading ? "opacity-40" : ""
+          }`}
           onPress={handleConfirm}
           disabled={loading}
           activeOpacity={0.8}
@@ -55,7 +57,9 @@ export const LogoutModal = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="w-full h-[48px] rounded-[12px] justify-center items-center bg-backgroundDark"
+          className={`w-full h-[48px] rounded-[12px] justify-center items-center bg-backgroundDark ${
+            loading ? "opacity-40" : ""
+          }`}
           onPress={onCancel}
           disabled={loading}
           activeOpacity={0.8}

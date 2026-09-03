@@ -18,6 +18,7 @@ export type RecordsRepo = {
     analysis: RecordAnalysis | null,
   ) => Promise<void>; // 🆕追加
   clearAll: () => Promise<void>; // 🆕追加
+  updateUsername: (uid: string, newUsername: string) => Promise<void>; // 🆕追加
 };
 
 const DB_NAME = "hoshigo-records";
@@ -150,4 +151,57 @@ export const recordsRepo: RecordsRepo = {
       tx.onerror = () => reject(tx.error);
     });
   },
+
+
+
+
+// 🆕自分のUIDに一致するレコードの名前を一括更新！
+  updateUsername: async (uid, newUsername) => {
+    if (typeof indexedDB === "undefined") return;
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.openCursor();
+
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (cursor) {
+          const record = cursor.value;
+          let updated = false;
+          const newRecord = { ...record };
+
+          if (record.black_uid === uid) {
+            newRecord.black_username = newUsername;
+            updated = true;
+          }
+          if (record.white_uid === uid) {
+            newRecord.white_username = newUsername;
+            updated = true;
+          }
+
+          if (updated) {
+            cursor.update(newRecord);
+          }
+          cursor.continue();
+        }
+      };
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
 };

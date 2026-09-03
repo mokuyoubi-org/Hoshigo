@@ -19,6 +19,7 @@ export type RecordsRepo = {
     analysis: RecordAnalysis | null,
   ) => Promise<void>; // 🆕追加
   clearAll: () => Promise<void>; // 🆕追加
+  updateUsername: (uid: string, newUsername: string) => Promise<void>; // 🆕追加
 };
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -166,4 +167,25 @@ export const recordsRepo: RecordsRepo = {
     const db = await getDb();
     await db.execAsync(`DELETE FROM records;`);
   },
+
+
+
+
+// 🆕自分のUIDに一致するレコードの名前を一括更新！
+  updateUsername: async (uid, newUsername) => {
+    const db = await getDb();
+    await db.runAsync(
+      `UPDATE records SET black_username = ? WHERE black_uid = ?`,
+      [newUsername, uid],
+    );
+    await db.runAsync(
+      `UPDATE records SET white_username = ? WHERE white_uid = ?`,
+      [newUsername, uid],
+    );
+  },
+
+
+
+
+
 };
