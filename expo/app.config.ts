@@ -19,7 +19,7 @@ const config: ExpoConfig = {
   slug: process.env.EXPO_PUBLIC_SLUG!,
   version: "1.0.0", // 🌟
   orientation: "portrait",
-  icon: "./assets/images/icon.png",
+  icon: "./assets/icons/icon.png",
   scheme: process.env.EXPO_PUBLIC_SCHEME!,
   userInterfaceStyle: "automatic",
 
@@ -65,7 +65,7 @@ const config: ExpoConfig = {
 
   web: {
     output: "static",
-    favicon: "./assets/images/favicon.png",
+    favicon: "./assets/icons/favicon.png",
     bundler: "metro",
   },
 
