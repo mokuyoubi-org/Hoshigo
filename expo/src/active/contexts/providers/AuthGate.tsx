@@ -14,6 +14,7 @@ import React, { ReactNode, useEffect, useRef } from "react";
 import { useProfileSync } from "../../hooks/others/useProfileSync";
 import { TurnstileHandle, TurnstileWidget } from "../../TurnstileWidget";
 import { useProfile } from "../ProfileContexts";
+import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -84,6 +85,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           setIsInitializing(false);
           return;
         }
+        await clearAllLocalData(); // 前の人のデータが残ってたりするので消しとく
         session = anonData.session;
       }
 
@@ -140,6 +142,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           return;
         }
 
+        await clearAllLocalData();
         const profile = await syncProfile();
         if (!profile) {
           console.error("再匿名化後のプロフィール取得に失敗");

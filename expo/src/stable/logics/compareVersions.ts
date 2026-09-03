@@ -1,4 +1,4 @@
-// @/src/stable/utils/compareVersions.ts
+// compareVersions.ts
 
 /**
  * "1.2.3" 形式のバージョン文字列を比較する。

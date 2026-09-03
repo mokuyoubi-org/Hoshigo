@@ -188,7 +188,7 @@ export function useLoginModal({ onClose, turnstileRef }: Props) {
         }
       }
 
-      await clearAllLocalData();
+      await clearAllLocalData(); // セッション切れの時
       await syncProfile();
       onClose();
     } finally {

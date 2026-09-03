@@ -2,6 +2,7 @@
 import { AgehamaDisplay } from "@/src/active/components/go/Agehama";
 import { AvatarWithPass } from "@/src/active/components/go/AvatarWithPass";
 import { useTranslation } from "@/src/active/language/i18n";
+import { botNameFormatter } from "@/src/stable/logics/nameFormatter";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { secondsToMinutes } from "@/src/stable/logics/timeFormatter";
 import { Color } from "expo-goband";
@@ -62,7 +63,7 @@ export function PlayerCard({
           className="shrink text-base font-semibold text-text"
           numberOfLines={1}
         >
-          {username}
+          {botNameFormatter(username, t)}
         </Text>
 
         <View className="shrink-0 px-2 py-0.5 bg-backgroundDark/50 rounded-full">

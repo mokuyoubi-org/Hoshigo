@@ -29,6 +29,7 @@ export default function IconSelectModal({
   onSelectIcon,
   currentIconIndex,
 }: Props) {
+  
   const t = useTranslation();
   const { height: windowHeight } = useWindowDimensions();
   const iconSize: number = 96;

@@ -3,6 +3,8 @@ import React from "react";
 import { Text, View } from "react-native";
 import { AgehamaDisplay } from "../../go/Agehama";
 import { AvatarWithPass } from "../../go/AvatarWithPass";
+import { botNameFormatter } from "@/src/stable/logics/nameFormatter";
+import { useTranslation } from "@/src/active/language/i18n";
 
 // ===== プレイヤーセル =====
 type PlayerCellProps = {
@@ -24,6 +26,7 @@ export const PlayerCell = React.memo(function PlayerCell({
   showPass,
   agehamaCount,
 }: PlayerCellProps) {
+  const t = useTranslation()
   return (
     <View className={`flex-1 flex-col ${isLeft ? "items-start" : "items-end"}`}>
       <View
@@ -51,7 +54,7 @@ export const PlayerCell = React.memo(function PlayerCell({
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {username}
+            {botNameFormatter(username, t)}
           </Text>
           <AgehamaDisplay count={agehamaCount} />
         </View>

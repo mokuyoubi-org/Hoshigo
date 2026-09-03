@@ -1,5 +1,5 @@
-// GameResultModal.tsx
 import { COLORS } from "@/src/active/constants/colors";
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useLang, useTranslation } from "@/src/active/language/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { FontAwesome, Octicons } from "@expo/vector-icons";
@@ -7,9 +7,17 @@ import { BoardSize } from "expo-goband";
 import { router } from "expo-router";
 import { ModalShell } from "modal-shell";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Animated,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { ICONS } from "../../constants/icons";
 import { useMatching } from "../../contexts/providers/MatchingContext";
+import { useIconUpdate } from "../../hooks/others/useIconUpdate";
 
 type Props = {
   visible: boolean;
@@ -37,6 +45,22 @@ export function GameResultModal({
   const { startMatching, isMatching } = useMatching();
   const t = useTranslation();
   const { lang } = useLang();
+
+  const { iconIndex: currentIconIndex } = useProfile();
+  const { updateIconIndex } = useIconUpdate();
+
+  // 🆕 IconSelectModal と同じパターンで個別くるくるを管理するにゃ
+  const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+
+  const handleSelectIcon = async (iconId: number) => {
+    if (loadingIndex !== null || currentIconIndex === iconId) return;
+    try {
+      setLoadingIndex(iconId);
+      await updateIconIndex(iconId);
+    } finally {
+      setLoadingIndex(null);
+    }
+  };
 
   const { progressAnim, animatedWidth } = useMemo(() => {
     const anim = new Animated.Value(0);
@@ -112,9 +136,9 @@ export function GameResultModal({
 
   return (
     <ModalShell
-      onClose={onClose}
+      onClose={loadingIndex !== null ? () => {} : onClose}
       size="lg"
-      backgroundColor="#ffffff" // foreground
+      backgroundColor="#ffffff"
       style={{ padding: 20, alignItems: "center", justifyContent: "center" }}
     >
       <View className="w-full items-center justify-center">
@@ -146,18 +170,41 @@ export function GameResultModal({
             </Text>
 
             <View className="flex-row flex-wrap justify-center items-center gap-[12px]">
-              {newlyAcquiredIcons.map((iconId) => (
-                <View
-                  key={iconId}
-                  className="items-center p-[8px] rounded-[12px] border-2 border-primaryLight"
-                  style={{ backgroundColor: COLORS.foreground }}
-                >
-                  <Image
-                    source={ICONS[iconId]}
-                    style={{ width: 64, height: 64, resizeMode: "contain" }}
-                  />
-                </View>
-              ))}
+              {newlyAcquiredIcons.map((iconId) => {
+                const isSelected = currentIconIndex === iconId;
+                const isLoadingThis = loadingIndex === iconId;
+
+                return (
+                  <TouchableOpacity
+                    key={iconId}
+                    activeOpacity={0.7}
+                    disabled={loadingIndex !== null}
+                    onPress={() => handleSelectIcon(iconId)}
+                    className={`items-center justify-center p-[8px] rounded-[12px] border-2 ${
+                      isSelected ? "border-primary" : "border-primaryLight"
+                    }`}
+                    style={{
+                      backgroundColor: COLORS.foreground,
+                      width: 80,
+                      height: 80,
+                    }}
+                  >
+                    {isLoadingThis ? (
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                    ) : (
+                      <Image
+                        source={ICONS[iconId]}
+                        style={{
+                          width: 64,
+                          height: 64,
+                          resizeMode: "contain",
+                          opacity: loadingIndex !== null ? 0.5 : 1,
+                        }}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         )}

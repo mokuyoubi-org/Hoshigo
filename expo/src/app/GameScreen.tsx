@@ -34,6 +34,7 @@ import {
   parseGameParams,
 } from "../stable/logics/gameScreenLogics";
 import { getRankInfo } from "../stable/logics/rankLogics";
+import { botNameFormatter } from "../stable/logics/nameFormatter";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -139,7 +140,7 @@ export default function GameScreen() {
         myIconIndex={iconIndex ?? 0}
         myRankIndex={myRankIndex}
         myColor={myColor}
-        oppUsername={oppUsername ?? ""}
+        oppUsername={botNameFormatter(oppUsername, t) ?? ""}
         oppIconIndex={oppIconIndex ?? 0}
         oppPoints={oppPoints ?? 0}
         oppColor={oppColor}
@@ -256,7 +257,7 @@ export default function GameScreen() {
           {/* 相手情報 */}
           <View style={{ width: boardWidth }}>
             <PlayerCard
-              username={oppUsername ?? ""}
+              username={botNameFormatter(oppUsername, t) ?? ""}
               iconIndex={oppIconIndex ?? 0}
               points={oppPoints ?? 0}
               color={oppColor}

@@ -207,6 +207,13 @@ export const dictionary = {
       matchType_9: "9-Stone",
     },
   },
+  BotName: {
+    en: {
+      bot1: "Senna",
+      bot2: "Luna",
+      bot3: "Mr. Bunny"
+    }
+  },
   DeleteModal: {
     en: {
       title: "Delete account?",

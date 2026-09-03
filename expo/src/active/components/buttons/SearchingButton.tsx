@@ -1,6 +1,7 @@
 import { COLORS } from "@/src/active/constants/colors";
 import React, { useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View, Platform } from "react-native";
+import ReactDOM from "react-dom";
 import { useMatching } from "../../contexts/providers/MatchingContext";
 import { useTranslation } from "../../language/i18n";
 
@@ -8,6 +9,7 @@ export const SearchingButton = () => {
   const { isMatching, matchingBoardSize, cancelMatching } = useMatching();
   const [isCanceling, setIsCanceling] = useState(false);
   const t = useTranslation();
+
   if (!isMatching) return null;
 
   const boardSizeText = matchingBoardSize
@@ -25,7 +27,7 @@ export const SearchingButton = () => {
     }
   };
 
-  return (
+  const content = (
     <View
       className={
         "absolute bottom-[90px] left-[20px] right-[20px] items-center z-[100]"
@@ -33,7 +35,6 @@ export const SearchingButton = () => {
       style={{ pointerEvents: "box-none" }}
     >
       <View className="flex-row items-center bg-foreground py-[10px] px-[16px] rounded-[25px] border-[4px] border-backgroundDark">
-        {/* 🌟 キャンセル中で「ない」時だけ、左のクルクルを出す */}
         {!isCanceling && (
           <ActivityIndicator
             size="small"
@@ -42,14 +43,12 @@ export const SearchingButton = () => {
           />
         )}
 
-        {/* 検索中 / キャンセル中テキスト */}
         <Text className="text-[14px] font-semibold text-text mr-[14px]">
           {isCanceling
             ? t("common.canceling")
             : `${t("common.searching")} ${boardSizeText}...`}
         </Text>
 
-        {/* キャンセル（×）ボタン */}
         <TouchableOpacity
           className="w-[32px] h-[32px] rounded-full bg-background justify-center items-center"
           onPress={handleCancel}
@@ -65,4 +64,11 @@ export const SearchingButton = () => {
       </View>
     </View>
   );
+
+  // Webのときだけ body の直下にポータルで飛ばすにゃ！
+  if (Platform.OS === "web" && typeof document !== "undefined") {
+    return ReactDOM.createPortal(content, document.body);
+  }
+
+  return content;
 };

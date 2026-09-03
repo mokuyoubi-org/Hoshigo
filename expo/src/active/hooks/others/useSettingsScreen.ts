@@ -2,7 +2,6 @@
 // useSettingsScreen.ts
 
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useState } from "react";
 import { useMatching } from "../../contexts/providers/MatchingContext";
@@ -30,7 +29,6 @@ export function useSettingsScreen() {
 
   const onLogout = async () => {
     setLoading(true);
-    await clearAllLocalData();
     await supabase.auth.signOut();
     setLoading(false);
   };
@@ -44,7 +42,6 @@ export function useSettingsScreen() {
       setLoading(false);
       return;
     }
-    await clearAllLocalData();
     // サインアウトの結果を受け取る
     const { error: signOutError } = await supabase.auth.signOut({
       scope: "local",

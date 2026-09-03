@@ -1,4 +1,4 @@
-// logics/analysis.ts
+// analysis.ts
 
 import { AnalyzeResult } from "@/packages/expo-katago/src";
 import { MoveAnalysisEntry, RecordAnalysis } from "@/src/active/types/analysis";
