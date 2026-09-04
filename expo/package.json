@@ -15,6 +15,8 @@
     "build:web": "expo export -p web && node fix-node-modules-path.js"
   },
   "dependencies": {
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-community/slider": "5.2.0",
     "@supabase/supabase-js": "^2.93.3",
