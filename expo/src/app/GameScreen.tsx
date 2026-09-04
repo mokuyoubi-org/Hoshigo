@@ -9,7 +9,7 @@ import { GameResultModal } from "@/src/active/components/modals/GameResultModal"
 import LoadingModal from "@/src/active/components/modals/LoadingModal";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
 import { useTranslation } from "@/src/active/language/i18n";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { BLACK, GoBoard, PASS_GRID, ReplayControls } from "expo-goband";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -27,7 +27,7 @@ import { PlayerCard } from "../active/components/go/PlayerCard";
 import { GameStartModal } from "../active/components/modals/GameStartModal";
 import { COLORS } from "../active/constants/colors";
 import { useProfile } from "../active/contexts/ProfileContexts";
-import { useDoubleTapSetting } from "../active/hooks/others/useDoubleTapSetting";
+import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
 import {
   GameScreenParams,
   getPassState,
@@ -230,7 +230,7 @@ export default function GameScreen() {
           {/* ─── 結果ボタン ─── */}
           {!isGameEnded ? (
             <IconButton
-              icon={<Ionicons name="information-circle-outline" />}
+              icon={<FontAwesome6 name="info" />}
               color={COLORS.primary}
               onPress={showGameStartModal}
             />

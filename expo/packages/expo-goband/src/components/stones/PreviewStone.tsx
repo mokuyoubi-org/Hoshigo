@@ -1,7 +1,8 @@
 import React, { memo } from "react";
 import { StyleSheet, View } from "react-native";
-import { COLORS } from "../constants/colors"; // 🐱 共通ファイルから直接importする
-import { BLACK, Color } from "../types/go";
+import { BLACK, Color } from "../..";
+import { COLORS } from "../../constants/colors";
+
 
 type Props = {
   stoneSize: number;

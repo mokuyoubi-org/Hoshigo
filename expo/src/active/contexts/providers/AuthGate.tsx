@@ -13,7 +13,7 @@ import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { useRouter, useSegments } from "expo-router";
 import React, { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
-import { useProfileSync } from "../../hooks/others/useProfileSync";
+import { useProfileSync } from "../../hooks/screens/useProfileSync";
 import { useProfile } from "../ProfileContexts";
 
 export function AuthGate({ children }: { children: ReactNode }) {

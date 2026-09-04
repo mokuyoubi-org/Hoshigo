@@ -21,8 +21,8 @@ import {
   Grid,
   PASS_GRID,
 } from "../types/go";
-import { BoardGridCell } from "./BoardGridCell";
 import { BoardLines } from "./BoardLines";
+import { DecoratedStone } from "./stones/DecoratedStone";
 
 type Props = {
   board: Board;
@@ -35,7 +35,6 @@ type Props = {
   isGameEnded: boolean;
   boardHistory: Board[];
   currentIndex: number;
-  onCurrentIndexChange?: (index: number) => void;
   boardBackgroundColor?: string;
   lineColor?: string;
   agehamaHistory: Agehama[];
@@ -55,10 +54,9 @@ export function GoBoard({
   isGameEnded,
   boardHistory,
   currentIndex,
-  onCurrentIndexChange,
   boardWidth,
   pinPoints,
-  editedPoints = [], // 🐱 受け取るにゃ！
+  editedPoints = [],
   enableDoubleTap = false,
   playerColor = BLACK,
 }: Props) {
@@ -164,8 +162,8 @@ export function GoBoard({
   const showTerritory = isGameEnded && currentIndex === boardHistory.length - 1;
 
   const pinSet = useMemo(() => new Set(pinPoints ?? []), [pinPoints]);
-  
-  // 🐱 判定を高速化するために Set に変換するにゃ！
+
+  // 🐱 判定を高速化するために Set に変換する
   const editedSet = useMemo(() => new Set(editedPoints), [editedPoints]);
 
   return (
@@ -201,7 +199,7 @@ export function GoBoard({
             const c = grid % boardSize;
 
             return (
-              <BoardGridCell
+              <DecoratedStone
                 key={grid}
                 grid={grid}
                 boardSize={boardSize}

@@ -12,11 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  TurnstileHandle,
-  TurnstileWidget,
-} from "turnstile-widget";
-import { useLoginModal } from "../../hooks/others/useLoginModal";
+import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
+import { useLoginModal } from "../../hooks/screens/useLoginModal";
 
 type Props = {
   visible: boolean;

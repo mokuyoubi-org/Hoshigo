@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { ICONS } from "../../constants/icons";
 import { useMatching } from "../../contexts/providers/MatchingContext";
-import { useIconUpdate } from "../../hooks/others/useIconUpdate";
+import { useIconUpdate } from "../../hooks/screens/useIconUpdate";
 
 type Props = {
   visible: boolean;

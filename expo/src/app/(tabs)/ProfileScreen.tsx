@@ -21,7 +21,7 @@ import RankInfoModal from "@/src/active/components/modals/RankInfoModal";
 import UsernameEditModal from "@/src/active/components/modals/UsernameEditModal";
 import { COLORS } from "@/src/active/constants/colors";
 import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
-import { useProfileScreen } from "@/src/active/hooks/others/useProfileScreen";
+import { useProfileScreen } from "@/src/active/hooks/screens/useProfileScreen";
 import { useTranslation } from "@/src/active/language/i18n";
 import { BOARD_SIZE_OPTIONS } from "expo-goband";
 import { useOverlay } from "react-overlay";

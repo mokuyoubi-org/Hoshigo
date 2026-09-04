@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { View } from "react-native";
-import { COLORS } from "../constants/colors";
+import { COLORS } from "../../constants/colors";
+
 
 type TerritoryProps = {
   territoryValue?: number;

@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { StyleSheet, View } from "react-native";
 import { COLORS } from "../constants/colors";
 
-type BoardLinesProps = {
+type Props = {
   boardSize: number;
   innerWidth: number;
   cellSize: number;
@@ -15,7 +15,7 @@ export const BoardLines = memo(function BoardLines({
   innerWidth,
   cellSize,
   lineWidth,
-}: BoardLinesProps) {
+}: Props) {
   return (
     <>
       {Array.from({ length: boardSize }).map((_, i) => (

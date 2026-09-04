@@ -9,8 +9,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useOverlay } from "react-overlay";
 import { ToggleSwitch } from "ui-atoms";
 import { useProfile } from "../active/contexts/ProfileContexts";
-import { useDoubleTapSetting } from "../active/hooks/others/useDoubleTapSetting";
-import { useSettingsScreen } from "../active/hooks/others/useSettingsScreen";
+import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
+import { useSettingsScreen } from "../active/hooks/screens/useSettingsScreen";
 import { openURL } from "../stable/logics/linking";
 
 export default function SettingsScreen() {
