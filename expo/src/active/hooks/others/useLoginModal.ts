@@ -2,26 +2,26 @@
 // useLoginModal.ts
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useTranslation } from "@/src/active/language/i18n";
+import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { isValidEmail } from "@/src/stable/logics/validationLogics";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import React, { useEffect, useState } from "react";
-import { TurnstileHandle } from "../../TurnstileWidget";
+import { TurnstileHandle } from "turnstile-widget";
 import { useProfileSync } from "./useProfileSync";
-import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 
 export type Step = "email" | "otp" | "selection";
 type Path = "link" | "signin" | null;
 
 export type ExistingPreview = {
   username: string;
-  points_9: number;
-  points_13: number;
+  rating_9: number;
+  rating_13: number;
 } | null;
 
 type GuestSnapshot = {
   username: string;
-  points9: number;
-  points13: number;
+  rating9: number;
+  rating13: number;
 };
 
 export type Selection = "guest" | "existing" | null;
@@ -29,11 +29,11 @@ export type Selection = "guest" | "existing" | null;
 type Props = {
   onClose: () => void;
   turnstileRef?: React.RefObject<TurnstileHandle | null>; // ← | null を追加だにゃ！
-}
+};
 
 export function useLoginModal({ onClose, turnstileRef }: Props) {
   const t = useTranslation();
-  const { username, points9, points13 } = useProfile();
+  const { username, rating9, rating13 } = useProfile();
   const { syncProfile } = useProfileSync();
 
   const [step, setStep] = useState<Step>("email");
@@ -46,8 +46,8 @@ export function useLoginModal({ onClose, turnstileRef }: Props) {
   const [guestUid, setGuestUid] = useState<string | undefined>(undefined);
   const [guestSnapshot] = useState<GuestSnapshot>(() => ({
     username: username ?? "",
-    points9: points9 ?? 0,
-    points13: points13 ?? 0,
+    rating9: rating9 ?? 0,
+    rating13: rating13 ?? 0,
   }));
   const [existingPreview, setExistingPreview] = useState<ExistingPreview>(null);
   const [selection, setSelection] = useState<Selection>(null);

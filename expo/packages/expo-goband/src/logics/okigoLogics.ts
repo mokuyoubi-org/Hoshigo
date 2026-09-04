@@ -10,17 +10,25 @@ export const generateOkigoBoard = (
   const m = (r: number, c: number) => makeGrid(r, c, boardSize);
 
   if (boardSize === 9) {
-    const points: Record<number, Grid[]> = {
+    const okiishiGrids: Record<MatchType, Grid[]> = {
+      0: [],
+      1: [],
       2: [m(3, 7), m(7, 3)],
       3: [m(3, 7), m(7, 3), m(7, 7)],
       4: [m(3, 3), m(7, 7), m(7, 3), m(3, 7)],
       5: [m(3, 3), m(7, 7), m(7, 3), m(3, 7), m(5, 5)],
+      6: [],
+      7: [],
+      8: [],
+      9: [],
     };
-    for (const pt of points[matchType] ?? []) {
-      board = applyMove(boardSize, pt, board, BLACK).board;
+    for (const grid of okiishiGrids[matchType] ?? []) {
+      board = applyMove(boardSize, grid, board, BLACK).board;
     }
   } else if (boardSize === 13) {
-    const points: Record<number, Grid[]> = {
+    const okiishiGrids: Record<MatchType, Grid[]> = {
+      0: [],
+      1: [],
       2: [m(4, 10), m(10, 4)],
       3: [m(4, 10), m(10, 4), m(10, 10)],
       4: [m(4, 4), m(10, 10), m(10, 4), m(4, 10)],
@@ -49,8 +57,8 @@ export const generateOkigoBoard = (
         m(4, 7),
       ],
     };
-    for (const pt of points[matchType] ?? []) {
-      board = applyMove(boardSize, pt, board, BLACK).board;
+    for (const grid of okiishiGrids[matchType] ?? []) {
+      board = applyMove(boardSize, grid, board, BLACK).board;
     }
   }
   return board;

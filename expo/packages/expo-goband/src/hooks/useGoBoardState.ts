@@ -11,7 +11,7 @@
 //   - computeTerritory  : 終局時の地合い計算
 //   - goToLatest        : リプレイ後、最新局面に戻る
 //
-// これにより、Playing.tsx側は「盤面の中身をどう更新するか」を知らなくてよくなる。
+// これにより、GameScreen.tsx側は「盤面の中身をどう更新するか」を知らなくてよくなる。
 //
 // ─── ref vs state の使い分け ───
 // render(JSXの中)で読まれる値は必ずstateにする(moves / territoryBoard など)。

@@ -2,17 +2,19 @@
 import { AgehamaDisplay } from "@/src/active/components/go/Agehama";
 import { AvatarWithPass } from "@/src/active/components/go/AvatarWithPass";
 import { useTranslation } from "@/src/active/language/i18n";
-import { botNameFormatter } from "@/src/stable/logics/nameFormatter";
+import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { secondsToMinutes } from "@/src/stable/logics/timeFormatter";
+import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
 import { Color } from "expo-goband";
 import React from "react";
 import { Text, View } from "react-native";
+import { COLORS } from "../../constants/colors";
 
 type Props = {
   username: string;
   iconIndex: number;
-  points: number;
+  rating: number;
   color: Color;
   isLeft: boolean;
   showPass: boolean;
@@ -24,7 +26,7 @@ type Props = {
 export function PlayerCard({
   username,
   iconIndex,
-  points,
+  rating: rating,
   color,
   isLeft,
   showPass,
@@ -33,7 +35,7 @@ export function PlayerCard({
   isMyTurn,
 }: Props) {
   const t = useTranslation();
-  const rank = getRankInfo(points, t);
+  const rank = getRankInfo(rating, t);
 
   return (
     <View
@@ -59,12 +61,30 @@ export function PlayerCard({
           isLeft ? "flex-row" : "flex-row-reverse"
         }`}
       >
-        <Text
-          className="shrink text-base font-semibold text-text"
-          numberOfLines={1}
+        {/* 名前とボットマークを表示するコンテナ */}
+        <View
+          className={`shrink flex-row items-center min-w-0 ${
+            isLeft ? "flex-row" : "flex-row-reverse"
+          }`}
         >
-          {botNameFormatter(username, t)}
-        </Text>
+          <Text
+            className="shrink text-base font-semibold text-text"
+            numberOfLines={1}
+          >
+            {botNameFormatter(username, t)}
+          </Text>
+          {isBot(username) && (
+            <MaterialCommunityIcons
+              name="robot"
+              size={14}
+              color={COLORS.textSub}
+              style={{
+                marginLeft: 4,
+                marginRight: 0,
+              }}
+            />
+          )}
+        </View>
 
         <View className="shrink-0 px-2 py-0.5 bg-backgroundDark/50 rounded-full">
           <Text className="text-xs font-medium text-textSub">{rank.name}</Text>

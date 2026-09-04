@@ -48,7 +48,7 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
   const { height: windowHeight } = useWindowDimensions();
 
   // 🐱 親から届いた rankInfo からポイントを取得する
-  const points = rankInfo.points;
+  const rating = rankInfo.rating;
 
   const colorBundles = useMemo(() => buildColorBundles(), []);
 
@@ -66,7 +66,7 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
       {/* 📌【固定②】現在のくみ */}
       <View className="w-full rounded-[20px] p-[22px] items-center mb-4 bg-foreground border-[1.5px] border-background">
         <Text className="text-xs font-bold mb-2.5 tracking-widest text-textSub">
-          {t("RankInfoModal.yourCurrentPoint")}
+          {t("RankInfoModal.yourCurrentRating")}
         </Text>
         <Text
           className="text-[34px] font-extrabold mb-1.5"
@@ -74,14 +74,14 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
             color: COLORS[rankInfo.color as keyof typeof COLORS] || COLORS.text,
           }}
         >
-          {points}pt
+          {rating}
         </Text>
 
         {rankInfo.next && (
           <Text className="text-sm font-semibold text-textSub">
             {t("RankInfoModal.remaining", {
               nextRank: rankInfo.next.name,
-              points: rankInfo.next.pointsNeeded,
+              rating: rankInfo.next.ratingNeeded,
             })}
           </Text>
         )}
@@ -105,18 +105,18 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
             const tierCount = bundle.indices.length;
             const rankItems = bundle.indices.map((i) => RANKS[i]);
 
-            const bundleStart = rankItems[0]?.minPoints ?? 0;
+            const bundleStart = rankItems[0]?.minRating ?? 0;
             const nextRank =
               RANKS[bundle.indices[bundle.indices.length - 1] + 1];
-            const bundleEnd = nextRank?.minPoints ?? null;
+            const bundleEnd = nextRank?.minRating ?? null;
 
-            const boundaryPoints = [
-              ...rankItems.map((g) => g.minPoints),
+            const boundaryRating = [
+              ...rankItems.map((g) => g.minRating),
               bundleEnd,
             ];
 
-            const isPastBundle = bundleEnd !== null && points >= bundleEnd;
-            const isFutureBundle = points < bundleStart;
+            const isPastBundle = bundleEnd !== null && rating >= bundleEnd;
+            const isFutureBundle = rating < bundleStart;
 
             let fillFraction = 0;
             if (isPastBundle) {
@@ -125,22 +125,22 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
               fillFraction = 0;
             } else {
               const currentSubTierIndex = rankItems.findIndex((rank, idx) => {
-                const nextMin = rankItems[idx + 1]?.minPoints ?? bundleEnd;
-                return nextMin === null || points < nextMin;
+                const nextMin = rankItems[idx + 1]?.minRating ?? bundleEnd;
+                return nextMin === null || rating < nextMin;
               });
 
               if (currentSubTierIndex !== -1) {
                 const currentSubRank = rankItems[currentSubTierIndex];
-                const nextMinPoints =
-                  rankItems[currentSubTierIndex + 1]?.minPoints ?? bundleEnd;
+                const nextMinRating =
+                  rankItems[currentSubTierIndex + 1]?.minRating ?? bundleEnd;
 
-                const tierStart = currentSubRank.minPoints;
-                const tierEnd = nextMinPoints;
+                const tierStart = currentSubRank.minRating;
+                const tierEnd = nextMinRating;
 
                 let subTierFraction = 1;
                 if (tierEnd !== null && tierEnd > tierStart) {
                   subTierFraction = Math.min(
-                    Math.max((points - tierStart) / (tierEnd - tierStart), 0),
+                    Math.max((rating - tierStart) / (tierEnd - tierStart), 0),
                     1,
                   );
                 }
@@ -197,7 +197,7 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
                 </View>
 
                 <View className="flex-row justify-between">
-                  {boundaryPoints.map((p, i) => (
+                  {boundaryRating.map((p, i) => (
                     <Text
                       key={i}
                       className="text-[11px] font-semibold text-textSub"

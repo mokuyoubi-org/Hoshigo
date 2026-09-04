@@ -12,13 +12,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { TurnstileHandle, TurnstileWidget } from "../../TurnstileWidget";
+import {
+  TurnstileHandle,
+  TurnstileWidget,
+} from "turnstile-widget";
 import { useLoginModal } from "../../hooks/others/useLoginModal";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-}
+};
 
 export function LoginModal({ visible, onClose }: Props) {
   const turnstileRef = useRef<TurnstileHandle>(null);
@@ -244,8 +247,8 @@ export function LoginModal({ visible, onClose }: Props) {
                       {guestSnapshot.username}
                     </Text>
                     <Text className="text-xs mt-1 text-textSub">
-                      9x9: {guestSnapshot.points9}pt / 13x13:{" "}
-                      {guestSnapshot.points13}pt
+                      9x9: {guestSnapshot.rating9}pts / 13x13:{" "}
+                      {guestSnapshot.rating13}pts
                     </Text>
                   </TouchableOpacity>
 
@@ -266,8 +269,8 @@ export function LoginModal({ visible, onClose }: Props) {
                       {existingPreview.username}
                     </Text>
                     <Text className="text-xs mt-1 text-textSub">
-                      9x9: {existingPreview.points_9}pt / 13x13:{" "}
-                      {existingPreview.points_13}pt
+                      9x9: {existingPreview.rating_9}pts / 13x13:{" "}
+                      {existingPreview.rating_13}pts
                     </Text>
                   </TouchableOpacity>
                 </View>

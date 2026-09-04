@@ -11,9 +11,9 @@ import { Alert } from "react-native";
 
 export function useProfileScreen() {
   const t = useTranslation();
-  const { username, iconIndex, isAnonymous, updateProfile, points9, points13 } =
+  const { username, iconIndex, isAnonymous, updateProfile, rating9, rating13 } =
     useProfile();
-  const [rank9, rank13] = [getRankInfo(points9, t), getRankInfo(points13, t)];
+  const [rank9, rank13] = [getRankInfo(rating9, t), getRankInfo(rating13, t)];
 
   // 選択中の盤面サイズ（9路 or 13路）
   const [boardSize, setBoardSize] = useState<BoardSize>(9);

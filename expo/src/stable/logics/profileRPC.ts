@@ -4,11 +4,15 @@ import { supabase } from "@/src/stable/services/supabase/supabase";
 
 export type ProfileData = {
   username: string;
-  points9: number;
-  points13: number;
+  rating9: number;
+  rating13: number;
   iconIndex: number;
-  games9: number;
-  games13: number;
+  wins9: number;
+  losses9: number;
+  draws9: number;
+  wins13: number;
+  losses13: number;
+  draws13: number;
   acquiredIcons: number[];
   allowBotMatch: boolean;
 };
@@ -70,11 +74,15 @@ export async function fetchProfileRPC(): Promise<FetchProfileResult | null> {
   const profile: ProfileData | null = rawProfile
     ? {
         username: rawProfile.username ?? "",
-        points9: rawProfile.points_9 ?? 0,
-        points13: rawProfile.points_13 ?? 0,
+        rating9: rawProfile.rating_9 ?? 0,
+        rating13: rawProfile.rating_13 ?? 0,
         iconIndex: rawProfile.icon_index ?? 0,
-        games9: rawProfile.games_9 ?? 0,
-        games13: rawProfile.games_13 ?? 0,
+        wins9: rawProfile.wins_9 ?? 0,
+        losses9: rawProfile.losses_9 ?? 0,
+        draws9: rawProfile.draws_9 ?? 0,
+        wins13: rawProfile.wins_13 ?? 0,
+        losses13: rawProfile.losses_13 ?? 0,
+        draws13: rawProfile.draws_13 ?? 0,
         acquiredIcons: rawProfile.acquired_icons ?? [],
         allowBotMatch: rawProfile.allow_bot_match ?? false,
       }

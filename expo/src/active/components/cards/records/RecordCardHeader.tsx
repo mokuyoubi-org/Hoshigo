@@ -11,7 +11,6 @@ import { Agehama, BLACK, MatchType, WHITE } from "expo-goband";
 import React, { useMemo } from "react";
 import { Text, View } from "react-native";
 import { PlayerCell } from "./PlayerCell";
-import { botNameFormatter } from "@/src/stable/logics/nameFormatter";
 
 type HeaderProps = {
   record: RecordType;
@@ -78,7 +77,7 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
     <View className="w-full flex-row items-end px-2 pt-2.5 pb-2">
       <PlayerCell
         isLeft
-        username={botNameFormatter(self(record.black_username, record.white_username), t)}
+        username={self(record.black_username, record.white_username)}
         iconIndex={self(record.black_icon_index, record.white_icon_index) ?? 0}
         rankIndex={self(record.black_rank_index, record.white_rank_index) ?? 0}
         color={isPlayerBlack ? BLACK : WHITE}
@@ -115,12 +114,13 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
 
       <PlayerCell
         isLeft={false}
-        username={botNameFormatter(opp(record.black_username, record.white_username), t)}
+        username={opp(record.black_username, record.white_username)}
         iconIndex={opp(record.black_icon_index, record.white_icon_index) ?? 0}
         rankIndex={opp(record.black_rank_index, record.white_rank_index) ?? 0}
         color={!isPlayerBlack ? BLACK : WHITE}
         showPass={!isPlayerBlack ? isBlackPass : isWhitePass}
         agehamaCount={opp(currentAgehama.black, currentAgehama.white)}
+        playerWin={playerWin}
       />
     </View>
   );

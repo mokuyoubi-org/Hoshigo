@@ -34,7 +34,6 @@ import {
   parseGameParams,
 } from "../stable/logics/gameScreenLogics";
 import { getRankInfo } from "../stable/logics/rankLogics";
-import { botNameFormatter } from "../stable/logics/nameFormatter";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -64,8 +63,8 @@ export default function GameScreen() {
     height * LAYOUT_CONFIG.BOARD_HEIGHT_RATIO,
   );
   // 対局する人の情報
-  const { iconIndex, username, points9, points13 } = useProfile();
-  const [rank9, rank13] = [getRankInfo(points9, t), getRankInfo(points13, t)];
+  const { iconIndex, username, rating9, rating13 } = useProfile();
+  const [rank9, rank13] = [getRankInfo(rating9, t), getRankInfo(rating13, t)];
   const params = useLocalSearchParams<GameScreenParams>();
   const {
     matchId,
@@ -76,11 +75,11 @@ export default function GameScreen() {
     boardSize,
     botMatch,
     oppUsername,
-    oppPoints,
+    oppRating,
     oppIconIndex,
   } = parseGameParams(params);
   const myRankIndex = (boardSize === 9 ? rank9.index : rank13.index) ?? 0;
-  const myPoints = (boardSize === 9 ? points9 : points13) ?? 0;
+  const myRating = (boardSize === 9 ? rating9 : rating13) ?? 0;
   // 🌟useMatchSession呼び出し！
   const {
     boardHistory,
@@ -99,8 +98,8 @@ export default function GameScreen() {
     handlePutStone,
     handleResign,
     turnState,
-    pointsBefore,
-    pointsAfter,
+    ratingBefore,
+    ratingAfter,
     rankIndexBefore,
     rankIndexAfter,
     newlyAcquiredIcons,
@@ -140,9 +139,9 @@ export default function GameScreen() {
         myIconIndex={iconIndex ?? 0}
         myRankIndex={myRankIndex}
         myColor={myColor}
-        oppUsername={botNameFormatter(oppUsername, t) ?? ""}
+        oppUsername={oppUsername ?? ""}
         oppIconIndex={oppIconIndex ?? 0}
-        oppPoints={oppPoints ?? 0}
+        oppRating={oppRating ?? 0}
         oppColor={oppColor}
         matchType={matchType}
         onClose={hide}
@@ -158,8 +157,8 @@ export default function GameScreen() {
         visible={true}
         resultComment={resultComment}
         onClose={onClose}
-        pointsBefore={pointsBefore}
-        pointsAfter={pointsAfter}
+        ratingBefore={ratingBefore}
+        ratingAfter={ratingAfter}
         rankIndexBefore={rankIndexBefore}
         rankIndexAfter={rankIndexAfter}
         newlyAcquiredIcons={newlyAcquiredIcons}
@@ -257,9 +256,9 @@ export default function GameScreen() {
           {/* 相手情報 */}
           <View style={{ width: boardWidth }}>
             <PlayerCard
-              username={botNameFormatter(oppUsername, t) ?? ""}
+              username={oppUsername ?? ""}
               iconIndex={oppIconIndex ?? 0}
-              points={oppPoints ?? 0}
+              rating={oppRating ?? 0}
               color={oppColor}
               isLeft={true}
               showPass={oppColor === BLACK ? isBlackPass : isWhitePass}
@@ -295,7 +294,7 @@ export default function GameScreen() {
             <PlayerCard
               username={username ?? ""}
               iconIndex={iconIndex ?? 0}
-              points={myPoints}
+              rating={myRating}
               color={myColor}
               isLeft={false}
               showPass={myColor === BLACK ? isBlackPass : isWhitePass}

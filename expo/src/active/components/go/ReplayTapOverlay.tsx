@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import React from "react";
+import { View, Pressable, StyleSheet } from "react-native";
 
 // 🐱 ② 左右タップ用オーバーレイのコンポーネント（GoBoardの中に閉じ込める）
 type ReplayTapOverlayProps = {

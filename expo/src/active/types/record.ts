@@ -12,8 +12,8 @@ export type RecordType = {
   white_icon_index: number;
   black_rank_index: number;
   white_rank_index: number;
-  black_points: number;
-  white_points: number;
+  black_rating: number;
+  white_rating: number;
   board_size: BoardSize;
   result: string | null;
   moves: number[];

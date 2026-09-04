@@ -59,7 +59,7 @@ export function useMatchSession({
   const { boardRef, movesRef } = goBoard;
   const botMove = useBotMove(myColor, boardSize, oppUsername);
   const endgame = useEndgameAnalysis();
-  const { points9, points13, acquiredIcons, updateProfile } = useProfile();
+  const { rating9, rating13, acquiredIcons, updateProfile } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,11 +67,11 @@ export function useMatchSession({
   const [matchResult, setMatchResult] = useState<
     Omit<MatchResultUpdate, "profilePatch">
   >(() => {
-    const initialPoints = (boardSize === 9 ? points9 : points13) ?? 0;
+    const initialRating = (boardSize === 9 ? rating9 : rating13) ?? 0;
     return {
-      pointsBefore: initialPoints,
-      rankIndexBefore: getRankInfo(initialPoints, t).index,
-      pointsAfter: 0,
+      ratingBefore: initialRating,
+      rankIndexBefore: getRankInfo(initialRating, t).index,
+      ratingAfter: 0,
       rankIndexAfter: 0,
       newlyAcquiredIcons: [],
     };
@@ -289,7 +289,7 @@ export function useMatchSession({
 
       if (data) console.log("result提出成功:", data);
       // 🥶 成功時はここでloadingを解除しない。実際の終局処理は
-      // gameCh_points_updated の data.result 受信時に setLoading(false) される想定のため。
+      // gameCh_rating_updated の data.result 受信時に setLoading(false) される想定のため。
     } catch (e) {
       console.error("ダブルパス処理で例外発生:", e);
       setLoading(false); // 🥶 例外時も同様に固まらないよう解除
@@ -297,7 +297,7 @@ export function useMatchSession({
   };
 
   // gameチャンネルからポイント更新の通知が来た時の処理。
-  const gameCh_points_updated = (payload: any) => {
+  const gameCh_rating_updated = (payload: any) => {
     const data = payload.payload ?? payload;
     if (!data) return;
 
@@ -307,8 +307,8 @@ export function useMatchSession({
       const updated = computeMatchResultUpdate(
         boardSize,
         myData,
-        points9 ?? 0,
-        points13 ?? 0,
+        rating9 ?? 0,
+        rating13 ?? 0,
         acquiredIcons ?? [],
         t,
       );
@@ -339,7 +339,7 @@ export function useMatchSession({
     {
       onMove: gameCh_move,
       onDoublePass: gameCh_double_pass,
-      onPointsUpdated: gameCh_points_updated,
+      onRatingUpdated: gameCh_rating_updated,
     },
     !isGameEnded,
   );

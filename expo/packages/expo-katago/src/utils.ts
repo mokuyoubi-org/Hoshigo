@@ -100,17 +100,25 @@ export const generateOkigoBoard = (
   const m = (r: number, c: number) => makeGrid(r, c, boardSize);
 
   if (boardSize === 9) {
-    const points: Record<number, Grid[]> = {
+    const okiishiGrids: Record<MatchType, Grid[]> = {
+      0: [],
+      1: [],
       2: [m(3, 7), m(7, 3)],
       3: [m(3, 7), m(7, 3), m(7, 7)],
       4: [m(3, 3), m(7, 7), m(7, 3), m(3, 7)],
       5: [m(3, 3), m(7, 7), m(7, 3), m(3, 7), m(5, 5)],
+      6: [],
+      7: [],
+      8: [],
+      9: [],
     };
-    for (const pt of points[matchType] ?? []) {
-      board = applyMove(boardSize, pt, board, BLACK).board;
+    for (const grid of okiishiGrids[matchType] ?? []) {
+      board = applyMove(boardSize, grid, board, BLACK).board;
     }
   } else if (boardSize === 13) {
-    const points: Record<number, Grid[]> = {
+    const okiishiGrids: Record<MatchType, Grid[]> = {
+      0: [],
+      1: [],
       2: [m(4, 10), m(10, 4)],
       3: [m(4, 10), m(10, 4), m(10, 10)],
       4: [m(4, 4), m(10, 10), m(10, 4), m(4, 10)],
@@ -139,11 +147,13 @@ export const generateOkigoBoard = (
         m(4, 7),
       ],
     };
-    for (const pt of points[matchType] ?? []) {
-      board = applyMove(boardSize, pt, board, BLACK).board;
+    for (const grid of okiishiGrids[matchType] ?? []) {
+      board = applyMove(boardSize, grid, board, BLACK).board;
     }
   } else if (boardSize === 19) {
-    const points: Record<number, Grid[]> = {
+    const okiishiGrids: Record<MatchType, Grid[]> = {
+      0: [],
+      1: [],
       2: [m(4, 16), m(16, 4)],
       3: [m(4, 16), m(16, 4), m(16, 16)],
       4: [m(4, 4), m(16, 16), m(16, 4), m(4, 16)],
@@ -180,8 +190,8 @@ export const generateOkigoBoard = (
         m(4, 10),
       ],
     };
-    for (const pt of points[matchType] ?? []) {
-      board = applyMove(boardSize, pt, board, BLACK).board;
+    for (const grid of okiishiGrids[matchType] ?? []) {
+      board = applyMove(boardSize, grid, board, BLACK).board;
     }
   }
   return board;
@@ -277,11 +287,7 @@ const mergeGoStrings = (
 // ====================================================================================
 
 /** 🟩🟦 (行, 列) の 1-based インデックスから 0〜80 の Grid 数値を生成する */
- const makeGrid = (
-  row: number,
-  col: number,
-  boardSize: BoardSize,
-): Grid => {
+const makeGrid = (row: number, col: number, boardSize: BoardSize): Grid => {
   const safeRow = Math.max(1, row);
   const safeCol = Math.max(1, col);
   return (safeRow - 1) * boardSize + (safeCol - 1);
@@ -292,11 +298,11 @@ export const getOppositeColor = (color: Color): Color =>
   color === BLACK ? WHITE : BLACK;
 
 /** 🟩🟦 空の盤面（オブジェクト）を作成する */
- const initBoard = (boardSize: BoardSize): Board =>
+const initBoard = (boardSize: BoardSize): Board =>
   new Array(boardSize * boardSize).fill(null);
 
 /** 🟩🟦 Boardをディープコピーする（参照関係を維持） */
- const cloneBoard = (board: Board): Board => {
+const cloneBoard = (board: Board): Board => {
   const newBoard: Board = new Array(board.length);
   const goStringMap = new Map<GoString, GoString>();
 
@@ -322,7 +328,7 @@ export const getOppositeColor = (color: Color): Color =>
 };
 
 /** 🟩🟦 着手処理（安全のためにクローンした盤面を操作して返す） */
- const applyMove = (
+const applyMove = (
   boardSize: BoardSize,
   grid: Grid,
   board: Board,

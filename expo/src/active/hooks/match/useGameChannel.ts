@@ -4,7 +4,7 @@ import { useRealtimeChannel } from "supabase-toolkit";
 export type GameChannelHandlers = {
   onMove: (payload: any) => void;
   onDoublePass: (payload: any) => void;
-  onPointsUpdated?: (payload: any) => void;
+  onRatingUpdated?: (payload: any) => void;
 };
 
 export function useGameChannel(
@@ -19,7 +19,7 @@ export function useGameChannel(
     {
       move: handlers.onMove,
       double_pass: handlers.onDoublePass,
-      points_updated: handlers.onPointsUpdated ?? (() => {}),
+      rating_updated: handlers.onRatingUpdated ?? (() => {}),
     },
     enabled,
   );

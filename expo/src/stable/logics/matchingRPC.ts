@@ -10,7 +10,7 @@ export type PlayingParams = {
   moves: string;
   myColor: string;
   oppUsername: string;
-  oppPoints: number;
+  oppRating: number;
   oppIconIndex: number;
   mySeconds: number;
   oppSeconds: number;
@@ -24,7 +24,7 @@ export const formatPlayingParams = (data: any): PlayingParams => ({
   moves: JSON.stringify(data.moves ?? []),
   myColor: data.my_color,
   oppUsername: data.opp_username ?? "対戦相手",
-  oppPoints: data.opp_points ?? 0,
+  oppRating: data.opp_rating ?? 0,
   oppIconIndex: data.opp_icon_index ?? 0,
   mySeconds: data.my_seconds ?? 0,
   oppSeconds: data.opp_seconds ?? 0,

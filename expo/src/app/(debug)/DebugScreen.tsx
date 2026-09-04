@@ -19,8 +19,8 @@ export default function DebugScreen() {
         visible={true}
         resultComment={"a"}
         onClose={() => {}}
-        pointsBefore={0}
-        pointsAfter={10}
+        ratingBefore={0}
+        ratingAfter={10}
         rankIndexBefore={0}
         rankIndexAfter={0}
         newlyAcquiredIcons={[]}
@@ -33,7 +33,7 @@ export default function DebugScreen() {
               myColor={ 1}
               oppUsername={""}
               oppIconIndex={ 0}
-              oppPoints={ 0}
+              oppRating={ 0}
               oppColor={2}
               matchType={3}
               onClose={()=>{}}

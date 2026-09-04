@@ -1,11 +1,9 @@
-// packages/expo-katago/src/web-katrain/modelManager.web.ts
+// modelManager.ts
 
 import { getModelFromIDB, saveModelToIDB } from "./modelStorage";
 
 export type ModelId = "b6" | "b10" | "b18";
-export const DEFAULT_MODEL_ID: ModelId = "b10";
-
-console.log("modelManager.web.ts");
+export const DEFAULT_MODEL_ID: ModelId = "b6";
 
 const MODEL_URLS: Record<ModelId, string> = {
   b6: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/g170-b6c96-s175395328-d26788732.bin.gz",
@@ -13,7 +11,15 @@ const MODEL_URLS: Record<ModelId, string> = {
   b18: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/kata1-b18c384nbt-s9996604416-d4316597426.bin.gz",
 };
 
-export async function readModelData(id: ModelId): Promise<Uint8Array> {
+export type ModelDownloadProgress = {
+  loaded: number;
+  total: number; // content-lengthが取れない場合は0
+};
+
+export async function readModelData(
+  id: ModelId,
+  onProgress?: (progress: ModelDownloadProgress) => void,
+): Promise<Uint8Array> {
   console.log("[readModelData]環境: web");
   // 1. まずIndexedDBにあるか確認
   const cachedData = await getModelFromIDB(id);
@@ -22,20 +28,37 @@ export async function readModelData(id: ModelId): Promise<Uint8Array> {
     return cachedData;
   }
 
-  // 2. なければR2からダウンロード
+  // 2. なければR2からダウンロード（ストリーミングで進捗を追いかける）
   const url = MODEL_URLS[id];
   if (!url) throw new Error(`未定義のModelId: ${id}`);
 
   console.log(`☁️ [modelManager.web] R2から ${id} のダウンロードを開始...`);
   const response = await fetch(url);
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
     throw new Error(
       `[R2] モデルの取得に失敗した (${id}): ${response.statusText}`,
     );
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
+  const total = Number(response.headers.get("content-length")) || 0;
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let loaded = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    loaded += value.length;
+    onProgress?.({ loaded, total });
+  }
+
+  const uint8Array = new Uint8Array(loaded);
+  let offset = 0;
+  for (const chunk of chunks) {
+    uint8Array.set(chunk, offset);
+    offset += chunk.length;
+  }
 
   // 3. 次回のためにIndexedDBに保存
   await saveModelToIDB(id, uint8Array);

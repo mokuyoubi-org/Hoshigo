@@ -9,12 +9,12 @@ import {
   supabase,
 } from "@/src/stable/services/supabase/supabase";
 
+import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { useRouter, useSegments } from "expo-router";
 import React, { ReactNode, useEffect, useRef } from "react";
+import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { useProfileSync } from "../../hooks/others/useProfileSync";
-import { TurnstileHandle, TurnstileWidget } from "../../TurnstileWidget";
 import { useProfile } from "../ProfileContexts";
-import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -31,10 +31,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
       username: null,
       iconIndex: 0,
       acquiredIcons: [0],
-      games9: 0,
-      games13: 0,
-      points9: 0,
-      points13: 0,
+      wins9: 0,
+      losses9: 0,
+      draws9: 0,
+      wins13: 0,
+      losses13: 0,
+      draws13: 0,
+      rating9: 0,
+      rating13: 0,
       allowBotMatch: true,
       isAnonymous: true,
     });
@@ -118,6 +122,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("🐱見張り猫 Auth event:", event, "Has session:", !!session);
+        if (event === "INITIAL_SESSION") return; // ← これを追加。初回判定はinitialize()の役目
         if (session) return;
 
         setIsInitializing(true);

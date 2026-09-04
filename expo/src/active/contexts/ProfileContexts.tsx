@@ -8,10 +8,14 @@ export type Profile = {
   username: string | null;
   iconIndex: number | null;
   acquiredIcons: number[] | null;
-  games9: number | null;
-  games13: number | null;
-  points9: number | null;
-  points13: number | null;
+  wins9: number | null;
+  losses9: number | null;
+  draws9: number | null;
+  wins13: number | null;
+  losses13: number | null;
+  draws13: number | null;
+  rating9: number | null;
+  rating13: number | null;
   allowBotMatch: boolean | null;
   isAnonymous: boolean;
 };
@@ -29,10 +33,14 @@ const initialProfile: Profile = {
   username: null,
   iconIndex: 0,
   acquiredIcons: [0],
-  games9: 0,
-  games13: 0,
-  points9: 0,
-  points13: 0,
+  rating9: 0,
+  wins9: 0,
+  losses9: 0,
+  draws9: 0,
+  rating13: 0,
+  wins13: 0,
+  losses13: 0,
+  draws13: 0,
   allowBotMatch: true,
   isAnonymous: true,
 };

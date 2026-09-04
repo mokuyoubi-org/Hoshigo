@@ -23,8 +23,8 @@ type Props = {
   visible: boolean;
   resultComment: string;
   onClose: () => void;
-  pointsBefore: number;
-  pointsAfter: number;
+  ratingBefore: number;
+  ratingAfter: number;
   rankIndexBefore: number;
   rankIndexAfter: number;
   boardSize: BoardSize;
@@ -36,8 +36,8 @@ export function GameResultModal({
   visible,
   resultComment,
   onClose,
-  pointsBefore,
-  pointsAfter,
+  ratingBefore,
+  ratingAfter,
   rankIndexBefore,
   rankIndexAfter,
   newlyAcquiredIcons,
@@ -74,12 +74,12 @@ export function GameResultModal({
   const hasAnimated = useRef(false);
 
   const beforeInfo = useMemo(
-    () => getRankInfo(pointsBefore, t),
-    [pointsBefore, t],
+    () => getRankInfo(ratingBefore, t),
+    [ratingBefore, t],
   );
   const afterInfo = useMemo(
-    () => getRankInfo(pointsAfter, t),
-    [pointsAfter, t],
+    () => getRankInfo(ratingAfter, t),
+    [ratingAfter, t],
   );
 
   const rankColor =

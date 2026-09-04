@@ -2,7 +2,8 @@
 //
 // ─── このhookの責務 ───────────────────────────────────
 // 終局時にKataGoへ「死に石はどれ？」を聞くだけの専用hook。useBotMoveと
-// 対になる存在で、こちらは常にb18(最も精度の高いモデル)を固定で使う。
+// 対になる存在で、こちらは精度優先でb18を使いたいが、b18がまだ準備
+// できていない場合はb10、それも無ければb6にフォールバックする。
 // ──────────────────────────────────────────────────
 
 import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
@@ -17,6 +18,9 @@ import {
   WHITE,
 } from "expo-goband";
 import { useKataGo } from "expo-katago";
+
+// 精度が高い順。実際に使われるのはこの中で今すぐ使えるものだけ。
+const MODEL_PREFERENCE_ORDER = ["b18", "b10", "b6"] as const;
 
 export function useEndgameAnalysis() {
   const kataGo = useKataGo();
@@ -39,12 +43,15 @@ export function useEndgameAnalysis() {
       }
     };
 
+    const modelId = kataGo.getBestAvailableModel([...MODEL_PREFERENCE_ORDER]);
+    console.log("準備できたモデル: ", modelId)
+
     const result = await kataGo.run({
       board,
       movesSoFar,
       matchType,
       boardSize,
-      modelId: "b18", // 終局は精度優先で固定
+      modelId, // 精度優先でb18、無ければ段階的にフォールバック
       currentPlayer: getNextPlayer(matchType, movesSoFar.length), // 🔥
     });
 

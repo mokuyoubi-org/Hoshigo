@@ -37,6 +37,8 @@ export const dictionary = {
       records: "Records",
       local: "Local",
       or: "or",
+      edit: "Edit",
+      done: "Done"
     },
   },
   Home: {
@@ -122,11 +124,11 @@ export const dictionary = {
   RankInfoModal: {
     en: {
       title: "About Ranks",
-      yourCurrentPoint: "Your current points",
-      remaining: "{{points}}pt until {{nextRank}}!",
+      yourCurrentRating: "Your Current Rating", // 単語の頭文字を大文字にする（Title Case）とUIっぽくなるにゃ！
+      remaining: "+{{rating}} pts to {{nextRank}}!",
       allRank: "All Ranks",
       current: "Current",
-      infoText: "Get points through matches and aim for higher ranks!",
+      infoText: "Earn rating through matches and aim for higher ranks!",
     },
   },
   ResultModal: {
@@ -209,10 +211,10 @@ export const dictionary = {
   },
   BotName: {
     en: {
-      bot1: "Senna",
+      bot1: "Sena",
       bot2: "Luna",
-      bot3: "Mr. Bunny"
-    }
+      bot3: "Mr. Bunny",
+    },
   },
   DeleteModal: {
     en: {

@@ -80,7 +80,7 @@ import { Board2D } from "../utils";
 import { analyzeMcts, playerToColor } from "./analyzeMcts";
 import { initBoardArrays, playMove, SimPosition } from "./fastBoard";
 import { parseKataGoModelV8 } from "./loadModelV8";
-import { ModelId, readModelData } from "./modelManager";
+import { ModelDownloadProgress, ModelId, readModelData } from "./modelManager";
 import { KataGoModelV8Tf } from "./modelV8";
 import { BoardState, FloatArray, GameRules, RegionOfInterest } from "./types";
 
@@ -146,20 +146,39 @@ async function disposeTensors(tensors: Record<string, tf.Tensor>) {
 
 const modelCache = new Map<ModelId, KataGoModelV8Tf>();
 
-export async function loadModel(modelId: ModelId): Promise<KataGoModelV8Tf> {
+
+// DLとウォームアップ、両方まとめた「読み込み全体の今の状態」
+export type ModelLoadStage =
+  | { phase: "downloading"; loaded: number; total: number }
+  | { phase: "warming_up"; step: number; totalSteps: number };
+
+export async function loadModel(
+  modelId: ModelId,
+  onProgress?: (stage: ModelLoadStage) => void,
+): Promise<KataGoModelV8Tf> {
   const cached = modelCache.get(modelId);
   if (cached) return cached;
 
-  const buf = await readModelData(modelId); // 未キャッシュ時はここで"downloading"通知が飛ぶ
+  const buf = await readModelData(modelId, (p: ModelDownloadProgress) =>
+    onProgress?.({ phase: "downloading", loaded: p.loaded, total: p.total }),
+  );
   const data = buf[0] === 0x1f && buf[1] === 0x8b ? ungzip(buf) : buf;
   const parsed = parseKataGoModelV8(data);
   const model = new KataGoModelV8Tf(parsed);
   modelCache.set(modelId, model);
 
+  const TOTAL_WARMUP_STEPS = 2;
+  onProgress?.({ phase: "warming_up", step: 0, totalSteps: TOTAL_WARMUP_STEPS });
+
   const spatial = tf.zeros([1, 19, 19, 22], "float32") as tf.Tensor4D;
   const global_ = tf.zeros([1, 19], "float32") as tf.Tensor2D;
+
   await disposeTensors(model.forward(spatial, global_));
+  onProgress?.({ phase: "warming_up", step: 1, totalSteps: TOTAL_WARMUP_STEPS });
+
   await disposeTensors(model.forwardPolicyValue(spatial, global_));
+  onProgress?.({ phase: "warming_up", step: 2, totalSteps: TOTAL_WARMUP_STEPS });
+
   spatial.dispose();
   global_.dispose();
 

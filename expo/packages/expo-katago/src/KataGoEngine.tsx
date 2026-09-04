@@ -7,6 +7,7 @@ import React, { Ref, useEffect, useRef } from "react";
 import {
   AnalyzeBoardArgs,
   AnalyzeResult,
+  ModelLoadStage,
   analyzeBoard,
   loadModel,
 } from "./web-katrain/analyzeBoard";
@@ -31,6 +32,13 @@ export type Props = {
   onReady: () => void;
   onError: (message: string) => void;
   onAnalyzeComplete?: (result: AnalyzeResult) => void;
+  // モデルの読み込み進捗通知(ダウンロード中/ウォームアップ中の両方を含む)。
+  // IndexedDBキャッシュ済みでダウンロードが不要な場合は"downloading"は呼ばれず、
+  // いきなり"warming_up"から始まる。
+  onLoadProgress?: (event: {
+    modelId: ModelId;
+    stage: ModelLoadStage;
+  }) => void;
 };
 
 export default function KataGoEngine({
@@ -38,6 +46,7 @@ export default function KataGoEngine({
   onReady,
   onError,
   onAnalyzeComplete,
+  onLoadProgress,
 }: Props) {
   const initializedRef = useRef(false);
 
@@ -80,15 +89,17 @@ export default function KataGoEngine({
         },
         warmupModel: async (id: ModelId): Promise<void> => {
           try {
-            // 1. モデルをロード
-            await loadModel(id);
+            // 1. モデルをロード（ダウンロード+ウォームアップの進捗はコールバック経由でRN側に通知）
+            await loadModel(id, (stage) => {
+              onLoadProgress?.({ modelId: id, stage });
+            });
             console.log(`🔥 [KataGoEngine] ${id} のウォームアップ完了`);
           } catch (e) {
             console.error(`[KataGoEngine] ウォームアップ失敗: ${id}`, e);
           }
         },
       }) as any,
-    [onAnalyzeComplete],
+    [onAnalyzeComplete, onLoadProgress],
   );
   return <div style={{ display: "none" }} />;
 }

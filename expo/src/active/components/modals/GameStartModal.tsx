@@ -1,12 +1,16 @@
 // GameStartModal.tsx
 import { AvatarWithPass } from "@/src/active/components/go/AvatarWithPass";
 import { useTranslation } from "@/src/active/language/i18n";
+import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
-import { BLACK, Color, MatchType, WHITE } from "expo-goband";
+import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
+import { Color, MatchType } from "expo-goband";
 import { ModalShell } from "modal-shell";
 import React, { useEffect } from "react";
 import { Text, View } from "react-native";
+import { COLORS } from "../../constants/colors";
 import { TranslationKey } from "../../language/lang";
+
 type Props = {
   myUsername: string;
   myIconIndex: number;
@@ -14,7 +18,7 @@ type Props = {
   myColor: Color;
   oppUsername: string;
   oppIconIndex: number;
-  oppPoints: number;
+  oppRating: number;
   oppColor: Color;
   matchType: MatchType;
   onClose?: () => void;
@@ -27,7 +31,8 @@ export const GameStartModal = ({
   myColor,
   oppUsername,
   oppIconIndex,
-  oppPoints,
+  oppRating,
+  oppColor,
   matchType,
   onClose,
 }: Props) => {
@@ -44,22 +49,20 @@ export const GameStartModal = ({
   // dictionary の新しいキー形式に合わせて取得する
   const matchTypeText = t(`MatchType.matchType_${matchType}` as TranslationKey);
 
-  const isMyBlack = myColor === BLACK;
-  const blackPlayer = isMyBlack
-    ? { name: myUsername, icon: myIconIndex, rankIndex: myRankIndex }
-    : {
-        name: oppUsername,
-        icon: oppIconIndex,
-        rankIndex: getRankInfo(oppPoints, t).index,
-      };
+  // 自分（左）と相手（右）のデータを整理
+  const leftPlayer = {
+    name: myUsername,
+    icon: myIconIndex,
+    rankIndex: myRankIndex,
+    color: myColor,
+  };
 
-  const whitePlayer = !isMyBlack
-    ? { name: myUsername, icon: myIconIndex, rankIndex: myRankIndex }
-    : {
-        name: oppUsername,
-        icon: oppIconIndex,
-        rankIndex: getRankInfo(oppPoints, t).index,
-      };
+  const rightPlayer = {
+    name: oppUsername,
+    icon: oppIconIndex,
+    rankIndex: getRankInfo(oppRating, t).index,
+    color: oppColor,
+  };
 
   return (
     <ModalShell
@@ -73,13 +76,14 @@ export const GameStartModal = ({
       </Text>
 
       <View className="flex-row items-center justify-between w-full my-2 px-2">
+        {/* 自分（左） */}
         <View className="items-center flex-1">
           <View className="relative mb-2">
             <AvatarWithPass
-              rankIndex={blackPlayer.rankIndex}
-              iconIndex={blackPlayer.icon}
+              rankIndex={leftPlayer.rankIndex}
+              iconIndex={leftPlayer.icon}
               size={56}
-              color={BLACK}
+              color={leftPlayer.color}
               isLeft={true}
               showPass={false}
             />
@@ -88,7 +92,7 @@ export const GameStartModal = ({
             className="text-base font-bold text-text text-center"
             numberOfLines={1}
           >
-            {blackPlayer.name}
+            {leftPlayer.name}
           </Text>
         </View>
 
@@ -98,23 +102,39 @@ export const GameStartModal = ({
           </Text>
         </View>
 
+        {/* 相手（右） */}
         <View className="items-center flex-1">
           <View className="relative mb-2">
             <AvatarWithPass
-              rankIndex={whitePlayer.rankIndex}
-              iconIndex={whitePlayer.icon}
+              rankIndex={rightPlayer.rankIndex}
+              iconIndex={rightPlayer.icon}
               size={56}
-              color={WHITE}
+              color={rightPlayer.color}
               isLeft={false}
               showPass={false}
             />
           </View>
-          <Text
-            className="text-base font-bold text-text text-center"
-            numberOfLines={1}
-          >
-            {whitePlayer.name}
-          </Text>
+
+          {/* 名前とボットマークを表示する部分 */}
+          <View className="flex-row items-center justify-center">
+            <Text
+              className="text-base font-bold text-text text-center"
+              numberOfLines={1}
+            >
+              {botNameFormatter(rightPlayer.name, t)}
+            </Text>
+            {isBot(rightPlayer.name) && (
+              <MaterialCommunityIcons
+                name="robot"
+                size={14}
+                color={COLORS.textSub}
+                style={{
+                  marginLeft: 4,
+                  marginRight: 0,
+                }}
+              />
+            )}
+          </View>
         </View>
       </View>
 

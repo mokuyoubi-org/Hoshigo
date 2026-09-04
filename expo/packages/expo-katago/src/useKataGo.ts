@@ -9,6 +9,10 @@
 // WebViewとの通信・多重呼び出しの直列化はKataGoEngineContextのrunAnalysisが
 // 一手に引き受けている。
 //
+// getBestAvailableModel は「本当は使いたいモデル」の優先順位リストを渡すと、
+// その中で今すぐ遅延なく使えるモデルIDを返す。例えばb18を使いたいが
+// まだウォームアップ中なら、自動的にb10やb6にフォールバックできる。
+//
 // 置き場所: src/active/hooks/useKataGo.ts
 // ──────────────────────────────────────────────────
 
@@ -29,7 +33,7 @@ export type KataGoParams = {
 };
 
 export function useKataGo() {
-  const { runAnalysis, engineReady } = useKataGoEngine();
+  const { runAnalysis, engineReady, readyModelIds } = useKataGoEngine();
 
   const run = async ({
     board,
@@ -48,5 +52,14 @@ export function useKataGo() {
     });
   };
 
-  return { run, engineReady };
+  // 優先順位リスト(例: ["b18","b10","b6"])のうち、今すぐ使えるものを返す。
+  // 何も見つからない場合はリストの最後(=通常は最軽量、常に準備済みのはず)を返す。
+  const getBestAvailableModel = (preferenceOrder: ModelId[]): ModelId => {
+    for (const id of preferenceOrder) {
+      if (readyModelIds.has(id)) return id;
+    }
+    return preferenceOrder[preferenceOrder.length - 1];
+  };
+
+  return { run, engineReady, getBestAvailableModel };
 }

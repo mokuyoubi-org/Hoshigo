@@ -15,7 +15,9 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function getModelFromIDB(modelId: string): Promise<Uint8Array | null> {
+export async function getModelFromIDB(
+  modelId: string,
+): Promise<Uint8Array | null> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -37,7 +39,10 @@ export async function getModelFromIDB(modelId: string): Promise<Uint8Array | nul
   }
 }
 
-export async function saveModelToIDB(modelId: string, data: Uint8Array): Promise<void> {
+export async function saveModelToIDB(
+  modelId: string,
+  data: Uint8Array,
+): Promise<void> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {

@@ -1,10 +1,9 @@
 import React, { memo } from "react";
-import { Image, Pressable, StyleSheet } from "react-native";
-import { Color, GoString, Grid } from "../types/go";
+import { Image, Pressable, StyleSheet, View } from "react-native";
+import { BLACK, Color, GoString, Grid } from "../types/go";
 import { PreviewStone } from "./PreviewStone";
 import { Stone } from "./Stone";
 import { Territory } from "./Territory";
-
 
 const HAND_ICON = require("../../assets/icons/hand.png");
 
@@ -19,6 +18,7 @@ type BoardGridCellProps = {
   isCurrentMove: boolean;
   showTerritory: boolean;
   isPinned: boolean;
+  isEdited?: boolean; // 🐱 編集された石フラグを追加！
   enableDoubleTap: boolean;
   playerColor: Color;
   disabled: boolean;
@@ -37,6 +37,7 @@ export const BoardGridCell = memo(function BoardGridCell({
   isCurrentMove,
   showTerritory,
   isPinned,
+  isEdited, 
   enableDoubleTap,
   playerColor,
   disabled,
@@ -68,6 +69,22 @@ export const BoardGridCell = memo(function BoardGridCell({
           isCurrentMove={isCurrentMove}
           isDead={isDead}
           showTerritory={showTerritory}
+        />
+      )}
+
+      {/* 🐱 編集された石用のハイライト（うっすら緑色 ＋ 緑色の枠線） */}
+      {isEdited && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            width: stoneSize,
+            height: stoneSize,
+            borderRadius: stoneSize / 2,
+            borderWidth: 5,
+            borderColor: goString?.color===BLACK?"#6b985e":"#6b985e", // 緑枠線
+            zIndex: 10,
+          }}
         />
       )}
 

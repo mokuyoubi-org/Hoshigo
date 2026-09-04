@@ -1,10 +1,14 @@
+// PlayerCell.tsx
+
 import { Color } from "@/packages/expo-goband/src";
+import { COLORS } from "@/src/active/constants/colors";
+import { useTranslation } from "@/src/active/language/i18n";
+import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
+import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
 import React from "react";
 import { Text, View } from "react-native";
 import { AgehamaDisplay } from "../../go/Agehama";
 import { AvatarWithPass } from "../../go/AvatarWithPass";
-import { botNameFormatter } from "@/src/stable/logics/nameFormatter";
-import { useTranslation } from "@/src/active/language/i18n";
 
 // ===== プレイヤーセル =====
 type PlayerCellProps = {
@@ -15,6 +19,7 @@ type PlayerCellProps = {
   color: Color;
   showPass: boolean;
   agehamaCount: number;
+  playerWin?: boolean;
 };
 
 export const PlayerCell = React.memo(function PlayerCell({
@@ -25,8 +30,18 @@ export const PlayerCell = React.memo(function PlayerCell({
   color,
   showPass,
   agehamaCount,
+  playerWin,
 }: PlayerCellProps) {
-  const t = useTranslation()
+  const t = useTranslation();
+  let botFace: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+  if (playerWin === true) {
+    botFace = "robot-dead";
+  } else if (playerWin === false) {
+    botFace = "robot-excited";
+  } else {
+    botFace = "robot";
+  }
+
   return (
     <View className={`flex-1 flex-col ${isLeft ? "items-start" : "items-end"}`}>
       <View
@@ -47,15 +62,27 @@ export const PlayerCell = React.memo(function PlayerCell({
             isLeft ? "items-start" : "items-end"
           }`}
         >
-          <Text
-            className={`text-sm font-medium text-text ${
-              isLeft ? "text-left" : "text-right flex-shrink"
-            }`}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {botNameFormatter(username, t)}
-          </Text>
+          {/* 名前とボットマークを表示するコンテナ */}
+          <View className={`flex-row items-center min-w-0`}>
+            <Text
+              className="text-sm font-medium text-text shrink"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {botNameFormatter(username, t)}
+            </Text>
+            {isBot(username) && (
+              <MaterialCommunityIcons
+                name={botFace}
+                size={14}
+                color={COLORS.textSub}
+                style={{
+                  marginLeft: 4,
+                  marginRight: 0,
+                }}
+              />
+            )}
+          </View>
           <AgehamaDisplay count={agehamaCount} />
         </View>
       </View>

@@ -1,7 +1,7 @@
 // records-repo.native.ts
 
-import type { RecordType } from "@/src/active/types/record";
 import type { RecordAnalysis } from "@/src/active/types/analysis";
+import type { RecordType } from "@/src/active/types/record";
 import * as SQLite from "expo-sqlite";
 
 export type RecordsRepo = {
@@ -37,8 +37,8 @@ function getDb() {
             white_uid TEXT,
             moves TEXT,
             match_type INTEGER,
-            black_points INTEGER,
-            white_points INTEGER,
+            black_rating INTEGER,
+            white_rating INTEGER,
             board_size INTEGER NOT NULL,
             dead_stones TEXT NOT NULL,
             black_username TEXT,
@@ -85,11 +85,11 @@ export const recordsRepo: RecordsRepo = {
       const stmt = await db.prepareAsync(`
         INSERT OR IGNORE INTO records (
           id, result, created_at, black_uid, white_uid, moves, match_type,
-          black_points, white_points, board_size, dead_stones,
+          black_rating, white_rating, board_size, dead_stones,
           black_username, black_icon_index, black_rank_index,
           white_username, white_icon_index, white_rank_index
         ) VALUES ($id, $result, $created_at, $black_uid, $white_uid, $moves, $match_type,
-          $black_points, $white_points, $board_size, $dead_stones,
+          $black_rating, $white_rating, $board_size, $dead_stones,
           $black_username, $black_icon_index, $black_rank_index,
           $white_username, $white_icon_index, $white_rank_index)
       `);
@@ -103,8 +103,8 @@ export const recordsRepo: RecordsRepo = {
             $white_uid: r.white_uid,
             $moves: r.moves ? JSON.stringify(r.moves) : null,
             $match_type: r.match_type,
-            $black_points: r.black_points,
-            $white_points: r.white_points,
+            $black_rating: r.black_rating,
+            $white_rating: r.white_rating,
             $board_size: r.board_size,
             $dead_stones: JSON.stringify(r.dead_stones ?? []),
             $black_username: r.black_username,
@@ -168,10 +168,7 @@ export const recordsRepo: RecordsRepo = {
     await db.execAsync(`DELETE FROM records;`);
   },
 
-
-
-
-// 🆕自分のUIDに一致するレコードの名前を一括更新！
+  // 🆕自分のUIDに一致するレコードの名前を一括更新！
   updateUsername: async (uid, newUsername) => {
     const db = await getDb();
     await db.runAsync(
@@ -183,9 +180,4 @@ export const recordsRepo: RecordsRepo = {
       [newUsername, uid],
     );
   },
-
-
-
-
-
 };

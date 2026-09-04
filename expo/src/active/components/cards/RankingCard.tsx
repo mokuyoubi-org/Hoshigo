@@ -4,7 +4,7 @@ import { Avatar } from "@/src/active/components/go/Avatar";
 import { COLORS } from "@/src/active/constants/colors";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
-import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"; // 🐱 MaterialCommunityIcons を追加！
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { useTranslation } from "../../language/i18n";
@@ -40,7 +40,7 @@ const RANK_LABELS: string[] = [
 // ─── 型定義 ───────────────────────────────
 export type Profile = {
   username: string;
-  points: number;
+  rating: number;
   icon_index: number;
   is_authenticated?: boolean; // 🐱 認証済みフラグを追加！
 };
@@ -63,7 +63,7 @@ export const RankingCard = ({
   const isMe = item.username === username;
 
   // 🌟 rank_index から表示用ラベルを取得する（無効な数値のときは "-"）
-  const rankLabel = RANK_LABELS[getRankInfo(item.points, t).index] ?? "-";
+  const rankLabel = RANK_LABELS[getRankInfo(item.rating, t).index] ?? "-";
 
   // useMemo で Animated.Value を安全に生成・保持する
   const fadeIn = useMemo(() => new Animated.Value(0), []);
@@ -90,11 +90,11 @@ export const RankingCard = ({
         <View className="flex-row items-center px-2 py-[14px]">
           {/* 順位 */}
           {isTop3 ? (
-            <View className="w-[42px] h-[42px] justify-center items-center mr-[12px]">
+            <View className="w-[42px] h-[42px] justify-center items-center mr-[2px]">
               <AntDesign name="crown" size={24} color={rankMeta.color} />
             </View>
           ) : (
-            <View className="w-[42px] h-[42px] justify-center items-center mr-[12px]">
+            <View className="w-[42px] h-[42px] justify-center items-center mr-[2px]">
               <Text className="text-[16px] font-bold color-textSub tracking-[0.5px] opacity-60">
                 {rank}
               </Text>
@@ -103,7 +103,7 @@ export const RankingCard = ({
 
           {/* アバター */}
           <Avatar
-            rankIndex={getRankInfo(item.points, t).index}
+            rankIndex={getRankInfo(item.rating, t).index}
             iconIndex={item.icon_index}
             size={50}
           />

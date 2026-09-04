@@ -19,6 +19,7 @@ const SANDBOXED_PACKAGES = [
   "expo-katago",
   "expo-goband",
   "modal-shell",
+  "turnstile-widget",
   "ui-atoms",
   "i18n-kit",
   "supabase-toolkit",

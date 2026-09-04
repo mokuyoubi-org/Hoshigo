@@ -23,7 +23,6 @@ import {
 } from "../types/go";
 import { BoardGridCell } from "./BoardGridCell";
 import { BoardLines } from "./BoardLines";
-import { ReplayTapOverlay } from "./ReplayTapOverlay";
 
 type Props = {
   board: Board;
@@ -36,11 +35,12 @@ type Props = {
   isGameEnded: boolean;
   boardHistory: Board[];
   currentIndex: number;
-  onCurrentIndexChange?: (index: number) => void; // 🐱 ① インデックス変更用のコールバックを追加！
+  onCurrentIndexChange?: (index: number) => void;
   boardBackgroundColor?: string;
   lineColor?: string;
   agehamaHistory: Agehama[];
   pinPoints?: Grid[];
+  editedPoints?: Grid[]; // 🐱 編集された石の位置リストを追加！
   enableDoubleTap?: boolean;
   playerColor?: Color;
 };
@@ -55,9 +55,10 @@ export function GoBoard({
   isGameEnded,
   boardHistory,
   currentIndex,
-  onCurrentIndexChange, // 🐱 受け取る！
+  onCurrentIndexChange,
   boardWidth,
   pinPoints,
+  editedPoints = [], // 🐱 受け取るにゃ！
   enableDoubleTap = false,
   playerColor = BLACK,
 }: Props) {
@@ -109,14 +110,11 @@ export function GoBoard({
   // 🐱 音声を安全に鳴らすためのヘルパー関数
   const playStoneSound = useCallback(async () => {
     try {
-      // プレイヤーが存在して、再生準備が整っているかチェック
       if (!stonePlayer) return;
 
-      // seekTo や play は Promise を返すので await で安全に待つ
       await stonePlayer.seekTo(0);
       await stonePlayer.play();
     } catch (error) {
-      // ネイティブ側で再生エラーが起きてもアプリを落とさないようにキャッチする
       console.warn("Failed to play stone sound:", error);
     }
   }, [stonePlayer]);
@@ -131,7 +129,6 @@ export function GoBoard({
     const appliedMove = moveHistory[currentIndex - 1];
     if (appliedMove === PASS_GRID) return;
 
-    // 🐱 安全な再生関数を呼び出す
     playStoneSound();
   }, [currentIndex, moveHistory, playStoneSound]);
 
@@ -167,11 +164,9 @@ export function GoBoard({
   const showTerritory = isGameEnded && currentIndex === boardHistory.length - 1;
 
   const pinSet = useMemo(() => new Set(pinPoints ?? []), [pinPoints]);
-
-  // 🐱 最大手数（リプレイの最大インデックス）を算出
-  const maxIndex = useMemo(() => {
-    return Math.max(0, (boardHistory?.length ?? 1) - 1);
-  }, [boardHistory]);
+  
+  // 🐱 判定を高速化するために Set に変換するにゃ！
+  const editedSet = useMemo(() => new Set(editedPoints), [editedPoints]);
 
   return (
     <View style={styles.container}>
@@ -218,6 +213,7 @@ export function GoBoard({
                 isCurrentMove={grid === currentMoveGrid}
                 showTerritory={showTerritory}
                 isPinned={pinSet.has(grid)}
+                isEdited={editedSet.has(grid)} // 🐱 ここで BoardGridCell に渡すにゃ！
                 enableDoubleTap={enableDoubleTap}
                 playerColor={playerColor}
                 disabled={disabled}
@@ -225,15 +221,6 @@ export function GoBoard({
               />
             );
           })}
-
-          {/* 🐱 ③ disabled の時だけ、マス目の上に透明なタップエリアを重ねる！ */}
-          {disabled && (
-            <ReplayTapOverlay
-              currentIndex={currentIndex}
-              maxIndex={maxIndex}
-              onCurrentIndexChange={onCurrentIndexChange}
-            />
-          )}
         </View>
       </Pressable>
     </View>

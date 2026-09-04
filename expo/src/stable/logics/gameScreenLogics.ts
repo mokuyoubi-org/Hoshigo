@@ -7,7 +7,7 @@ import {
   MatchType,
   PASS_GRID,
   WHITE,
-} from"expo-goband";
+} from "expo-goband";
 
 export type GameScreenParams = {
   matchId: string;
@@ -16,7 +16,7 @@ export type GameScreenParams = {
   moves: string;
   myColor: string;
   oppUsername: string;
-  oppPoints: string;
+  oppRating: string;
   oppIconIndex: string;
   mySeconds: string;
   oppSeconds: string;
@@ -50,7 +50,7 @@ export function parseGameParams(params: Partial<GameScreenParams>) {
     boardSize,
     botMatch,
     oppUsername: params.oppUsername ?? "",
-    oppPoints: Number(params.oppPoints ?? 0),
+    oppRating: Number(params.oppRating ?? 0),
     oppIconIndex: Number(params.oppIconIndex ?? 0),
   };
 }

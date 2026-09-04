@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 4,
     borderColor: "#e1e8ed", // backgroundDark
-    padding: 24,
+    padding: 16,
   },
   fullWidth: {
     width: "100%",
