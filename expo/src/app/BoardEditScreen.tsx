@@ -158,7 +158,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
       }
       setIsEditMode(false);
     }
-  };
+  }; 
 
   // 編集モードでの着手
   const handlePutStone = (grid: Grid) => {
