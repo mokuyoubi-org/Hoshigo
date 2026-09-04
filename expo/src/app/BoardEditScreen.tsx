@@ -222,7 +222,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
           </TouchableOpacity>
 
           {/* 碁盤の右上端に重ねた編集モード切り替えボタン */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={toggleEditMode}
             activeOpacity={0.8}
             className={`px-2 py-2 rounded-full border-4 border-primaryDark ${
@@ -232,7 +232,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
             <Text className="text-base font-bold text-primaryDark tracking-wide">
               {!isEditMode ?t("common.edit"):t("common.done")}
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* コンテンツ領域 */}
