@@ -331,7 +331,7 @@ begin
       )
     ),
     'points_updated', -- イベント名
-    'game:' || new.id::text, -- 🐱 gameChannelにまとめるにゃ！
+    'game:' || new.id::text, -- 🐱 gameChannelにまとめる
     false
   );
 
@@ -392,7 +392,7 @@ declare
   v_black_profiles private.profiles%rowtype;
   v_white_profiles private.profiles%rowtype;
   
-  -- 相手のプロフィールとポイントを入れる変数だにゃ！
+  -- 相手のプロフィールとポイントを入れる変数
   v_opp_profile    private.profiles%rowtype;
   v_opp_points     smallint;
 begin
@@ -400,18 +400,18 @@ begin
   select * into v_black_profiles from private.profiles where uid = p_match.black_uid;
   select * into v_white_profiles from private.profiles where uid = p_match.white_uid;
 
-  -- 自分が黒なら相手は白、自分が白なら相手は黒だにゃ！
+  -- 自分が黒なら相手は白、自分が白なら相手は黒
   if v_is_black then
     v_opp_profile := v_white_profiles;
   else
     v_opp_profile := v_black_profiles;
   end if;
 
-  -- 碁盤のサイズ（board_size）によってポイントの列を切り替えるにゃん！
+  -- 碁盤のサイズ（board_size）によってポイントの列を切り替える！
   v_opp_points := case p_match.board_size
     when 9  then v_opp_profile.points_9
     when 13 then v_opp_profile.points_13
-    else 0 -- 万が一9や13以外が来たときの保険だにゃ
+    else 0 -- 万が一9や13以外が来たときの保険
   end;
 
   return jsonb_build_object(
@@ -420,7 +420,7 @@ begin
     'match_type',     p_match.match_type,
     'moves',          coalesce(to_jsonb(p_match.moves), '[]'::jsonb),
     'my_color',       case when v_is_black then 'black' else 'white' end,
-    'opp_points',     coalesce(v_opp_points, 0), -- ★盤サイズに応じたポイントが入るにゃ！
+    'opp_points',     coalesce(v_opp_points, 0), -- ★盤サイズに応じたポイントが入る
     'opp_username',   v_opp_profile.username,
     'opp_icon_index', v_opp_profile.icon_index,
     'my_seconds',      case when v_is_black then p_match.black_seconds else p_match.white_seconds end,
@@ -443,13 +443,13 @@ declare
   v_icons smallint[] := '{}';
   v_rank smallint;
 begin
-  -- 9路盤・13路盤の強い方のランクを採用するにゃ
+  -- 9路盤・13路盤の強い方のランクを採用する
   v_rank := greatest(
     private.points_to_rank(p_points9),
     private.points_to_rank(p_points13)
   );
 
-  -- ランクに応じたアイコン (0 〜 5) を追加するにゃ
+  -- ランクに応じたアイコン (0 〜 5) を追加する
   for i in 0..5 loop
     if v_rank >= (i * 3) then
       v_icons := array_append(v_icons, i::smallint);
@@ -539,7 +539,7 @@ begin
   where pf.username = v_bot_username
   limit 1;
 
-  -- 2. 盤の広さとランクに応じて match_type (置き石) を決めるにゃ！
+  -- 2. 盤の広さとランクに応じて match_type (置き石) を決める
   if p_board_size = 9 then
     o_match_type := case v_rank
       -- [対bot1]
@@ -862,12 +862,12 @@ begin
 
     -- ⬜️ ボット戦分岐 ⬜️
     if v_waiter.try_count >= 10 and v_waiter_profile.allow_bot_match then --- v_waiter.try_count >= 10に戻す🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-      -- 対戦ボットとmatch_typeを取得するにゃ！
+      -- 対戦ボットとmatch_typeを取得する
       select o_bot_uid, o_match_type
       into v_bot_uid, v_match_type
       from private.get_bot_match_info(v_waiter_points, p_board_size);
 
-      -- 🌟 match_typeが1〜9なら常に人間が黒、0なら50%の確率でランダムに判定するにゃ！
+      -- 🌟 match_typeが1〜9なら常に人間が黒、0なら50%の確率でランダムに判定する
       if v_match_type >= 1 then
         v_human_is_black := true;
       else
@@ -882,7 +882,7 @@ begin
         case when v_human_is_black then v_waiter.player_uid else v_bot_uid end,
         case when v_human_is_black then v_bot_uid else v_waiter.player_uid end,
         'playing', v_match_type,
-        -- 🌟 置き石(2以上)があるなら白番スタート、互先・コミ落ち(0または1)なら黒番スタートにゃ！
+        -- 🌟 置き石(2以上)があるなら白番スタート、互先・コミ落ち(0または1)なら黒番スタート
         case when v_match_type > 1 then 'white' else 'black' end,
         now(),
         p_board_size
@@ -915,7 +915,7 @@ begin
       begin
         select * into v_opponent_profile from private.profiles pf where pf.uid = v_opponent.player_uid;
 
-        -- 人間同士は常にランダム(50%)にゃ！
+        -- 人間同士は常にランダム(50%)
         v_human_first_is_black := random() < 0.5;
 
         insert into private.matches (
@@ -1045,7 +1045,7 @@ begin
     and m.status = 'playing'
   limit 1;
 
-  -- 既に対局が始まっていれば、その対局情報を返すにゃ！
+  -- 既に対局が始まっていれば、その対局情報を返す
   if found then
     return private.build_match_json(v_match, v_player_uid);
   end if;
@@ -1151,7 +1151,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- 5. メンテ情報とプロフィール（新しく作った場合はそのデータ）をまとめて返すにゃ！
+  -- 5. メンテ情報とプロフィール（新しく作った場合はそのデータ）をまとめて返す
   RETURN json_build_object(
     'app_status', json_build_object(
       'maintenance', COALESCE(v_status.maintenance, false),
@@ -1397,12 +1397,12 @@ begin
     and m.status = 'playing'
   limit 1;
 
-  -- 既に対局が始まっていれば、その対局情報を返すにゃ！
+  -- 既に対局が始まっていれば、その対局情報を返す
   if found then
     return private.build_match_json(v_match, v_player_uid);
   end if;
 
-  -- 待機列に追加（既に待機中なら何もしないにゃ）
+  -- 待機列に追加（既に待機中なら何もしない）
   begin
     insert into private.waitlist (player_uid, board_size)
     values (v_player_uid, p_board_size);
@@ -1547,7 +1547,7 @@ begin
   -- 1. 本人チェック＆statusがpendingかどうかのチェック（部外者・状態不正ならここで自動エラー終了）
   perform private.assert_player(p_match_id, array['pending']);
 
-  -- 2. 排他ロック（for update）をかけながら対局情報を取得するにゃ
+  -- 2. 排他ロック（for update）をかけながら対局情報を取得する
   select *
   into v_match
   from private.matches m
@@ -1562,7 +1562,7 @@ begin
   v_white_uid := v_match.white_uid;
   v_current_result := v_match.result;
 
-  -- 3. bot戦は無条件で確定するにゃ
+  -- 3. bot戦は無条件で確定する
   if private.is_bot_uid(v_black_uid) or private.is_bot_uid(v_white_uid) then
     update private.matches
     set result = p_result, status = 'finished', dead_stones = p_dead_stones
@@ -1578,7 +1578,7 @@ begin
     return;
   end if;
 
-  -- 5. ② 二人目の結果送信 → 後着優先で確定するにゃ
+  -- 5. ② 二人目の結果送信 → 後着優先で確定する
   update private.matches
   set result = p_result, status = 'finished', dead_stones = p_dead_stones
   where id = p_match_id;
@@ -1684,19 +1684,19 @@ begin
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
   
-  -- 1. ログイン中のユーザーIDを取得するにゃ
+  -- 1. ログイン中のユーザーIDを取得する
   current_user_id := auth.uid();
   
   if current_user_id is null then
     raise exception 'Not authenticated';
   end if;
 
-  -- 2. バリデーション（3〜20文字の半角英数字・アンダースコア）だにゃ
+  -- 2. バリデーション（3〜20文字の半角英数字・アンダースコア）
   if new_username !~ '^[A-Za-z0-9_]{3,12}$' then
     raise exception 'Invalid username format';
   end if;
 
-  -- 3. ユーザー名の重複チェックだにゃ（他の人が使っていないか確認）
+  -- 3. ユーザー名の重複チェック（他の人が使っていないか確認）
   if exists (
     select 1 
     from private.profiles 
@@ -1706,7 +1706,7 @@ begin
     raise exception 'Username already taken';
   end if;
 
-  -- 4. ユーザー名を更新するにゃ
+  -- 4. ユーザー名を更新する
   update private.profiles
   set username = new_username
   where uid = current_user_id;

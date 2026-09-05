@@ -1,24 +1,23 @@
+// Stone.tsx
 import React, { memo } from "react";
 import { StyleSheet, View } from "react-native";
-import { BLACK, Color } from "../..";
-import { COLORS } from "../../constants/colors";
 
+import { COLORS } from "../../constants/colors";
+import { BLACK, Color } from "../../types/go";
 
 type StoneProps = {
   color: Color;
   stoneSize: number;
-  isDead?: boolean;
-  showTerritory?: boolean;
+  opacity?: number;
 };
 
+// 🐱 余計なものは一切持たず、丸い石を描画するだけのピュアな部品だにゃ！
 export const Stone = memo(function Stone({
   color,
   stoneSize,
-  isDead,
-  showTerritory,
+  opacity = 1,
 }: StoneProps) {
   const isBlack = color === BLACK;
-  const isDeadAndShow = isDead && showTerritory;
 
   return (
     <View style={styles.centerContainer}>
@@ -30,23 +29,10 @@ export const Stone = memo(function Stone({
             height: stoneSize,
             borderRadius: stoneSize / 2,
             backgroundColor: isBlack ? COLORS.darkObject : COLORS.lightObject,
-            opacity: isDeadAndShow ? 0.48 : 1,
+            opacity: opacity,
           },
         ]}
       />
-      {isDeadAndShow && (
-        <View
-          style={[
-            styles.deadStoneSquare,
-            {
-              width: stoneSize / 2,
-              height: stoneSize / 2,
-              borderRadius: Math.max(2, stoneSize / 8),
-              backgroundColor: isBlack ? COLORS.lightObject : COLORS.darkObject,
-            },
-          ]}
-        />
-      )}
     </View>
   );
 });
@@ -58,9 +44,5 @@ const styles = StyleSheet.create({
   },
   stoneBase: {
     borderWidth: 0,
-  },
-  deadStoneSquare: {
-    position: "absolute",
-    opacity: 0.32,
   },
 });

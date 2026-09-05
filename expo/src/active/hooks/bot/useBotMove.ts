@@ -89,7 +89,7 @@ export function useBotMove(
 
       // 人間が2回連続でパス（3手前と1手前がパス）していたら、ボットも即座にパスする
       if (
-        movesSoFar.length >= 3 &&
+        ((boardSize ===9 && movesSoFar.length >= 50) || (boardSize ===13 && movesSoFar.length >= 100) || (boardSize ===19 && movesSoFar.length >= 200)) &&
         movesSoFar[movesSoFar.length - 1] === PASS_GRID && // 人間の1手前（直前の着手）
         movesSoFar[movesSoFar.length - 3] === PASS_GRID // 人間の2手前（ボットの手を挟むので3手前）
       ) {

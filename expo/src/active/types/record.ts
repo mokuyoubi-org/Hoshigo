@@ -19,7 +19,7 @@ export type RecordType = {
   moves: number[];
   dead_stones: number[];
   match_type: MatchType;
-  analysis: RecordAnalysis | null; // 🆕追加
+  analysis: RecordAnalysis | null;
 };
 
 export type RecordOrSkeleton = SkeletonOr<RecordType>;

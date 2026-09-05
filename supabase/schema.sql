@@ -72,7 +72,7 @@ declare
   v_icon_item smallint;
   v_other_board_size smallint;
 begin
-  -- 反対側の盤サイズを割り出すにゃ（アイコン計算用）
+  -- 反対側の盤サイズを割り出す（アイコン計算用）
   v_other_board_size := case when new.board_size = 9 then 13 else 9 end;
 
   -- ─── 1. プロフィール情報 & 戦績情報の取得 ───────────────────────────
@@ -82,7 +82,7 @@ begin
   from private.profiles
   where uid = new.black_uid;
 
-  -- wins + losses + draws の合計で総対局数を計算するにゃ！
+  -- wins + losses + draws の合計で総対局数を計算する
   select 
     coalesce(wins + losses + draws, 0), 
     coalesce(rating, 0), 
@@ -102,7 +102,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- wins + losses + draws の合計で総対局数を計算するにゃ！
+  -- wins + losses + draws の合計で総対局数を計算する
   select 
     coalesce(wins + losses + draws, 0), 
     coalesce(rating, 0), 
@@ -305,7 +305,7 @@ begin
       )
     ),
     'rating_updated', -- イベント名
-    'game:' || new.id::text, -- gameChannelにまとめるにゃ
+    'game:' || new.id::text, -- gameChannelにまとめる
     false
   );
 
@@ -666,7 +666,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得するにゃ
+  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得する
   select coalesce(rating, 0) into v_black_rating
   from private.user_stats
   where uid = new.black_uid and board_size = new.board_size;
@@ -920,14 +920,14 @@ begin
     -- プロフィール情報をとってくる
     select * into v_waiter_profile from private.profiles pf where pf.uid = v_waiter.player_uid;
 
-    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得するにゃ
+    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得する
     select coalesce(rating, 0)
       into v_waiter_rating
       from private.user_stats
      where uid = v_waiter.player_uid
        and board_size = p_board_size;
 
-    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得するにゃ
+    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得する
     select coalesce(allow_bot_match, true)
       into v_allow_bot_match
       from private.user_settings
@@ -969,7 +969,7 @@ begin
     -- 👦👦👦 人間戦分岐（match_typeは常に0＆白黒ランダム） 👦👦👦
     v_rating_diff := least(v_waiter.try_count::int * 300, 1000)::smallint; -- 1000は最大ポイント差。
 
-    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えたにゃ
+    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えた
     select wl.* into v_opponent
     from private.waitlist wl
     join private.user_stats us on us.uid = wl.player_uid and us.board_size = p_board_size

@@ -21,6 +21,7 @@ export type GameScreenParams = {
   mySeconds: string;
   oppSeconds: string;
   botMatch: string;
+  oppUid: string;
 };
 
 // Partial を使って undefined が来ても大丈夫にする
@@ -52,6 +53,7 @@ export function parseGameParams(params: Partial<GameScreenParams>) {
     oppUsername: params.oppUsername ?? "",
     oppRating: Number(params.oppRating ?? 0),
     oppIconIndex: Number(params.oppIconIndex ?? 0),
+    oppUid: params.oppUid ?? "",
   };
 }
 

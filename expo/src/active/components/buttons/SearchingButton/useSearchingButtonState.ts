@@ -91,7 +91,7 @@ export function useSearchingButtonState() {
     } catch (error) {
       console.error(error);
     } finally {
-      // キャンセル処理が終わったら isCanceling フラグを下げるにゃ
+      // キャンセル処理が終わったら isCanceling フラグを下げる
       setIsCanceling(false);
     }
   };

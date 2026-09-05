@@ -119,12 +119,12 @@ begin
 
     -- ⬜️ ボット戦分岐 ⬜️
     if v_waiter.try_count >= 10 and v_waiter_profile.allow_bot_match then --- v_waiter.try_count >= 10に戻す🔥🔥🔥🔥🔥🔥🔥🔥
-      -- 対戦ボットとmatch_typeを取得するにゃ！
+      -- 対戦ボットとmatch_typeを取得する
       select o_bot_uid, o_match_type
       into v_bot_uid, v_match_type
       from private.get_bot_match_info(v_waiter_points, p_board_size);
 
-      -- 🌟 match_typeが1〜9なら常に人間が黒、0なら50%の確率でランダムに判定するにゃ！
+      -- 🌟 match_typeが1〜9なら常に人間が黒、0なら50%の確率でランダムに判定する
       if v_match_type >= 1 then
         v_human_is_black := true;
       else
@@ -139,7 +139,7 @@ begin
         case when v_human_is_black then v_waiter.player_uid else v_bot_uid end,
         case when v_human_is_black then v_bot_uid else v_waiter.player_uid end,
         'playing', v_match_type,
-        -- 🌟 置き石(2以上)があるなら白番スタート、互先・コミ落ち(0または1)なら黒番スタートにゃ！
+        -- 🌟 置き石(2以上)があるなら白番スタート、互先・コミ落ち(0または1)なら黒番スタート
         case when v_match_type > 1 then 'white' else 'black' end,
         now(),
         p_board_size
@@ -172,7 +172,7 @@ begin
       begin
         select * into v_opponent_profile from private.profiles pf where pf.uid = v_opponent.player_uid;
 
-        -- 人間同士は常にランダム(50%)にゃ！
+        -- 人間同士は常にランダム(50%)
         v_human_first_is_black := random() < 0.5;
 
         insert into private.matches (

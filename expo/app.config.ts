@@ -5,6 +5,7 @@ import { ExpoConfig } from "expo/config";
 
 import * as dotenv from "dotenv";
 import * as path from "path";
+import withRemoveForegroundServicePermission from "./plugins/withRemoveForegroundServicePermission";
 
 dotenv.config({
   path: [
@@ -101,6 +102,7 @@ const config: ExpoConfig = {
         },
       },
     ],
+    withRemoveForegroundServicePermission as any,
   ],
 
   experiments: {

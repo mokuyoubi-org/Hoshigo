@@ -1,12 +1,13 @@
+// useMatchClock.ts
+
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BLACK, Color, stringToColor } from "expo-goband";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSounds } from "../useSounds";
 
 export type ServerSyncPayload = {
   moves: number[];
   turn: Color;
-  // blackSeconds: number;
-  // whiteSeconds: number;
 };
 
 // 🥶 対局の「今、誰が動けるか」を表す唯一の状態。
@@ -66,6 +67,15 @@ export function useMatchClock({
   useEffect(() => {
     onServerSyncRef.current = onServerSync;
   }, [onServerSync]);
+
+  // 🐱 中で直接 useSounds を呼び出すにゃ！
+  const { playSound } = useSounds();
+
+  // 🐱 タイマー（setInterval）対策として playSound を Ref に入れるにゃ
+  const playSoundRef = useRef(playSound);
+  useEffect(() => {
+    playSoundRef.current = playSound;
+  }, [playSound]);
 
   // ─── 関数定義 ─────────────────────────────────────
 
@@ -218,11 +228,18 @@ export function useMatchClock({
       if (turnRef.current !== myColorRef.current) {
         oppSecondsRef.current = Math.max(0, oppSecondsRef.current - 1);
         setOppSeconds(oppSecondsRef.current);
+
+        // 🆕 相手の番でも10秒以下（10秒〜1秒）なら「ぴっぴ」鳴らす？
         return;
       }
 
       mySecondsRef.current = Math.max(0, mySecondsRef.current - 1);
       setMySeconds(mySecondsRef.current);
+
+      // 🆕 自分の残り時間が10秒以下（10秒〜1秒）になったら音を鳴らす
+      if (mySecondsRef.current <= 10 && mySecondsRef.current > 0) {
+        playSoundRef.current?.("pip");
+      }
     }, 1000);
 
     return () => {

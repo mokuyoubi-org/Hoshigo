@@ -10,15 +10,12 @@ import React from "react";
 import { OverlayProvider } from "react-overlay";
 import "../../global.css";
 
-import { COLORS } from "@/src/active/constants/colors";
-import { LogBox, View } from "react-native";
+import { View } from "react-native";
+import { ProgressBar } from "../active/components/common/ProgressBar";
 import { ForceUpdateModal } from "../active/components/modals/ForceUpdateModal";
 import { MaintenanceModal } from "../active/components/modals/MaintenanceModal";
 import { MatchingProvider } from "../active/contexts/providers/MatchingContext";
-
-// tfがうるさいので「is already registered」が含まれる警告を黙らせる
-LogBox.ignoreLogs([/is already registered/]);
-
+import { LoadingScreen } from "../active/components/common/LoadingScreen";
 function RoutedContent() {
   const { isInitializing, maintenance, maintenanceMessage, needsUpdate } =
     useApp();
@@ -34,20 +31,19 @@ function RoutedContent() {
 
       <SearchingButton />
 
-      {/* ローディング幕 */}
-      {isInitializing && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: COLORS.background,
-            zIndex: 300,
-          }}
-        />
-      )}
+      {/* ローディング */}
+{isInitializing && (
+  <View
+    style={{
+      position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 300,
+    }}
+  >
+    {/* AuthGate.tsx の initialize() が待ち先。セッション確認〜匿名ログイン
+        〜プロフィール同期までを一括してこの1状態で表現している(子段階なし) */}
+    <LoadingScreen label="Checking authentication..." percent={null} />
+  </View>
+)}
 
       {/* 🐱 メンテナンス画面 */}
       {maintenance && !needsUpdate && (

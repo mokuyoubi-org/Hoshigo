@@ -39,7 +39,7 @@ export function useProfileScreen() {
     }
   };
 
-const handleUpdateUsername = async (
+  const handleUpdateUsername = async (
     newUsername: string,
   ): Promise<string | null> => {
     setLoading(true);
@@ -57,10 +57,12 @@ const handleUpdateUsername = async (
           return t("Profile.usernameUpdateFailed");
         }
       } else {
-        // 🆕 1. ログイン中の自分のUIDを取得するにゃ
-        const { data: { user } } = await supabase.auth.getUser();
+        // 🆕 1. ログイン中の自分のUIDを取得する
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
-          // 🆕 2. ローカルDBの対局記録のユーザー名も一括更新するにゃ！
+          // 🆕 2. ローカルDBの対局記録のユーザー名も一括更新する
           await recordsRepo.updateUsername(user.id, newUsername);
         }
 

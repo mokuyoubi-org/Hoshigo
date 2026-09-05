@@ -60,6 +60,49 @@ export const generateOkigoBoard = (
     for (const grid of okiishiGrids[matchType] ?? []) {
       board = applyMove(boardSize, grid, board, BLACK).board;
     }
+  } else if (boardSize === 19) {
+    const okiishiGrids: Record<MatchType, Grid[]> = {
+      0: [],
+      1: [],
+      2: [m(4, 16), m(16, 4)],
+      3: [m(4, 16), m(16, 4), m(16, 16)],
+      4: [m(4, 4), m(16, 16), m(16, 4), m(4, 16)],
+      5: [m(4, 4), m(16, 16), m(16, 4), m(4, 16), m(10, 10)],
+      6: [m(4, 4), m(16, 16), m(16, 4), m(4, 16), m(10, 4), m(10, 16)],
+      7: [
+        m(4, 4),
+        m(16, 16),
+        m(16, 4),
+        m(4, 16),
+        m(10, 10),
+        m(10, 4),
+        m(10, 16),
+      ],
+      8: [
+        m(4, 4),
+        m(16, 16),
+        m(16, 4),
+        m(4, 16),
+        m(10, 4),
+        m(10, 16),
+        m(16, 10),
+        m(4, 10),
+      ],
+      9: [
+        m(4, 4),
+        m(16, 16),
+        m(16, 4),
+        m(4, 16),
+        m(10, 10),
+        m(10, 4),
+        m(10, 16),
+        m(16, 10),
+        m(4, 10),
+      ],
+    };
+    for (const grid of okiishiGrids[matchType] ?? []) {
+      board = applyMove(boardSize, grid, board, BLACK).board;
+    }
   }
   return board;
 };

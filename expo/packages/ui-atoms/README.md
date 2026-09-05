@@ -77,3 +77,35 @@ import { SegmentedControl } from "ui-atoms";
 
 - 色は全てこのパッケージ内で完結（親アプリの`COLORS`は参照しません）。デザインを変えたい場合は各コンポーネント内の`StyleSheet`を直接編集してください。
 - `Animated`を使う場合は`useRef(new Animated.Value(...)).current`ではなく`useAnimatedValue(...)`を使うこと（`react-hooks/refs`ルールでレンダー中の`ref.current`アクセスが禁止されているため）。
+
+## SegmentedIconControl
+
+アイコン付きのセグメント式トグルです。モード切り替えなど、文字ではなくアイコンで選択肢を並べたい時に使用します。値は `string`・`boolean` などで使えます。
+
+```tsx
+import { SegmentedIconControl } from "ui-atoms";
+import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
+
+<SegmentedIconControl
+  value={isEditMode}
+  onSelect={setIsEditMode}
+  options={[
+    {
+      value: false,
+      icon: <FontAwesome6 name="hand" />,
+    },
+    {
+      value: true,
+      icon: <MaterialIcons name="edit" />,
+    },
+  ]}
+/>;
+```
+
+- `value`：現在選ばれている値。
+
+- `options`：選択肢の配列。value と表示用の icon（@expo/vector-icons など）を持ちます。内部で size={18} と色（アクティブ/非アクティブ）が自動的に注入されます。
+
+- `onSelect`：選択肢がタップされた時に呼ばれる関数。選ばれた value が渡されます。
+
+- `activeColor`：省略可。アクティブな選択肢の背景色（デフォルトは #ffffff）。

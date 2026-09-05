@@ -1,5 +1,3 @@
-/* eslint-env node */
-/* eslint-disable no-undef */
 /**
  * fix-node-modules-path.js
  *

@@ -1,5 +1,3 @@
-// records-repo.native.ts
-
 import type { RecordAnalysis } from "@/src/active/types/analysis";
 import type { RecordType } from "@/src/active/types/record";
 import * as SQLite from "expo-sqlite";
@@ -17,9 +15,9 @@ export type RecordsRepo = {
     boardSize: number,
     id: number,
     analysis: RecordAnalysis | null,
-  ) => Promise<void>; // 🆕追加
-  clearAll: () => Promise<void>; // 🆕追加
-  updateUsername: (uid: string, newUsername: string) => Promise<void>; // 🆕追加
+  ) => Promise<void>;
+  clearAll: () => Promise<void>;
+  updateUsername: (uid: string, newUsername: string) => Promise<void>;
 };
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -52,14 +50,6 @@ function getDb() {
           CREATE INDEX IF NOT EXISTS idx_records_board_id
             ON records (board_size, id);
         `);
-        // 🆕既存インストール向けマイグレーション。
-        // CREATE TABLE IF NOT EXISTSは既存テーブルにカラムを追加してくれないので、
-        // 新規インストールでは重複エラーになるのを承知でALTER TABLEも試す。
-        try {
-          await db.execAsync(`ALTER TABLE records ADD COLUMN analysis TEXT`);
-        } catch {
-          // 既にカラムがある場合はここに来る(想定内なので握りつぶす)
-        }
         return db;
       },
     );
@@ -72,13 +62,12 @@ function rowToRecord(row: any): RecordType {
     ...row,
     moves: row.moves ? JSON.parse(row.moves) : null,
     dead_stones: row.dead_stones ? JSON.parse(row.dead_stones) : [],
-    analysis: row.analysis ? JSON.parse(row.analysis) : null, // 🆕追加
+    analysis: row.analysis ? JSON.parse(row.analysis) : null,
   };
 }
 
 export const recordsRepo: RecordsRepo = {
   insertMany: async (records) => {
-    // (変更なし。analysisはINSERT文の列に含めていないので新規行は自動的にNULLになる)
     if (records.length === 0) return;
     const db = await getDb();
     await db.withTransactionAsync(async () => {
@@ -154,7 +143,6 @@ export const recordsRepo: RecordsRepo = {
     return rows.map(rowToRecord);
   },
 
-  // 🆕1手分析されるごとにここが呼ばれる想定。analysis列を丸ごと上書き。
   updateAnalysis: async (boardSize, id, analysis) => {
     const db = await getDb();
     await db.runAsync(
@@ -164,11 +152,14 @@ export const recordsRepo: RecordsRepo = {
   },
 
   clearAll: async () => {
-    const db = await getDb();
-    await db.execAsync(`DELETE FROM records;`);
+    if (dbPromise) {
+      const db = await dbPromise;
+      await db.closeAsync();
+      dbPromise = null;
+    }
+    await SQLite.deleteDatabaseAsync("hoshigo-records.db");
   },
 
-  // 🆕自分のUIDに一致するレコードの名前を一括更新！
   updateUsername: async (uid, newUsername) => {
     const db = await getDb();
     await db.runAsync(

@@ -157,8 +157,8 @@ export function KataGoEngineProvider({
       // 3. まずデフォルトモデルだけ待つ → ここで即プレイ可能にする
       await engine.warmupModel(DEFAULT_MODEL_ID);
       markModelReady(DEFAULT_MODEL_ID);
-      setLoadProgress(null); // デフォルトモデル分の進捗表示は役目終了
-      setEngineReady(true);
+      setEngineReady(true); // 先にゲートを開ける → ローディング画面はもう表示されない
+      setLoadProgress(null); // 後片付け（このタイミングでの再描画はもう画面に見えない）
       console.log(
         `[KataGoContext] デフォルトモデル(${DEFAULT_MODEL_ID})準備完了、プレイ可能に`,
       );

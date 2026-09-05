@@ -49,7 +49,7 @@ export function GameResultModal({
   const { iconIndex: currentIconIndex } = useProfile();
   const { updateIconIndex } = useIconUpdate();
 
-  // 🆕 IconSelectModal と同じパターンで個別くるくるを管理するにゃ
+  // 🆕 IconSelectModal と同じパターンで個別くるくるを管理する
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
   const handleSelectIcon = async (iconId: number) => {

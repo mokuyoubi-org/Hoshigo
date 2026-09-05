@@ -38,7 +38,8 @@ export const dictionary = {
       local: "Local",
       or: "or",
       edit: "Edit",
-      done: "Done"
+      done: "Done",
+      tapToDismiss: "Tap to dismiss",
     },
   },
   Home: {
@@ -124,7 +125,7 @@ export const dictionary = {
   RankInfoModal: {
     en: {
       title: "About Ranks",
-      yourCurrentRating: "Your Current Rating", // 単語の頭文字を大文字にする（Title Case）とUIっぽくなるにゃ！
+      yourCurrentRating: "Your Current Rating", // 単語の頭文字を大文字にする（Title Case）とUIっぽくなる
       remaining: "+{{rating}} pts to {{nextRank}}!",
       allRank: "All Ranks",
       current: "Current",

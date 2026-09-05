@@ -28,7 +28,7 @@ export type Selection = "guest" | "existing" | null;
 
 type Props = {
   onClose: () => void;
-  turnstileRef?: React.RefObject<TurnstileHandle | null>; // ← | null を追加だにゃ！
+  turnstileRef?: React.RefObject<TurnstileHandle | null>; // ← | null を追加
 };
 
 export function useLoginModal({ onClose, turnstileRef }: Props) {

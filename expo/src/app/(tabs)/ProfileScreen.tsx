@@ -121,7 +121,7 @@ export default function ProfileScreen() {
                   <MaterialCommunityIcons
                     name="check-decagram"
                     size={22}
-                    color={COLORS.primary} // ブランドカラー（青など）で統一だにゃ！
+                    color={COLORS.primary} // ブランドカラー（青など）で統一
                   />
                 )}
                 <TouchableOpacity

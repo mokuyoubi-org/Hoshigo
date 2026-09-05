@@ -14,7 +14,7 @@ import {
   Grid,
   MatchType,
   PASS_GRID,
-  useGoBoardState,
+  useGoGame,
 } from "expo-goband";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -55,7 +55,7 @@ export function useMatchSession({
   const kataGo = useKataGo();
   // -------- state --------
   const t = useTranslation();
-  const goBoard = useGoBoardState({ boardSize, matchType, movesInt });
+const goBoard = useGoGame({ boardSize, matchType, movesInt });
   const { boardRef, movesRef } = goBoard;
   const botMove = useBotMove(myColor, boardSize, oppUsername);
   const endgame = useEndgameAnalysis();
@@ -63,6 +63,10 @@ export function useMatchSession({
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
+  // 🐱 対局終了直後、RecordType組み立てに必要だけど今まで捨てていたデータたち
+  const [resultRaw, setResultRaw] = useState<string | null>(null);
+  const [oppRatingAfter, setOppRatingAfter] = useState(0);
+  const [finalDeadStones, setFinalDeadStones] = useState<number[]>([]);
 
   const [matchResult, setMatchResult] = useState<
     Omit<MatchResultUpdate, "profilePatch">
@@ -83,25 +87,25 @@ export function useMatchSession({
 
   // 🌟 -------- 関数 --------
 
-  const handleServerSync = async (payload: ServerSyncPayload) => {
-    if (isGameEnded) return;
+const handleServerSync = async (payload: ServerSyncPayload) => {
+  if (isGameEnded) return;
 
-    const localCount = goBoard.movesRef.current.length;
-    const serverCount = payload.moves.length;
+  const localCount = goBoard.movesRef.current.length;
+  const serverCount = payload.moves.length;
 
-    if (serverCount > localCount && !isResyncingRef.current) {
-      isResyncingRef.current = true;
-      console.warn(
-        `[useMatchSession] moves取りこぼし検出: local=${localCount} → server=${serverCount}、resyncします`,
-      );
+  if (serverCount > localCount && !isResyncingRef.current) {
+    isResyncingRef.current = true;
+    console.warn(
+      `[useMatchSession] moves取りこぼし検出: local=${localCount} → server=${serverCount}、resyncします`,
+    );
 
-      reconnect();
+    reconnect();
 
-      const serverTurn = goBoard.resyncFromMoves(payload.moves);
-      clock.unfreeze(serverTurn);
-      isResyncingRef.current = false;
-    }
-  };
+    const serverTurn = goBoard.loadMoves(payload.moves);
+    clock.unfreeze(serverTurn);
+    isResyncingRef.current = false;
+  }
+};
 
   // 🌟 -------- 時計の用意！ --------
   const clock = useMatchClock({
@@ -134,75 +138,75 @@ export function useMatchSession({
   }, [botMove, matchType, matchId, clock]);
 
   // 人間が手を打つ
-  const handlePutStone = async (grid: Grid) => {
-    if (!clock.isMyTurn || isGameEnded || isSubmittingRef.current) return;
+const handlePutStone = async (grid: Grid) => {
+  if (!clock.isMyTurn || isGameEnded || isSubmittingRef.current) return;
 
-    isSubmittingRef.current = true;
-    clock.freeze(); // 🥶 タップした瞬間から結果が確定するまで、誰の番でもない
+  isSubmittingRef.current = true;
+  clock.freeze(); // 🥶 タップした瞬間から結果が確定するまで、誰の番でもない
 
-    const applied = goBoard.applyOwnMove(grid, myColor);
-    if (!applied) {
-      clock.unfreeze(myColor); // 非合法手なら即座に自分の番へ戻す
-      isSubmittingRef.current = false;
+  const applied = goBoard.applyLegalMove(grid, myColor);
+  if (!applied) {
+    clock.unfreeze(myColor); // 非合法手なら即座に自分の番へ戻す
+    isSubmittingRef.current = false;
+    return;
+  }
+
+  // 🥶 kataGo計算・RPC送信をまとめて1つのtry/catch/finallyで保護する。
+  // どちらで失敗・例外が起きても、必ず「石を戻す→自分の番に戻す→送信フラグを解放する」
+  // という後始末に辿り着けるようにするための一本化。
+  try {
+    const x = goBoard.boardHistoryRef.current[goBoard.currentIndex];
+    const result = await kataGo.run({
+      board: x,
+      movesSoFar: goBoard.moves,
+      matchType,
+      boardSize,
+      modelId: "b6",
+      currentPlayer: myColor,
+    });
+
+    console.log("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓usematchsession↓↓↓↓↓↓↓↓↓↓↓↓↓↓");
+    printCustomKataGoResult(x, goBoard.moves, myColor, result);
+    console.log("↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑usematchsession↑↑↑↑↑↑↑↑↑↑↑↑↑↑");
+
+    // 🥶 ここから実際にサーバーへ送信する。以降frozenが3秒以上続いたら
+    // useMatchClock側のタイムアウト救済が働く(通信ロス等の異常検知用)。
+    clock.markWaitingForServer();
+
+    // supabase送信
+    const { error } = await supabase.rpc("add_move", {
+      p_match_id: matchId,
+      p_move: grid,
+    });
+
+    // 失敗した場合、なかったことにしてまたやり直し
+    if (error) {
+      console.error("着手送信失敗:", error);
+      goBoard.loadMoves(goBoard.movesRef.current.slice(0, -1));
+      clock.unfreeze(myColor); // 失敗したら自分の番へ戻す
       return;
     }
 
-    // 🥶 kataGo計算・RPC送信をまとめて1つのtry/catch/finallyで保護する。
-    // どちらで失敗・例外が起きても、必ず「石を戻す→自分の番に戻す→送信フラグを解放する」
-    // という後始末に辿り着けるようにするための一本化。
-    try {
-      const x = goBoard.boardHistoryRef.current[goBoard.currentIndex];
-      const result = await kataGo.run({
-        board: x,
-        movesSoFar: goBoard.moves,
-        matchType,
-        boardSize,
-        modelId: "b6",
-        currentPlayer: myColor,
-      });
+    // 着手送信成功時にハートビートタイマーをリセット
+    clock.resetHeartbeat();
 
-      console.log("↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓usematchsession↓↓↓↓↓↓↓↓↓↓↓↓↓↓");
-      printCustomKataGoResult(x, goBoard.moves, myColor, result);
-      console.log("↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑usematchsession↑↑↑↑↑↑↑↑↑↑↑↑↑↑");
+    // 🥶 自分の手がダブルパスだった場合、そのままfrozenを維持
+    const moves = goBoard.movesRef.current;
+    const isDoublePass =
+      grid === PASS_GRID && moves[moves.length - 2] === PASS_GRID;
 
-      // 🥶 ここから実際にサーバーへ送信する。以降frozenが3秒以上続いたら
-      // useMatchClock側のタイムアウト救済が働く(通信ロス等の異常検知用)。
-      clock.markWaitingForServer();
-
-      // supabase送信
-      const { error } = await supabase.rpc("add_move", {
-        p_match_id: matchId,
-        p_move: grid,
-      });
-
-      // 失敗した場合、なかったことにしてまたやり直し
-      if (error) {
-        console.error("着手送信失敗:", error);
-        goBoard.revertLastOwnMove();
-        clock.unfreeze(myColor); // 失敗したら自分の番へ戻す
-        return;
-      }
-
-      // 着手送信成功時にハートビートタイマーをリセット
-      clock.resetHeartbeat();
-
-      // 🥶 自分の手がダブルパスだった場合、そのままfrozenを維持
-      const moves = goBoard.movesRef.current;
-      const isDoublePass =
-        grid === PASS_GRID && moves[moves.length - 2] === PASS_GRID;
-
-      if (!isDoublePass) {
-        clock.unfreeze(oppColor);
-      }
-    } catch (e) {
-      // kataGoの計算失敗・RPC通信の例外、どちらもここでまとめて拾う
-      console.error("着手処理で例外発生:", e);
-      goBoard.revertLastOwnMove();
-      clock.unfreeze(myColor); // 例外でも自分の番へ戻す
-    } finally {
-      isSubmittingRef.current = false;
+    if (!isDoublePass) {
+      clock.unfreeze(oppColor);
     }
-  };
+  } catch (e) {
+    // kataGoの計算失敗・RPC通信の例外、どちらもここでまとめて拾う
+    console.error("着手処理で例外発生:", e);
+    goBoard.loadMoves(goBoard.movesRef.current.slice(0, -1));
+    clock.unfreeze(myColor); // 例外でも自分の番へ戻す
+  } finally {
+    isSubmittingRef.current = false;
+  }
+};
 
   // 人間が投了
   const handleResign = async () => {
@@ -227,37 +231,37 @@ export function useMatchSession({
 
   // 🌟 -------- チャンネル系 --------
   // gameチャンネルから手の通知が来た時の処理。
-  const gameCh_move = async (payload: any) => {
-    if (isGameEnded) return;
-    const data = payload.payload ?? payload;
-    const move: number = data.move;
-    const moveCount: number = data.move_count;
+const gameCh_move = async (payload: any) => {
+  if (isGameEnded) return;
+  const data = payload.payload ?? payload;
+  const move: number = data.move;
+  const moveCount: number = data.move_count;
 
-    clock.syncSecondsFromServer(
-      Number(data.black_seconds),
-      Number(data.white_seconds),
-    );
+  clock.syncSecondsFromServer(
+    Number(data.black_seconds),
+    Number(data.white_seconds),
+  );
 
-    const isNewMove = moveCount === goBoard.movesRef.current.length + 1;
+  const isNewMove = moveCount === goBoard.movesRef.current.length + 1;
 
-    if (isNewMove) {
-      goBoard.applyRemoteMove(move, oppColor);
-      isSubmittingRef.current = false;
+  if (isNewMove) {
+    goBoard.applyTrustedMove(move, oppColor);
+    isSubmittingRef.current = false;
 
-      // 相手の手を受信（相手のadd_move）したタイミングでハートビートタイマーをリセット
-      clock.resetHeartbeat();
+    // 相手の手を受信(相手のadd_move)したタイミングでハートビートタイマーをリセット
+    clock.resetHeartbeat();
 
-      const moves = goBoard.movesRef.current;
-      const isDoublePass =
-        move === PASS_GRID && moves[moves.length - 2] === PASS_GRID;
+    const moves = goBoard.movesRef.current;
+    const isDoublePass =
+      move === PASS_GRID && moves[moves.length - 2] === PASS_GRID;
 
-      if (isDoublePass) {
-        clock.freeze(); // 🥶 集計待ちの間、誰の番でもない
-      } else {
-        clock.unfreeze(myColor);
-      }
+    if (isDoublePass) {
+      clock.freeze(); // 🥶 集計待ちの間、誰の番でもない
+    } else {
+      clock.unfreeze(myColor);
     }
-  };
+  }
+};
 
   // gameチャンネルからダブルパス通知が来た時の処理。
   const gameCh_double_pass = async (payload: any) => {
@@ -272,6 +276,7 @@ export function useMatchSession({
         boardSize,
       );
       goBoard.setDeadStones(deadStones);
+      setFinalDeadStones(deadStones);
 
       const { result } = goBoard.computeTerritory();
 
@@ -302,6 +307,7 @@ export function useMatchSession({
     if (!data) return;
 
     const myData = myColor === 1 ? data.black : data.white;
+    const oppData = myColor === 1 ? data.white : data.black;
 
     if (myData) {
       const updated = computeMatchResultUpdate(
@@ -319,10 +325,15 @@ export function useMatchSession({
       }
     }
 
+    if (oppData?.new_rating != null) {
+      setOppRatingAfter(oppData.new_rating);
+    }
+
     if (data.result) {
       const resTmp = goBoard.computeTerritory();
       goBoard.setTerritoryBoard(resTmp.territoryBoard);
 
+      setResultRaw(data.result);
       setResultComment(
         resultToComment(data.result, myColor, t) ?? t("common.matchComplete"),
       );
@@ -385,6 +396,9 @@ export function useMatchSession({
     setLoading,
     handlePutStone,
     handleResign,
+    resultRaw,
+    oppRatingAfter,
+    finalDeadStones,
     ...matchResult,
   };
 }

@@ -10,10 +10,11 @@ import LoadingModal from "@/src/active/components/modals/LoadingModal";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
 import { useTranslation } from "@/src/active/language/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { BLACK, GoBoard, PASS_GRID, ReplayControls } from "expo-goband";
+import { useAudioPlayer } from "expo-audio";
+import { BLACK, GoBoard, PASS_GRID } from "expo-goband";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   Text,
   TouchableOpacity,
@@ -34,6 +35,7 @@ import {
   parseGameParams,
 } from "../stable/logics/gameScreenLogics";
 import { getRankInfo } from "../stable/logics/rankLogics";
+import { buildRecordFromMatch } from "../stable/logics/recordBuilder";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -63,7 +65,7 @@ export default function GameScreen() {
     height * LAYOUT_CONFIG.BOARD_HEIGHT_RATIO,
   );
   // 対局する人の情報
-  const { iconIndex, username, rating9, rating13 } = useProfile();
+  const { uid, iconIndex, username, rating9, rating13 } = useProfile();
   const [rank9, rank13] = [getRankInfo(rating9, t), getRankInfo(rating13, t)];
   const params = useLocalSearchParams<GameScreenParams>();
   const {
@@ -77,9 +79,12 @@ export default function GameScreen() {
     oppUsername,
     oppRating,
     oppIconIndex,
+    oppUid,
   } = parseGameParams(params);
   const myRankIndex = (boardSize === 9 ? rank9.index : rank13.index) ?? 0;
   const myRating = (boardSize === 9 ? rating9 : rating13) ?? 0;
+
+const { playSound } = useGameSounds();
   // 🌟useMatchSession呼び出し！
   const {
     boardHistory,
@@ -88,7 +93,6 @@ export default function GameScreen() {
     currentIndex,
     setCurrentIndex,
     territoryBoard,
-    goToLatest,
     isMyTurn,
     mySeconds,
     oppSeconds,
@@ -103,6 +107,9 @@ export default function GameScreen() {
     rankIndexBefore,
     rankIndexAfter,
     newlyAcquiredIcons,
+    resultRaw,
+    oppRatingAfter,
+    finalDeadStones,
   } = useMatchSession({
     matchId,
     myColor,
@@ -128,11 +135,12 @@ export default function GameScreen() {
   // 対局開始モーダルや、結果モーダルを閉じた時の処理
   const onClose = () => {
     hide();
-    goToLatest();
   };
 
   // iボタン押した時には、対局開始モーダルを表示。useEffectでも使うのでここに出してある
+  // 音も鳴らす
   const showGameStartModal = () => {
+    playSound("gameStart");
     show(
       <GameStartModal
         myUsername={username ?? ""}
@@ -151,6 +159,7 @@ export default function GameScreen() {
 
   // resultボタン押した時には、結果モーダルを表示。useEffectでも使うのでここに出してある
   const showResultModal = () => {
+    playSound("gameStart");
     show(
       <GameResultModal
         boardSize={boardSize}
@@ -194,6 +203,32 @@ export default function GameScreen() {
   // isGameEndedは対局が終了しているか否か。
   useEffect(() => {
     if (isGameEnded) {
+      const record = buildRecordFromMatch({
+        matchId,
+        boardSize,
+        matchType,
+        moves: moves ?? [],
+        deadStones: finalDeadStones,
+        result: resultRaw,
+        myColor,
+        myUid: uid ?? "",
+        myUsername: username ?? "",
+        myIconIndex: iconIndex ?? 0,
+        myRatingBefore: ratingBefore,
+        myRankIndexAfter: rankIndexAfter,
+        oppUid,
+        oppUsername: oppUsername ?? "",
+        oppIconIndex: oppIconIndex ?? 0,
+        oppRatingBefore: oppRating ?? 0,
+        oppRatingAfter,
+        t,
+      });
+
+      router.replace({
+        pathname: "/BoardEditScreen",
+        params: { recordJson: JSON.stringify(record) },
+      });
+
       showResultModal();
     }
   }, [isGameEnded]);
@@ -227,25 +262,12 @@ export default function GameScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* ─── 結果ボタン ─── */}
-          {!isGameEnded ? (
-            <IconButton
-              icon={<FontAwesome6 name="info" />}
-              color={COLORS.primary}
-              onPress={showGameStartModal}
-            />
-          ) : (
-            <TouchableOpacity
-              className={`mb-4 self-start ${!isGameEnded ? "opacity-0" : ""}`}
-              onPress={showResultModal}
-              activeOpacity={0.7}
-              disabled={!isGameEnded}
-            >
-              <Text className="text-base font-bold text-text tracking-wide">
-                {t("common.result")}
-              </Text>
-            </TouchableOpacity>
-          )}
+          {/* ─── infoボタン ─── */}
+          <IconButton
+            icon={<FontAwesome6 name="info" />}
+            color={COLORS.primary}
+            onPress={showGameStartModal}
+          />
         </View>
 
         {/* ─── 余白 a ─── */}
@@ -313,7 +335,7 @@ export default function GameScreen() {
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_B }} />
 
         {/* ─── 二兄弟 ─── */}
-        {!isGameEnded ? (
+        {!isGameEnded && (
           <View className="flex-row gap-2" style={{ width: boardWidth }}>
             <TouchableOpacity
               className={`flex-1 h-14 border-2 border-primaryDark rounded-2xl justify-center items-center bg-foreground ${
@@ -343,17 +365,6 @@ export default function GameScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <View
-            className="w-full max-w-[680px] bg-transparent"
-            style={{ minWidth: boardWidth }}
-          >
-            <ReplayControls
-              onCurrentIndexChange={setCurrentIndex}
-              currentIndex={currentIndex}
-              maxIndex={boardHistory.length - 1}
-            />
-          </View>
         )}
 
         {/* ─── 余白 c ─── */}
@@ -372,3 +383,7 @@ export default function GameScreen() {
   // overlay providerが提供している「椅子=枠」は一つだけだからだ。
   // 逆に言えば、そのシステムに乗りたくない場合はshowを使わなければ良い。
 }
+function useGameSounds(): { playSound: any; } {
+  throw new Error("Function not implemented.");
+}
+

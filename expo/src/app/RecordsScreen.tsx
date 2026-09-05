@@ -135,7 +135,7 @@ export default function RecordsScreen() {
               offset: SNAP_INTERVAL * i,
               index: i,
             })}
-            // 🐱 useState の値を渡すので ESLint エラーが消える
+            // 🐱 useState の値を渡す
             initialScrollIndex={currentIndex} // 初期表示時にスクロールしておくインデックス
             onScrollToIndexFailed={(info) => {
               // initialScrollIndex へのスクロールが失敗した場合のリカバリー処理

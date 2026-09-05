@@ -1,7 +1,9 @@
+// PreviewStone.tsx
+
 import React, { memo } from "react";
 import { StyleSheet, View } from "react-native";
-import { BLACK, Color } from "../..";
 import { COLORS } from "../../constants/colors";
+import { BLACK, Color } from "../../types/go";
 
 
 type Props = {

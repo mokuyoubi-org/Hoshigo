@@ -1,6 +1,5 @@
 // GoBoard.tsx
 
-import { useAudioPlayer } from "expo-audio";
 import React, {
   useCallback,
   useEffect,
@@ -11,6 +10,7 @@ import React, {
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { COLORS } from "../constants/colors";
+import { useSounds } from "../hooks/useSounds";
 import {
   Agehama,
   BLACK,
@@ -22,7 +22,7 @@ import {
   PASS_GRID,
 } from "../types/go";
 import { BoardLines } from "./BoardLines";
-import { DecoratedStone } from "./stones/DecoratedStone";
+import { IntersectionContainer } from "./stones/IntersectionContainer";
 
 type Props = {
   board: Board;
@@ -40,6 +40,8 @@ type Props = {
   agehamaHistory: Agehama[];
   pinPoints?: Grid[];
   editedPoints?: Grid[]; // 🐱 編集された石の位置リストを追加！
+  botMovePoints?: Grid[]; // 🐱 ボットが打った石の位置リスト（青マーカー用）
+  forceShowTerritory?: boolean; // 🐱 isGameEndedに関わらず地計算結果を強制表示するフラグ
   enableDoubleTap?: boolean;
   playerColor?: Color;
 };
@@ -57,6 +59,8 @@ export function GoBoard({
   boardWidth,
   pinPoints,
   editedPoints = [],
+  botMovePoints = [],
+  forceShowTerritory = false,
   enableDoubleTap = false,
   playerColor = BLACK,
 }: Props) {
@@ -101,21 +105,9 @@ export function GoBoard({
     };
   }, [boardWidth, boardSize]);
 
-  // ─── 音 ──────────────────────────────────────────────
-  const stonePlayer = useAudioPlayer(require("../../assets/sounds/stone.mp3"));
   const prevIndexRef = useRef<number | null>(null);
 
-  // 🐱 音声を安全に鳴らすためのヘルパー関数
-  const playStoneSound = useCallback(async () => {
-    try {
-      if (!stonePlayer) return;
-
-      await stonePlayer.seekTo(0);
-      await stonePlayer.play();
-    } catch (error) {
-      console.warn("Failed to play stone sound:", error);
-    }
-  }, [stonePlayer]);
+  const { playSound } = useSounds();
 
   useEffect(() => {
     const prevIdx = prevIndexRef.current;
@@ -125,10 +117,14 @@ export function GoBoard({
     if (currentIndex !== prevIdx + 1) return;
 
     const appliedMove = moveHistory[currentIndex - 1];
-    if (appliedMove === PASS_GRID) return;
 
-    playStoneSound();
-  }, [currentIndex, moveHistory, playStoneSound]);
+    // パスのときはパスの音、石を置いたときは石の音を鳴らすにゃ！
+    if (appliedMove === PASS_GRID) {
+      playSound("pass", 0.2);
+    } else {
+      playSound("stone");
+    }
+  }, [currentIndex, moveHistory, playSound]);
 
   const handlePressGrid = useCallback(
     (grid: Grid, goString: GoString | null) => {
@@ -159,12 +155,16 @@ export function GoBoard({
     return move === PASS_GRID ? null : move;
   }, [currentIndex, moveHistory]);
 
-  const showTerritory = isGameEnded && currentIndex === boardHistory.length - 1;
+  // 🐱 forceShowTerritoryがtrueなら、isGameEndedに関わらず地計算結果を表示する
+  const showTerritory =
+    forceShowTerritory ||
+    (isGameEnded && currentIndex === boardHistory.length - 1);
 
   const pinSet = useMemo(() => new Set(pinPoints ?? []), [pinPoints]);
 
   // 🐱 判定を高速化するために Set に変換する
   const editedSet = useMemo(() => new Set(editedPoints), [editedPoints]);
+  const botMoveSet = useMemo(() => new Set(botMovePoints), [botMovePoints]);
 
   return (
     <View style={styles.container}>
@@ -199,7 +199,7 @@ export function GoBoard({
             const c = grid % boardSize;
 
             return (
-              <DecoratedStone
+              <IntersectionContainer
                 key={grid}
                 grid={grid}
                 boardSize={boardSize}
@@ -211,7 +211,8 @@ export function GoBoard({
                 isCurrentMove={grid === currentMoveGrid}
                 showTerritory={showTerritory}
                 isPinned={pinSet.has(grid)}
-                isEdited={editedSet.has(grid)} // 🐱 ここで BoardGridCell に渡すにゃ！
+                isEdited={editedSet.has(grid)} // 🐱 ここで BoardGridCell に渡す
+                isBotMove={botMoveSet.has(grid)}
                 enableDoubleTap={enableDoubleTap}
                 playerColor={playerColor}
                 disabled={disabled}

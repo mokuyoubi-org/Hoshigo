@@ -121,7 +121,7 @@ export const RankingCard = ({
               {item.username}
             </Text>
 
-            {/* 🐱 認証済みユーザーなら公式バッジを表示するにゃ！ */}
+            {/* 🐱 認証済みユーザーなら公式バッジを表示する */}
             {item.is_authenticated && (
               <MaterialCommunityIcons
                 name="check-decagram"

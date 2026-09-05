@@ -1,7 +1,5 @@
-// records-repo.web.ts
-
-import type { RecordType } from "@/src/active/types/record";
 import type { RecordAnalysis } from "@/src/active/types/analysis";
+import type { RecordType } from "@/src/active/types/record";
 
 export type RecordsRepo = {
   insertMany: (records: RecordType[]) => Promise<void>;
@@ -16,9 +14,9 @@ export type RecordsRepo = {
     boardSize: number,
     id: number,
     analysis: RecordAnalysis | null,
-  ) => Promise<void>; // 🆕追加
-  clearAll: () => Promise<void>; // 🆕追加
-  updateUsername: (uid: string, newUsername: string) => Promise<void>; // 🆕追加
+  ) => Promise<void>;
+  clearAll: () => Promise<void>;
+  updateUsername: (uid: string, newUsername: string) => Promise<void>;
 };
 
 const DB_NAME = "hoshigo-records";
@@ -41,7 +39,6 @@ function openDb(): Promise<IDBDatabase> {
 
 export const recordsRepo: RecordsRepo = {
   insertMany: async (records) => {
-    // (変更なし。IndexedDBはスキーマレスなのでanalysisフィールドが無くても問題なし)
     if (typeof indexedDB === "undefined" || records.length === 0) return;
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -54,7 +51,6 @@ export const recordsRepo: RecordsRepo = {
   },
 
   getNewestId: async (boardSize) => {
-    // (変更なし)
     if (typeof indexedDB === "undefined") return null;
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -71,7 +67,6 @@ export const recordsRepo: RecordsRepo = {
   },
 
   getOldestId: async (boardSize) => {
-    // (変更なし)
     if (typeof indexedDB === "undefined") return null;
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -105,10 +100,7 @@ export const recordsRepo: RecordsRepo = {
       req.onsuccess = () => {
         const cursor = req.result;
         if (!cursor || results.length >= limit) {
-          // 🆕nativeとの型整合のため、analysisが無いレコードはnullに正規化
-          resolve(
-            results.map((r) => ({ ...r, analysis: r.analysis ?? null })),
-          );
+          resolve(results.map((r) => ({ ...r, analysis: r.analysis ?? null })));
           return;
         }
         results.push(cursor.value);
@@ -118,7 +110,6 @@ export const recordsRepo: RecordsRepo = {
     });
   },
 
-  // 🆕1手分析されるごとにここが呼ばれる想定。get→フィールド更新→put。
   updateAnalysis: async (boardSize, id, analysis) => {
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
@@ -140,22 +131,15 @@ export const recordsRepo: RecordsRepo = {
     });
   },
 
-
   clearAll: async () => {
     if (typeof indexedDB === "undefined") return;
-    const db = await openDb();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      tx.objectStore(STORE_NAME).clear();
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+      const req = indexedDB.deleteDatabase(DB_NAME);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
     });
   },
 
-
-
-
-// 🆕自分のUIDに一致するレコードの名前を一括更新！
   updateUsername: async (uid, newUsername) => {
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
@@ -191,17 +175,4 @@ export const recordsRepo: RecordsRepo = {
       tx.onerror = () => reject(tx.error);
     });
   },
-
-
-
-
-
-
-
-
-
-
-
-
-
 };

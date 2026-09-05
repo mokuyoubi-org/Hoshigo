@@ -1,34 +1,36 @@
-// useGoBoardState.ts
+// expo-goband/src/hooks/useGoGame.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
 // 対局中の盤面状態(board / boardHistory / agehamaHistory / moves / lastMove
-// / currentIndex / territoryBoard)を一手に管理する。
+// / currentIndex / territoryBoard)を一手に管理する、Go対局全般で使える汎用hook。
 //
 // 外に公開するのは「状態そのもの」よりも「何が起きたか」に近い操作にした:
-//   - applyOwnMove   : 自分が着手した(合法手チェック込み)
-//   - revertLastOwnMove : 通信失敗などで直前の自分の着手を取り消す
-//   - applyRemoteMove   : 相手 or ボットの着手がbroadcastで届いた
-//   - computeTerritory  : 終局時の地合い計算
-//   - goToLatest        : リプレイ後、最新局面に戻る
+//   - applyLegalMove   : 合法手チェックをした上で着手を反映する(非合法ならfalseを返す)
+//   - applyTrustedMove : 合法性チェック済みの着手を無条件で反映する(ボット/相手/棋譜再生用)
+//   - loadMoves        : 任意のmoves配列から状態を丸ごと再構築する(初期化/巻き戻し/resync兼用)
+//   - computeTerritory : 終局時の地合い計算
+//   - goToLatest       : リプレイ後、最新局面に戻る
 //
-// これにより、GameScreen.tsx側は「盤面の中身をどう更新するか」を知らなくてよくなる。
+// 通信対局固有の概念(サーバー送信失敗時の巻き戻し、resync)は、このhookが
+// loadMovesという汎用プリミティブを提供することで、呼び出し側(useMatchSessionなど)
+// で組み立ててもらう形にしている。このhook自身は「通信」も「対局の勝敗」も知らない。
 //
 // ─── ref vs state の使い分け ───
 // render(JSXの中)で読まれる値は必ずstateにする(moves / territoryBoard など)。
 // render中に読まれない、内部処理専用の値だけrefにする(boardRef / deadStonesRef)。
-// 外部からrefへの直接代入(goBoard.xxxRef.current = ...)はESLintの
-// react-hooks/immutability に引っかかるため禁止。更新はhookが公開するsetter経由で行う。
+// 外部からrefへの直接代入(goBoard.xxxRef.current = ...)は禁止。更新はhookが公開するsetter経由で行う。
 //
 // ──────────────────────────────────────────────────
 
 import { useRef, useState } from "react";
+import { movesToBoardHistory } from "../logics/boardConverters";
+import { getColorToMove } from "../logics/getColorToMove";
 import {
   applyMove,
   cloneBoard,
   initBoard,
   isLegalMove,
 } from "../logics/goLogics";
-import { generateOkigoBoard } from "../logics/okigoLogics";
 import {
   TerritoryBoard,
   generateTerritoryBoard,
@@ -42,76 +44,44 @@ import {
   Grid,
   MatchType,
   PASS_GRID,
-  WHITE,
 } from "../types/go";
 
 type Args = {
   boardSize: BoardSize;
   matchType: MatchType;
-  movesInt: number[]; // paramsから来る、着手前の手の履歴(-1がパス)
+  movesInt: number[]; // 初期化用の、着手前の手の履歴(-1がパス)
 };
 
-// paramsのmovesInt(数値配列)から、初期盤面・履歴を再構築する。
-// Playing.tsxにあったbuildInitialStateをそのまま移植。
-const buildInitialState = ({ boardSize, matchType, movesInt }: Args) => {
-  let board = generateOkigoBoard(matchType, boardSize);
+// moves配列(Grid[])から、盤面・履歴・現在の手番を一括で再構築する。
+// 初期化・巻き戻し・resyncのすべてがこの1関数に集約される。
+const buildStateFromMoves = (
+  boardSize: BoardSize,
+  matchType: MatchType,
+  moves: Grid[],
+) => {
+  const { boardHistory, agehamaHistory } = movesToBoardHistory(
+    boardSize,
+    matchType,
+    moves,
+  );
 
-  const firstTurn: Color = matchType >= 2 ? WHITE : BLACK;
-  const colors: Color[] = firstTurn === BLACK ? [BLACK, WHITE] : [WHITE, BLACK];
-
-  const agehmHist: Agehama[] = [{ black: 0, white: 0 }];
-  const boardHistory: Board[] = [cloneBoard(board)];
-  const moves: Grid[] = [];
-  let lastMoveGrid: Grid | null = null;
-
-  for (let i = 0; i < movesInt.length; i++) {
-    const grid = movesInt[i];
-    const color = colors[i % 2];
-    const last = agehmHist[agehmHist.length - 1];
-    if (grid === -1) {
-      moves.push(PASS_GRID);
-      boardHistory.push(cloneBoard(board));
-      agehmHist.push({ ...last });
-      lastMoveGrid = PASS_GRID;
-    } else {
-      const { board: newBoard, agehama } = applyMove(
-        boardSize,
-        grid,
-        cloneBoard(board),
-        color,
-      );
-      board = newBoard;
-      boardHistory.push(cloneBoard(board));
-      moves.push(grid);
-      agehmHist.push(
-        color === BLACK
-          ? { ...last, black: last.black + agehama }
-          : { ...last, white: last.white + agehama },
-      );
-      lastMoveGrid = grid;
-    }
-  }
-
-  const currentTurn: Color = colors[movesInt.length % 2];
+  const lastMoveGrid = moves.length > 0 ? moves[moves.length - 1] : null;
+  const currentTurn = getColorToMove(matchType, moves.length);
 
   return {
-    board,
+    board: boardHistory[boardHistory.length - 1],
     boardHistory,
     moves,
-    agehamaHistory: agehmHist,
+    agehamaHistory,
     currentTurn,
     lastMoveGrid,
   };
 };
 
-export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
+export function useGoGame({ boardSize, matchType, movesInt }: Args) {
   // ── 初期状態の計算は1回きりでいい ──────────────────────
-  // 以前はuseRefで擬似的なlazy-initを行っていたが、これはrender中に
-  // ref.currentを読むことになりreact-hooks/refsに違反する。
-  // 「render前に一度だけ計算してそれ以降は変えない値」はuseStateの
-  // lazy initializerが正しい表現。
   const [initialState] = useState(() =>
-    buildInitialState({ boardSize, matchType, movesInt }),
+    buildStateFromMoves(boardSize, matchType, movesInt),
   );
 
   const boardRef = useRef<Board>(initialState.board);
@@ -125,8 +95,6 @@ export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
     initialState.agehamaHistory,
   );
 
-  // moves: GameScreen側でrender(moveHistoryの計算・GoBoardへのprops渡し)に
-  // 使われるので、boardHistory/agehamaHistoryと同じく ref + state のペアにする。
   const movesRef = useRef<Grid[]>(initialState.moves);
   const [moves, setMovesState] = useState<Grid[]>(initialState.moves);
 
@@ -135,24 +103,16 @@ export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
   );
 
   const currentIndexRef = useRef<number>(initialState.moves.length);
-  // ※ setCurrentIndexはそのままリプレイ用に公開する(refとは同期させない)。
-  //   理由: ReplayControlsでの巻き戻し操作は「見た目だけ」の操作であって、
-  //   進行中の対局の手数(currentIndexRef)には影響させたくないため。
   const [currentIndex, setCurrentIndex] = useState<number>(
     initialState.moves.length,
   );
 
-  // territoryBoard: GameScreen側でGoBoardのpropsとして直接renderに使われるため、
-  // ref単体ではなくstateとして持つ(以前はrefで外部からrefに直接代入していたため
-  // react-hooks/immutability + react-hooks/refs 両方に違反していた)。
   const [territoryBoard, setTerritoryBoard] = useState<TerritoryBoard>(
     Array.from({ length: boardSize }, () => Array(boardSize).fill(0)),
   );
 
   // deadStones(死に石): renderで一切使わない、
   // computeTerritory内部でのみ参照する値なので純粋なrefのままでよい。
-  // ただし外部から直接 .current = ... と書き換えるのはimmutability違反になるため、
-  // 更新は setDeadStones 経由に限定し、refそのものは外に公開しない。
   const deadStonesRef = useRef<Grid[]>([]);
   const setDeadStones = (deadStones: Grid[]) => {
     deadStonesRef.current = deadStones;
@@ -180,8 +140,8 @@ export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
     setCurrentIndex(currentIndexRef.current);
   };
 
-  // ── 自分の着手を反映する。非合法手ならfalseを返して何もしない ──────
-  const applyOwnMove = (grid: Grid, color: Color): boolean => {
+  // ── 合法手チェックをした上で着手を反映する。非合法ならfalseを返して何もしない ──
+  const applyLegalMove = (grid: Grid, color: Color): boolean => {
     if (
       !isLegalMove(
         boardSize,
@@ -216,26 +176,8 @@ export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
     return true;
   };
 
-  // ── 通信失敗時、直前の自分の着手を取り消す ────────────────
-  const revertLastOwnMove = () => {
-    movesRef.current = movesRef.current.slice(0, -1);
-    setMovesState(movesRef.current);
-
-    currentIndexRef.current--;
-    setCurrentIndex(currentIndexRef.current);
-
-    boardHistoryRef.current = boardHistoryRef.current.slice(0, -1);
-    setBoardHistoryState(boardHistoryRef.current);
-
-    agehamaHistoryRef.current = agehamaHistoryRef.current.slice(0, -1);
-    setAgehamaHistoryState(agehamaHistoryRef.current);
-
-    boardRef.current =
-      boardHistoryRef.current[boardHistoryRef.current.length - 1];
-  };
-
-  // ── 相手 or ボットの着手がbroadcastで届いた時に反映する ─────────
-  const applyRemoteMove = (grid: Grid, color: Color) => {
+  // ── 合法性チェック済みの着手を無条件で反映する(ボット/相手/棋譜再生用) ──
+  const applyTrustedMove = (grid: Grid, color: Color) => {
     advanceIndex();
 
     if (grid === PASS_GRID) {
@@ -268,9 +210,6 @@ export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
 
   // ── 終局時の地合い計算(territoryBoard生成) ──────────
   // deadStonesRef(死石)が事前にセットされている前提。
-  // ※ ここではterritoryBoard stateへの反映はしない(純粋な計算のみ)。
-  //   game_double_pass のようにdeadStonesだけ使いたい呼び出し元もあるため、
-  //   実際にstateへ反映するかどうかは呼び出し元(useMatchSession)が判断する。
   const computeTerritory = () => {
     const last =
       agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
@@ -286,23 +225,19 @@ export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
   };
 
   // ── リプレイ後、最新局面に戻る ─────────────────────────
-  // ※ 元の実装と同じく、refのみ更新してstate(currentIndex)は更新しない。
-  //   (結果モーダルを開き直した時にrender用stateとズレる可能性が元からあるが、
-  //   今回はロジックの移植に専念し、挙動は変えていない)
   const goToLatest = () => {
     const finalIndex = boardHistoryRef.current.length - 1;
     currentIndexRef.current = finalIndex;
     boardRef.current = boardHistoryRef.current[finalIndex];
   };
 
-  // ── サーバのmoves配列で盤面を丸ごと再構築する(取りこぼし検出時のresync用) ──
-  // 戻り値: サーバ視点での現在の手番(呼び出し側でclockのsetTurnに渡す用)
-  const resyncFromMoves = (serverMovesInt: number[]): Color => {
-    const rebuilt = buildInitialState({
-      boardSize,
-      matchType,
-      movesInt: serverMovesInt,
-    });
+  // ── 任意のmoves配列から状態を丸ごと再構築する ──────────────
+  // 「巻き戻し(末尾を1つ削ったmovesで再構築)」も
+  // 「resync(サーバのmoves配列で丸ごと差し替え)」も、
+  // どちらも"moves配列が変わったので状態を作り直す"という同じ操作でしかない。
+  // 戻り値: 再構築後の手番(呼び出し側でclockのunfreezeなどに使う用)
+  const loadMoves = (nextMoves: Grid[]): Color => {
+    const rebuilt = buildStateFromMoves(boardSize, matchType, nextMoves);
 
     boardRef.current = rebuilt.board;
     boardHistoryRef.current = rebuilt.boardHistory;
@@ -334,12 +269,11 @@ export function useGoBoardState({ boardSize, matchType, movesInt }: Args) {
     territoryBoard,
     setTerritoryBoard,
     setDeadStones,
-    applyOwnMove,
-    revertLastOwnMove,
-    applyRemoteMove,
+    applyLegalMove,
+    applyTrustedMove,
     computeTerritory,
     goToLatest,
     initialTurn: initialState.currentTurn,
-    resyncFromMoves,
+    loadMoves,
   };
 }
