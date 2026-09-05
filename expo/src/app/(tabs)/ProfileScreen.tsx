@@ -176,7 +176,7 @@ export default function ProfileScreen() {
 
 
 {/* 戦績カード */}
-<StatsCard />
+{/* <StatsCard /> */}
 
 
 
