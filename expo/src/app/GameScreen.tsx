@@ -36,6 +36,7 @@ import {
 } from "../stable/logics/gameScreenLogics";
 import { getRankInfo } from "../stable/logics/rankLogics";
 import { buildRecordFromMatch } from "../stable/logics/recordBuilder";
+import { useSounds } from "../active/hooks/useSounds";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -84,7 +85,7 @@ export default function GameScreen() {
   const myRankIndex = (boardSize === 9 ? rank9.index : rank13.index) ?? 0;
   const myRating = (boardSize === 9 ? rating9 : rating13) ?? 0;
 
-const { playSound } = useGameSounds();
+const { playSound } = useSounds();
   // 🌟useMatchSession呼び出し！
   const {
     boardHistory,
@@ -140,7 +141,7 @@ const { playSound } = useGameSounds();
   // iボタン押した時には、対局開始モーダルを表示。useEffectでも使うのでここに出してある
   // 音も鳴らす
   const showGameStartModal = () => {
-    playSound("gameStart");
+    playSound("gamestart");
     show(
       <GameStartModal
         myUsername={username ?? ""}
@@ -159,7 +160,7 @@ const { playSound } = useGameSounds();
 
   // resultボタン押した時には、結果モーダルを表示。useEffectでも使うのでここに出してある
   const showResultModal = () => {
-    playSound("gameStart");
+    playSound("gamestart");
     show(
       <GameResultModal
         boardSize={boardSize}
@@ -383,7 +384,3 @@ const { playSound } = useGameSounds();
   // overlay providerが提供している「椅子=枠」は一つだけだからだ。
   // 逆に言えば、そのシステムに乗りたくない場合はshowを使わなければ良い。
 }
-function useGameSounds(): { playSound: any; } {
-  throw new Error("Function not implemented.");
-}
-

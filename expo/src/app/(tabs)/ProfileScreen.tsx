@@ -26,6 +26,7 @@ import { useTranslation } from "@/src/active/language/i18n";
 import { BOARD_SIZE_OPTIONS } from "expo-goband";
 import { useOverlay } from "react-overlay";
 import { IconButton, SegmentedControl } from "ui-atoms";
+import { StatsCard } from "@/src/active/components/cards/StatsCard";
 
 export default function ProfileScreen() {
   const t = useTranslation();
@@ -167,6 +168,37 @@ export default function ProfileScreen() {
                 )
               }
             />
+
+
+
+
+
+
+
+{/* 戦績カード */}
+<StatsCard />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             {/* クラウドメニュー */}
             <TouchableOpacity
