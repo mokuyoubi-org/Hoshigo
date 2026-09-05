@@ -72,7 +72,7 @@ declare
   v_icon_item smallint;
   v_other_board_size smallint;
 begin
-  -- 反対側の盤サイズを割り出す（アイコン計算用）
+  -- 反対側の盤サイズを割り出すにゃ（アイコン計算用）
   v_other_board_size := case when new.board_size = 9 then 13 else 9 end;
 
   -- ─── 1. プロフィール情報 & 戦績情報の取得 ───────────────────────────
@@ -82,7 +82,7 @@ begin
   from private.profiles
   where uid = new.black_uid;
 
-  -- wins + losses + draws の合計で総対局数を計算する
+  -- wins + losses + draws の合計で総対局数を計算するにゃ！
   select 
     coalesce(wins + losses + draws, 0), 
     coalesce(rating, 0), 
@@ -102,7 +102,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- wins + losses + draws の合計で総対局数を計算する
+  -- wins + losses + draws の合計で総対局数を計算するにゃ！
   select 
     coalesce(wins + losses + draws, 0), 
     coalesce(rating, 0), 
@@ -305,7 +305,7 @@ begin
       )
     ),
     'rating_updated', -- イベント名
-    'game:' || new.id::text, -- gameChannelにまとめる
+    'game:' || new.id::text, -- gameChannelにまとめるにゃ
     false
   );
 
@@ -419,6 +419,7 @@ begin
     'match_type',     p_match.match_type,
     'moves',          coalesce(to_jsonb(p_match.moves), '[]'::jsonb),
     'my_color',       case when v_is_black then 'black' else 'white' end,
+    'opp_uid',        v_opp_profile.uid,
     'opp_rating',     coalesce(v_opp_rating, 0),
     'opp_username',   v_opp_profile.username,
     'opp_icon_index', v_opp_profile.icon_index,
@@ -666,7 +667,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得する
+  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得するにゃ
   select coalesce(rating, 0) into v_black_rating
   from private.user_stats
   where uid = new.black_uid and board_size = new.board_size;
@@ -685,6 +686,7 @@ begin
     'match_type',      new.match_type,
     'moves',           coalesce(to_jsonb(new.moves), '[]'::jsonb),
     'my_color',        'black',
+    'opp_uid',         new.white_uid,
     'opp_rating',      coalesce(v_white_rating, 0),
     'opp_icon_index',  v_white.icon_index,
     'opp_username',    v_white.username,
@@ -699,6 +701,7 @@ begin
     'match_type',      new.match_type,
     'moves',           coalesce(to_jsonb(new.moves), '[]'::jsonb),
     'my_color',        'white',
+    'opp_uid',         new.black_uid,
     'opp_rating',      coalesce(v_black_rating, 0),
     'opp_icon_index',  v_black.icon_index,
     'opp_username',    v_black.username,
@@ -920,14 +923,14 @@ begin
     -- プロフィール情報をとってくる
     select * into v_waiter_profile from private.profiles pf where pf.uid = v_waiter.player_uid;
 
-    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得する
+    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得するにゃ
     select coalesce(rating, 0)
       into v_waiter_rating
       from private.user_stats
      where uid = v_waiter.player_uid
        and board_size = p_board_size;
 
-    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得する
+    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得するにゃ
     select coalesce(allow_bot_match, true)
       into v_allow_bot_match
       from private.user_settings
@@ -969,7 +972,7 @@ begin
     -- 👦👦👦 人間戦分岐（match_typeは常に0＆白黒ランダム） 👦👦👦
     v_rating_diff := least(v_waiter.try_count::int * 300, 1000)::smallint; -- 1000は最大ポイント差。
 
-    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えた
+    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えたにゃ
     select wl.* into v_opponent
     from private.waitlist wl
     join private.user_stats us on us.uid = wl.player_uid and us.board_size = p_board_size
