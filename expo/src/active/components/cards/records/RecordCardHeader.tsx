@@ -1,5 +1,6 @@
 // RecordCardHeader.tsx
 import { COLORS } from "@/src/active/constants/colors";
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useLang, useTranslation } from "@/src/active/language/i18n";
 import { RecordType } from "@/src/active/types/record";
 import {
@@ -35,6 +36,7 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
 }: HeaderProps) {
   const { lang } = useLang();
   const t = useTranslation();
+  const { iconIndex, username } = useProfile();
 
   const self = <T,>(blackVal: T, whiteVal: T): T =>
     isPlayerBlack ? blackVal : whiteVal;
@@ -76,9 +78,10 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
   return (
     <View className="w-full flex-row items-end px-2 pt-2.5 pb-2">
       <PlayerCell
+        // 左が自分固定なので対局に関係のない情報(username, iconindex)はuseprofileから取ってきてもよい
         isLeft
-        username={self(record.black_username, record.white_username)}
-        iconIndex={self(record.black_icon_index, record.white_icon_index) ?? 0}
+        username={username ?? "me"}
+        iconIndex={iconIndex ?? 0}
         rankIndex={self(record.black_rank_index, record.white_rank_index) ?? 0}
         color={isPlayerBlack ? BLACK : WHITE}
         showPass={isPlayerBlack ? isBlackPass : isWhitePass}

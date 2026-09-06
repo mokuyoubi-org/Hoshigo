@@ -10,7 +10,7 @@ type Props = {
   zIndex?: number;
 };
 
-// 🐱 編集マーク・最新手・テリトリー・死に石マークを全部これ1つで表示するにゃ！
+// 🐱 編集マーク・最新手・テリトリー・死に石マークを全部これ1つで表示する
 export const Marker = memo(function Marker({
   size,
   color,

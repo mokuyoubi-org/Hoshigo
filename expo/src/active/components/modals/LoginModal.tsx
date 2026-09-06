@@ -244,7 +244,7 @@ export function LoginModal({ visible, onClose }: Props) {
                       {guestSnapshot.username}
                     </Text>
                     <Text className="text-xs mt-1 text-textSub">
-                      9x9: {guestSnapshot.rating9}pts / 13x13:{" "}
+                      9x9: {guestSnapshot.rating9}pts / 13x13:
                       {guestSnapshot.rating13}pts
                     </Text>
                   </TouchableOpacity>
@@ -266,7 +266,7 @@ export function LoginModal({ visible, onClose }: Props) {
                       {existingPreview.username}
                     </Text>
                     <Text className="text-xs mt-1 text-textSub">
-                      9x9: {existingPreview.rating_9}pts / 13x13:{" "}
+                      9x9: {existingPreview.rating_9}pts / 13x13:
                       {existingPreview.rating_13}pts
                     </Text>
                   </TouchableOpacity>

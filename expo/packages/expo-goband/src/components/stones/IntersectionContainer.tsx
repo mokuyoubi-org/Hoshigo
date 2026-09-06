@@ -86,7 +86,7 @@ export const IntersectionContainer = memo(function DecoratedStone({
       ]}
       disabled={disabled}
     >
-      {/* ① 実線の石（シンプルに丸い石を描くだけにゃ！） */}
+      {/* ① 実線の石（シンプルに丸い石を描くだけ） */}
       {goString && (
         <Stone
           color={goString.color}

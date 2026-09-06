@@ -11,7 +11,7 @@ type StoneProps = {
   opacity?: number;
 };
 
-// 🐱 余計なものは一切持たず、丸い石を描画するだけのピュアな部品だにゃ！
+// 🐱 余計なものは一切持たず、丸い石を描画するだけのピュアな部品
 export const Stone = memo(function Stone({
   color,
   stoneSize,

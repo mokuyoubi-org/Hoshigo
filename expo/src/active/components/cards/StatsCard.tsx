@@ -1,6 +1,6 @@
+import { COLORS } from "@/src/active/constants/colors";
 import React from "react";
 import { Text, View } from "react-native";
-import { COLORS } from "@/src/active/constants/colors";
 
 type StatsCardProps = {
   wins?: number;
@@ -32,11 +32,15 @@ export const StatsCard = ({
       {/* ヘッダー */}
       <View className="flex-row justify-between items-end">
         <View>
-          <Text className="text-[11px] font-bold" style={{ color: COLORS.textSub }}>
+          <Text
+            className="text-[11px] font-bold"
+            style={{ color: COLORS.textSub }}
+          >
             到達ランク
           </Text>
           <Text className="text-2xl font-black" style={{ color: COLORS.text }}>
-            {currentRank} <Text className="text-xs font-bold">（{wins}勝）</Text>
+            {currentRank}
+            <Text className="text-xs font-bold">（{wins}勝）</Text>
           </Text>
         </View>
 
@@ -47,7 +51,10 @@ export const StatsCard = ({
             borderColor: COLORS.backgroundDark,
           }}
         >
-          <Text className="text-[10px] font-bold" style={{ color: COLORS.textSub }}>
+          <Text
+            className="text-[10px] font-bold"
+            style={{ color: COLORS.textSub }}
+          >
             踏破した領域
           </Text>
           <Text className="text-xs font-black" style={{ color: COLORS.green }}>
@@ -65,8 +72,11 @@ export const StatsCard = ({
           <Text className="text-xs font-bold" style={{ color: COLORS.text }}>
             ランク踏破度（濃淡ログ）
           </Text>
-          <Text className="text-[10px] font-bold" style={{ color: COLORS.green }}>
-            パワー上昇中にゃ！
+          <Text
+            className="text-[10px] font-bold"
+            style={{ color: COLORS.green }}
+          >
+            パワー上昇中
           </Text>
         </View>
 
@@ -76,8 +86,8 @@ export const StatsCard = ({
             const isConquered = index <= activeIndex;
             const isCurrent = index === activeIndex;
 
-            // 濃淡（透明度）の計算：左ほど薄く、今のランク（activeIndex）で100%濃くなるにゃ！
-            // 例: activeIndexが3の時 ➔ 0.25, 0.5, 0.75, 1.0 というグラデーションになるにゃ
+            // 濃淡（透明度）の計算：左ほど薄く、今のランク（activeIndex）で100%濃くなる
+            // 例: activeIndexが3の時 ➔ 0.25, 0.5, 0.75, 1.0 というグラデーションになる
             const opacityLevel = isConquered
               ? Math.max(0.25, (index + 1) / (activeIndex + 1))
               : 1.0;
@@ -88,12 +98,12 @@ export const StatsCard = ({
                 <View
                   className="w-full rounded-t-sm"
                   style={{
-                    // 右にいくほど高くして「積んだ感」を出すにゃ
+                    // 右にいくほど高くして「積んだ感」を出す
                     height: `${30 + index * 10}%`,
                     backgroundColor: isConquered
-                      ? COLORS.green           // 踏破領域は緑
+                      ? COLORS.green // 踏破領域は緑
                       : COLORS.backgroundDark, // 未到達はグレー
-                    opacity: opacityLevel,    // ここで濃淡（アルファ値）をコントロール！
+                    opacity: opacityLevel, // ここで濃淡（アルファ値）をコントロール！
                   }}
                 />
               </View>

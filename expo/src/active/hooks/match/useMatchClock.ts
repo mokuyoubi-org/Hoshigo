@@ -68,10 +68,10 @@ export function useMatchClock({
     onServerSyncRef.current = onServerSync;
   }, [onServerSync]);
 
-  // 🐱 中で直接 useSounds を呼び出すにゃ！
+  // 🐱 中で直接 useSounds を呼び出す
   const { playSound } = useSounds();
 
-  // 🐱 タイマー（setInterval）対策として playSound を Ref に入れるにゃ
+  // 🐱 タイマー（setInterval）対策として playSound を Ref に入れる
   const playSoundRef = useRef(playSound);
   useEffect(() => {
     playSoundRef.current = playSound;

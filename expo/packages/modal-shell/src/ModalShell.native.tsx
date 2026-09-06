@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import {
   Animated,
   Keyboard,
+  Platform,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -40,13 +41,13 @@ export function ModalShell({
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== "web",
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 8,
         tension: 40,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== "web",
       }),
     ]).start();
   }, [fadeAnim, scaleAnim]);
@@ -66,7 +67,10 @@ export function ModalShell({
   return (
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
       {/* 暗い背景部分 */}
-      <Pressable style={styles.backgroundPress} onPress={handleBackgroundPress} />
+      <Pressable
+        style={styles.backgroundPress}
+        onPress={handleBackgroundPress}
+      />
 
       {/* モーダル本体 ── ここが「見た目(色/枠/角丸/アニメ/サイズ上限)」だけの責務。
           alignItemsを指定していないので、中身はRN標準どおり幅いっぱいに伸びる。 */}
@@ -80,7 +84,10 @@ export function ModalShell({
         ]}
       >
         {dismissKeyboardOnPress ? (
-          <Pressable style={styles.fullWidth} onPress={() => Keyboard.dismiss()}>
+          <Pressable
+            style={styles.fullWidth}
+            onPress={() => Keyboard.dismiss()}
+          >
             {children}
           </Pressable>
         ) : (

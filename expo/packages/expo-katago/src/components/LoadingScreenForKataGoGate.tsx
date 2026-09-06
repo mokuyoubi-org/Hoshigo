@@ -1,9 +1,10 @@
-// ProgressBar.tsx
+// LoadingScreenForKataGoGate.tsx
+// 中身はforlayoutと同じ。依存関係を作らないため別々に用意
 
 import React, { useEffect, useRef } from "react";
-import { Animated, Easing, View } from "react-native";
+import { Animated, Easing, Platform, Text, View } from "react-native";
 
-type Props = {
+type ProgressBarProps = {
   /** 0-100の実測%。測れないときは null で「不確定バー」になる */
   percent: number | null;
   width?: number;
@@ -12,13 +13,13 @@ type Props = {
   fillColor?: string;
 };
 
-export function ProgressBar({
+function ProgressBar({
   percent,
   width = 180,
   height = 6,
   trackColor = "#e5e9ec",
   fillColor = "#b4c9db",
-}: Props) {
+}: ProgressBarProps) {
   const isIndeterminate = percent === null;
 
   // 不確定モード用：帯の中を左右にスライドし続けるアニメーション
@@ -33,8 +34,8 @@ export function ProgressBar({
         toValue: 1,
         duration: 1100,
         easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      })
+        useNativeDriver: Platform.OS !== "web",
+      }),
     );
     loop.start();
 
@@ -77,6 +78,43 @@ export function ProgressBar({
           }}
         />
       )}
+    </View>
+  );
+}
+
+type LoadingScreenProps = {
+  label: string;
+  percent: number | null; // null = 不確定バー
+  backgroundColor?: string;
+};
+
+export function LoadingScreenForKataGoGate({
+  label,
+  percent,
+  backgroundColor = "white",
+}: LoadingScreenProps) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor,
+      }}
+    >
+      <Text style={{ marginBottom: 15, fontSize: 14, color: "#4e5256" }}>
+        {label}
+      </Text>
+
+      <ProgressBar percent={percent} />
+
+      {/* %の有無に関わらず高さを固定で確保。DLの時だけ帯下に文字が出て
+          UIが伸び縮みするジャンプを防ぐための「空箱」 */}
+      <View style={{ height: 18, justifyContent: "center", marginTop: 6 }}>
+        {percent !== null && (
+          <Text style={{ fontSize: 12, color: "#4e5256" }}>{percent}%</Text>
+        )}
+      </View>
     </View>
   );
 }

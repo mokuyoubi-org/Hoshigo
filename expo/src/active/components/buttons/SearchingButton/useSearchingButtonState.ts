@@ -3,7 +3,7 @@
 import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { useTranslation } from "@/src/active/language/i18n";
 import { useEffect, useState } from "react";
-import { Animated } from "react-native";
+import { Animated, Platform } from "react-native";
 
 export function useSearchingButtonState() {
   const { isMatching, matchingBoardSize, cancelMatching } = useMatching();
@@ -51,13 +51,13 @@ export function useSearchingButtonState() {
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 300,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
         Animated.spring(slideAnim, {
           toValue: 0,
           friction: 8,
           tension: 40,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
       ]).start();
     } else if (isMounted) {
@@ -65,12 +65,12 @@ export function useSearchingButtonState() {
         Animated.timing(fadeAnim, {
           toValue: 0,
           duration: 250,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
         Animated.timing(slideAnim, {
           toValue: 20,
           duration: 250,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
       ]).start(() => {
         // 退場アニメーションが完全に終わって消えるときに、次回の表示用にリセット！

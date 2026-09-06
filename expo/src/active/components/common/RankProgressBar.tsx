@@ -46,58 +46,50 @@ export function RankProgressBar({
   onStepChange,
   onAnimationEnd,
 }: RankProgressBarProps) {
-  // Animated.Valueは「一度作ったら不変」なインスタンスなので、
-  // useRefの疑似lazy-initではなくuseStateのlazy initializerで持つ。
   const [progressAnim] = useState(() => new Animated.Value(0));
 
-  // 最新の callback を保持するための ref。
-  // render中に直接 .current = ... と代入するのはreact-hooks/refs違反になるため、
-  // 依存配列なしのuseEffect(=毎レンダー後に実行される)で更新する。
   const onStepChangeRef = useRef(onStepChange);
   useEffect(() => {
     onStepChangeRef.current = onStepChange;
   });
 
   useEffect(() => {
-    // 1. アニメーションなし（RankInfoModal用など）
+    // 1. アニメーションなし
     if (animationType === "none") {
       progressAnim.setValue(progressPercent);
       return;
     }
 
-    // 2. シンプルな伸び縮み（Profile画面用など）
+    // 2. シンプルな伸び縮み
     if (animationType === "simple") {
       Animated.timing(progressAnim, {
         toValue: progressPercent,
         duration: 1000,
-        useNativeDriver: false,
+        useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
       }).start();
       return;
     }
 
-    // 3. 昇降級・飛び級（ResultModal用）
+    // 3. 昇降級・飛び級
     if (animationType === "transition") {
       const isRankChanged = rankIndexBefore !== rankIndexAfter;
 
-      // グループ変動がない場合（通常ポイント変動）
       if (!isRankChanged) {
         progressAnim.setValue(beforePercent);
         Animated.timing(progressAnim, {
           toValue: afterPercent,
           duration: 1000,
-          useNativeDriver: false,
+          useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
         }).start(() => {
           onAnimationEnd?.();
         });
         return;
       }
 
-      // 🌟 昇降級（飛び級含む）の連動アニメーション
       const isRankUp = rankIndexAfter > rankIndexBefore;
       const stepDiff = Math.abs(rankIndexAfter - rankIndexBefore);
       const totalSteps = stepDiff;
 
-      // ステップごとに順繰りアニメーションを再生する関数
       const playStepAnimation = (step: number) => {
         if (step > totalSteps) {
           onAnimationEnd?.();
@@ -108,39 +100,34 @@ export function RankProgressBar({
           ? rankIndexBefore + step
           : rankIndexBefore - step;
 
-        // テキスト・テーマカラーの更新
         onStepChangeRef.current?.(stepTargetRankIndex);
 
         if (step === 0) {
-          // 【最初の段】現在の% ➔ 100%（または0%）
           progressAnim.setValue(beforePercent);
           Animated.timing(progressAnim, {
             toValue: isRankUp ? 100 : 0,
             duration: 500,
-            useNativeDriver: false,
+            useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
           }).start(() => playStepAnimation(step + 1));
         } else if (step < totalSteps) {
-          // 【途中の段（飛び級）】0% ➔ 100%
           progressAnim.setValue(isRankUp ? 0 : 100);
           Animated.timing(progressAnim, {
             toValue: isRankUp ? 100 : 0,
             duration: 450,
-            useNativeDriver: false,
+            useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
           }).start(() => playStepAnimation(step + 1));
         } else {
-          // 【最後の段】到達先の段位 ➔ 最終到達%
           progressAnim.setValue(isRankUp ? 0 : 100);
           Animated.timing(progressAnim, {
             toValue: afterPercent,
             duration: 600,
-            useNativeDriver: false,
+            useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
           }).start(() => {
             onAnimationEnd?.();
           });
         }
       };
 
-      // アニメーションスタート
       playStepAnimation(0);
     }
   }, [
@@ -153,7 +140,6 @@ export function RankProgressBar({
     progressAnim,
     onAnimationEnd,
   ]);
-
 
   const animatedWidth = progressAnim.interpolate({
     inputRange: [0, 100],

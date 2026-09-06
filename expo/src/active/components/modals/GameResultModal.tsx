@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Animated,
   Image,
+  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -103,7 +104,7 @@ export function GameResultModal({
       Animated.timing(progressAnim, {
         toValue: rankIndexAfter > rankIndexBefore ? 100 : 0,
         duration: 600,
-        useNativeDriver: false,
+        useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
       }).start(() => {
         setIsRankNew(true);
         progressAnim.setValue(rankIndexAfter > rankIndexBefore ? 0 : 100);
@@ -112,7 +113,8 @@ export function GameResultModal({
           Animated.timing(progressAnim, {
             toValue: afterInfo.percent,
             duration: 600,
-            useNativeDriver: false,
+            useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
+
           }).start();
         }, 100);
       });
@@ -122,7 +124,8 @@ export function GameResultModal({
       Animated.timing(progressAnim, {
         toValue: afterInfo.percent,
         duration: 1200,
-        useNativeDriver: false,
+              useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
+
       }).start();
     }
   }, [visible]);

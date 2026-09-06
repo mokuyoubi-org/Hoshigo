@@ -6,7 +6,7 @@
 // ====================================================================================
 
 import React, { useEffect, useState } from "react";
-import { Animated, Pressable, StyleSheet } from "react-native";
+import { Animated, Platform, Pressable, StyleSheet } from "react-native";
 
 // ====================================================================================
 // 【型定義・定数】
@@ -63,7 +63,7 @@ export const ToggleSwitch = ({
     Animated.timing(opacityAnim, {
       toValue: disabled ? 0.2 : value ? 1 : 0.3,
       duration: ANIM_DURATION,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== "web",
     }).start();
   }, [disabled, value, opacityAnim]);
 
@@ -71,7 +71,7 @@ export const ToggleSwitch = ({
     Animated.timing(knobAnim, {
       toValue: value ? KNOB_TRANSLATE_X : 0,
       duration: ANIM_DURATION,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== "web",
     }).start();
   }, [value, knobAnim]);
 

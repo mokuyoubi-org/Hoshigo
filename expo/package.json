@@ -17,6 +17,7 @@
   "dependencies": {
     "@emnapi/core": "^1.11.3",
     "@emnapi/runtime": "^1.11.3",
+    "@expo-google-fonts/m-plus-rounded-1c": "^0.4.4",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-community/slider": "5.2.0",
     "@supabase/supabase-js": "^2.93.3",
@@ -30,7 +31,7 @@
     "expo-build-properties": "~57.0.17",
     "expo-constants": "~57.0.12",
     "expo-dev-client": "~57.0.18",
-    "expo-font": "~57.0.1",
+    "expo-font": "~57.0.3",
     "expo-linking": "~57.0.9",
     "expo-localization": "~57.0.1",
     "expo-navigation-bar": "~57.0.2",

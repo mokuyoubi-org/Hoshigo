@@ -82,7 +82,6 @@ export function GoBoard({
     setPendingGrid(null);
   }
 
-  // 🐱 サイズ計算
   const {
     innerWidth,
     cellSize,
@@ -91,17 +90,20 @@ export function GoBoard({
     paddingSize,
     radiusSize,
   } = useMemo(() => {
-    const paddingRatio = 0.8;
-    const innerWidthCalc =
-      boardWidth / (1 + (2 * paddingRatio) / (boardSize - 1));
-    const cellSizeCalc = innerWidthCalc / (boardSize - 1);
+    const paddingRatio = 1.0; // 余白は 1マス分
+    const cellSizeCalc = boardWidth / (boardSize - 1 + 2 * paddingRatio);
+    const innerWidthCalc = cellSizeCalc * (boardSize - 1);
+    const paddingSizeCalc = cellSizeCalc * paddingRatio;
+
     return {
       innerWidth: innerWidthCalc,
       cellSize: cellSizeCalc,
       stoneSize: cellSizeCalc * 0.9,
       lineWidth: Math.max(1, innerWidthCalc / 200),
-      paddingSize: cellSizeCalc * paddingRatio,
-      radiusSize: boardWidth * 0.06,
+      paddingSize: paddingSizeCalc,
+      // 🐱 丸みも cellSize（1マス分）に比例させる
+      // 例: 1マスの半分のサイズ（0.5）にすると、路盤サイズに応じて綺麗に縮小・拡大される♪
+      radiusSize: cellSizeCalc * 0.5,
     };
   }, [boardWidth, boardSize]);
 
@@ -118,7 +120,7 @@ export function GoBoard({
 
     const appliedMove = moveHistory[currentIndex - 1];
 
-    // パスのときはパスの音、石を置いたときは石の音を鳴らすにゃ！
+    // パスのときはパスの音、石を置いたときは石の音を鳴らす
     if (appliedMove === PASS_GRID) {
       playSound("pass", 0.2);
     } else {

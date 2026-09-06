@@ -6,7 +6,7 @@ import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
-import { Animated, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Platform, Text, TouchableOpacity, View } from "react-native";
 import { useTranslation } from "../../language/i18n";
 
 const RANK_COLORS: Record<number, { color: string }> = {
@@ -73,7 +73,7 @@ export const RankingCard = ({
       toValue: 1,
       duration: 400,
       delay: index * 50, // 順番にフェードイン
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== "web",
     }).start();
   }, [fadeIn, index]);
 

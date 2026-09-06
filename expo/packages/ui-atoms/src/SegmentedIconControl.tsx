@@ -43,10 +43,7 @@ export const SegmentedIconControl = <T extends string | boolean>({
               key={String(option.value)}
               style={[
                 styles.segment,
-                isActive && [
-                  styles.segmentActive,
-                  { backgroundColor: activeColor },
-                ],
+                isActive && [{ backgroundColor: activeColor }],
               ]}
               onPress={() => onSelect(option.value)}
               activeOpacity={0.8}
@@ -78,13 +75,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 18,
-  },
-  segmentActive: {
-    // 影をつけて浮き上がらせる
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
   },
 });
