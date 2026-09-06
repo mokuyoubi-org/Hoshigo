@@ -72,7 +72,7 @@ declare
   v_icon_item smallint;
   v_other_board_size smallint;
 begin
-  -- 反対側の盤サイズを割り出す（アイコン計算用）
+  -- 反対側の盤サイズを割り出すにゃ（アイコン計算用）
   v_other_board_size := case when new.board_size = 9 then 13 else 9 end;
 
   -- ─── 1. プロフィール情報 & 戦績情報の取得 ───────────────────────────
@@ -82,7 +82,7 @@ begin
   from private.profiles
   where uid = new.black_uid;
 
-  -- wins + losses + draws の合計で総対局数を計算する
+  -- wins + losses + draws の合計で総対局数を計算するにゃ！
   select 
     coalesce(wins + losses + draws, 0), 
     coalesce(rating, 0), 
@@ -102,7 +102,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- wins + losses + draws の合計で総対局数を計算する
+  -- wins + losses + draws の合計で総対局数を計算するにゃ！
   select 
     coalesce(wins + losses + draws, 0), 
     coalesce(rating, 0), 
@@ -305,7 +305,7 @@ begin
       )
     ),
     'rating_updated', -- イベント名
-    'game:' || new.id::text, -- gameChannelにまとめる
+    'game:' || new.id::text, -- gameChannelにまとめるにゃ
     false
   );
 
@@ -513,7 +513,7 @@ ALTER FUNCTION "private"."cleanup_old_anonymous_profiles"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."get_bot_match_info"("p_rating" smallint, "p_board_size" smallint, OUT "o_bot_uid" "uuid", OUT "o_match_type" smallint) RETURNS "record"
-    LANGUAGE "plpgsql" IMMUTABLE
+    LANGUAGE "plpgsql" STABLE
     SET "search_path" TO ''
     AS $$
 declare
@@ -523,61 +523,83 @@ begin
   -- ポイントからランク(0: 10k 〜 17: 8D)を計算する
   v_rank := private.rating_to_rank_index(p_rating);
 
-  -- 1. ランクによって当たるボットを決める
-  -- 10k(0) 〜 1D(9)  -> bot1
-  -- 2D(10) 〜 4D(12) -> bot2
-  -- 5D(13) 〜 8D(17) -> bot3
-  if v_rank <= 9 then
-    v_bot_username := 'bot1';
-  elsif v_rank <= 12 then
-    v_bot_username := 'bot2';
-  else
-    v_bot_username := 'bot3';
-  end if;
-
-  select pf.uid into o_bot_uid
-  from private.profiles pf
-  where pf.username = v_bot_username
-  limit 1;
-
-  -- 2. 盤の広さとランクに応じて match_type (置き石) を決める
+  -- 盤の広さとランクに応じた (bot_username, match_type) の判定
   if p_board_size = 9 then
-    o_match_type := case v_rank
-      -- [対bot1]
-      when 0 then 5 -- 10k
-      when 1 then 5 -- 9k
-      when 2 then 4 -- 8k
-      when 3 then 4 -- 7k
-      when 4 then 3 -- 6k
-      when 5 then 3 -- 5k
-      when 6 then 2 -- 4k
-      when 7 then 2 -- 3k
-      when 8 then 1 -- 2k
-      when 9 then 1 -- 1k
-      -- [対bot1] 1D
-      -- [対bot2] 2,3,4D
-      -- [対bot3] 5,6,7,8D
-      else 0
-    end;
+    case v_rank
+      when 0 then v_bot_username := 'bot1'; o_match_type := 5; -- 10k
+      when 1 then v_bot_username := 'bot2'; o_match_type := 5; -- 9k
+      when 2 then v_bot_username := 'bot3'; o_match_type := 5; -- 8k
+      when 3 then v_bot_username := 'bot1'; o_match_type := 4; -- 7k
+      when 4 then v_bot_username := 'bot2'; o_match_type := 4; -- 6k
+      when 5 then v_bot_username := 'bot3'; o_match_type := 4; -- 5k
+      when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
+      when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
+      when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
+      when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
+      when 10 then v_bot_username := 'bot2'; o_match_type := 2; -- 1D
+      when 11 then v_bot_username := 'bot3'; o_match_type := 2; -- 2D
+      when 12 then v_bot_username := 'bot1'; o_match_type := 1; -- 3D
+      when 13 then v_bot_username := 'bot2'; o_match_type := 1; -- 4D
+      when 14 then v_bot_username := 'bot3'; o_match_type := 1; -- 5D
+      when 15 then v_bot_username := 'bot1'; o_match_type := 0; -- 6D
+      when 16 then v_bot_username := 'bot2'; o_match_type := 0; -- 7D
+      when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
+      else null;
+    end case;
 
   elsif p_board_size = 13 then
-    o_match_type := case v_rank
-      -- [対bot1]
-      when 0 then 9 -- 10k
-      when 1 then 8 -- 9k
-      when 2 then 7 -- 8k
-      when 3 then 6 -- 7k
-      when 4 then 5 -- 6k
-      when 5 then 4 -- 5k
-      when 6 then 3 -- 4k
-      when 7 then 2 -- 3k
-      when 8 then 1 -- 2k
-      when 9 then 1 -- 1k
-      -- [対bot1] 1D
-      -- [対bot2] 2,3,4D
-      -- [対bot3] 5,6,7,8D
-      else 0
-    end;
+    case v_rank
+      when 0 then v_bot_username := 'bot1'; o_match_type := 9; -- 10k
+      when 1 then v_bot_username := 'bot1'; o_match_type := 8; -- 9k
+      when 2 then v_bot_username := 'bot1'; o_match_type := 7; -- 8k
+      when 3 then v_bot_username := 'bot1'; o_match_type := 6; -- 7k
+      when 4 then v_bot_username := 'bot1'; o_match_type := 5; -- 6k
+      when 5 then v_bot_username := 'bot1'; o_match_type := 4; -- 5k
+      when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
+      when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
+      when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
+      when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
+      when 10 then v_bot_username := 'bot2'; o_match_type := 2; -- 1D
+      when 11 then v_bot_username := 'bot3'; o_match_type := 2; -- 2D
+      when 12 then v_bot_username := 'bot1'; o_match_type := 1; -- 3D
+      when 13 then v_bot_username := 'bot1'; o_match_type := 0; -- 4D
+      when 14 then v_bot_username := 'bot2'; o_match_type := 1; -- 5D
+      when 15 then v_bot_username := 'bot2'; o_match_type := 0; -- 6D
+      when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
+      when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
+      else null;
+    end case;
+
+  elsif p_board_size = 19 then
+    case v_rank
+      when 0 then v_bot_username := 'bot1'; o_match_type := 9; -- 10k
+      when 1 then v_bot_username := 'bot1'; o_match_type := 8; -- 9k
+      when 2 then v_bot_username := 'bot1'; o_match_type := 7; -- 8k
+      when 3 then v_bot_username := 'bot1'; o_match_type := 6; -- 7k
+      when 4 then v_bot_username := 'bot1'; o_match_type := 5; -- 6k
+      when 5 then v_bot_username := 'bot1'; o_match_type := 4; -- 5k
+      when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
+      when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
+      when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
+      when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
+      when 10 then v_bot_username := 'bot1'; o_match_type := 1; -- 1D
+      when 11 then v_bot_username := 'bot1'; o_match_type := 0; -- 2D
+      when 12 then v_bot_username := 'bot2'; o_match_type := 2; -- 3D
+      when 13 then v_bot_username := 'bot2'; o_match_type := 1; -- 4D
+      when 14 then v_bot_username := 'bot2'; o_match_type := 0; -- 5D
+      when 15 then v_bot_username := 'bot3'; o_match_type := 2; -- 6D
+      when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
+      when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
+      else null;
+    end case;
+  end if;
+
+  -- ボット名からUIDを取得する
+  if v_bot_username is not null then
+    select pf.uid into o_bot_uid
+    from private.profiles pf
+    where pf.username = v_bot_username
+    limit 1;
   end if;
 end;
 $$;
@@ -667,7 +689,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得する
+  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得するにゃ
   select coalesce(rating, 0) into v_black_rating
   from private.user_stats
   where uid = new.black_uid and board_size = new.board_size;
@@ -923,14 +945,14 @@ begin
     -- プロフィール情報をとってくる
     select * into v_waiter_profile from private.profiles pf where pf.uid = v_waiter.player_uid;
 
-    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得する
+    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得するにゃ
     select coalesce(rating, 0)
       into v_waiter_rating
       from private.user_stats
      where uid = v_waiter.player_uid
        and board_size = p_board_size;
 
-    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得する
+    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得するにゃ
     select coalesce(allow_bot_match, true)
       into v_allow_bot_match
       from private.user_settings
@@ -972,7 +994,7 @@ begin
     -- 👦👦👦 人間戦分岐（match_typeは常に0＆白黒ランダム） 👦👦👦
     v_rating_diff := least(v_waiter.try_count::int * 300, 1000)::smallint; -- 1000は最大ポイント差。
 
-    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えた
+    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えたにゃ
     select wl.* into v_opponent
     from private.waitlist wl
     join private.user_stats us on us.uid = wl.player_uid and us.board_size = p_board_size
