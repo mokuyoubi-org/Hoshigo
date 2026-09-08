@@ -74,7 +74,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           captchaToken = await getCaptchaToken();
           console.log("取得したトークン:", captchaToken);
         } catch (err) {
-          console.error("匿名ログイン失敗(CAPTCHA):", err);
+          console.error("匿名ログイン失敗(CAPTCHA)だよ:", err);
           clearUserState();
           setIsInitializing(false);
           return;
