@@ -57,6 +57,7 @@ function buildHtml(sitekey: string, action: string): string {
           },
           "error-callback": function (code) {
             postToRN({ type: "error", message: "challenge_failed", code: code });
+            postToRN({ type: "debug", message: "userAgent: " + navigator.userAgent + " / cookieEnabled: " + navigator.cookieEnabled });
           }
         });
         postToRN({ type: "ready" });
@@ -115,6 +116,8 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           console.error("Turnstile error code:", data.code);
           pendingRef.current?.reject(new Error("Turnstile challenge failed"));
           pendingRef.current = null;
+        } else if (data.type === "debug") {
+          console.log("Turnstile debug:", data.message);
         }
       } catch (e) {
         console.error("Turnstile message parse error:", e);
@@ -195,6 +198,14 @@ const getTokenInternal = (): Promise<string> => {
           domStorageEnabled
           originWhitelist={["*"]}
           androidLayerType="software"
+          // ✅2026/09/09 Cookie周りをデフォルト任せにせず明示化。
+          // Turnstileが内部でクッキーに依存しているため、これが未指定だと
+          // 端末やOSバージョンによって暗黙のデフォルトが変わりうる。
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
+          mixedContentMode="always"
+          // キャッシュされた古いページ状態がexecute()の再実行に影響しないようにする
+          cacheEnabled={false}
           style={{ width: 1, height: 1 }}
         />
       </View>
