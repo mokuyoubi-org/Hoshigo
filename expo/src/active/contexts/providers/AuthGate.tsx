@@ -2,12 +2,12 @@
 // ✅2026/09/01 Turnstile(Cloudflare CAPTCHA)によるボット対策を追加。
 //   匿名ログインの直前に必ずトークンを取得し、取れなければログインさせない(厳格モード)。
 // AuthGate.tsx
-
 import { useApp } from "@/src/active/contexts/AppContexts";
 import {
   setMaintenanceHandler,
   supabase,
 } from "@/src/stable/services/supabase/supabase";
+import * as Updates from "expo-updates";
 
 import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { useRouter, useSegments } from "expo-router";
@@ -56,6 +56,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   // ①メンテナンス仕込み + ②initialize + ③見張り猫設置。
   useEffect(() => {
+    console.log("🔎 実行中のビルド情報:", {
+      runtimeVersion: Updates.runtimeVersion,
+      channel: Updates.channel,
+      updateId: Updates.updateId,
+      isEmbeddedLaunch: Updates.isEmbeddedLaunch, // trueならOTAではなくビルド埋め込みのJSで起動してる
+    });
+
     // RPCを呼んだ時にメンテ中だった時にメッセージを表示できる設定を、あらかじめ仕込んでおく
     // 詳細はsupabase.tsを参照
     setMaintenanceHandler((message) => {
