@@ -123,9 +123,7 @@ const config: ExpoConfig = {
 
   assetBundlePatterns: ["assets/images/*"],
 
-  runtimeVersion: {
-    policy: "appVersion",
-  },
+  runtimeVersion: "1.0.0",
 };
 
 export default config;
