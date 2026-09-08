@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>html,body{margin:0;padding:0;background:transparent;}</style>
+  </head>
+  <body>
+    <div id="cf-container"></div>
+    <script>
+      // sitekeyとactionは、RN側が組み立てたURLのクエリパラメータから受け取る。
+      // ここはインラインHTMLと違い「本物のページ」なので、URLSearchParamsが使える。
+      var params = new URLSearchParams(window.location.search);
+      var sitekey = params.get("sitekey");
+      var action = params.get("action") || "anonymous_signin";
+
+      var widgetId = null;
+
+      function postToRN(payload) {
+        window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+      }
+
+      function initTurnstile() {
+        if (!window.turnstile) {
+          setTimeout(initTurnstile, 100);
+          return;
+        }
+        widgetId = window.turnstile.render("#cf-container", {
+          sitekey: sitekey,
+          action: action,
+          appearance: "interaction-only",
+          execution: "execute",
+          callback: function (token) {
+            postToRN({ type: "token", token: token });
+          },
+          "error-callback": function (code) {
+            postToRN({ type: "error", message: "challenge_failed", code: code });
+          }
+        });
+        postToRN({ type: "ready" });
+      }
+
+      // RN側からのgetToken要求を受け取る
+      function handleMessage(event) {
+        try {
+          var data = JSON.parse(event.data);
+          if (data.type === "execute" && widgetId) {
+            window.turnstile.reset(widgetId);
+            window.turnstile.execute(widgetId);
+          }
+        } catch (e) {}
+      }
+      document.addEventListener("message", handleMessage); // Android
+      window.addEventListener("message", handleMessage); // iOS
+
+      initTurnstile();
+    </script>
+  </body>
+</html>

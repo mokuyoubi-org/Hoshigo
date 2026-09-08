@@ -1,5 +1,10 @@
 // TurnstileWidget.native.tsx
 // ネイティブ(iOS/Android)版のTurnstile実装。
+// ✅2026/09/09 「インラインHTML + baseUrlで偽装したオリジン」だと、
+//   Cloudflare側が非標準環境とみなすらしく300030エラーの無限ループに
+//   陥ることが判明したため、hoshigo.app上に本物の静的ページ
+//   (turnstile-bridge.html)をホスティングし、WebViewはそれを
+//   本当にネットワーク越しに読み込む方式に変更した。
 // WebView内で見えないTurnstileチャレンジを実行し、
 // postMessage経由でトークンをRN側に受け渡す。
 
@@ -22,67 +27,7 @@ type Props = {
   action?: string;
 };
 
-// WebView内で読み込む、見えないだけの最小HTML。
-// callbackでトークンを取得したら、RN側にpostMessageで送る。
-function buildHtml(sitekey: string, action: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <style>html,body{margin:0;padding:0;background:transparent;}</style>
-  </head>
-  <body>
-    <div id="cf-container"></div>
-    <script>
-      var widgetId = null;
-
-      function postToRN(payload) {
-        window.ReactNativeWebView.postMessage(JSON.stringify(payload));
-      }
-
-      function initTurnstile() {
-        if (!window.turnstile) {
-          setTimeout(initTurnstile, 100);
-          return;
-        }
-        widgetId = window.turnstile.render("#cf-container", {
-          sitekey: "${sitekey}",
-          action: "${action}",
-          appearance: "interaction-only",
-          execution: "execute",
-          callback: function (token) {
-            postToRN({ type: "token", token: token });
-          },
-          "error-callback": function (code) {
-            postToRN({ type: "error", message: "challenge_failed", code: code });
-            postToRN({ type: "debug", message: "userAgent: " + navigator.userAgent + " / cookieEnabled: " + navigator.cookieEnabled });
-          }
-        });
-        postToRN({ type: "ready" });
-      }
-
-      // RN側からのgetToken要求を受け取る
-      document.addEventListener("message", handleMessage); // Android
-      window.addEventListener("message", handleMessage); // iOS
-
-      function handleMessage(event) {
-        try {
-          var data = JSON.parse(event.data);
-          if (data.type === "execute" && widgetId) {
-            window.turnstile.reset(widgetId);
-            window.turnstile.execute(widgetId);
-          }
-        } catch (e) {}
-      }
-
-      initTurnstile();
-    </script>
-  </body>
-</html>
-`;
-}
+const BRIDGE_URL = "https://hoshigo.app/turnstile-bridge.html";
 
 export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
   ({ sitekey, action = "anonymous_signin" }, ref) => {
@@ -101,7 +46,9 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
       })
     );
 
-    const html = buildHtml(sitekey, action);
+    const bridgeUrl = `${BRIDGE_URL}?sitekey=${encodeURIComponent(
+      sitekey
+    )}&action=${encodeURIComponent(action)}`;
 
     const handleMessage = (event: WebViewMessageEvent) => {
       try {
@@ -116,8 +63,6 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           console.error("Turnstile error code:", data.code);
           pendingRef.current?.reject(new Error("Turnstile challenge failed"));
           pendingRef.current = null;
-        } else if (data.type === "debug") {
-          console.log("Turnstile debug:", data.message);
         }
       } catch (e) {
         console.error("Turnstile message parse error:", e);
@@ -129,35 +74,35 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     // isAnalyzingRef と同じ考え方)。
     const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-const getTokenInternal = (): Promise<string> => {
-  return new Promise<string>((resolve, reject) => {
-    if (!readyRef.current || !webviewRef.current) {
-      reject(new Error("Turnstile widget not ready"));
-      return;
-    }
+    const getTokenInternal = (): Promise<string> => {
+      return new Promise<string>((resolve, reject) => {
+        if (!readyRef.current || !webviewRef.current) {
+          reject(new Error("Turnstile widget not ready"));
+          return;
+        }
 
-    // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
-    // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
-    const timeoutId = setTimeout(() => {
-      if (pendingRef.current) {
-        pendingRef.current = null;
-        reject(new Error("Turnstile token request timed out"));
-      }
-    }, 15000);
+        // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
+        // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
+        const timeoutId = setTimeout(() => {
+          if (pendingRef.current) {
+            pendingRef.current = null;
+            reject(new Error("Turnstile token request timed out"));
+          }
+        }, 15000);
 
-    pendingRef.current = {
-      resolve: (token: string) => {
-        clearTimeout(timeoutId);
-        resolve(token);
-      },
-      reject: (err: Error) => {
-        clearTimeout(timeoutId);
-        reject(err);
-      },
+        pendingRef.current = {
+          resolve: (token: string) => {
+            clearTimeout(timeoutId);
+            resolve(token);
+          },
+          reject: (err: Error) => {
+            clearTimeout(timeoutId);
+            reject(err);
+          },
+        };
+        webviewRef.current.postMessage(JSON.stringify({ type: "execute" }));
+      });
     };
-    webviewRef.current.postMessage(JSON.stringify({ type: "execute" }));
-  });
-};
 
     useImperativeHandle(ref, () => ({
       getToken: () => {
@@ -173,7 +118,9 @@ const getTokenInternal = (): Promise<string> => {
                 setTimeout(
                   () =>
                     reject(
-                      new Error("Turnstile widget did not become ready in time")
+                      new Error(
+                        "Turnstile widget did not become ready in time"
+                      )
                     ),
                   10000
                 )
@@ -192,20 +139,15 @@ const getTokenInternal = (): Promise<string> => {
       <View style={{ width: 0, height: 0, overflow: "hidden" }}>
         <WebView
           ref={webviewRef}
-          source={{ html, baseUrl: "https://hoshigo.app" }}
+          source={{ uri: bridgeUrl }}
           onMessage={handleMessage}
           javaScriptEnabled
           domStorageEnabled
           originWhitelist={["*"]}
           androidLayerType="software"
-          // ✅2026/09/09 Cookie周りをデフォルト任せにせず明示化。
-          // Turnstileが内部でクッキーに依存しているため、これが未指定だと
-          // 端末やOSバージョンによって暗黙のデフォルトが変わりうる。
           thirdPartyCookiesEnabled
           sharedCookiesEnabled
           mixedContentMode="always"
-          // キャッシュされた古いページ状態がexecute()の再実行に影響しないようにする
-          cacheEnabled={false}
           style={{ width: 1, height: 1 }}
         />
       </View>
