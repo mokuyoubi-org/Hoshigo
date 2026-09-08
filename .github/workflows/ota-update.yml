@@ -47,4 +47,4 @@ jobs:
         run: npm ci
 
       - name: Run EAS Update
-        run: npx eas-cli update --channel production --auto --non-interactive
+        run: npx eas-cli update --channel default --auto --non-interactive
