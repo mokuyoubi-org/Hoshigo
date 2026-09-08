@@ -1,9 +1,11 @@
+// RecordsScreen.tsx
+
 import { useTranslation } from "@/src/active/language/i18n";
 import { RecordOrSkeleton } from "@/src/active/types/record";
 import { BOARD_SIZE_OPTIONS } from "expo-goband";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SegmentedControl } from "ui-atoms";
@@ -28,6 +30,7 @@ export default function RecordsScreen() {
     handleToggle,
     loadMore,
     handleScroll,
+    syncNewData,
   } = useRecordsScreen();
 
   // 関数
@@ -69,6 +72,25 @@ export default function RecordsScreen() {
       />
     );
   };
+
+
+  // 🐱 3. 画面にフォーカスが戻ってくる（Backで戻った時など）たびに実行されるエフェクト
+  useFocusEffect(
+    useCallback(() => {
+      // BoardEdit画面から戻ってきた時に、最新のDB状態を同期してメモリ（caches）を更新する
+      syncNewData();
+    }, [])
+  );
+
+  useEffect(() => {
+    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
+    if (
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+    ) {
+      document.activeElement.blur();
+    }
+  }, []);
 
   // 一つ一つのレコードカードに与えられた固有のid。
   // ※上から順番の0,1,2,...みたいなindexではないらしい。というのは、要素の並び替えなどにも柔軟に対応するため。

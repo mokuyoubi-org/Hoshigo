@@ -85,7 +85,9 @@ export const generateMoveObjects = (
   return result;
 };
 
-const gridToMoveObject = (grid: Grid, boardSize: BoardSize): MoveObject => ({
+
+// Grid ▶︎ MoveObject
+export const gridToMoveObject = (grid: Grid, boardSize: BoardSize): MoveObject => ({
   x: (grid % boardSize) + 1,
   y: Math.floor(grid / boardSize) + 1,
   player: BLACK,

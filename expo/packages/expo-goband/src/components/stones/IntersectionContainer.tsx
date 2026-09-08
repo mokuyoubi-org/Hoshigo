@@ -1,9 +1,9 @@
 // IntersectionContainer.tsx
+
 import React, { memo } from "react";
 import { Pressable, StyleSheet } from "react-native";
-
 import { COLORS } from "../../constants/colors";
-import { BLACK, Color, GoString, Grid } from "../../types/go";
+import { BLACK, Color, GoString, Grid, PASS_GRID } from "../../types/go";
 import { Marker } from "./Marker";
 import { PinPoint } from "./PinPoint";
 import { PreviewStone } from "./PreviewStone";
@@ -22,10 +22,14 @@ type Props = {
   isPinned: boolean;
   isEdited?: boolean;
   isBotMove?: boolean;
+  moveEvaluation?: "good" | "bad"; // 🐱 良手（○）・悪手（❌）の判定結果
+  isCandidate?: boolean; // 🐱 候補手かどうか
   enableDoubleTap: boolean;
   playerColor: Color;
   disabled: boolean;
   onPressGrid: (grid: Grid, goString: GoString | null) => void;
+  prevTurn: Color;
+  lastMove: Grid;
 };
 
 export const IntersectionContainer = memo(function DecoratedStone({
@@ -41,10 +45,14 @@ export const IntersectionContainer = memo(function DecoratedStone({
   isPinned,
   isEdited,
   isBotMove,
+  moveEvaluation,
+  isCandidate,
   enableDoubleTap,
   playerColor,
   disabled,
   onPressGrid,
+  prevTurn,
+  lastMove,
 }: Props) {
   const r = Math.floor(grid / boardSize);
   const c = grid % boardSize;
@@ -71,6 +79,9 @@ export const IntersectionContainer = memo(function DecoratedStone({
         : undefined;
 
   const markOpacity = !isDeadAndShow ? 1 : 0.4;
+
+  // 🐱 候補手の場合の不透明度（薄さ）
+  const candidateOpacity = 0.6;
 
   return (
     <Pressable
@@ -109,15 +120,17 @@ export const IntersectionContainer = memo(function DecoratedStone({
       )}
 
       {/* ② 最新手のマーカー */}
-      {goString && isCurrentMove && (
-        <Marker
-          size={stoneSize * 0.6}
-          color={currentMoveColor}
-          shape="circle"
-          opacity={!isDeadAndShow ? 1 : 0.32}
-          zIndex={5}
-        />
-      )}
+      {goString &&
+        isCurrentMove &&
+        !(moveEvaluation && playerColor === goString.color) && ( // ⭕️❌がある時は表示しない
+          <Marker
+            size={stoneSize * 0.6}
+            color={currentMoveColor}
+            shape="circle"
+            opacity={!isDeadAndShow ? 1 : 0.32}
+            zIndex={5}
+          />
+        )}
 
       {/* ③ 編集された石用マーク（人間＝赤） */}
       {isEdited && (
@@ -146,6 +159,31 @@ export const IntersectionContainer = memo(function DecoratedStone({
         <PreviewStone stoneSize={stoneSize} playerColor={playerColor} />
       )}
 
+      {/* ④' 🐱 候補手（石がない場所 ＆ 候補手フラグがONのとき） 
+      (prevTurn === playerColor)がめっちゃ大事！これがないと、白の手番になぜか黒の候補手が出てくる
+      あと、パスの時に候補手出されるのも嫌なのでそれも防止する
+      */}
+      {!goString &&
+        isCandidate &&
+        prevTurn === playerColor &&
+        lastMove !== PASS_GRID && (
+          <>
+            {/* 薄い石 */}
+            <Stone
+              color={playerColor} // 自分の色固定ということ。つまり、自分の候補手しか表示しない
+              stoneSize={stoneSize}
+              opacity={candidateOpacity}
+            />
+            {/* 薄い良手（○）マーク */}
+            <Marker
+              size={stoneSize * 0.7}
+              shape="good"
+              opacity={candidateOpacity}
+              zIndex={15}
+            />
+          </>
+        )}
+
       {/* ⑤ 陣地（地）マーク */}
       {!goString && showTerritory && territoryValue !== 0 && (
         <Marker
@@ -159,6 +197,16 @@ export const IntersectionContainer = memo(function DecoratedStone({
 
       {/* ⑥ ピンポイント */}
       {isPinned && <PinPoint />}
+
+      {/* ⑦ 実際に打たれた石に対する良手（○）・悪手（❌）の評価マーク */}
+      {goString && moveEvaluation && playerColor === goString.color && (
+        <Marker
+          size={stoneSize * 0.7}
+          shape={moveEvaluation}
+          opacity={markOpacity}
+          zIndex={15}
+        />
+      )}
     </Pressable>
   );
 });

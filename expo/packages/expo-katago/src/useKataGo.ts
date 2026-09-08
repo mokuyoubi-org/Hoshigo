@@ -20,7 +20,7 @@ import { useKataGoEngine } from "./KataGoEngineContext";
 
 import { Board, BoardSize, Color, Grid, MatchType } from "./types";
 import { boardToBoard2D, movesToMoveObjects } from "./utils";
-import { AnalyzeResult } from "./web-katrain/analyzeBoard";
+import { AnalyzeResult, AnalyzeResultFields } from "./web-katrain/analyzeBoard";
 import { ModelId } from "./web-katrain/modelManager";
 
 export type KataGoParams = {
@@ -30,6 +30,7 @@ export type KataGoParams = {
   boardSize: BoardSize;
   matchType: MatchType;
   modelId: ModelId;
+  fields?: AnalyzeResultFields;
 };
 
 export function useKataGo() {
@@ -42,6 +43,7 @@ export function useKataGo() {
     boardSize,
     matchType,
     modelId,
+    fields,
   }: KataGoParams): Promise<AnalyzeResult | null> => {
     return runAnalysis({
       board: boardToBoard2D(board, boardSize),
@@ -49,11 +51,11 @@ export function useKataGo() {
       currentPlayer,
       modelId,
       boardSize,
+      fields,
+      komi: matchType === 0 ? 6.5 : 0, // ⚠️⚠️⚠️⚠️大事!!!!!!!!!!!!!!!!!⚠️⚠️⚠️⚠️
     });
   };
 
-  // 優先順位リスト(例: ["b18","b10","b6"])のうち、今すぐ使えるものを返す。
-  // 何も見つからない場合はリストの最後(=通常は最軽量、常に準備済みのはず)を返す。
   const getBestAvailableModel = (preferenceOrder: ModelId[]): ModelId => {
     for (const id of preferenceOrder) {
       if (readyModelIds.has(id)) return id;

@@ -4,6 +4,7 @@ import {
   RankingCard,
 } from "@/src/active/components/cards/RankingCard";
 import { COLORS } from "@/src/active/constants/colors";
+import { fetchWithDailyCache } from "@/src/stable/logics/syncUtils"; // 🐱 追加！
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BOARD_SIZE_OPTIONS, BoardSize } from "expo-goband";
 import { ModalShell } from "modal-shell";
@@ -16,7 +17,6 @@ import {
 } from "react-native";
 import { SegmentedControl } from "ui-atoms";
 
-// 🐱 取得するデータに board_size も含める
 type RankingItem = Profile & {
   board_size: number;
   is_authenticated: boolean;
@@ -34,28 +34,31 @@ export default function RankingsModal({ visible, onClose }: Props) {
 
   const { height: windowHeight } = useWindowDimensions();
 
-  // 🐱 モーダルが開いた時だけ1回通信して全データを取る
   useEffect(() => {
     if (!visible) return;
 
     const fetchTopProfiles = async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc("get_rankings");
 
-      if (error) {
-        console.error(error);
-      } else {
-        setAllProfiles(data ?? []);
-      }
+      // 🐱 1日1回だけ Supabase から取得し、2回目以降は sqliteKv のキャッシュを使うにゃ！
+      const data = await fetchWithDailyCache<RankingItem[]>(
+        "global_rankings",
+        async () => {
+          const { data, error } = await supabase.rpc("get_rankings");
+          if (error) throw error;
+          return data ?? [];
+        }
+      );
+
+      setAllProfiles(data ?? []);
       setLoading(false);
     };
 
     fetchTopProfiles();
-  }, [visible]); // ← 引数の boardSize を外して、初回表示時だけに統一した
+  }, [visible]);
 
   if (!visible) return null;
 
-  // 🐱 選択されている boardSize のデータだけサクッと絞り込む
   const currentProfiles = allProfiles.filter(
     (item) => item.board_size === boardSize,
   );

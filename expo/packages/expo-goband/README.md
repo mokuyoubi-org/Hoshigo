@@ -48,16 +48,7 @@ export default function GameScreen() {
         />
       </View>
 
-      <View style={styles.controlsWrapper}>
-        <ReplayControls
-          currentIndex={goBoard.currentIndex}
-          maxIndex={goBoard.history.length}
-          onIndexChange={(index) => {
-            goBoard.setCurrentIndex(index);
-          }}
-          onGoToLatest={goBoard.goToLatest}
-        />
-      </View>
+
     </SafeAreaView>
   );
 }

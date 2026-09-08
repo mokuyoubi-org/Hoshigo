@@ -1,5 +1,8 @@
+// types/record.ts
+
 import { BoardSize, MatchType } from "expo-goband";
-import { RecordAnalysis } from "./analysis";
+import { RecordAnalysis } from "expo-goband";
+
 
 export type RecordType = {
   id: number;

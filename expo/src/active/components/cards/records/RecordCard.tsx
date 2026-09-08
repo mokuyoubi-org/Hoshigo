@@ -81,12 +81,14 @@ export const RecordCard = ({
           isWhitePass={false}
           currentAgehama={agehama}
           matchType={matchType}
+          currentIndex={0}
+          showWinRateBar={false} // これにより、レコードカードでは勝率バーを表示しない
         />
       </View>
 
       {boardWidth > 0 && (
-        <View
-          pointerEvents="none" /*これで碁盤のタッチイベントが無効になる！ */
+        <View // 碁盤のタッチイベントを無効にする
+          style={{ pointerEvents: "none" }}
         >
           <GoBoard
             boardSize={boardSize}

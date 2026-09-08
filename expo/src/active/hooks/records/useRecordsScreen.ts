@@ -1,3 +1,5 @@
+// useRecordsScreen.ts
+
 import { useRecordsSync } from "@/src/active/hooks/records/useRecordsSync";
 import { RecordOrSkeleton, RecordType } from "@/src/active/types/record";
 import {
@@ -38,7 +40,7 @@ type BoardCache = {
   hasMore: boolean;
 };
 
-const FETCH_NUM = 30;
+const FETCH_NUM = 10;
 
 function makeInitialCache(): BoardCache {
   return {
@@ -265,6 +267,32 @@ export function useRecordsScreen() {
     }
   };
 
+  const syncNewData = useCallback(async () => {
+    if (!uid) return;
+    const targetBoardSize = boardSizeRef.current;
+
+    try {
+      // 1. 最新のDB変更を同期する
+      await syncNewer(uid, targetBoardSize);
+
+      // 2. 現在のページデータを最新のDBから取得し直す
+      const page = await fetchOlderPage(
+        uid,
+        targetBoardSize,
+        null,
+        records.filter((r) => !isSkeletonCard(r)).length || FETCH_NUM,
+      );
+
+      if (page.length > 0) {
+        // 3. 盤面や分析結果（analysis）を再計算してキャッシュを上書き更新！
+        processRecords(page, targetBoardSize);
+        updateCache(targetBoardSize, { records: page });
+      }
+    } catch (e) {
+      console.error("[syncNewData] 同期に失敗しました:", e);
+    }
+  }, [uid, syncNewer, fetchOlderPage, processRecords, records]);
+
   return {
     uid,
     isLoading,
@@ -280,5 +308,6 @@ export function useRecordsScreen() {
     handleToggle,
     loadMore,
     handleScroll,
+    syncNewData,
   };
 }

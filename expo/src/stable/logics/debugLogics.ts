@@ -1,21 +1,31 @@
-import { BLACK, Board, WHITE } from "expo-goband";
+import { gridToMoveObject } from "@/packages/expo-katago/src/utils";
+import { BLACK, Board, BoardSize, Color, Grid, WHITE } from "expo-goband";
 
 export const printCustomKataGoResult = (
-  board: any,
-  moves: any,
-  currentPlayer: any,
+  board: Board,
+  moves: Grid[],
+  currentPlayer: Color,
   result: any,
+  boardSize: BoardSize,
 ): void => {
+  // 盤面のサイズ（9路盤なら9）を取得する
+
+  // 1. moves（数字の配列）を gridToMoveObject で {x, y} の形に変換する
+  const formattedInputMoves = moves.map((grid: number) => {
+    const moveObj = gridToMoveObject(grid, boardSize);
+    return { x: moveObj.x, y: moveObj.y };
+  });
+
   console.log("受け取った情報:");
-  printDebugBoard(board);
-  console.log("moves: ", moves);
+  // printDebugBoard(board);
+  console.log("moves: ", JSON.stringify(formattedInputMoves));
   console.log("currentPlayer: ", currentPlayer);
 
   console.log("出力情報:");
   // 小数を第2位で切り捨てるおまじない
   const trunc = (val: number): number => Math.floor(val * 100) / 100;
 
-  // 1. moves を 0~4 まで取得して、1行ずつのJSON文字列にする！
+  // 2. moves を 0~4 まで取得して、1行ずつのJSON文字列にする！
   const movesFormatted = result.moves
     .slice(0, 5)
     .map((m: any) => {
@@ -29,14 +39,14 @@ export const printCustomKataGoResult = (
     })
     .join(", \n");
 
-  // 2. ownership の配列内の小数をまとめて切り捨てる（1行にまとめる！）
-  const ownershipFormatted = JSON.stringify(result.ownership.map(trunc));
+  // 3. ownership の配列内の小数をまとめて切り捨てる（1行にまとめる！）
+  // const ownershipFormatted = JSON.stringify(result.ownership.map(trunc));
 
-  // 3. 社長が作ってくれた理想のフォーマットに組み立てる！
+  // 4. フォーマットに組み立てる
   const output =
     `{"moves": [\n` +
     `${movesFormatted}], \n` +
-    `"ownership": ${ownershipFormatted}, \n` +
+    // `"ownership": ${ownershipFormatted}, \n` +
     `"scoreLead": ${trunc(result.scoreLead)}, \n` +
     `"winRate": ${trunc(result.winRate)}}`;
 

@@ -19,7 +19,6 @@ export const SegmentedControl = <T extends string | number>({
   onSelect,
 }: SegmentedControlProps<T>) => {
   return (
-    <View style={{ pointerEvents: "box-none" }}>
       <View style={styles.track}>
         {options.map((option) => {
           const isActive = value === option.value;
@@ -48,7 +47,6 @@ export const SegmentedControl = <T extends string | number>({
           );
         })}
       </View>
-    </View>
   );
 };
 

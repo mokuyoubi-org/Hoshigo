@@ -1,11 +1,14 @@
 // useBotMove.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
-// ボットのusernameを元にどのモデルを使うかを決めてuseKataGoを呼び、
+// ボットのusernameを元にどのモデルを使うかを決めてuseKataGoTaskを呼び、
 // 返ってきた解析結果から最善手(bestMove)だけを取り出す。
+//
+// 2026/09/07: botの着手を決めるためのkataGo呼び出しは、その局面(直前の
+// 相手の手の直後)の分析結果そのものでもある。もう一度別に呼び直す
+// 無駄を避けるため、onDecidedにbestMoveと一緒にanalysisも渡す。
 // ──────────────────────────────────────────────────
 
-import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
 import {
   BLACK,
   Board,
@@ -19,8 +22,9 @@ import {
   WHITE,
 } from "expo-goband";
 
-import { DEFAULT_MODEL_ID, ModelId, useKataGo } from "expo-katago";
+import { AnalyzeResult, DEFAULT_MODEL_ID, ModelId } from "expo-katago";
 import { useRef } from "react";
+import { useKataGoTask } from "./useKataGoTask";
 
 // ★ボットのユーザー名とモデルIDの対応表
 const BOT_MODEL_MAP: Record<string, ModelId> = {
@@ -34,7 +38,7 @@ export function useBotMove(
   boardSize: BoardSize,
   opponentUsername?: string,
 ) {
-  const kataGo = useKataGo();
+  const kataGoTask = useKataGoTask();
   const isBotRunningRef = useRef(false);
 
   const modelId: ModelId =
@@ -44,11 +48,14 @@ export function useBotMove(
     board: Board,
     movesSoFar: Grid[],
     matchType: MatchType,
-    onDecided: (grid: Grid) => Promise<void> | void,
+    onDecided: (
+      grid: Grid,
+      analysis: AnalyzeResult | null,
+    ) => Promise<void> | void,
   ) => {
     if (isBotRunningRef.current) return;
 
-    // matchtypeが2~9の場合: botは必ず白で先手。movesSoFarが奇数ならおかしい。
+    // ⚠️matchtypeが2~9の場合: botは必ず白で先手。movesSoFarが奇数ならおかしい。
     // matchtypeが1の場合: botは必ず白で後手。movesSoFarが偶数ならおかしい。
     // matchtypeが0の場合: myColorがBLACKの場合、movesSoFarが偶数ならおかしい。myColorがWHITEの場合、movesSoFarが奇数ならおかしい。
     let isGuusuu = false;
@@ -65,7 +72,7 @@ export function useBotMove(
       return;
     }
 
-    // 直近2手が連続パス(終局)なら、ボットは考える必要が無い。
+    // ⚠️直近2手が連続パス(終局)なら、ボットは考える必要が無い。
     // ※多重推論によるクラッシュ対策としては、今はKataGoEngineContext側の
     //   runAnalysisが直列化で担保している。これは純粋にゲームロジック上の
     //   ガード(終局後にボットに無駄な着手を送らせない)。
@@ -83,26 +90,22 @@ export function useBotMove(
 
     isBotRunningRef.current = true;
     try {
-      console.log(
-        `🤖 [useBotMove] 対戦相手: ${opponentUsername ?? "なし(人間戦)"} -> 使用モデル: ${modelId}`,
-      );
-
-      // 人間が2回連続でパス（3手前と1手前がパス）していたら、ボットも即座にパスする
+      // ⚠️人間が2回連続でパス（3手前と1手前がパス）していたら、ボットも即座にパスする
       if (
-        ((boardSize ===9 && movesSoFar.length >= 50) || (boardSize ===13 && movesSoFar.length >= 100) || (boardSize ===19 && movesSoFar.length >= 200)) &&
+        ((boardSize === 9 && movesSoFar.length >= 50) ||
+          (boardSize === 13 && movesSoFar.length >= 100) ||
+          (boardSize === 19 && movesSoFar.length >= 200)) &&
         movesSoFar[movesSoFar.length - 1] === PASS_GRID && // 人間の1手前（直前の着手）
         movesSoFar[movesSoFar.length - 3] === PASS_GRID // 人間の2手前（ボットの手を挟むので3手前）
       ) {
         console.log(
           "🤖 [useBotMove] 人間が2回連続パスしたため、ボットも強制パスする",
         );
-        await onDecided(PASS_GRID);
+        await onDecided(PASS_GRID, null);
         return;
       }
 
-      //
-
-      const result = await kataGo.run({
+      const result = await kataGoTask.run({
         board,
         movesSoFar,
         matchType,
@@ -110,21 +113,6 @@ export function useBotMove(
         modelId,
         currentPlayer: getOppositeColor(myColor),
       });
-
-      // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
-
-      // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
-
-      printCustomKataGoResult(
-        board,
-        movesSoFar,
-        getOppositeColor(myColor),
-        result,
-      );
-
-      // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
-
-      // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
 
       if (!result || !result.moves || result.moves.length === 0) {
         console.warn("[useBotMove] ボットの着手決定に失敗しました(Skip)");
@@ -137,7 +125,21 @@ export function useBotMove(
           ? PASS_GRID
           : makeGrid(best.y, best.x, boardSize);
 
-      await onDecided(bestMove);
+      // ⚠️bot3のmatchType===5つまり5子局は、初手からパスしてしまうので、それを禁止する。
+      // 10手も経ってないのにパスするのは禁止 ⚠️これを20とかにすると流石に意味わからん手を打つようになるのでng
+      if (
+        modelId === "b18" &&
+        matchType === 5 &&
+        movesSoFar.length < 10 &&
+        bestMove === PASS_GRID
+      ) {
+        const best2 = result.moves[1];
+        const bestMove2 = makeGrid(best2.y, best2.x, boardSize);
+        await onDecided(bestMove2, result);
+        return;
+      }
+
+      await onDecided(bestMove, result);
     } finally {
       isBotRunningRef.current = false;
     }

@@ -1,3 +1,4 @@
+// app/BoardEditScreen.tsx
 import { RecordCardHeader } from "@/src/active/components/cards/records/RecordCardHeader";
 import { useTranslation } from "@/src/active/language/i18n";
 import { RecordType } from "@/src/active/types/record";
@@ -5,11 +6,12 @@ import {
   FontAwesome6,
   MaterialCommunityIcons,
   MaterialIcons,
+  Octicons,
 } from "@expo/vector-icons";
-import { GoBoard, ReplayControls, TerritoryBoard } from "expo-goband";
+import { GoBoard, ScoreLeadReplayControls } from "expo-goband";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   LayoutChangeEvent,
@@ -23,9 +25,10 @@ import { TerritoryCalculatorButton } from "../active/components/buttons/Territor
 import { ReplayTapOverlay } from "../active/components/go/ReplayTapOverlay";
 import { COLORS } from "../active/constants/colors";
 import { useProfile } from "../active/contexts/ProfileContexts";
-import { useSuggestNextMove } from "../active/hooks/bot/useSuggestNextMove";
-import { useTerritoryCalculation } from "../active/hooks/bot/useTerritoryCalculation";
-import { useEditableGoBoard } from "../active/hooks/screens/useEditableGoBoard";
+import { useBotAnalysis } from "../active/hooks/bot/useBotAnalysis";
+import { useBoardEditActions } from "../active/hooks/edit/useBoardEditActions";
+import { useEditableGoBoard } from "../active/hooks/edit/useEditableGoBoard";
+import { useReplayMoveEvaluation } from "../active/hooks/edit/useReplayMoveEvaluation";
 
 export default function BoardEditScreen() {
   const { recordJson } = useLocalSearchParams<{ recordJson: string }>();
@@ -55,60 +58,50 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
   const t = useTranslation();
   const { uid } = useProfile();
 
+  // 🐱 棋譜モード専用：手ごとのKataGo解析を進める・止める・DBに永続化する
+  const botAnalysis = useBotAnalysis(record);
+
+  // 🐱 「完全に分析済みか」は手ごとの解析(analyzedCount)に加えて、最後の1手の
+  //    効果を測るための最終局面(perMove[totalMoves])まで埋まっているかも見る
+  const isFullyAnalyzed =
+    botAnalysis.analyzedCount >= botAnalysis.totalMoves &&
+    botAnalysis.analysis.perMove[botAnalysis.totalMoves] != null;
+
+  // 🐱 botAnalysisが進めた解析結果を反映させたrecord。編集モードの分析キャッシュも
+  //    リプレイモードの好手/悪手判定も、どちらもこちらを見るようにする
+  const liveRecord = useMemo(
+    () => ({ ...record, analysis: botAnalysis.analysis }),
+    [record, botAnalysis.analysis],
+  );
+
+  // 🐱 編集モード・盤面履歴・分析キャッシュはすべてここに集約されている
+  const board = useEditableGoBoard(liveRecord);
+
+  // 🐱 ボット思考・地計算ボタンの処理と、地計算の一時表示状態
   const {
-    boardSize,
-    isEditMode,
-    toggleEditMode,
-    currentIndex,
-    setCurrentIndex,
-    maxIdx,
-    processed,
-    editedPoints,
-    botMovePoints,
-    handlePutStone,
-    isBlackPass,
-    isWhitePass,
-    currentAgehama,
-  } = useEditableGoBoard(record);
+    manualTerritory,
+    handleBotSuggest,
+    handleCalculateTerritory,
+    isBotSuggesting,
+    isCalculatingTerritory,
+    isAnyProcessing,
+  } = useBoardEditActions(board, board.boardSize, record.match_type);
 
-  // 🤖 ボット思考 & 🧮 地計算(どちらも編集モード専用の単発hook)
-  const { suggestNextMove, isThinking } = useSuggestNextMove(
-    boardSize,
-    record.match_type,
-  );
-  const { calculateTerritory, isCalculating } = useTerritoryCalculation(
-    boardSize,
-    record.match_type,
-  );
-
-  // 🐱 地計算のその場限りの結果(保存はしない、画面を離れたら消えてOK)
-  const [manualTerritory, setManualTerritory] = useState<{
-    territoryBoard: TerritoryBoard;
-    result: string;
-  } | null>(null);
-
-  // 🐱 局面が動いたら古い地計算結果は捨てる(そのままだと違う局面の結果が表示され続けてしまう)
-  useEffect(() => {
-    setManualTerritory(null);
-  }, [currentIndex, isEditMode]);
-
-  const handleBotSuggest = async () => {
-    const grid = await suggestNextMove(
-      processed.boardHistory[currentIndex],
-      processed.moves.slice(0, currentIndex),
+  // 🐱 リプレイモードでの好手・悪手判定と代替候補手
+  const { lastMoveEvaluation, lastMoveGrid, candidatePoints } =
+    useReplayMoveEvaluation(
+      liveRecord,
+      board.boardSize,
+      board.currentIndex,
+      board.isEditMode,
     );
-    if (grid !== null) handlePutStone(grid, "bot");
-  };
 
-  const handleCalculateTerritory = async () => {
-    const calculated = await calculateTerritory(
-      processed.boardHistory[currentIndex],
-      processed.moves.slice(0, currentIndex),
-      currentAgehama.black,
-      currentAgehama.white,
-    );
-    if (calculated) setManualTerritory(calculated);
-  };
+  // 🐱 RecordCardHeaderは`record`ごと受け取って中でrecord.analysisを見るので、
+  //    分岐後の合成データに差し替えたrecordを作って渡す。
+  const recordForHeader = useMemo(
+    () => ({ ...record, analysis: board.combinedAnalysis }),
+    [record, board.combinedAnalysis],
+  );
 
   const isPlayerBlack = record.black_uid === uid;
   const blackWins = record.result?.startsWith("B")
@@ -146,6 +139,8 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
           <TouchableOpacity
             // ここが大事。対局画面には戻れないようにする
             onPress={() => {
+              // 🐱 分析ループが裏で走ったままナビゲーションするのを防ぐ
+              if (botAnalysis.isAnalyzing) botAnalysis.requestStop();
               if (router.canGoBack()) {
                 router.back();
               } else {
@@ -160,11 +155,40 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
           </TouchableOpacity>
 
           <View className="flex-row items-center gap-4">
-            {isEditMode && (
+            {!board.isEditMode && !isFullyAnalyzed && (
+              // 📕棋譜モード: もし盤面がまだ分析されてなかったら分析するボタン。
+              //    分析済みなら表示しない。押すと未分析の続きから再開する。
+              <IconButton
+                icon={
+                  botAnalysis.isAnalyzing ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : (
+                    <Octicons name="graph" />
+                  )
+                }
+                color={COLORS.primary}
+                onPress={botAnalysis.toggleAnalysis}
+              />
+            )}
+
+            {board.isEditMode && (
+              // ✏️編集モード: auto on offボタン
+              <IconButton
+                icon={
+                  <MaterialCommunityIcons
+                    name={board.isAutoAnalysisEnabled ? "flash" : "flash-off"}
+                  />
+                }
+                color={board.isAutoAnalysisEnabled ? COLORS.primary : "#9999"}
+                onPress={board.toggleAutoAnalysis}
+              />
+            )}
+
+            {board.isEditMode && (
               // ✏️編集モード: ボットが次の一手を考えてくれるボタン
               <IconButton
                 icon={
-                  isThinking ? (
+                  isBotSuggesting ? (
                     <ActivityIndicator size="small" color={COLORS.primary} />
                   ) : (
                     <MaterialCommunityIcons name="robot" />
@@ -172,34 +196,41 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 }
                 color={"#75b384d7"}
                 onPress={handleBotSuggest}
-              />
-            )}
-
-            {/* ✏️編集モード: 一体型になった地計算ボタンを使う */}
-            {isEditMode && (
-              <TerritoryCalculatorButton
-                isCalculating={isCalculating}
-                resultText={manualTerritory?.result}
-                color={COLORS.primary}
-                onPress={() => {
-                  handleCalculateTerritory();
+                disabled={isAnyProcessing}
+                // 🐱 自分が実行中ではなく、他の処理が動いて押せない時は薄く(opacity: 0.4)するにゃ！
+                style={{
+                  opacity: isAnyProcessing && !isBotSuggesting ? 0.4 : 1,
                 }}
               />
             )}
 
-            {/* {!isEditMode && (
-              // 📕棋譜モード: ボットが分析をしてくれるボタン
-              <IconButton
-                icon={<Octicons name="graph" />}
-                color={COLORS.primary}
-                onPress={() => {}}
-              />
-            )} */}
+            {/* ✏️編集モード: 一体型になった地計算ボタンを使う */}
+            {board.isEditMode && (
+              <View
+                style={{
+                  opacity: isAnyProcessing && !isCalculatingTerritory ? 0.4 : 1,
+                }}
+              >
+                <TerritoryCalculatorButton
+                  isCalculating={isCalculatingTerritory}
+                  resultText={manualTerritory?.result}
+                  color={COLORS.primary}
+                  onPress={() => {
+                    handleCalculateTerritory();
+                  }}
+                  disabled={isAnyProcessing}
+                />
+              </View>
+            )}
 
             {/* 🔄 モード切り替えスイッチ（編集モード ↔ 閲覧・再現モード） */}
             <SegmentedIconControl
-              value={isEditMode}
-              onSelect={toggleEditMode}
+              value={board.isEditMode}
+              onSelect={() => {
+                // 🐱 棋譜分析中に編集モードへ入って推論が二重に走るのを防ぐ
+                if (botAnalysis.isAnalyzing) botAnalysis.requestStop();
+                board.toggleEditMode();
+              }}
               options={[
                 {
                   value: false, // 閲覧モード（手）
@@ -219,14 +250,16 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
         {/* コンテンツ領域 */}
         <View className="flex-1 px-4 pb-6">
           <RecordCardHeader
-            record={record}
+            record={recordForHeader}
             isPlayerBlack={isPlayerBlack}
             playerWin={playerWin}
-            isBlackPass={isBlackPass}
-            isWhitePass={isWhitePass}
-            currentAgehama={currentAgehama}
+            isBlackPass={board.isBlackPass}
+            isWhitePass={board.isWhitePass}
+            currentAgehama={board.currentAgehama}
             simpleComment={false}
             matchType={record.match_type}
+            currentIndex={board.currentIndex}
+            showWinRateBar={board.isAutoAnalysisEnabled}
           />
 
           {/* 碁盤エリア */}
@@ -243,43 +276,52 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 }}
               >
                 <GoBoard
-                  boardSize={boardSize}
+                  boardSize={board.boardSize}
                   boardWidth={boardWidth}
-                  agehamaHistory={processed.agehamaHistory}
+                  agehamaHistory={board.processed.agehamaHistory}
                   board={
-                    processed.boardHistory[currentIndex] ??
-                    processed.boardHistory[0] ??
+                    board.processed.boardHistory[board.currentIndex] ??
+                    board.processed.boardHistory[0] ??
                     {}
                   }
-                  onPutStone={(grid) => handlePutStone(grid, "human")}
-                  moveHistory={processed.moves.slice(0, currentIndex + 1)}
+                  onPutStone={(grid) => board.handlePutStone(grid, "human")}
+                  moveHistory={board.processed.moves.slice(
+                    0,
+                    board.currentIndex + 1,
+                  )}
                   territoryBoard={
-                    manualTerritory?.territoryBoard ?? processed.territoryBoard
+                    manualTerritory?.territoryBoard ??
+                    board.processed.territoryBoard
                   }
                   forceShowTerritory={!!manualTerritory}
-                  disabled={!isEditMode}
-                  isGameEnded={!isEditMode}
-                  boardHistory={processed.boardHistory}
-                  currentIndex={currentIndex}
-                  editedPoints={editedPoints}
-                  botMovePoints={botMovePoints}
+                  disabled={!board.isEditMode || board.isAnalyzing}
+                  isGameEnded={!board.isEditMode}
+                  boardHistory={board.processed.boardHistory}
+                  currentIndex={board.currentIndex}
+                  editMarkers={board.editMarkers}
+                  candidatePoints={candidatePoints}
+                  moveEvaluationPoint={lastMoveGrid}
+                  moveEvaluation={lastMoveEvaluation}
                 />
 
-                {!isEditMode && (
+                {!board.isEditMode && (
                   <ReplayTapOverlay
-                    currentIndex={currentIndex}
-                    maxIndex={maxIdx}
-                    onCurrentIndexChange={setCurrentIndex}
+                    currentIndex={board.currentIndex}
+                    maxIndex={board.maxIdx}
+                    onCurrentIndexChange={board.setCurrentIndex}
                   />
                 )}
               </View>
             )}
           </View>
 
-          <ReplayControls
-            onCurrentIndexChange={setCurrentIndex}
-            currentIndex={currentIndex}
-            maxIndex={maxIdx}
+          {/* 📈 リプレイコントロール＆グラフ（一体型） */}
+          <ScoreLeadReplayControls
+            showScoreLeadGraph={board.isAutoAnalysisEnabled}
+            analysis={board.combinedAnalysis}
+            currentIndex={board.currentIndex}
+            totalMoves={board.processed.moves.length}
+            onCurrentIndexChange={board.setCurrentIndex}
           />
         </View>
       </View>

@@ -1,14 +1,17 @@
 // analysis.ts
 
 import { AnalyzeResult } from "@/packages/expo-katago/src";
-import { MoveAnalysisEntry, RecordAnalysis } from "@/src/active/types/analysis";
+import { MoveAnalysisEntry, RecordAnalysis } from "expo-goband";
+
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const toPercent = (n: number) => Math.round(n * 100);
 
 // winRate/scoreLeadはKataGoが常に黒視点で返してくる(currentPlayerに依存しない)ので、
 // ここでの反転処理は不要。そのまま黒視点の値として保存する。
-export function buildMoveAnalysisEntry(result: AnalyzeResult): MoveAnalysisEntry {
+export function buildMoveAnalysisEntry(
+  result: AnalyzeResult,
+): MoveAnalysisEntry {
   return {
     winRate: toPercent(result.winRate),
     scoreLead: round2(result.scoreLead),

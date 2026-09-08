@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 // 🐱 ② 左右タップ用オーバーレイのコンポーネント（GoBoardの中に閉じ込める）
 type ReplayTapOverlayProps = {
@@ -27,9 +27,20 @@ export function ReplayTapOverlay({
     <View style={StyleSheet.absoluteFill}>
       <View style={styles.overlayContainer}>
         {/* 左側：1手戻る */}
-        <Pressable style={styles.tapArea} onPress={handleLeftTap} />
+        <Pressable
+          style={styles.tapArea}
+          onPress={handleLeftTap}
+          focusable={false}
+          // @ts-ignore Web用：キーボードフォーカス（Tabキー選択）から外す
+          tabIndex={-1}
+        />
         {/* 右側：1手進む */}
-        <Pressable style={styles.tapArea} onPress={handleRightTap} />
+        <Pressable
+          style={styles.tapArea}
+          onPress={handleRightTap}
+          focusable={false}
+          tabIndex={-1}
+        />
       </View>
     </View>
   );

@@ -3,15 +3,19 @@
 // ─── このhookの責務 ───────────────────────────────────
 // 1局分のRecordTypeを受け取り、手ごとのKataGo解析(b6)を進める・止める・
 // DBに永続化する、をまとめて面倒みるAnalyzeScreen専属のorchestratorフック。
-// (呼び出し箇所がAnalyzeScreen1箇所だけなので、Context直結のuseKataGoを
+// (呼び出し箇所がAnalyzeScreen1箇所だけなので、Context直結のuseKataGoTaskを
 //  ここで直接呼ぶのは、まとめ役/道具のルールに沿って問題ない)
 //
 // 中断の挙動: 実行中の1手ぶんの推論そのものは止めない。
 // 「次の手への予約」だけキャンセルする(ループの先頭でstopRequestedRefを見る)。
+//
+// 2026/09/07: perMove[i]は「i手目を打つ前の局面」の解析結果なので、
+// 最後の1手の効果を測るには「全手打ち終わった後の最終局面」もperMove
+// [totalMoves]として持っておく必要がある。手ごとのループが全部終わった
+// 後、追加で1回だけ最終局面を解析してこれを埋める。
 // ──────────────────────────────────────────────────
 
 import { BLACK, isNoOkiishi, movesToBoardHistory, WHITE } from "expo-goband";
-import { useKataGo } from "expo-katago";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -19,15 +23,15 @@ import {
   createEmptyAnalysis,
   getAnalyzedCount,
 } from "@/src/stable/logics/analysis";
-import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
-import { RecordAnalysis } from "../../types/analysis";
+import { RecordAnalysis } from "expo-goband";
 import { RecordType } from "../../types/record";
+import { useKataGoTask } from "./useKataGoTask";
 
 const ANALYSIS_MODEL_ID = "b6";
 
 export function useBotAnalysis(record: RecordType) {
-  const kataGo = useKataGo();
+  const kataGoTask = useKataGoTask();
   const totalMoves = record.moves?.length ?? 0;
   const isNormalOrder = isNoOkiishi(record.match_type);
 
@@ -69,7 +73,7 @@ export function useBotAnalysis(record: RecordType) {
       : moveIndex % 2 === 1;
     const currentPlayer = isBlackTurn ? BLACK : WHITE;
 
-    const result = await kataGo.run({
+    const result = await kataGoTask.run({
       board,
       movesSoFar,
       currentPlayer,
@@ -78,15 +82,30 @@ export function useBotAnalysis(record: RecordType) {
       modelId: ANALYSIS_MODEL_ID,
     });
 
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+    if (!result) return null;
+    return buildMoveAnalysisEntry(result);
+  };
 
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+  // 全手打ち終わった後の最終局面を分析してエントリを返す。
+  // (analyzeOneMoveと構造は同じだが、moveIndex=totalMovesとして
+  //  「最後の手を打った後」を評価する点だけが違う)
+  const analyzeFinalPosition = async () => {
+    const board = boardHistoryRef.current[totalMoves];
+    const movesSoFar = record.moves ?? [];
 
-    printCustomKataGoResult(board, movesSoFar, currentPlayer, result);
+    const isBlackTurn = isNormalOrder
+      ? totalMoves % 2 === 0
+      : totalMoves % 2 === 1;
+    const currentPlayer = isBlackTurn ? BLACK : WHITE;
 
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
-
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+    const result = await kataGoTask.run({
+      board,
+      movesSoFar,
+      currentPlayer,
+      boardSize: record.board_size,
+      matchType: record.match_type,
+      modelId: ANALYSIS_MODEL_ID,
+    });
 
     if (!result) return null;
     return buildMoveAnalysisEntry(result);
@@ -100,14 +119,31 @@ export function useBotAnalysis(record: RecordType) {
 
     try {
       let current = analysisRef.current;
+      let completedAllMoves = true;
+
+
+
+
+
+
+
+
+
+
+
+
       for (let i = getAnalyzedCount(current, totalMoves); i < totalMoves; i++) {
-        if (stopRequestedRef.current) break;
+        if (stopRequestedRef.current) {
+          completedAllMoves = false;
+          break;
+        }
 
         const entry = await analyzeOneMove(i);
         if (!entry) {
           console.warn(
             `[useRecordAnalysis] ${i}手目の解析に失敗したため中断します`,
           );
+          completedAllMoves = false;
           break;
         }
 
@@ -117,7 +153,52 @@ export function useBotAnalysis(record: RecordType) {
         analysisRef.current = current;
         setAnalysis(current);
 
-        await recordsRepo.updateAnalysis(record.board_size, record.id, current); // db保存
+        try {
+          await recordsRepo.updateAnalysis(record.board_size, record.id, current);
+        } catch (e) {
+          // 🐱 DB保存に失敗した場合、原因究明のため必ずログに残す
+          console.error(
+            `[useRecordAnalysis] ${i}手目のDB保存に失敗しました`,
+            e,
+          );
+          completedAllMoves = false;
+          break;
+        }
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      // 🐱 手ごとのループが最後まで完走した(中断も失敗もなかった)場合だけ、
+      //    最終局面(最後の1手の効果を測るためのperMove[totalMoves])を埋める。
+      //    既に埋まっていれば(前回のセッションで完了済みなら)スキップ。
+      if (completedAllMoves && current.perMove[totalMoves] == null) {
+        const finalEntry = await analyzeFinalPosition();
+        if (finalEntry) {
+          current = {
+            perMove: [...current.perMove.slice(0, totalMoves), finalEntry],
+          };
+          analysisRef.current = current;
+          setAnalysis(current);
+          await recordsRepo.updateAnalysis(
+            record.board_size,
+            record.id,
+            current,
+          );
+        } else {
+          console.warn("[useRecordAnalysis] 最終局面の解析に失敗しました");
+        }
       }
     } finally {
       runningRef.current = false;
@@ -144,6 +225,7 @@ export function useBotAnalysis(record: RecordType) {
     totalMoves,
     isAnalyzing,
     toggleAnalysis,
-    engineReady: kataGo.engineReady,
+    requestStop,
+    engineReady: kataGoTask.engineReady,
   };
 }

@@ -30,7 +30,6 @@ export const SegmentedIconControl = <T extends string | boolean>({
   inactiveColor = "#b3bbc1",
 }: SegmentedIconControlProps<T>) => {
   return (
-    <View style={{ pointerEvents: "box-none" }}>
       <View style={styles.track}>
         {options.map((option) => {
           const isActive = value === option.value;
@@ -56,7 +55,6 @@ export const SegmentedIconControl = <T extends string | boolean>({
           );
         })}
       </View>
-    </View>
   );
 };
 

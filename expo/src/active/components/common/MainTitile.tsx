@@ -1,5 +1,3 @@
-// MainTitle.tsx
-
 import { COLORS } from "@/src/active/constants/colors";
 import { AntDesign } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
@@ -29,27 +27,21 @@ export const MainTitle = () => {
     <View className="items-center justify-center p-6 relative w-full">
       {/* ⚪️⚫️ 1. 背景の重なる黒石と白石 */}
       <View className="absolute -bottom-2 flex-row items-center justify-center w-full h-full">
-        {/* 黒石 */}
+        {/* 黒石 (ViewにはboxShadowを使用) */}
         <View
           className="w-36 h-36 rounded-full absolute -translate-x-9 -translate-y-3 opacity-80"
           style={{
             backgroundColor: "#334155",
-            shadowColor: "#64748b",
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.2,
-            shadowRadius: 9,
+            boxShadow: "0px 6px 9px rgba(100, 116, 139, 0.2)",
             elevation: 6,
           }}
         />
-        {/* 白石 */}
+        {/* 白石 (ViewにはboxShadowを使用) */}
         <View
           className="w-36 h-36 rounded-full absolute translate-x-9 translate-y-3 opacity-95 border border-slate-200"
           style={{
             backgroundColor: "#FFFFFF",
-            shadowColor: "#94a3b8",
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.25,
-            shadowRadius: 9,
+            boxShadow: "0px 6px 9px rgba(148, 163, 184, 0.25)",
             elevation: 4,
           }}
         />
@@ -92,13 +84,13 @@ export const MainTitle = () => {
           {/* 1. 背景用の白いフチ */}
           <Text
             className="text-[120px] tracking-[12px] mb-0 leading-[144px] absolute text-center"
-            style={{
-              color: "#FFFFFF",
-              fontFamily: "MPLUSRounded1c_900Black",
-              textShadowColor: "rgba(255, 255, 255, 0.9)",
-              textShadowOffset: { width: 0, height: 0 },
-              textShadowRadius: 12,
-            }}
+            style={
+              {
+                color: "#FFFFFF",
+                fontFamily: "MPLUSRounded1c_900Black",
+                textShadow: "0px 0px 12px rgba(255, 255, 255, 0.9)",
+              } as any
+            }
           >
             星碁
           </Text>
@@ -106,13 +98,13 @@ export const MainTitle = () => {
           {/* 2. メインの文字 */}
           <Text
             className="text-[120px] tracking-[12px] mb-0 leading-[144px] text-center"
-            style={{
-              color: COLORS.primary,
-              fontFamily: "MPLUSRounded1c_900Black",
-              textShadowColor: "rgb(104, 114, 128)",
-              textShadowOffset: { width: 1.5, height: 4.5 },
-              textShadowRadius: 4.5,
-            }}
+            style={
+              {
+                color: COLORS.primary,
+                fontFamily: "MPLUSRounded1c_900Black",
+                textShadow: "1.5px 4.5px 4.5px rgb(104, 114, 128)",
+              } as any
+            }
           >
             星碁
           </Text>

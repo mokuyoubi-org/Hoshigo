@@ -1,5 +1,5 @@
-import type { RecordAnalysis } from "@/src/active/types/analysis";
 import type { RecordType } from "@/src/active/types/record";
+import { RecordAnalysis } from "expo-goband";
 import * as SQLite from "expo-sqlite";
 
 export type RecordsRepo = {
@@ -76,11 +76,11 @@ export const recordsRepo: RecordsRepo = {
           id, result, created_at, black_uid, white_uid, moves, match_type,
           black_rating, white_rating, board_size, dead_stones,
           black_username, black_icon_index, black_rank_index,
-          white_username, white_icon_index, white_rank_index
+          white_username, white_icon_index, white_rank_index, analysis
         ) VALUES ($id, $result, $created_at, $black_uid, $white_uid, $moves, $match_type,
           $black_rating, $white_rating, $board_size, $dead_stones,
           $black_username, $black_icon_index, $black_rank_index,
-          $white_username, $white_icon_index, $white_rank_index)
+          $white_username, $white_icon_index, $white_rank_index, $analysis)
       `);
       try {
         for (const r of records) {
@@ -102,6 +102,7 @@ export const recordsRepo: RecordsRepo = {
             $white_username: r.white_username,
             $white_icon_index: r.white_icon_index,
             $white_rank_index: r.white_rank_index,
+            $analysis: r.analysis ? JSON.stringify(r.analysis) : null,
           });
         }
       } finally {

@@ -8,24 +8,24 @@
  * ================================================================
  *
  * 必須:
- *   currentPlayer  'black' | 'white'  次の手番🌟
- *   modelId        ModelId            使用するモデル ("b10")🌟
+ *   currentPlayer  'black' | 'white'  次の手番
+ *   modelId        ModelId            使用するモデル("b6" | "b10" | "b18")
  *
- *   board: number[][]🌟
+ *   board: number[][]
  *   0=空点, 1=黒石, 2=白石 の二次元配列。
  *   例: [[0,1,0],[2,0,1],[0,0,0]]
  *   ※ moves も同時に渡すと履歴情報も活用されより正確になる。
  *
- *   moves: MoveObject[]🌟
+ *   moves: MoveObject[]
  *   着手履歴の配列。board を省略するとここから盤面を再構築する。
  *   例: [{x:3, y:3, player:'black'}, {x:15, y:15, player:'white'}]
  *   ※ パスは x:-1, y:-1 で表現。
  *
  *
  * オプション:
- *   komi            number      コミ（デフォルト: 6.5）🌟
- *   rules           GameRules   'japanese'|'chinese'|'korean'（デフォルト: 'japanese'）🌟
- *   visits          number      MCTS 探索数（デフォルト: 200）🌟
+ *   komi            number      コミ（デフォルト: 6.5）
+ *   rules           GameRules   'japanese'|'chinese'|'korean'（デフォルト: 'japanese'）
+ *   visits          number      MCTS 探索数（デフォルト: 200）
  *                               多いほど精度↑・時間↑。cpu では 50〜200 が現実的。
  *   topK            number      返す候補手の数（デフォルト: 10）
  *   pvLen           number      読み筋の最大手数（デフォルト: 10）
@@ -88,13 +88,23 @@ import { BoardState, FloatArray, GameRules, RegionOfInterest } from "./types";
 // 型定義
 // ================================================================
 
+// 出力フィールドの取捨選択。省略時(undefined)は元のweb-katrainと同じフル出力。
+// このアプリでは useKataGo.ts 側で明示的に false を渡して絞っている。
+export type AnalyzeResultFields = {
+  scoreSelfplay?: boolean;
+  scoreStdev?: boolean;
+  visits?: boolean;
+  ownershipStdev?: boolean;
+  policy?: boolean;
+  moveDetails?: boolean; // falseなら moves は {x, y, winRate} のみになる
+};
+
 export type AnalyzeBoardArgs = {
   currentPlayer: Color;
   modelId: ModelId;
   board: Board2D;
   moves: MoveObject[];
   boardSize: BoardSize;
-
   komi?: number;
   rules?: GameRules;
   visits?: number;
@@ -104,35 +114,38 @@ export type AnalyzeBoardArgs = {
   wideRootNoise?: number;
   nnRandomize?: boolean;
   regionOfInterest?: RegionOfInterest | null;
+  fields?: AnalyzeResultFields;
+};
+
+export type AnalyzeResult = {
+  winRate: number;
+  scoreLead: number;
+  scoreSelfplay?: number;
+  scoreStdev?: number;
+  visits?: number;
+  ownership: number[] | FloatArray;
+  ownershipStdev?: number[] | FloatArray;
+  policy?: number[] | FloatArray;
+  moves: MoveInfo[];
 };
 
 export type MoveInfo = {
   x: number;
   y: number;
   winRate: number;
-  winRateLost: number;
-  scoreLead: number;
-  scoreSelfplay: number;
-  scoreStdev: number;
-  visits: number;
-  pointsLost: number;
-  relativePointsLost: number;
-  order: number;
-  prior: number;
-  pv: string[];
+  winRateLost?: number;
+  scoreLead?: number;
+  scoreSelfplay?: number;
+  scoreStdev?: number;
+  visits?: number;
+  pointsLost?: number;
+  relativePointsLost?: number;
+  order?: number;
+  prior?: number;
+  pv?: string[];
 };
 
-export type AnalyzeResult = {
-  winRate: number;
-  scoreLead: number;
-  scoreSelfplay: number;
-  scoreStdev: number;
-  visits: number;
-  ownership: number[] | FloatArray;
-  ownershipStdev: number[] | FloatArray;
-  policy: number[] | FloatArray;
-  moves: MoveInfo[];
-};
+
 
 // ================================================================
 // モデルキャッシュ & ウォームアップ
@@ -206,7 +219,18 @@ export async function analyzeBoard(
     wideRootNoise = 0.04,
     nnRandomize = true,
     regionOfInterest,
+    fields,
   } = args;
+
+  // 出力フィールドの取捨選択。省略時(undefined)は元のweb-katrainと同じフル出力。
+  const {
+    scoreSelfplay: includeScoreSelfplay = true,
+    scoreStdev: includeScoreStdev = true,
+    visits: includeVisits = true,
+    ownershipStdev: includeOwnershipStdev = true,
+    policy: includePolicy = true,
+    moveDetails: includeMoveDetails = true,
+  } = fields ?? {};
 
   initBoardArrays(args.boardSize);
   const zeroBasedMoves = normalizeMovesToZeroBased(moves ?? []);
@@ -247,24 +271,40 @@ export async function analyzeBoard(
     regionOfInterest: regionOfInterest ?? null,
   });
 
-  console.log("ownership status:", {
-    exists: !!output.ownership,
-    length: output.ownership?.length,
-    isTypedArrayOrArray:
-      output.ownership instanceof Float32Array ||
-      Array.isArray(output.ownership),
-  });
+  const moves_: MoveInfo[] = denormalizeMovesToOneBased(output.moves).map(
+    (m) => {
+      const base: MoveInfo = { x: m.x, y: m.y, winRate: m.winRate };
+      if (!includeMoveDetails) return base;
+      return {
+        ...base,
+        winRateLost: m.winRateLost,
+        scoreLead: m.scoreLead,
+        scoreSelfplay: m.scoreSelfplay,
+        scoreStdev: m.scoreStdev,
+        visits: m.visits,
+        pointsLost: m.pointsLost,
+        relativePointsLost: m.relativePointsLost,
+        order: m.order,
+        prior: m.prior,
+        pv: m.pv,
+      };
+    },
+  );
 
   return {
     winRate: output.rootWinRate,
     scoreLead: output.rootScoreLead,
-    scoreSelfplay: output.rootScoreSelfplay,
-    scoreStdev: output.rootScoreStdev,
-    visits: output.rootVisits,
+    ...(includeScoreSelfplay
+      ? { scoreSelfplay: output.rootScoreSelfplay }
+      : {}),
+    ...(includeScoreStdev ? { scoreStdev: output.rootScoreStdev } : {}),
+    ...(includeVisits ? { visits: output.rootVisits } : {}),
     ownership: output.ownership,
-    ownershipStdev: output.ownershipStdev,
-    policy: output.policy,
-    moves: denormalizeMovesToOneBased(output.moves),
+    ...(includeOwnershipStdev
+      ? { ownershipStdev: output.ownershipStdev }
+      : {}),
+    ...(includePolicy ? { policy: output.policy } : {}),
+    moves: moves_,
   };
 }
 

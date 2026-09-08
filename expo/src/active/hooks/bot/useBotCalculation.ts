@@ -1,12 +1,17 @@
-// useEndgameAnalysis.ts
+// useBotCalculation.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
-// 終局時にKataGoへ「死に石はどれ？」を聞くだけの専用hook。useBotMoveと
-// 対になる存在で、こちらは精度優先でb18を使いたいが、b18がまだ準備
-// できていない場合はb10、それも無ければb6にフォールバックする。
+// 終局時にKataGoへ「死に石はどれ？」を聞くだけの専用hook。精度優先で
+// b18を希望するが、まだ準備できていなければuseKataGoTask側が自動で
+// b10・b6にフォールバックする。
+//
+// 2026/09/07: 死に石判定のためのkataGo呼び出しは、最終局面の
+// winRate/scoreLeadも一緒に持っている。今まではownershipだけ抜き出して
+// 捨てていたが、これは「最後の1手を打った後の局面」の解析結果そのもの
+// なので、呼び出し元(useMatchSession)がliveAnalysisに記録できるよう
+// analysisごと返す。
 // ──────────────────────────────────────────────────
 
-import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
 import {
   BLACK,
   Board,
@@ -17,21 +22,18 @@ import {
   ownershipToDeadStones,
   WHITE,
 } from "expo-goband";
-import { useKataGo } from "expo-katago";
+import { AnalyzeResult } from "expo-katago";
+import { useKataGoTask } from "./useKataGoTask";
 
-// 精度が高い順。実際に使われるのはこの中で今すぐ使えるものだけ。
-const MODEL_PREFERENCE_ORDER = ["b18", "b10", "b6"] as const;
-
-export function useEndgameAnalysis() {
-  const kataGo = useKataGo();
+export function useBotCalculation() {
+  const kataGoTask = useKataGoTask();
 
   const analyzeTerritory = async (
     board: Board,
     movesSoFar: Grid[],
     matchType: MatchType,
     boardSize: BoardSize,
-  ): Promise<Grid[]> => {
-    // 🔥
+  ): Promise<{ deadStones: Grid[]; analysis: AnalyzeResult | null }> => {
     const getNextPlayer = (matchType: number, movesCount: number): Color => {
       const isBlackStart = matchType === 0 || matchType === 1;
       const isEven = movesCount % 2 === 0;
@@ -43,34 +45,20 @@ export function useEndgameAnalysis() {
       }
     };
 
-    const modelId = kataGo.getBestAvailableModel([...MODEL_PREFERENCE_ORDER]);
-    console.log("準備できたモデル: ", modelId)
-
-    const result = await kataGo.run({
+    const analysis = await kataGoTask.run({
       board,
       movesSoFar,
       matchType,
       boardSize,
-      modelId, // 精度優先でb18、無ければ段階的にフォールバック
-      currentPlayer: getNextPlayer(matchType, movesSoFar.length), // 🔥
+      modelId: "b18", // 精度優先の希望。無ければ自動でb10→b6にフォールバック
+      currentPlayer: getNextPlayer(matchType, movesSoFar.length),
     });
 
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
+    const deadStones = analysis
+      ? ownershipToDeadStones(board, analysis.ownership)
+      : [];
 
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
-
-    printCustomKataGoResult(
-      board,
-      movesSoFar,
-      getNextPlayer(matchType, movesSoFar.length),
-      result,
-    );
-
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
-
-    // ⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️⚙️
-
-    return result ? ownershipToDeadStones(board, result.ownership) : [];
+    return { deadStones, analysis };
   };
 
   return { analyzeTerritory };

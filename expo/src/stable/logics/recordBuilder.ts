@@ -1,6 +1,14 @@
-import { RecordType } from "@/src/active/types/record";
+// recordBuilder.ts
+
 import { TranslationKey } from "@/src/active/language/lang";
-import { BLACK, BoardSize, Color, MatchType } from "expo-goband";
+import { RecordType } from "@/src/active/types/record";
+import {
+  BLACK,
+  BoardSize,
+  Color,
+  MatchType,
+  RecordAnalysis,
+} from "expo-goband";
 import { getRankInfo } from "./rankLogics";
 
 type BuildRecordArgs = {
@@ -22,6 +30,7 @@ type BuildRecordArgs = {
   oppRatingBefore: number;
   oppRatingAfter: number;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+  analysis: RecordAnalysis | null;
 };
 
 // 🐱 対局終了直後にGameScreen側が持っている材料一式から、
@@ -46,6 +55,7 @@ export function buildRecordFromMatch({
   oppRatingBefore,
   oppRatingAfter,
   t,
+  analysis,
 }: BuildRecordArgs): RecordType {
   const isMeBlack = myColor === BLACK;
   const oppRankIndexAfter = getRankInfo(oppRatingAfter, t).index;
@@ -68,6 +78,6 @@ export function buildRecordFromMatch({
     moves,
     dead_stones: deadStones,
     match_type: matchType,
-    analysis: null,
+    analysis,
   };
 }

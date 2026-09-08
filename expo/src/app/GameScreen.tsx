@@ -10,11 +10,10 @@ import LoadingModal from "@/src/active/components/modals/LoadingModal";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
 import { useTranslation } from "@/src/active/language/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useAudioPlayer } from "expo-audio";
 import { BLACK, GoBoard, PASS_GRID } from "expo-goband";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   Text,
   TouchableOpacity,
@@ -29,6 +28,7 @@ import { GameStartModal } from "../active/components/modals/GameStartModal";
 import { COLORS } from "../active/constants/colors";
 import { useProfile } from "../active/contexts/ProfileContexts";
 import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
+import { useSounds } from "../active/hooks/useSounds";
 import {
   GameScreenParams,
   getPassState,
@@ -36,7 +36,7 @@ import {
 } from "../stable/logics/gameScreenLogics";
 import { getRankInfo } from "../stable/logics/rankLogics";
 import { buildRecordFromMatch } from "../stable/logics/recordBuilder";
-import { useSounds } from "../active/hooks/useSounds";
+import { recordsRepo } from "../stable/logics/records-repo";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -85,7 +85,7 @@ export default function GameScreen() {
   const myRankIndex = (boardSize === 9 ? rank9.index : rank13.index) ?? 0;
   const myRating = (boardSize === 9 ? rating9 : rating13) ?? 0;
 
-const { playSound } = useSounds();
+  const { playSound } = useSounds();
   // 🌟useMatchSession呼び出し！
   const {
     boardHistory,
@@ -111,6 +111,7 @@ const { playSound } = useSounds();
     resultRaw,
     oppRatingAfter,
     finalDeadStones,
+    analysis,
   } = useMatchSession({
     matchId,
     myColor,
@@ -123,6 +124,7 @@ const { playSound } = useSounds();
     initialMySeconds: Number(params.mySeconds),
     initialOppSeconds: Number(params.oppSeconds),
   });
+
   // 対局自体の情報
   const moveHistory = moves?.slice(0, currentIndex + 1) ?? [];
   const { isBlackPass, isWhitePass } = getPassState(
@@ -223,7 +225,15 @@ const { playSound } = useSounds();
         oppRatingBefore: oppRating ?? 0,
         oppRatingAfter,
         t,
+        analysis,
       });
+
+      // 🐱 分析結果込みでローカルにも保存しておく。INSERT OR IGNOREなので、
+      //    後からsyncNewerがサーバー版(analysisを持たない)を取ってきても
+      //    上書きされず、この時点のanalysisがそのまま残り続ける。
+      recordsRepo
+        .insertMany([record])
+        .catch((e) => console.error("対局記録のローカル保存に失敗:", e));
 
       router.replace({
         pathname: "/BoardEditScreen",

@@ -98,7 +98,6 @@ export function KataGoEngineProvider({
   const isAnalyzingRef = useRef(false);
 
   const handleAnalyzeComplete = (result: AnalyzeResult) => {
-    console.log("🔔 [KataGoContext] WebViewから完成通知を受信");
     if (resultCallbackRef.current) {
       resultCallbackRef.current(result);
       resultCallbackRef.current = null;
@@ -245,7 +244,7 @@ export function KataGoEngineProvider({
     >
       <View
         style={{
-          pointerEvents: "none",
+          // pointerEvents: "none",
           position: "absolute",
           width: 0,
           height: 0,

@@ -23,6 +23,7 @@ import {
 } from "../types/go";
 import { BoardLines } from "./BoardLines";
 import { IntersectionContainer } from "./stones/IntersectionContainer";
+const EMPTY_EDIT_MARKERS = new Map<Grid, "human" | "bot">();
 
 type Props = {
   board: Board;
@@ -39,8 +40,10 @@ type Props = {
   lineColor?: string;
   agehamaHistory: Agehama[];
   pinPoints?: Grid[];
-  editedPoints?: Grid[]; // 🐱 編集された石の位置リストを追加！
-  botMovePoints?: Grid[]; // 🐱 ボットが打った石の位置リスト（青マーカー用）
+  editMarkers?: Map<Grid, "human" | "bot">;
+  candidatePoints?: Grid[]; // 🐱 直近の手が悪手だった場合に見せる、代替候補の位置一覧
+  moveEvaluationPoint?: Grid | null; // 🐱 良手・悪手マークを付ける対象のマス(=直近に打たれた手)
+  moveEvaluation?: "good" | "bad"; // 🐱 その手の評価
   forceShowTerritory?: boolean; // 🐱 isGameEndedに関わらず地計算結果を強制表示するフラグ
   enableDoubleTap?: boolean;
   playerColor?: Color;
@@ -58,8 +61,10 @@ export function GoBoard({
   currentIndex,
   boardWidth,
   pinPoints,
-  editedPoints = [],
-  botMovePoints = [],
+  editMarkers = EMPTY_EDIT_MARKERS, // 🐱 誰がその地点を打ったか(人間/ボット)を表すMap
+  candidatePoints = [],
+  moveEvaluationPoint = null,
+  moveEvaluation,
   forceShowTerritory = false,
   enableDoubleTap = false,
   playerColor = BLACK,
@@ -164,9 +169,10 @@ export function GoBoard({
 
   const pinSet = useMemo(() => new Set(pinPoints ?? []), [pinPoints]);
 
-  // 🐱 判定を高速化するために Set に変換する
-  const editedSet = useMemo(() => new Set(editedPoints), [editedPoints]);
-  const botMoveSet = useMemo(() => new Set(botMovePoints), [botMovePoints]);
+  const candidateSet = useMemo(
+    () => new Set(candidatePoints),
+    [candidatePoints],
+  );
 
   return (
     <View style={styles.container}>
@@ -213,12 +219,20 @@ export function GoBoard({
                 isCurrentMove={grid === currentMoveGrid}
                 showTerritory={showTerritory}
                 isPinned={pinSet.has(grid)}
-                isEdited={editedSet.has(grid)} // 🐱 ここで BoardGridCell に渡す
-                isBotMove={botMoveSet.has(grid)}
+                isEdited={editMarkers.get(grid) === "human"}
+                isBotMove={editMarkers.get(grid) === "bot"}
+                isCandidate={candidateSet.has(grid)}
+                moveEvaluation={
+                  grid === moveEvaluationPoint ? moveEvaluation : undefined
+                }
                 enableDoubleTap={enableDoubleTap}
                 playerColor={playerColor}
                 disabled={disabled}
                 onPressGrid={handlePressGrid}
+                prevTurn={prevTurn}
+                lastMove={moveHistory[moveHistory.length-2]
+                  // ⚠️ここがなんでlength-2なのかはよくわからんが、ともかくそうしたらうまくいった。
+                }
               />
             );
           })}
