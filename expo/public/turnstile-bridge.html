@@ -35,6 +35,12 @@
           },
           "error-callback": function (code) {
             postToRN({ type: "error", message: "challenge_failed", code: code });
+          },
+          "before-interactive-callback": function () {
+            postToRN({ type: "interactive", value: true });
+          },
+          "after-interactive-callback": function () {
+            postToRN({ type: "interactive", value: false });
           }
         });
         postToRN({ type: "ready" });

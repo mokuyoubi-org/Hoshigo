@@ -5,6 +5,11 @@
 //   陥ることが判明したため、hoshigo.app上に本物の静的ページ
 //   (turnstile-bridge.html)をホスティングし、WebViewはそれを
 //   本当にネットワーク越しに読み込む方式に変更した。
+// ✅2026/09/09 普段は1px四方の見えない場所にWebViewを置いているため、
+//   Cloudflareがまれに要求する「人間によるチェック(interactive)」が
+//   物理的に押せず、永遠にタイムアウトする問題が発覚。
+//   before/after-interactive-callbackを使い、必要な時だけ画面中央に
+//   モーダル風に表示し、終わったら元の見えない状態に戻すようにした。
 // WebView内で見えないTurnstileチャレンジを実行し、
 // postMessage経由でトークンをRN側に受け渡す。
 
@@ -12,8 +17,9 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
-import { View } from "react-native";
+import { StyleSheet, TouchableOpacity, Text, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 
 console.log("TurnstileWidget.native.tsx");
@@ -38,6 +44,10 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
       reject: (err: Error) => void;
     } | null>(null);
 
+    // Cloudflareが人間によるチェックを要求してきた時だけtrueにする。
+    // trueの間だけ、画面中央にモーダル風にWebViewを表示する。
+    const [isInteractive, setIsInteractive] = useState(false);
+
     // WebView側の準備が整うまでgetToken()を待たせるためのPromise
     const readyResolveRef = useRef<(() => void) | null>(null);
     const readyPromiseRef = useRef<Promise<void>>(
@@ -57,15 +67,30 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           readyRef.current = true;
           readyResolveRef.current?.();
         } else if (data.type === "token") {
+          setIsInteractive(false);
           pendingRef.current?.resolve(data.token);
           pendingRef.current = null;
         } else if (data.type === "error") {
           console.error("Turnstile error code:", data.code);
+          setIsInteractive(false);
           pendingRef.current?.reject(new Error("Turnstile challenge failed"));
           pendingRef.current = null;
+        } else if (data.type === "interactive") {
+          setIsInteractive(Boolean(data.value));
         }
       } catch (e) {
         console.error("Turnstile message parse error:", e);
+      }
+    };
+
+    // ユーザーがモーダルのキャンセルを押した場合の安全弁。
+    // これが無いと、何らかの理由でチェックが完了できなかった時、
+    // ユーザーが永遠にモーダルに閉じ込められてしまう。
+    const handleCancel = () => {
+      setIsInteractive(false);
+      if (pendingRef.current) {
+        pendingRef.current.reject(new Error("Turnstile challenge cancelled"));
+        pendingRef.current = null;
       }
     };
 
@@ -86,6 +111,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
         const timeoutId = setTimeout(() => {
           if (pendingRef.current) {
             pendingRef.current = null;
+            setIsInteractive(false);
             reject(new Error("Turnstile token request timed out"));
           }
         }, 15000);
@@ -136,23 +162,80 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     }));
 
     return (
-      <View style={{ width: 0, height: 0, overflow: "hidden" }}>
-        <WebView
-          ref={webviewRef}
-          source={{ uri: bridgeUrl }}
-          onMessage={handleMessage}
-          javaScriptEnabled
-          domStorageEnabled
-          originWhitelist={["*"]}
-          androidLayerType="software"
-          thirdPartyCookiesEnabled
-          sharedCookiesEnabled
-          mixedContentMode="always"
-          style={{ width: 1, height: 1 }}
-        />
+      <View
+        style={
+          isInteractive
+            ? styles.backdrop
+            : styles.hiddenContainer
+        }
+        pointerEvents={isInteractive ? "auto" : "none"}
+      >
+        <View style={isInteractive ? styles.modalCard : undefined}>
+          <WebView
+            ref={webviewRef}
+            source={{ uri: bridgeUrl }}
+            onMessage={handleMessage}
+            javaScriptEnabled
+            domStorageEnabled
+            originWhitelist={["*"]}
+            androidLayerType="software"
+            thirdPartyCookiesEnabled
+            sharedCookiesEnabled
+            mixedContentMode="always"
+            style={isInteractive ? styles.visibleWebview : styles.hiddenWebview}
+          />
+          {isInteractive ? (
+            <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+              <Text style={styles.cancelText}>キャンセル</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
     );
   }
 );
 
 TurnstileWidget.displayName = "TurnstileWidget";
+
+const styles = StyleSheet.create({
+  hiddenContainer: {
+    width: 0,
+    height: 0,
+    overflow: "hidden",
+  },
+  hiddenWebview: {
+    width: 1,
+    height: 1,
+  },
+  backdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  modalCard: {
+    width: 320,
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "center",
+  },
+  visibleWebview: {
+    width: 300,
+    height: 300,
+    backgroundColor: "white",
+  },
+  cancelButton: {
+    marginTop: 12,
+    padding: 8,
+  },
+  cancelText: {
+    color: "#888",
+    fontSize: 14,
+  },
+});
