@@ -1,10 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      async
+      defer
+    ></script>
     <style>
-      html, body {
+      html,
+      body {
         margin: 0;
         padding: 0;
         background: transparent;
@@ -12,11 +17,11 @@
       }
 
       #cf-message {
-        display: none; /* redirectモードの時だけJSで表示 */
         box-sizing: border-box;
         height: 100vh;
         padding: 32px 28px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         color: #1a1a1a;
         background: #ffffff;
         display: flex;
@@ -37,7 +42,9 @@
       }
 
       @keyframes cf-spin {
-        to { transform: rotate(360deg); }
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       #cf-title {
@@ -68,86 +75,40 @@
       <p id="cf-subtitle">Please don't close this — it only takes a moment.</p>
       <div id="cf-container"></div>
     </div>
-    <div id="cf-container-hidden"></div>
 
     <script>
-      // sitekeyとactionは、RN側が組み立てたURLのクエリパラメータから受け取る。
-      // redirect=1の場合、これは隠れたWebViewではなく、
-      // 本物のブラウザ(Custom Tabs / SFSafariViewController、
-      // 本物のブラウザエンジン)で開かれているページなので、
-      // postMessageではなく、カスタムスキームへのリダイレクトで
-      // トークンをRN側に持ち帰る。
+      // sitekeyとactionは、RN(expo-web-browser)が組み立てたURLの
+      // クエリパラメータから受け取る。このページは常に
+      // Custom Tabs / SFSafariViewController(本物のブラウザエンジン)で
+      // 開かれる前提なので、redirect分岐やpostMessage経路は無く、
+      // 常にカスタムスキームへのリダイレクトでトークンを持ち帰る。
       var params = new URLSearchParams(window.location.search);
       var sitekey = params.get("sitekey");
       var action = params.get("action") || "anonymous_signin";
-      var redirect = params.get("redirect") === "1";
-      var widgetId = null;
-
-      // redirectモードの時だけ、待機メッセージ入りのUIを表示し、
-      // ウィジェットもそのコンテナ内にレンダリングする。
-      // 隠れたWebView(普段の静かな確認)にはメッセージ不要なので、
-      // 見えないコンテナのままにしておく。
-      var containerId = redirect ? "cf-container" : "cf-container-hidden";
-      if (redirect) {
-        document.getElementById("cf-message").style.display = "flex";
-      }
-
-      function postToRN(payload) {
-        if (window.ReactNativeWebView) {
-          window.ReactNativeWebView.postMessage(JSON.stringify(payload));
-        }
-      }
 
       function initTurnstile() {
         if (!window.turnstile) {
           setTimeout(initTurnstile, 100);
           return;
         }
-        widgetId = window.turnstile.render("#" + containerId, {
+        window.turnstile.render("#cf-container", {
           sitekey: sitekey,
           action: action,
           appearance: "interaction-only",
-          // redirectモード(本物のブラウザ)には、RN側からexecuteの合図を
-          // 送る手段が無いので、レンダリングされたら自動で実行する。
-          execution: redirect ? "render" : "execute",
+          // RN側からexecuteの合図を送る手段が無いので、
+          // レンダリングされたら自動で実行する。
+          execution: "render",
           callback: function (token) {
-            if (redirect) {
-              window.location.href =
-                "hoshigo://turnstile-callback?token=" + encodeURIComponent(token);
-            } else {
-              postToRN({ type: "token", token: token });
-            }
+            window.location.href =
+              "hoshigo://turnstile-callback?token=" + encodeURIComponent(token);
           },
           "error-callback": function (code) {
-            if (redirect) {
-              window.location.href =
-                "hoshigo://turnstile-callback?error=1&code=" + encodeURIComponent(code);
-            } else {
-              postToRN({ type: "error", message: "challenge_failed", code: code });
-            }
+            window.location.href =
+              "hoshigo://turnstile-callback?error=1&code=" +
+              encodeURIComponent(code);
           },
-          "before-interactive-callback": function () {
-            postToRN({ type: "interactive", value: true });
-          },
-          "after-interactive-callback": function () {
-            postToRN({ type: "interactive", value: false });
-          }
         });
-        postToRN({ type: "ready" });
       }
-
-      // RN側(隠れたWebView)からのgetToken要求を受け取る(redirectモードでは未使用)
-      function handleMessage(event) {
-        try {
-          var data = JSON.parse(event.data);
-          if (data.type === "execute" && widgetId) {
-            window.turnstile.reset(widgetId);
-            window.turnstile.execute(widgetId);
-          }
-        } catch (e) {}
-      }
-      document.addEventListener("message", handleMessage); // Android
-      window.addEventListener("message", handleMessage); // iOS
 
       initTurnstile();
     </script>
