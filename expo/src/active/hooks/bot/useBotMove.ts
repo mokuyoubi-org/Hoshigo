@@ -105,6 +105,28 @@ export function useBotMove(
         return;
       }
 
+
+      // 初手はハードコード
+
+      // if(movesSoFar.length === 0){
+      //   if(matchType === 0){}
+      //   else{
+      //     // matchType1はbotは必ず後攻なのであり得ない。なので置き碁の場合ということになる
+      //     if(boardSize === 9){
+      //       if(matchType === 2){}else if(matchType === 3){}else if(matchType === 4){}else if(matchType === 5){}
+      //     }
+      //     else if(boardSize === 13){
+      //       if(matchType === 2){}else if(matchType === 3){}else if(matchType === 4){}else if(matchType === 5){}else if(matchType === 6){}else if(matchType === 7){}else if(matchType === 8){}else if(matchType === 9){}
+      //     }
+
+      //   }
+      //    await onDecided(, null);
+      // }
+
+
+
+
+
       const result = await kataGoTask.run({
         board,
         movesSoFar,
@@ -118,6 +140,16 @@ export function useBotMove(
         console.warn("[useBotMove] ボットの着手決定に失敗しました(Skip)");
         return;
       }
+
+
+// 1手目: ハードコードする。
+// 2or3手目: 最善手40%, 2番手24%, 3番手18%, 4番手12%, 5番手6%
+// 4or5手目: 最善手60%, 2番手16%, 3番手12%, 4番手8%, 5番手4%
+// 6or7手目: 最善手80%, 2番手8%, 3番手6%, 4番手4%, 5番手2%
+// 8手目以降: 最善手100%
+
+
+
 
       const best = result.moves[0];
       const bestMove: Grid =

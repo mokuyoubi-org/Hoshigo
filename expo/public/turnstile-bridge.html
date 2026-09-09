@@ -1,40 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      async
+      defer
+    ></script>
     <style>
-      html, body {
+      html,
+      body {
         margin: 0;
         padding: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
         background: transparent;
-        overflow: hidden;
-      }
-      #cf-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
       }
     </style>
   </head>
   <body>
     <div id="cf-container"></div>
     <script>
+      // sitekeyとactionは、RN側が組み立てたURLのクエリパラメータから受け取る。
+      // ここはインラインHTMLと違い「本物のページ」なので、URLSearchParamsが使える。
       var params = new URLSearchParams(window.location.search);
       var sitekey = params.get("sitekey");
       var action = params.get("action") || "anonymous_signin";
-
       var widgetId = null;
 
       function postToRN(payload) {
-        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-          window.ReactNativeWebView.postMessage(JSON.stringify(payload));
-        }
+        window.ReactNativeWebView.postMessage(JSON.stringify(payload));
       }
 
       function initTurnstile() {
@@ -51,30 +44,34 @@
             postToRN({ type: "token", token: token });
           },
           "error-callback": function (code) {
-            postToRN({ type: "error", message: "challenge_failed", code: code });
+            postToRN({
+              type: "error",
+              message: "challenge_failed",
+              code: code,
+            });
           },
           "before-interactive-callback": function () {
             postToRN({ type: "interactive", value: true });
           },
           "after-interactive-callback": function () {
-            // チェックが終わったときだけモーダルを閉じるようにするにゃ
             postToRN({ type: "interactive", value: false });
-          }
+          },
         });
         postToRN({ type: "ready" });
       }
 
+      // RN側からのgetToken要求を受け取る
       function handleMessage(event) {
         try {
-          var data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-          if (data.type === "execute" && widgetId !== null) {
+          var data = JSON.parse(event.data);
+          if (data.type === "execute" && widgetId) {
             window.turnstile.reset(widgetId);
             window.turnstile.execute(widgetId);
           }
         } catch (e) {}
       }
-      document.addEventListener("message", handleMessage);
-      window.addEventListener("message", handleMessage);
+      document.addEventListener("message", handleMessage); // Android
+      window.addEventListener("message", handleMessage); // iOS
 
       initTurnstile();
     </script>

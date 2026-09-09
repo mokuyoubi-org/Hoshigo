@@ -10,6 +10,10 @@
 //   物理的に押せず、永遠にタイムアウトする問題が発覚。
 //   before/after-interactive-callbackを使い、必要な時だけ画面中央に
 //   モーダル風に表示し、終わったら元の見えない状態に戻すようにした。
+// ✅2026/09/09 WebView自体のサイズ(style)をisInteractiveで切り替えると、
+//   Cloudflare側の描画がリサイズに追従できず真っ白になる不具合が発覚。
+//   WebViewのサイズは常に300x300で固定し、包む側のViewの位置・透明度
+//   だけを切り替える方式に変更した(画面外に追いやる/中央に表示する)。
 // WebView内で見えないTurnstileチャレンジを実行し、
 // postMessage経由でトークンをRN側に受け渡す。
 
@@ -19,7 +23,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { StyleSheet, TouchableOpacity, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 
 console.log("TurnstileWidget.native.tsx");
@@ -53,11 +57,11 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     const readyPromiseRef = useRef<Promise<void>>(
       new Promise((resolve) => {
         readyResolveRef.current = resolve;
-      })
+      }),
     );
 
     const bridgeUrl = `${BRIDGE_URL}?sitekey=${encodeURIComponent(
-      sitekey
+      sitekey,
     )}&action=${encodeURIComponent(action)}`;
 
     const handleMessage = (event: WebViewMessageEvent) => {
@@ -145,11 +149,11 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
                   () =>
                     reject(
                       new Error(
-                        "Turnstile widget did not become ready in time"
-                      )
+                        "Turnstile widget did not become ready in time",
+                      ),
                     ),
-                  10000
-                )
+                  10000,
+                ),
               ),
             ]);
             return getTokenInternal();
@@ -161,61 +165,54 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
       },
     }));
 
-return (
-  <View
-    style={isInteractive ? styles.backdrop : styles.hiddenContainer}
-    pointerEvents={isInteractive ? "auto" : "none"}
-  >
-    <View style={isInteractive ? styles.modalCard : styles.offscreen}>
-      <WebView
-        ref={webviewRef}
-        source={{ uri: bridgeUrl }}
-        onMessage={handleMessage}
-        javaScriptEnabled
-        domStorageEnabled
-        originWhitelist={["*"]}
-        androidLayerType="software"
-        thirdPartyCookiesEnabled
-        sharedCookiesEnabled
-        mixedContentMode="always"
-        style={styles.webview}
-      />
-      {isInteractive ? (
-        <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>キャンセル</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  </View>
-);
-  }
+    return (
+      <View
+        style={isInteractive ? styles.visibleWrapper : styles.hiddenWrapper}
+        pointerEvents={isInteractive ? "auto" : "none"}
+      >
+        <View style={styles.modalCard}>
+          <WebView
+            ref={webviewRef}
+            source={{ uri: bridgeUrl }}
+            onMessage={handleMessage}
+            javaScriptEnabled
+            domStorageEnabled
+            originWhitelist={["*"]}
+            androidLayerType="software"
+            thirdPartyCookiesEnabled
+            sharedCookiesEnabled
+            mixedContentMode="always"
+            style={styles.webview}
+          />
+          <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+            <Text style={styles.cancelText}>キャンセル</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  },
 );
 
 TurnstileWidget.displayName = "TurnstileWidget";
 
 const styles = StyleSheet.create({
-  // 非表示の時は画面外（見えない位置）に飛ばすだけで、サイズは最初から300x90を保つ
-  hiddenContainer: {
+  hiddenWrapper: {
     position: "absolute",
-    top: -9999,
-    left: -9999,
-    width: 300,
-    height: 90,
-    overflow: "hidden",
+    top: -1000,
+    left: -1000,
+    width: 320,
+    height: 332,
+    opacity: 0,
   },
-  offscreen: {
-    width: 300,
-    height: 90,
-  },
-  backdrop: {
+  visibleWrapper: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
     zIndex: 9999,
   },
   modalCard: {
@@ -225,16 +222,14 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
   },
-  // WebView自体のサイズは変えない（ずっと300x90）にゃ！
   webview: {
     width: 300,
-    height: 90,
-    backgroundColor: "transparent",
+    height: 300,
+    backgroundColor: "white",
   },
   cancelButton: {
     marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    padding: 8,
   },
   cancelText: {
     color: "#888",
