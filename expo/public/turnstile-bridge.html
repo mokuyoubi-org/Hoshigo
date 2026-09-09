@@ -1,36 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script
-      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-      async
-      defer
-    ></script>
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        background: transparent;
-      }
-    </style>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>html,body{margin:0;padding:0;background:transparent;font-family:sans-serif;}</style>
   </head>
   <body>
+    <div id="status" style="padding:16px;font-size:14px;">読み込み中...</div>
     <div id="cf-container"></div>
     <script>
-      // sitekeyとactionは、RN側が組み立てたURLのクエリパラメータから受け取る。
-      // auto=1の場合、生まれた時から画面上に見えている専用インスタンス
-      // (インタラクション対応モーダル用)なので、executeの合図を待たず
-      // レンダリングと同時に自動実行する(execution: "render")。
       var params = new URLSearchParams(window.location.search);
       var sitekey = params.get("sitekey");
       var action = params.get("action") || "anonymous_signin";
-      var auto = params.get("auto") === "1";
       var widgetId = null;
 
+      function setStatus(text) {
+        document.getElementById("status").textContent = text;
+      }
+
       function postToRN(payload) {
-        window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+        setStatus(JSON.stringify(payload)); // ← ブラウザでも見えるように、まずここに書く
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+        }
       }
 
       function initTurnstile() {
@@ -38,12 +30,11 @@
           setTimeout(initTurnstile, 100);
           return;
         }
-        postToRN({ type: "debug", message: "render直前 auto=" + auto });
         widgetId = window.turnstile.render("#cf-container", {
           sitekey: sitekey,
           action: action,
           appearance: "interaction-only",
-          execution: auto ? "render" : "execute",
+          execution: "execute",
           callback: function (token) {
             postToRN({ type: "token", token: token });
           },
@@ -51,18 +42,17 @@
             postToRN({ type: "error", message: "challenge_failed", code: code });
           },
           "before-interactive-callback": function () {
-            postToRN({ type: "debug", message: "before-interactive発火(auto=" + auto + ")" });
             postToRN({ type: "interactive", value: true });
           },
           "after-interactive-callback": function () {
-            postToRN({ type: "debug", message: "after-interactive発火(auto=" + auto + ")" });
             postToRN({ type: "interactive", value: false });
           }
         });
         postToRN({ type: "ready" });
-        postToRN({ type: "debug", message: "render完了 widgetId=" + widgetId + " auto=" + auto });
+        // ブラウザ単体テスト用: readyになったら自分でexecuteも呼んでしまう
+        window.turnstile.execute(widgetId);
       }
-      // RN側からのgetToken要求を受け取る(auto=1の時は使わない)
+
       function handleMessage(event) {
         try {
           var data = JSON.parse(event.data);
@@ -72,8 +62,8 @@
           }
         } catch (e) {}
       }
-      document.addEventListener("message", handleMessage); // Android
-      window.addEventListener("message", handleMessage); // iOS
+      document.addEventListener("message", handleMessage);
+      window.addEventListener("message", handleMessage);
 
       initTurnstile();
     </script>
