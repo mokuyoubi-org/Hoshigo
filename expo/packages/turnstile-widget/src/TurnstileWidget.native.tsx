@@ -186,7 +186,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           />
           {isInteractive ? (
             <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-              <Text style={styles.cancelText}>キャンセル</Text>
+              <Text style={styles.cancelText}>cancel</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 9999,
@@ -227,12 +227,13 @@ const styles = StyleSheet.create({
   },
   visibleWebview: {
     width: 300,
-    height: 300,
-    backgroundColor: "white",
+    height: 90, // Turnstileのチェックボックス(高さ約65px)が余裕をもって納まるサイズにするにゃ！
+    backgroundColor: "transparent",
   },
   cancelButton: {
     marginTop: 12,
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   cancelText: {
     color: "#888",
