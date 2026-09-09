@@ -81,6 +81,8 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           pendingRef.current = null;
         } else if (data.type === "interactive") {
           setIsInteractive(Boolean(data.value));
+        } else if (data.type === "debug") {
+          console.log("Turnstile debug:", data.message);
         }
       } catch (e) {
         console.error("Turnstile message parse error:", e);
@@ -183,9 +185,14 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
             sharedCookiesEnabled
             mixedContentMode="always"
             style={styles.webview}
+            onLoadStart={() => console.log("Turnstile WebView: onLoadStart")}
+            onLoad={() => console.log("Turnstile WebView: onLoad成功")}
+            onError={(e) =>
+              console.error("Turnstile WebView onError:", e.nativeEvent)
+            }
           />
           <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>キャンセル</Text>
+            <Text style={styles.cancelText}>cancel1</Text>
           </TouchableOpacity>
         </View>
       </View>

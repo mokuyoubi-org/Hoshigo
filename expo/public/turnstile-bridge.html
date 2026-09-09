@@ -35,6 +35,7 @@
           setTimeout(initTurnstile, 100);
           return;
         }
+        postToRN({ type: "debug", message: "render直前 sitekey=" + sitekey + " action=" + action });
         widgetId = window.turnstile.render("#cf-container", {
           sitekey: sitekey,
           action: action,
@@ -44,22 +45,20 @@
             postToRN({ type: "token", token: token });
           },
           "error-callback": function (code) {
-            postToRN({
-              type: "error",
-              message: "challenge_failed",
-              code: code,
-            });
+            postToRN({ type: "error", message: "challenge_failed", code: code });
           },
           "before-interactive-callback": function () {
+            postToRN({ type: "debug", message: "before-interactive発火" });
             postToRN({ type: "interactive", value: true });
           },
           "after-interactive-callback": function () {
+            postToRN({ type: "debug", message: "after-interactive発火" });
             postToRN({ type: "interactive", value: false });
-          },
+          }
         });
         postToRN({ type: "ready" });
+        postToRN({ type: "debug", message: "render完了 widgetId=" + widgetId });
       }
-
       // RN側からのgetToken要求を受け取る
       function handleMessage(event) {
         try {
