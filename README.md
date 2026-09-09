@@ -1,7 +1,6 @@
 # 🌟 Hoshigo
 
 Hoshigo is a mobile Go game app.
-Based on a 9x9 board, it features functions such as online matches.
 
 ---
 
@@ -9,12 +8,6 @@ Based on a 9x9 board, it features functions such as online matches.
 
 <img width="1024" height="500" alt="Frame 2" src="https://github.com/user-attachments/assets/0369483b-cf3f-4442-acd3-4d239d78e7ad" />
 
----
-
-## 🛠 Tech Stack
-
-* ⛰️ **Expo**: App Frontend
-* ⚡️ **Supabase**: Database
 
 ---
 

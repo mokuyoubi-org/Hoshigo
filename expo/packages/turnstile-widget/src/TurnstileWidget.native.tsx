@@ -161,51 +161,51 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
       },
     }));
 
-    return (
-      <View
-        style={
-          isInteractive
-            ? styles.backdrop
-            : styles.hiddenContainer
-        }
-        pointerEvents={isInteractive ? "auto" : "none"}
-      >
-        <View style={isInteractive ? styles.modalCard : undefined}>
-          <WebView
-            ref={webviewRef}
-            source={{ uri: bridgeUrl }}
-            onMessage={handleMessage}
-            javaScriptEnabled
-            domStorageEnabled
-            originWhitelist={["*"]}
-            androidLayerType="software"
-            thirdPartyCookiesEnabled
-            sharedCookiesEnabled
-            mixedContentMode="always"
-            style={isInteractive ? styles.visibleWebview : styles.hiddenWebview}
-          />
-          {isInteractive ? (
-            <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-              <Text style={styles.cancelText}>cancel</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      </View>
-    );
+return (
+  <View
+    style={isInteractive ? styles.backdrop : styles.hiddenContainer}
+    pointerEvents={isInteractive ? "auto" : "none"}
+  >
+    <View style={isInteractive ? styles.modalCard : styles.offscreen}>
+      <WebView
+        ref={webviewRef}
+        source={{ uri: bridgeUrl }}
+        onMessage={handleMessage}
+        javaScriptEnabled
+        domStorageEnabled
+        originWhitelist={["*"]}
+        androidLayerType="software"
+        thirdPartyCookiesEnabled
+        sharedCookiesEnabled
+        mixedContentMode="always"
+        style={styles.webview}
+      />
+      {isInteractive ? (
+        <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+          <Text style={styles.cancelText}>キャンセル</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  </View>
+);
   }
 );
 
 TurnstileWidget.displayName = "TurnstileWidget";
 
 const styles = StyleSheet.create({
+  // 非表示の時は画面外（見えない位置）に飛ばすだけで、サイズは最初から300x90を保つ
   hiddenContainer: {
-    width: 0,
-    height: 0,
+    position: "absolute",
+    top: -9999,
+    left: -9999,
+    width: 300,
+    height: 90,
     overflow: "hidden",
   },
-  hiddenWebview: {
-    width: 1,
-    height: 1,
+  offscreen: {
+    width: 300,
+    height: 90,
   },
   backdrop: {
     position: "absolute",
@@ -225,9 +225,10 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
   },
-  visibleWebview: {
+  // WebView自体のサイズは変えない（ずっと300x90）にゃ！
+  webview: {
     width: 300,
-    height: 90, // Turnstileのチェックボックス(高さ約65px)が余裕をもって納まるサイズにするにゃ！
+    height: 90,
     backgroundColor: "transparent",
   },
   cancelButton: {
