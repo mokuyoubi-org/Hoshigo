@@ -16,17 +16,17 @@ dotenv.config({
 });
 
 const config: ExpoConfig = {
-  name: process.env.EXPO_PUBLIC_NAME!,
-  slug: process.env.EXPO_PUBLIC_SLUG!,
+  name: "Hoshigo",
+  slug: "Hoshigo",
   version: "1.0.0", // 🌟
   orientation: "portrait",
   icon: "./assets/icons/icon.png",
-  scheme: process.env.EXPO_PUBLIC_SCHEME!,
+  scheme: "hoshigo",
   userInterfaceStyle: "automatic",
 
   ios: {
     supportsTablet: true,
-    bundleIdentifier: process.env.IOS_BUNDLE_IDENTIFIER!,
+    bundleIdentifier: "com.mokuyoubi.hoshigo",
     icon: {
       dark: "./assets/icons/ios-dark.png",
       light: "./assets/icons/ios-light.png",
@@ -39,7 +39,7 @@ const config: ExpoConfig = {
       NSBonjourServices: ["_expo._tcp"],
       CFBundleURLTypes: [
         {
-          CFBundleURLSchemes: [process.env.EXPO_PUBLIC_SCHEME!],
+          CFBundleURLSchemes: ["hoshigo"],
         },
       ],
     },
@@ -53,12 +53,12 @@ const config: ExpoConfig = {
     },
 
     predictiveBackGestureEnabled: false,
-    package: process.env.ANDROID_PACKAGE_NAME!,
+    package: "com.mokuyoubi.Hoshigo",
     intentFilters: [
       {
         action: "VIEW",
         autoVerify: true,
-        data: [{ scheme: process.env.EXPO_PUBLIC_SCHEME! }, { scheme: "exp" }],
+        data: [{ scheme: "hoshigo" }, { scheme: "exp" }],
         category: ["BROWSABLE", "DEFAULT"],
       },
     ],
@@ -71,7 +71,7 @@ const config: ExpoConfig = {
   },
 
   plugins: [
-    ["expo-router", { origin: process.env.EXPO_PUBLIC_HOSHIGO_APP_URL! }],
+    ["expo-router", { origin: "https://hoshigo.app" }],
     [
       "expo-splash-screen",
       {
@@ -111,13 +111,13 @@ const config: ExpoConfig = {
   },
 
   updates: {
-    url: process.env.EXPO_UPDATES_URL!,
+    url: "https://u.expo.dev/0c034fcf-9b3f-4ae4-be56-052d71e47d52",
   },
 
   extra: {
     router: {},
     eas: {
-      projectId: process.env.EAS_PROJECT_ID!,
+      projectId: "0c034fcf-9b3f-4ae4-be56-052d71e47d52",
     },
   },
 

@@ -84,7 +84,7 @@ export function useLoginModal({ onClose, turnstileRef }: Props) {
       const { error: updateError } = await supabase.auth.updateUser(
         { email },
         {
-          emailRedirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://`,
+          emailRedirectTo: `hoshigo://`,
         },
       );
 
@@ -99,7 +99,7 @@ export function useLoginModal({ onClose, turnstileRef }: Props) {
         const { error: signInError } = await supabase.auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: `${process.env.EXPO_PUBLIC_SCHEME!}://`,
+            emailRedirectTo: `hoshigo://`,
             captchaToken,
           },
         });
