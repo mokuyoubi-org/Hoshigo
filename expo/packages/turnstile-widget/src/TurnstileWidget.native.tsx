@@ -192,7 +192,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
             }
           />
           <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>cancel1</Text>
+            <Text style={styles.cancelText}>cancel2</Text>
           </TouchableOpacity>
         </View>
       </View>
