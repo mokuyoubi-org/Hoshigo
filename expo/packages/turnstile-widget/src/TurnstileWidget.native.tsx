@@ -52,11 +52,11 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     const readyPromiseRef = useRef<Promise<void>>(
       new Promise((resolve) => {
         readyResolveRef.current = resolve;
-      })
+      }),
     );
 
     const bridgeUrl = `${BRIDGE_URL}?sitekey=${encodeURIComponent(
-      sitekey
+      sitekey,
     )}&action=${encodeURIComponent(action)}`;
 
     // 普段の(隠れた)WebViewからのメッセージ
@@ -74,9 +74,9 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           pendingRef.current?.reject(new Error("Turnstile challenge failed"));
           pendingRef.current = null;
         } else if (data.type === "interactive" && data.value) {
-          // 隠れたWebViewでは人間の確認を完了できないので、
-          // 専用の新しいWebViewをモーダルとして生成する。
           setIsInteractive(true);
+        } else if (data.type === "debug") {
+          console.log("Turnstile debug(hidden):", data.message);
         }
       } catch (e) {
         console.error("Turnstile message parse error:", e);
@@ -96,6 +96,8 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           setIsInteractive(false);
           pendingRef.current?.reject(new Error("Turnstile challenge failed"));
           pendingRef.current = null;
+        } else if (data.type === "debug") {
+          console.log("Turnstile debug(visible):", data.message);
         }
       } catch (e) {
         console.error("Turnstile message parse error(visible):", e);
@@ -161,11 +163,11 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
                   () =>
                     reject(
                       new Error(
-                        "Turnstile widget did not become ready in time"
-                      )
+                        "Turnstile widget did not become ready in time",
+                      ),
                     ),
-                  10000
-                )
+                  10000,
+                ),
               ),
             ]);
             return getTokenInternal();
@@ -212,7 +214,10 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
                 mixedContentMode="always"
                 style={styles.webview}
               />
-              <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+              <TouchableOpacity
+                onPress={handleCancel}
+                style={styles.cancelButton}
+              >
                 <Text style={styles.cancelText}>キャンセル</Text>
               </TouchableOpacity>
             </View>
@@ -220,7 +225,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
         ) : null}
       </>
     );
-  }
+  },
 );
 
 TurnstileWidget.displayName = "TurnstileWidget";
