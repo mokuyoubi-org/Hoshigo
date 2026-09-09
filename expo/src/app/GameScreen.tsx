@@ -162,7 +162,6 @@ export default function GameScreen() {
 
   // resultボタン押した時には、結果モーダルを表示。useEffectでも使うのでここに出してある
   const showResultModal = () => {
-    playSound("gamestart");
     show(
       <GameResultModal
         boardSize={boardSize}
