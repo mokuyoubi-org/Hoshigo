@@ -1,19 +1,13 @@
 // TurnstileWidget.native.tsx
 // ネイティブ(iOS/Android)版のTurnstile実装。
-// ✅2026/09/09 「インラインHTML + baseUrlで偽装したオリジン」だと、
-//   Cloudflare側が非標準環境とみなすらしく300030エラーの無限ループに
-//   陥ることが判明したため、hoshigo.app上に本物の静的ページ
-//   (turnstile-bridge.html)をホスティングし、WebViewはそれを
-//   本当にネットワーク越しに読み込む方式に変更した。
-// ✅2026/09/09 普段は1px四方の見えない場所にWebViewを置いているため、
-//   Cloudflareがまれに要求する「人間によるチェック(interactive)」が
-//   物理的に押せず、永遠にタイムアウトする問題が発覚。
-//   before/after-interactive-callbackを使い、必要な時だけ画面中央に
-//   モーダル風に表示し、終わったら元の見えない状態に戻すようにした。
-// ✅2026/09/09 WebView自体のサイズ(style)をisInteractiveで切り替えると、
-//   Cloudflare側の描画がリサイズに追従できず真っ白になる不具合が発覚。
-//   WebViewのサイズは常に300x300で固定し、包む側のViewの位置・透明度
-//   だけを切り替える方式に変更した(画面外に追いやる/中央に表示する)。
+// ✅2026/09/09 「インラインHTML + baseUrlで偽装したオリジン」を、
+//   hoshigo.app上に本物の静的ページ(turnstile-bridge.html)をホスティングし、
+//   WebViewはそれを本当にネットワーク越しに読み込む方式に変更した。
+// ✅2026/09/09 「一度でも隠された(サイズ0/画面外/opacity0)状態を経験した
+//   WebViewは、後から見せても中の描画が復活しない」というAndroid WebView
+//   特有の癖が判明。普段のログイン用WebView(常に隠れたまま)とは別に、
+//   Cloudflareが人間の確認を求めてきた時だけ、生まれた時から画面上に
+//   存在する専用の新しいWebViewを都度生成する方式に変更した。
 // WebView内で見えないTurnstileチャレンジを実行し、
 // postMessage経由でトークンをRN側に受け渡す。
 
@@ -41,6 +35,7 @@ const BRIDGE_URL = "https://hoshigo.app/turnstile-bridge.html";
 
 export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
   ({ sitekey, action = "anonymous_signin" }, ref) => {
+    // 普段のログイン用(常に隠れたまま)のWebView
     const webviewRef = useRef<WebView>(null);
     const readyRef = useRef(false);
     const pendingRef = useRef<{
@@ -49,7 +44,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     } | null>(null);
 
     // Cloudflareが人間によるチェックを要求してきた時だけtrueにする。
-    // trueの間だけ、画面中央にモーダル風にWebViewを表示する。
+    // trueの間だけ、専用の新しいWebViewをモーダルとして生成する。
     const [isInteractive, setIsInteractive] = useState(false);
 
     // WebView側の準備が整うまでgetToken()を待たせるためのPromise
@@ -57,41 +52,57 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     const readyPromiseRef = useRef<Promise<void>>(
       new Promise((resolve) => {
         readyResolveRef.current = resolve;
-      }),
+      })
     );
 
     const bridgeUrl = `${BRIDGE_URL}?sitekey=${encodeURIComponent(
-      sitekey,
+      sitekey
     )}&action=${encodeURIComponent(action)}`;
 
-    const handleMessage = (event: WebViewMessageEvent) => {
+    // 普段の(隠れた)WebViewからのメッセージ
+    const handleHiddenMessage = (event: WebViewMessageEvent) => {
       try {
         const data = JSON.parse(event.nativeEvent.data);
         if (data.type === "ready") {
           readyRef.current = true;
           readyResolveRef.current?.();
         } else if (data.type === "token") {
-          setIsInteractive(false);
           pendingRef.current?.resolve(data.token);
           pendingRef.current = null;
         } else if (data.type === "error") {
           console.error("Turnstile error code:", data.code);
-          setIsInteractive(false);
           pendingRef.current?.reject(new Error("Turnstile challenge failed"));
           pendingRef.current = null;
-        } else if (data.type === "interactive") {
-          setIsInteractive(Boolean(data.value));
-        } else if (data.type === "debug") {
-          console.log("Turnstile debug:", data.message);
+        } else if (data.type === "interactive" && data.value) {
+          // 隠れたWebViewでは人間の確認を完了できないので、
+          // 専用の新しいWebViewをモーダルとして生成する。
+          setIsInteractive(true);
         }
       } catch (e) {
         console.error("Turnstile message parse error:", e);
       }
     };
 
+    // インタラクション専用の、生まれた時から画面上に見えているWebViewからのメッセージ
+    const handleVisibleMessage = (event: WebViewMessageEvent) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        if (data.type === "token") {
+          setIsInteractive(false);
+          pendingRef.current?.resolve(data.token);
+          pendingRef.current = null;
+        } else if (data.type === "error") {
+          console.error("Turnstile error code(visible):", data.code);
+          setIsInteractive(false);
+          pendingRef.current?.reject(new Error("Turnstile challenge failed"));
+          pendingRef.current = null;
+        }
+      } catch (e) {
+        console.error("Turnstile message parse error(visible):", e);
+      }
+    };
+
     // ユーザーがモーダルのキャンセルを押した場合の安全弁。
-    // これが無いと、何らかの理由でチェックが完了できなかった時、
-    // ユーザーが永遠にモーダルに閉じ込められてしまう。
     const handleCancel = () => {
       setIsInteractive(false);
       if (pendingRef.current) {
@@ -113,14 +124,13 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
         }
 
         // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
-        // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
         const timeoutId = setTimeout(() => {
           if (pendingRef.current) {
             pendingRef.current = null;
             setIsInteractive(false);
             reject(new Error("Turnstile token request timed out"));
           }
-        }, 15000);
+        }, 30000); // モーダル表示・人間の操作を待つ時間も含むため30秒に延長
 
         pendingRef.current = {
           resolve: (token: string) => {
@@ -151,11 +161,11 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
                   () =>
                     reject(
                       new Error(
-                        "Turnstile widget did not become ready in time",
-                      ),
+                        "Turnstile widget did not become ready in time"
+                      )
                     ),
-                  10000,
-                ),
+                  10000
+                )
               ),
             ]);
             return getTokenInternal();
@@ -168,15 +178,13 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     }));
 
     return (
-      <View
-        style={isInteractive ? styles.visibleWrapper : styles.hiddenWrapper}
-        pointerEvents={isInteractive ? "auto" : "none"}
-      >
-        <View style={styles.modalCard}>
+      <>
+        {/* 普段のログイン用。常に隠れたまま */}
+        <View style={styles.hiddenWrapper}>
           <WebView
             ref={webviewRef}
             source={{ uri: bridgeUrl }}
-            onMessage={handleMessage}
+            onMessage={handleHiddenMessage}
             javaScriptEnabled
             domStorageEnabled
             originWhitelist={["*"]}
@@ -185,30 +193,43 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
             sharedCookiesEnabled
             mixedContentMode="always"
             style={styles.webview}
-            onLoadStart={() => console.log("Turnstile WebView: onLoadStart")}
-            onLoad={() => console.log("Turnstile WebView: onLoad成功")}
-            onError={(e) =>
-              console.error("Turnstile WebView onError:", e.nativeEvent)
-            }
           />
-          <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>cancel2</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+
+        {/* インタラクションが必要な時だけ、真っ新な状態で生成 */}
+        {isInteractive ? (
+          <View style={styles.visibleWrapper} pointerEvents="auto">
+            <View style={styles.modalCard}>
+              <WebView
+                source={{ uri: `${bridgeUrl}&auto=1` }}
+                onMessage={handleVisibleMessage}
+                javaScriptEnabled
+                domStorageEnabled
+                originWhitelist={["*"]}
+                androidLayerType="software"
+                thirdPartyCookiesEnabled
+                sharedCookiesEnabled
+                mixedContentMode="always"
+                style={styles.webview}
+              />
+              <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+                <Text style={styles.cancelText}>キャンセル</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+      </>
     );
-  },
+  }
 );
 
 TurnstileWidget.displayName = "TurnstileWidget";
 
 const styles = StyleSheet.create({
   hiddenWrapper: {
-    position: "absolute",
-    top: -1000,
-    left: -1000,
-    width: 320,
-    height: 332,
+    width: 0,
+    height: 0,
+    overflow: "hidden",
   },
   visibleWrapper: {
     position: "absolute",
