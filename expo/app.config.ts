@@ -91,6 +91,7 @@ const config: ExpoConfig = {
     "expo-localization",
     "expo-font",
     "expo-sqlite",
+    "expo-web-browser",
     [
       "expo-build-properties",
       {

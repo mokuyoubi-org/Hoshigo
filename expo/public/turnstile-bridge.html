@@ -3,23 +3,23 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <style>html,body{margin:0;padding:0;background:transparent;font-family:sans-serif;}</style>
+    <style>html,body{margin:0;padding:0;background:transparent;}</style>
   </head>
   <body>
-    <div id="status" style="padding:16px;font-size:14px;">読み込み中...</div>
     <div id="cf-container"></div>
     <script>
+      // sitekeyとactionは、RN側が組み立てたURLのクエリパラメータから受け取る。
+      // redirect=1の場合、これは隠れたWebViewではなく、
+      // 本物のブラウザ(Custom Tabs / SFSafariViewController)で
+      // 開かれているページなので、postMessageではなく、
+      // カスタムスキームへのリダイレクトでトークンをRN側に持ち帰る。
       var params = new URLSearchParams(window.location.search);
       var sitekey = params.get("sitekey");
       var action = params.get("action") || "anonymous_signin";
+      var redirect = params.get("redirect") === "1";
       var widgetId = null;
 
-      function setStatus(text) {
-        document.getElementById("status").textContent = text;
-      }
-
       function postToRN(payload) {
-        setStatus(JSON.stringify(payload)); // ← ブラウザでも見えるように、まずここに書く
         if (window.ReactNativeWebView) {
           window.ReactNativeWebView.postMessage(JSON.stringify(payload));
         }
@@ -34,12 +34,24 @@
           sitekey: sitekey,
           action: action,
           appearance: "interaction-only",
-          execution: "execute",
+          // redirectモード(本物のブラウザ)には、RN側からexecuteの合図を
+          // 送る手段が無いので、レンダリングされたら自動で実行する。
+          execution: redirect ? "render" : "execute",
           callback: function (token) {
-            postToRN({ type: "token", token: token });
+            if (redirect) {
+              window.location.href =
+                "hoshigo://turnstile-callback?token=" + encodeURIComponent(token);
+            } else {
+              postToRN({ type: "token", token: token });
+            }
           },
           "error-callback": function (code) {
-            postToRN({ type: "error", message: "challenge_failed", code: code });
+            if (redirect) {
+              window.location.href =
+                "hoshigo://turnstile-callback?error=1&code=" + encodeURIComponent(code);
+            } else {
+              postToRN({ type: "error", message: "challenge_failed", code: code });
+            }
           },
           "before-interactive-callback": function () {
             postToRN({ type: "interactive", value: true });
@@ -49,10 +61,9 @@
           }
         });
         postToRN({ type: "ready" });
-        // ブラウザ単体テスト用: readyになったら自分でexecuteも呼んでしまう
-        window.turnstile.execute(widgetId);
       }
 
+      // RN側(隠れたWebView)からのgetToken要求を受け取る(redirectモードでは未使用)
       function handleMessage(event) {
         try {
           var data = JSON.parse(event.data);
@@ -62,8 +73,8 @@
           }
         } catch (e) {}
       }
-      document.addEventListener("message", handleMessage);
-      window.addEventListener("message", handleMessage);
+      document.addEventListener("message", handleMessage); // Android
+      window.addEventListener("message", handleMessage); // iOS
 
       initTurnstile();
     </script>

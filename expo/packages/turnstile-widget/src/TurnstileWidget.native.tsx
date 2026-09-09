@@ -3,21 +3,20 @@
 // ✅2026/09/09 「インラインHTML + baseUrlで偽装したオリジン」を、
 //   hoshigo.app上に本物の静的ページ(turnstile-bridge.html)をホスティングし、
 //   WebViewはそれを本当にネットワーク越しに読み込む方式に変更した。
-// ✅2026/09/09 「一度でも隠された(サイズ0/画面外/opacity0)状態を経験した
-//   WebViewは、後から見せても中の描画が復活しない」というAndroid WebView
-//   特有の癖が判明。普段のログイン用WebView(常に隠れたまま)とは別に、
-//   Cloudflareが人間の確認を求めてきた時だけ、生まれた時から画面上に
-//   存在する専用の新しいWebViewを都度生成する方式に変更した。
+// ✅2026/09/09 ブラウザで直接開くと即座にトークンが取れるのに、
+//   埋め込みWebView内だと「人間の確認」を要求された場合に限って
+//   何をどう工夫しても完了しないことが判明。WebViewという入れ物自体が
+//   Cloudflareから信頼度の低い環境として扱われていると判断し、
+//   普段の静かな確認は引き続き隠れたWebViewで行い、
+//   Cloudflareが人間の確認を求めてきた時だけ、
+//   expo-web-browser(Custom Tabs / SFSafariViewController、
+//   本物のブラウザエンジン)を一時的に開いて解決する方式に変更した。
 // WebView内で見えないTurnstileチャレンジを実行し、
 // postMessage経由でトークンをRN側に受け渡す。
 
-import React, {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import React, { forwardRef, useImperativeHandle, useRef } from "react";
+import { View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 
 console.log("TurnstileWidget.native.tsx");
@@ -32,10 +31,10 @@ type Props = {
 };
 
 const BRIDGE_URL = "https://hoshigo.app/turnstile-bridge.html";
+const REDIRECT_URL = "hoshigo://turnstile-callback";
 
 export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
   ({ sitekey, action = "anonymous_signin" }, ref) => {
-    // 普段のログイン用(常に隠れたまま)のWebView
     const webviewRef = useRef<WebView>(null);
     const readyRef = useRef(false);
     const pendingRef = useRef<{
@@ -43,24 +42,58 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
       reject: (err: Error) => void;
     } | null>(null);
 
-    // Cloudflareが人間によるチェックを要求してきた時だけtrueにする。
-    // trueの間だけ、専用の新しいWebViewをモーダルとして生成する。
-    const [isInteractive, setIsInteractive] = useState(false);
-
     // WebView側の準備が整うまでgetToken()を待たせるためのPromise
     const readyResolveRef = useRef<(() => void) | null>(null);
     const readyPromiseRef = useRef<Promise<void>>(
       new Promise((resolve) => {
         readyResolveRef.current = resolve;
-      }),
+      })
     );
 
     const bridgeUrl = `${BRIDGE_URL}?sitekey=${encodeURIComponent(
-      sitekey,
+      sitekey
     )}&action=${encodeURIComponent(action)}`;
 
-    // 普段の(隠れた)WebViewからのメッセージ
-    const handleHiddenMessage = (event: WebViewMessageEvent) => {
+    // Cloudflareが人間の確認を求めてきた時、隠れたWebViewでは完了できないので、
+    // 本物のブラウザ(Custom Tabs等)を一時的に開いて解決する。
+    const resolveViaBrowser = async () => {
+      const current = pendingRef.current;
+      if (!current) return; // 既に他の経路で解決/失敗済み
+      pendingRef.current = null; // 隠れたWebView側からの二重解決を防ぐ
+
+      try {
+        const authUrl = `${bridgeUrl}&redirect=1`;
+        const result = await Promise.race([
+          WebBrowser.openAuthSessionAsync(authUrl, REDIRECT_URL),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Turnstile browser flow timed out")),
+              60000
+            )
+          ),
+        ]);
+
+        if (result.type === "success" && result.url) {
+          const match = result.url.match(/[?&]token=([^&]+)/);
+          const token = match ? decodeURIComponent(match[1]) : null;
+          if (token) {
+            current.resolve(token);
+          } else {
+            current.reject(
+              new Error("Turnstile: redirect did not contain a token")
+            );
+          }
+        } else {
+          current.reject(new Error("Turnstile challenge cancelled"));
+        }
+      } catch (e) {
+        current.reject(
+          e instanceof Error ? e : new Error("Turnstile browser flow failed")
+        );
+      }
+    };
+
+    const handleMessage = (event: WebViewMessageEvent) => {
       try {
         const data = JSON.parse(event.nativeEvent.data);
         if (data.type === "ready") {
@@ -74,42 +107,10 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
           pendingRef.current?.reject(new Error("Turnstile challenge failed"));
           pendingRef.current = null;
         } else if (data.type === "interactive" && data.value) {
-          setIsInteractive(true);
-        } else if (data.type === "debug") {
-          console.log("Turnstile debug(hidden):", data.message);
+          resolveViaBrowser();
         }
       } catch (e) {
         console.error("Turnstile message parse error:", e);
-      }
-    };
-
-    // インタラクション専用の、生まれた時から画面上に見えているWebViewからのメッセージ
-    const handleVisibleMessage = (event: WebViewMessageEvent) => {
-      try {
-        const data = JSON.parse(event.nativeEvent.data);
-        if (data.type === "token") {
-          setIsInteractive(false);
-          pendingRef.current?.resolve(data.token);
-          pendingRef.current = null;
-        } else if (data.type === "error") {
-          console.error("Turnstile error code(visible):", data.code);
-          setIsInteractive(false);
-          pendingRef.current?.reject(new Error("Turnstile challenge failed"));
-          pendingRef.current = null;
-        } else if (data.type === "debug") {
-          console.log("Turnstile debug(visible):", data.message);
-        }
-      } catch (e) {
-        console.error("Turnstile message parse error(visible):", e);
-      }
-    };
-
-    // ユーザーがモーダルのキャンセルを押した場合の安全弁。
-    const handleCancel = () => {
-      setIsInteractive(false);
-      if (pendingRef.current) {
-        pendingRef.current.reject(new Error("Turnstile challenge cancelled"));
-        pendingRef.current = null;
       }
     };
 
@@ -126,13 +127,15 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
         }
 
         // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
+        // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
+        // (ブラウザ経由の解決に移った場合は、resolveViaBrowser内でpendingRefを
+        //  nullにしているので、この保険は発火しない)
         const timeoutId = setTimeout(() => {
           if (pendingRef.current) {
             pendingRef.current = null;
-            setIsInteractive(false);
             reject(new Error("Turnstile token request timed out"));
           }
-        }, 30000); // モーダル表示・人間の操作を待つ時間も含むため30秒に延長
+        }, 15000);
 
         pendingRef.current = {
           resolve: (token: string) => {
@@ -163,11 +166,11 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
                   () =>
                     reject(
                       new Error(
-                        "Turnstile widget did not become ready in time",
-                      ),
+                        "Turnstile widget did not become ready in time"
+                      )
                     ),
-                  10000,
-                ),
+                  10000
+                )
               ),
             ]);
             return getTokenInternal();
@@ -180,91 +183,23 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     }));
 
     return (
-      <>
-        {/* 普段のログイン用。常に隠れたまま */}
-        <View style={styles.hiddenWrapper}>
-          <WebView
-            ref={webviewRef}
-            source={{ uri: bridgeUrl }}
-            onMessage={handleHiddenMessage}
-            javaScriptEnabled
-            domStorageEnabled
-            originWhitelist={["*"]}
-            androidLayerType="software"
-            thirdPartyCookiesEnabled
-            sharedCookiesEnabled
-            mixedContentMode="always"
-            style={styles.webview}
-          />
-        </View>
-
-        {/* インタラクションが必要な時だけ、真っ新な状態で生成 */}
-        {isInteractive ? (
-          <View style={styles.visibleWrapper} pointerEvents="auto">
-            <View style={styles.modalCard}>
-              <WebView
-                source={{ uri: `${bridgeUrl}&auto=1` }}
-                onMessage={handleVisibleMessage}
-                javaScriptEnabled
-                domStorageEnabled
-                originWhitelist={["*"]}
-                androidLayerType="software"
-                thirdPartyCookiesEnabled
-                sharedCookiesEnabled
-                mixedContentMode="always"
-                style={styles.webview}
-              />
-              <TouchableOpacity
-                onPress={handleCancel}
-                style={styles.cancelButton}
-              >
-                <Text style={styles.cancelText}>キャンセル</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
-      </>
+      <View style={{ width: 0, height: 0, overflow: "hidden" }}>
+        <WebView
+          ref={webviewRef}
+          source={{ uri: bridgeUrl }}
+          onMessage={handleMessage}
+          javaScriptEnabled
+          domStorageEnabled
+          originWhitelist={["*"]}
+          androidLayerType="software"
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
+          mixedContentMode="always"
+          style={{ width: 1, height: 1 }}
+        />
+      </View>
     );
-  },
+  }
 );
 
 TurnstileWidget.displayName = "TurnstileWidget";
-
-const styles = StyleSheet.create({
-  hiddenWrapper: {
-    width: 0,
-    height: 0,
-    overflow: "hidden",
-  },
-  visibleWrapper: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    zIndex: 9999,
-  },
-  modalCard: {
-    width: 320,
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-    alignItems: "center",
-  },
-  webview: {
-    width: 300,
-    height: 300,
-    backgroundColor: "white",
-  },
-  cancelButton: {
-    marginTop: 12,
-    padding: 8,
-  },
-  cancelText: {
-    color: "#888",
-    fontSize: 14,
-  },
-});
