@@ -1,3 +1,5 @@
+// records-repo.native.ts
+
 import type { RecordType } from "@/src/active/types/record";
 import { RecordAnalysis } from "expo-goband";
 import * as SQLite from "expo-sqlite";
@@ -158,7 +160,18 @@ export const recordsRepo: RecordsRepo = {
       await db.closeAsync();
       dbPromise = null;
     }
-    await SQLite.deleteDatabaseAsync("hoshigo-records.db");
+    try {
+      await SQLite.deleteDatabaseAsync("hoshigo-records.db");
+    } catch (error) {
+      // ファイルが存在しないだけのエラーなら「はいはい」って流す
+      if (
+        error instanceof Error &&
+        error.message.includes("DatabaseNotFoundException")
+      ) {
+        return;
+      }
+      throw error;
+    }
   },
 
   updateUsername: async (uid, newUsername) => {

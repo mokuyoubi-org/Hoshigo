@@ -3,21 +3,94 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <style>html,body{margin:0;padding:0;background:transparent;}</style>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        height: 100%;
+      }
+
+      #cf-message {
+        display: none; /* redirectモードの時だけJSで表示 */
+        box-sizing: border-box;
+        height: 100vh;
+        padding: 32px 28px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #1a1a1a;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      #cf-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e5e5e5;
+        border-top-color: #f38020; /* Cloudflareオレンジ */
+        border-radius: 50%;
+        animation: cf-spin 0.8s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      @keyframes cf-spin {
+        to { transform: rotate(360deg); }
+      }
+
+      #cf-title {
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+
+      #cf-subtitle {
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+        line-height: 1.5;
+        max-width: 280px;
+      }
+
+      #cf-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 24px;
+      }
+    </style>
   </head>
   <body>
-    <div id="cf-container"></div>
+    <div id="cf-message">
+      <div id="cf-spinner"></div>
+      <p id="cf-title">Verifying you're human</p>
+      <p id="cf-subtitle">Please don't close this — it only takes a moment.</p>
+      <div id="cf-container"></div>
+    </div>
+    <div id="cf-container-hidden"></div>
+
     <script>
       // sitekeyとactionは、RN側が組み立てたURLのクエリパラメータから受け取る。
       // redirect=1の場合、これは隠れたWebViewではなく、
-      // 本物のブラウザ(Custom Tabs / SFSafariViewController)で
-      // 開かれているページなので、postMessageではなく、
-      // カスタムスキームへのリダイレクトでトークンをRN側に持ち帰る。
+      // 本物のブラウザ(Custom Tabs / SFSafariViewController、
+      // 本物のブラウザエンジン)で開かれているページなので、
+      // postMessageではなく、カスタムスキームへのリダイレクトで
+      // トークンをRN側に持ち帰る。
       var params = new URLSearchParams(window.location.search);
       var sitekey = params.get("sitekey");
       var action = params.get("action") || "anonymous_signin";
       var redirect = params.get("redirect") === "1";
       var widgetId = null;
+
+      // redirectモードの時だけ、待機メッセージ入りのUIを表示し、
+      // ウィジェットもそのコンテナ内にレンダリングする。
+      // 隠れたWebView(普段の静かな確認)にはメッセージ不要なので、
+      // 見えないコンテナのままにしておく。
+      var containerId = redirect ? "cf-container" : "cf-container-hidden";
+      if (redirect) {
+        document.getElementById("cf-message").style.display = "flex";
+      }
 
       function postToRN(payload) {
         if (window.ReactNativeWebView) {
@@ -30,7 +103,7 @@
           setTimeout(initTurnstile, 100);
           return;
         }
-        widgetId = window.turnstile.render("#cf-container", {
+        widgetId = window.turnstile.render("#" + containerId, {
           sitekey: sitekey,
           action: action,
           appearance: "interaction-only",
