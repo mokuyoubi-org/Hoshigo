@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
     left: -1000,
     width: 320,
     height: 332,
-    opacity: 0,
   },
   visibleWrapper: {
     position: "absolute",
