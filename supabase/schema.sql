@@ -807,7 +807,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得する
+  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得するにゃ
   select coalesce(rating, 0) into v_black_rating
   from private.user_stats
   where uid = new.black_uid and board_size = new.board_size;
@@ -1063,14 +1063,14 @@ begin
     -- プロフィール情報をとってくる
     select * into v_waiter_profile from private.profiles pf where pf.uid = v_waiter.player_uid;
 
-    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得する
+    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得するにゃ
     select coalesce(rating, 0)
       into v_waiter_rating
       from private.user_stats
      where uid = v_waiter.player_uid
        and board_size = p_board_size;
 
-    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得する
+    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得するにゃ
     select coalesce(allow_bot_match, true)
       into v_allow_bot_match
       from private.user_settings
@@ -1112,7 +1112,7 @@ begin
     -- 👦👦👦 人間戦分岐（match_typeは常に0＆白黒ランダム） 👦👦👦
     v_rating_diff := least(v_waiter.try_count::int * 300, 1000)::smallint; -- 1000は最大ポイント差。
 
-    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えた
+    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えたにゃ
     select wl.* into v_opponent
     from private.waitlist wl
     join private.user_stats us on us.uid = wl.player_uid and us.board_size = p_board_size
