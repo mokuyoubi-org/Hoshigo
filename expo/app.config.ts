@@ -124,7 +124,7 @@ const config: ExpoConfig = {
 
   assetBundlePatterns: ["assets/images/*"],
 
-  runtimeVersion: "1.0.1",
+  runtimeVersion: "1.0.0", // 誰に対してotaを配信するか。
 };
 
 export default config;
