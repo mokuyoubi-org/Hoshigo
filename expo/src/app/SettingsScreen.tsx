@@ -3,7 +3,7 @@ import { ToggleSwitch } from "@/packages/ui-atoms/src";
 import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
 import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
 import { useTranslation } from "@/src/active/i18n";
-import Constants from "expo-constants";
+import * as Application from "expo-application";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
@@ -156,9 +156,9 @@ export default function SettingsScreen() {
                 <Text className="text-base font-semibold text-text tracking-wide">
                   {t("common.appVersion")}
                 </Text>
-                <Text className="text-base font-semibold text-textSub tracking-wide">
-                  {Constants.expoConfig?.version}
-                </Text>
+               <Text className="text-base font-semibold text-textSub tracking-wide">
+  {Application.nativeApplicationVersion}
+</Text>
               </View>
 
               {/* 区切り線 */}

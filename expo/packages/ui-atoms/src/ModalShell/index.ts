@@ -1,3 +1,3 @@
 // index.ts
 
-export { ModalShell } from "./ModalShell.web";
+export { ModalShell } from "./ModalShell";

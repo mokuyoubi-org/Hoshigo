@@ -1,7 +1,5 @@
 // RankingsModal.tsx
 import { BOARD_SIZE_OPTIONS, BoardSize } from "@/packages/go-core/src";
-import { SegmentedControl } from "@/packages/ui-atoms/src";
-import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import {
   Profile,
   RankingCard,
@@ -16,6 +14,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { ModalShell, SegmentedControl } from "ui-atoms";
 
 type RankingItem = Profile & {
   board_size: number;

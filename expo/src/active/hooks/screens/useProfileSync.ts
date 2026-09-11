@@ -1,11 +1,11 @@
 // ✅acive
 // useProfileSync.ts
 
-import Constants from "expo-constants";
+import { compareVersions } from "@/src/stable/logics/compareVersions";
 import { fetchProfileRPC } from "@/src/stable/logics/profileRPC";
+import * as Application from "expo-application";
 import { useApp } from "../../contexts/AppContexts";
 import { useProfile } from "../../contexts/ProfileContexts";
-import { compareVersions } from "@/src/stable/logics/compareVersions";
 
 // 要は、データベースと通信してプロフィール(メンテナンス情報もついでに)を取ってくる。そしてそれをcontextにしまっておく。
 export const useProfileSync = () => {
@@ -33,7 +33,7 @@ export const useProfileSync = () => {
       // 2.5 バージョンチェック。サーバーが要求する最低バージョンより
       // 自分の今のバージョンが古ければ、強制アップデートフラグを立てる。
       const requiredVersion = result.appStatus.version;
-      const currentVersion = Constants.expoConfig?.version ?? "0.0.0";
+      const currentVersion = Application.nativeApplicationVersion ?? "0.0.0";
       if (
         requiredVersion &&
         compareVersions(currentVersion, requiredVersion) < 0

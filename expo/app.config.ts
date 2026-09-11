@@ -18,7 +18,7 @@ dotenv.config({
 const config: ExpoConfig = {
   name: "Hoshigo",
   slug: "Hoshigo",
-  version: "1.0.1", // 🌟
+  version: "1.0.2", // アプリのバージョン。
   orientation: "portrait",
   icon: "./assets/icons/icon.png",
   scheme: "hoshigo",
@@ -124,7 +124,7 @@ const config: ExpoConfig = {
 
   assetBundlePatterns: ["assets/images/*"],
 
-  runtimeVersion: "1.0.0", // 誰に対してotaを配信するか。
+  runtimeVersion: "1.0.2", // 誰に対してotaを配信するか。
 };
 
 export default config;
