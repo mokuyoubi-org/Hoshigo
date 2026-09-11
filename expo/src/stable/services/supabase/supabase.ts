@@ -1,8 +1,8 @@
 // コメント2026/08/31
 // supabase.ts
 
+import { createResilientClient } from "@/packages/supabase-kit/src";
 import { storage } from "@/src/stable/services/storage/secure";
-import { createResilientClient } from "supabase-toolkit";
 
 // メンテナンス系
 // ここでcontextを更新しているわけではないみたい

@@ -1,5 +1,4 @@
-import { gridToMoveObject } from "@/packages/expo-katago/src/utils";
-import { BLACK, Board, BoardSize, Color, Grid, WHITE } from "expo-goband";
+import { BLACK, Board, BoardSize, Color, Grid, gridToMoveObject, WHITE } from "@/packages/go-core";
 
 export const printCustomKataGoResult = (
   board: Board,

@@ -1,7 +1,7 @@
 // resultLogics.ts
 
-import { TranslationKey } from "@/src/active/language/lang";
-import { BoardSize } from "expo-goband";
+import { BoardSize } from "@/packages/go-core/src";
+import { TFunction } from "@/src/active/i18n/types";
 import { getRankInfo } from "./rankLogics";
 
 // UserPointResultの定義もこちらに引っ越し(stableがactiveの型に依存しないように)
@@ -30,7 +30,7 @@ export function computeMatchResultUpdate(
   currentRating9: number,
   currentRating13: number,
   currentAcquiredIcons: number[],
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
+  t: TFunction,
 ): MatchResultUpdate | null {
   const maybeRating = Number(pointResult.new_rating);
   if (isNaN(maybeRating)) return null;

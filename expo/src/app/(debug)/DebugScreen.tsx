@@ -5,6 +5,8 @@
 // import { GameStartModal } from "@/src/active/components/modals/GameStartModal";
 // import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModal";
 // import { LoginModal } from "@/src/active/components/modals/LoginModal";
+import { LoadingScreen } from "@/packages/ui-atoms/src";
+import { COLORS } from "@/src/active/constants/colors";
 import React from "react";
 import { View } from "react-native";
 
@@ -39,6 +41,15 @@ export default function DebugScreen() {
               onClose={()=>{}}
             /> */}
       {/* <MaintenanceModal message={"abd"} /> */}
+
+                {/* <LoadingScreen
+                  label="Checking authentication..."
+                  percent={null}
+                  backgroundColor={COLORS.background}
+                  textColor={COLORS.textSub}
+                  trackColor={COLORS.backgroundDark}
+                  fillColor={COLORS.primary}
+                /> */}
 
       {/* <LoginModal visible={true} onClose={() => {}} /> */}
     </View>

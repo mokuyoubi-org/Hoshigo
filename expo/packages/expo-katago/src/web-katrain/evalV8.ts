@@ -1,4 +1,4 @@
-import { BLACK, Color } from "../types";
+import { BLACK, Color }  from "go-core";
 
 export type KataGoEval = {
   blackWinProb: number; // 0..1

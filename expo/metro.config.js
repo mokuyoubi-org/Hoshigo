@@ -1,5 +1,5 @@
 // metro/metro.config.js
-// ターミナルのうるさい λ WARN ログを黙らせる消しゴム
+// ターミナルのうるさい λ WARN ログを黙らせる
 const originalWarn = console.warn;
 console.warn = (...args) => {
   const msg = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');

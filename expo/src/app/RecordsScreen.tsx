@@ -1,15 +1,15 @@
 // RecordsScreen.tsx
 
-import { useTranslation } from "@/src/active/language/i18n";
+import { BOARD_SIZE_OPTIONS } from "@/packages/go-core/src";
+import { useTranslation } from "@/src/active/i18n";
 import { RecordOrSkeleton } from "@/src/active/types/record";
-import { BOARD_SIZE_OPTIONS } from "expo-goband";
 import { router, useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect } from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SegmentedControl } from "ui-atoms";
-import { RecordCard } from "../active/components/cards/records/RecordCard";
+import { RecordCard } from "../active/components/cards/RecordCard";
 import { SkeletonCard } from "../active/components/cards/SkeletonCard";
 import { useRecordsScreen } from "../active/hooks/records/useRecordsScreen";
 import { isSkeletonCard } from "../stable/logics/recordCardLogics";
@@ -73,13 +73,12 @@ export default function RecordsScreen() {
     );
   };
 
-
   // 🐱 3. 画面にフォーカスが戻ってくる（Backで戻った時など）たびに実行されるエフェクト
   useFocusEffect(
     useCallback(() => {
       // BoardEdit画面から戻ってきた時に、最新のDB状態を同期してメモリ（caches）を更新する
       syncNewData();
-    }, [])
+    }, []),
   );
 
   useEffect(() => {

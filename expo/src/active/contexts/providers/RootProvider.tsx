@@ -1,4 +1,4 @@
-import { LangProvider } from "@/src/active/language/i18n";
+import { LangProvider } from "@/src/active/i18n";
 import React, { ReactNode } from "react";
 import { AppProvider } from "../AppContexts";
 import { ProfileProvider } from "../ProfileContexts";

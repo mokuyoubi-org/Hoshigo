@@ -74,9 +74,16 @@
  */
 
 import * as tf from "@tensorflow/tfjs";
+import {
+  BLACK,
+  Board2D,
+  BoardSize,
+  Color,
+  EMPTY,
+  MoveObject,
+  WHITE,
+} from "go-core";
 import { ungzip } from "pako";
-import { BLACK, BoardSize, Color, EMPTY, MoveObject, WHITE } from "../types";
-import { Board2D } from "../utils";
 import { analyzeMcts, playerToColor } from "./analyzeMcts";
 import { initBoardArrays, playMove, SimPosition } from "./fastBoard";
 import { parseKataGoModelV8 } from "./loadModelV8";
@@ -145,8 +152,6 @@ export type MoveInfo = {
   pv?: string[];
 };
 
-
-
 // ================================================================
 // モデルキャッシュ & ウォームアップ
 // ================================================================
@@ -158,7 +163,6 @@ async function disposeTensors(tensors: Record<string, tf.Tensor>) {
 }
 
 const modelCache = new Map<ModelId, KataGoModelV8Tf>();
-
 
 // DLとウォームアップ、両方まとめた「読み込み全体の今の状態」
 export type ModelLoadStage =
@@ -181,16 +185,28 @@ export async function loadModel(
   modelCache.set(modelId, model);
 
   const TOTAL_WARMUP_STEPS = 2;
-  onProgress?.({ phase: "warming_up", step: 0, totalSteps: TOTAL_WARMUP_STEPS });
+  onProgress?.({
+    phase: "warming_up",
+    step: 0,
+    totalSteps: TOTAL_WARMUP_STEPS,
+  });
 
   const spatial = tf.zeros([1, 19, 19, 22], "float32") as tf.Tensor4D;
   const global_ = tf.zeros([1, 19], "float32") as tf.Tensor2D;
 
   await disposeTensors(model.forward(spatial, global_));
-  onProgress?.({ phase: "warming_up", step: 1, totalSteps: TOTAL_WARMUP_STEPS });
+  onProgress?.({
+    phase: "warming_up",
+    step: 1,
+    totalSteps: TOTAL_WARMUP_STEPS,
+  });
 
   await disposeTensors(model.forwardPolicyValue(spatial, global_));
-  onProgress?.({ phase: "warming_up", step: 2, totalSteps: TOTAL_WARMUP_STEPS });
+  onProgress?.({
+    phase: "warming_up",
+    step: 2,
+    totalSteps: TOTAL_WARMUP_STEPS,
+  });
 
   spatial.dispose();
   global_.dispose();
@@ -300,9 +316,7 @@ export async function analyzeBoard(
     ...(includeScoreStdev ? { scoreStdev: output.rootScoreStdev } : {}),
     ...(includeVisits ? { visits: output.rootVisits } : {}),
     ownership: output.ownership,
-    ...(includeOwnershipStdev
-      ? { ownershipStdev: output.ownershipStdev }
-      : {}),
+    ...(includeOwnershipStdev ? { ownershipStdev: output.ownershipStdev } : {}),
     ...(includePolicy ? { policy: output.policy } : {}),
     moves: moves_,
   };

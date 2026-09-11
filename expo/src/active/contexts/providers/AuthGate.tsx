@@ -13,7 +13,9 @@ import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { useRouter, useSegments } from "expo-router";
 import React, { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
+import { COLORS } from "../../constants/colors";
 import { useProfileSync } from "../../hooks/screens/useProfileSync";
+import { useLang } from "../../i18n";
 import { useProfile } from "../ProfileContexts";
 
 export function AuthGate({ children }: { children: ReactNode }) {
@@ -23,6 +25,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const { setMaintenance, setMaintenanceMessage, setIsInitializing } = useApp();
   const { syncProfile } = useProfileSync();
   const turnstileRef = useRef<TurnstileHandle>(null);
+  const { lang } = useLang();
 
   const clearUserState = () => {
     updateProfile({
@@ -181,6 +184,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
       <TurnstileWidget
         ref={turnstileRef}
         sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
+        bgColor={COLORS.background}
+        textColor={COLORS.text}
+        spinnerColor={COLORS.primary}
+        spinnerTrackColor={COLORS.backgroundDark}
+        lang={lang}
       />
       {children}
     </>

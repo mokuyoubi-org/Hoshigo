@@ -1,6 +1,6 @@
 // RuleModal.tsx
-import { useTranslation } from "@/src/active/language/i18n";
-import { ModalShell } from "modal-shell";
+import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
+import { useTranslation } from "@/src/active/i18n";
 import React from "react";
 import {
   ScrollView,

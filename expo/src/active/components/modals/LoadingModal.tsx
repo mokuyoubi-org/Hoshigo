@@ -1,5 +1,5 @@
-import { useTranslation } from "@/src/active/language/i18n";
-import { ModalShell } from "modal-shell";
+import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
+import { useTranslation } from "@/src/active/i18n";
 import React from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { COLORS } from "../../constants/colors";

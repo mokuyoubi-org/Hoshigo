@@ -1,4 +1,7 @@
 // RankingsModal.tsx
+import { BOARD_SIZE_OPTIONS, BoardSize } from "@/packages/go-core/src";
+import { SegmentedControl } from "@/packages/ui-atoms/src";
+import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import {
   Profile,
   RankingCard,
@@ -6,8 +9,6 @@ import {
 import { COLORS } from "@/src/active/constants/colors";
 import { fetchWithDailyCache } from "@/src/stable/logics/syncUtils"; // 🐱 追加！
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { BOARD_SIZE_OPTIONS, BoardSize } from "expo-goband";
-import { ModalShell } from "modal-shell";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,7 +16,6 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { SegmentedControl } from "ui-atoms";
 
 type RankingItem = Profile & {
   board_size: number;
@@ -40,14 +40,14 @@ export default function RankingsModal({ visible, onClose }: Props) {
     const fetchTopProfiles = async () => {
       setLoading(true);
 
-      // 🐱 1日1回だけ Supabase から取得し、2回目以降は sqliteKv のキャッシュを使うにゃ！
+      // 🐱 1日1回だけ Supabase から取得し、2回目以降は sqliteKv のキャッシュを使う
       const data = await fetchWithDailyCache<RankingItem[]>(
         "global_rankings",
         async () => {
           const { data, error } = await supabase.rpc("get_rankings");
           if (error) throw error;
           return data ?? [];
-        }
+        },
       );
 
       setAllProfiles(data ?? []);

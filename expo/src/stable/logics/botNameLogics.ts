@@ -1,11 +1,8 @@
 // botNameLogics.ts
 
-import { TranslationKey } from "@/src/active/language/lang";
+import { TFunction } from "@/src/active/i18n/types";
 
-export const botNameFormatter = (
-  username: string,
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
-) => {
+export const botNameFormatter = (username: string, t: TFunction) => {
   if (username === "bot1") {
     return t("BotName.bot1");
   } else if (username === "bot2") {

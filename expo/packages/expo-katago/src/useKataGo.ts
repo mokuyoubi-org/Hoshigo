@@ -18,8 +18,15 @@
 
 import { useKataGoEngine } from "./KataGoEngineContext";
 
-import { Board, BoardSize, Color, Grid, MatchType } from "./types";
-import { boardToBoard2D, movesToMoveObjects } from "./utils";
+import {
+  Board,
+  BoardSize,
+  boardToBoard2D,
+  Color,
+  Grid,
+  MatchType,
+  movesToMoveObjects,
+} from "go-core";
 import { AnalyzeResult, AnalyzeResultFields } from "./web-katrain/analyzeBoard";
 import { ModelId } from "./web-katrain/modelManager";
 

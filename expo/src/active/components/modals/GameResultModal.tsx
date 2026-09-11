@@ -1,17 +1,16 @@
+import { BoardSize } from "@/packages/go-core/src";
+import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { COLORS } from "@/src/active/constants/colors";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useLang, useTranslation } from "@/src/active/language/i18n";
+import { useLang, useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { FontAwesome, Octicons } from "@expo/vector-icons";
-import { BoardSize } from "expo-goband";
 import { router } from "expo-router";
-import { ModalShell } from "modal-shell";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
   Image,
-  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -114,7 +113,6 @@ export function GameResultModal({
             toValue: afterInfo.percent,
             duration: 600,
             useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
-
           }).start();
         }, 100);
       });
@@ -124,8 +122,7 @@ export function GameResultModal({
       Animated.timing(progressAnim, {
         toValue: afterInfo.percent,
         duration: 1200,
-              useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
-
+        useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
       }).start();
     }
   }, [visible]);

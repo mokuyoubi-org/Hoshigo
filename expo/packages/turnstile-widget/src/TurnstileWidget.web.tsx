@@ -8,7 +8,7 @@ import React, {
   useImperativeHandle,
   useRef,
 } from "react";
-import { View } from "react-native";
+import { ColorValue, View } from "react-native";
 
 console.log("TurnstileWidget.web.tsx");
 
@@ -21,7 +21,12 @@ export type TurnstileHandle = {
 
 type Props = {
   sitekey: string;
-  action?: string; // Supabaseのanonymous sign-inを識別するaction名(任意)
+  // web版では未使用。native版とprops形状を揃えて呼び出し側の型エラーを防ぐためだけに受け取る
+  bgColor?: string;
+  textColor?: string;
+  spinnerColor?: string;
+  spinnerTrackColor?: string;
+  lang?: string;
 };
 
 // スクリプトタグが未挿入なら挿入し、読み込み完了を待つ
@@ -51,7 +56,7 @@ function loadTurnstileScript(): Promise<void> {
 }
 
 export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
-  ({ sitekey, action = "anonymous_signin" }, ref) => {
+  ({ sitekey }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const widgetIdRef = useRef<string | null>(null);
     const pendingRef = useRef<{
@@ -76,7 +81,6 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
 
           widgetIdRef.current = window.turnstile.render(containerRef.current, {
             sitekey,
-            action,
             appearance: "interaction-only", // 通常は完全に非表示
             execution: "execute", // renderしただけでは走らせない
             callback: (token: string) => {

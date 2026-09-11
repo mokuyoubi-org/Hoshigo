@@ -21,14 +21,21 @@ export type TurnstileHandle = {
 
 type Props = {
   sitekey: string;
-  action?: string;
+  lang: string;
+  bgColor: string;
+  textColor: string;
+  spinnerColor: string;
+  spinnerTrackColor: string;
 };
 
 const BRIDGE_URL = "https://hoshigo.app/turnstile-bridge.html";
 const REDIRECT_URL = "hoshigo://turnstile-callback";
 
 export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
-  ({ sitekey, action = "anonymous_signin" }, ref) => {
+  (
+    { sitekey, lang, bgColor, textColor, spinnerColor, spinnerTrackColor },
+    ref,
+  ) => {
     // 同時に複数箇所からgetToken()が呼ばれても、後勝ちで前の呼び出し元が
     // 無反応(ハング)にならないよう、直列化する(KataGoEngineContextの
     // isAnalyzingRef と同じ考え方)。ブラウザを二重に開かせない保険。
@@ -36,9 +43,16 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
 
     const getTokenInternal = (): Promise<string> => {
       return new Promise<string>(async (resolve, reject) => {
-        const bridgeUrl = `${BRIDGE_URL}?sitekey=${encodeURIComponent(
+        const searchParams = new URLSearchParams({
           sitekey,
-        )}&action=${encodeURIComponent(action)}`;
+          lang,
+          bgColor: bgColor.replace("#", ""),
+          textColor: textColor.replace("#", ""),
+          spinnerColor: spinnerColor.replace("#", ""),
+          spinnerTrackColor: spinnerTrackColor.replace("#", ""),
+        });
+
+        const bridgeUrl = `${BRIDGE_URL}?${searchParams.toString()}`;
 
         try {
           const result = await Promise.race([

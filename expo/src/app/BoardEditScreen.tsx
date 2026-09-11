@@ -1,6 +1,9 @@
 // app/BoardEditScreen.tsx
-import { RecordCardHeader } from "@/src/active/components/cards/records/RecordCardHeader";
-import { useTranslation } from "@/src/active/language/i18n";
+import { GoBoard, ScoreLeadReplayControls } from "@/packages/go-components/src";
+import { BLACK, WHITE } from "@/packages/go-core/src";
+import { IconButton, SegmentedIconControl } from "@/packages/ui-atoms/src";
+import { RecordCardHeader } from "@/src/active/components/common/RecordCardHeader";
+import { useTranslation } from "@/src/active/i18n";
 import { RecordType } from "@/src/active/types/record";
 import {
   FontAwesome6,
@@ -8,9 +11,9 @@ import {
   MaterialIcons,
   Octicons,
 } from "@expo/vector-icons";
-import { GoBoard, ScoreLeadReplayControls } from "expo-goband";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { ReplayTapOverlay } from "go-components";
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -20,15 +23,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconButton, SegmentedIconControl } from "ui-atoms";
 import { TerritoryCalculatorButton } from "../active/components/buttons/TerritoryCalculatorButton";
-import { ReplayTapOverlay } from "../active/components/go/ReplayTapOverlay";
 import { COLORS } from "../active/constants/colors";
 import { useProfile } from "../active/contexts/ProfileContexts";
 import { useBotAnalysis } from "../active/hooks/bot/useBotAnalysis";
 import { useBoardEditActions } from "../active/hooks/edit/useBoardEditActions";
 import { useEditableGoBoard } from "../active/hooks/edit/useEditableGoBoard";
 import { useReplayMoveEvaluation } from "../active/hooks/edit/useReplayMoveEvaluation";
+import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
 
 export default function BoardEditScreen() {
   const { recordJson } = useLocalSearchParams<{ recordJson: string }>();
@@ -76,6 +78,8 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
 
   // 🐱 編集モード・盤面履歴・分析キャッシュはすべてここに集約されている
   const board = useEditableGoBoard(liveRecord);
+
+  const { enableDoubleTap13 } = useDoubleTapSetting();
 
   // 🐱 ボット思考・地計算ボタンの処理と、地計算の一時表示状態
   const {
@@ -197,7 +201,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 color={"#75b384d7"}
                 onPress={handleBotSuggest}
                 disabled={isAnyProcessing}
-                // 🐱 自分が実行中ではなく、他の処理が動いて押せない時は薄く(opacity: 0.4)するにゃ！
+                // 🐱 自分が実行中ではなく、他の処理が動いて押せない時は薄く(opacity: 0.4)する
                 style={{
                   opacity: isAnyProcessing && !isBotSuggesting ? 0.4 : 1,
                 }}
@@ -276,32 +280,55 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 }}
               >
                 <GoBoard
+                  // 盤面サイズ: 1
                   boardSize={board.boardSize}
-                  boardWidth={boardWidth}
-                  agehamaHistory={board.processed.agehamaHistory}
+                  // プレイヤの色: 1
+                  playerColor={isPlayerBlack ? BLACK : WHITE}
+                  // 現在の盤面、インデックス、テリトリーボード: 3
                   board={
                     board.processed.boardHistory[board.currentIndex] ??
                     board.processed.boardHistory[0] ??
                     {}
                   }
-                  onPutStone={(grid) => board.handlePutStone(grid, "human")}
-                  moveHistory={board.processed.moves.slice(
-                    0,
-                    board.currentIndex + 1,
-                  )}
+                  currentIndex={board.currentIndex}
                   territoryBoard={
                     manualTerritory?.territoryBoard ??
                     board.processed.territoryBoard
                   }
-                  forceShowTerritory={!!manualTerritory}
+                  // history系: 3
+                  moveHistory={board.processed.moves.slice(
+                    0,
+                    board.currentIndex + 1,
+                  )}
+                  boardHistory={board.processed.boardHistory}
+                  agehamaHistory={board.processed.agehamaHistory}
+                  // タッチした時の処理: 1
+                  onPutStone={(grid) => board.handlePutStone(grid, "human")}
+                  // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
                   disabled={!board.isEditMode || board.isAnalyzing}
                   isGameEnded={!board.isEditMode}
-                  boardHistory={board.processed.boardHistory}
-                  currentIndex={board.currentIndex}
+                  enableDoubleTap={
+                    board.boardSize === 13 ? enableDoubleTap13 : false
+                  }
+                  // その他情報: 5
+                  forceShowTerritory={!!manualTerritory}
                   editMarkers={board.editMarkers}
                   candidatePoints={candidatePoints}
                   moveEvaluationPoint={lastMoveGrid}
                   moveEvaluation={lastMoveEvaluation}
+                  // 物理サイズ: 1
+                  boardWidth={boardWidth}
+                  // 色: 10
+                  boardColor={COLORS.primary}
+                  lineColor={COLORS.background}
+                  blackStoneColor={COLORS.darkObject}
+                  blackStoneAccentColor={COLORS.darkObjectAccent}
+                  whiteStoneColor={COLORS.lightObject}
+                  whiteStoneAccentColor={COLORS.lightObjectAccent}
+                  humanMoveColor={COLORS.humanMoveColor}
+                  botMoveColor={COLORS.botMoveColor}
+                  goodMoveColor={COLORS.goodMoveColor}
+                  badMoveColor={COLORS.badMoveColor}
                 />
 
                 {!board.isEditMode && (
@@ -322,6 +349,13 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
             currentIndex={board.currentIndex}
             totalMoves={board.processed.moves.length}
             onCurrentIndexChange={board.setCurrentIndex}
+            primary={COLORS.primary}
+            background={COLORS.background}
+            backgroundDark={COLORS.backgroundDark}
+            foreground={COLORS.foreground}
+            primaryDark={COLORS.primaryDark}
+            darkObject={COLORS.darkObject}
+            darkObjectAccent={COLORS.darkObjectAccent}
           />
         </View>
       </View>

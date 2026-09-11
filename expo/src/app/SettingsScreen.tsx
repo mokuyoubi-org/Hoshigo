@@ -1,13 +1,16 @@
+import { OTA_VERSION } from "@/ota-version";
+import { ToggleSwitch } from "@/packages/ui-atoms/src";
 import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
 import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
-import { useTranslation } from "@/src/active/language/i18n";
+import { useTranslation } from "@/src/active/i18n";
+import Constants from "expo-constants";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useOverlay } from "react-overlay";
-import { ToggleSwitch } from "ui-atoms";
+import { COLORS } from "../active/constants/colors";
+import { useOverlay } from "../active/contexts/OverlayContext";
 import { useProfile } from "../active/contexts/ProfileContexts";
 import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
 import { useSettingsScreen } from "../active/hooks/screens/useSettingsScreen";
@@ -26,7 +29,7 @@ export default function SettingsScreen() {
     handleConfirmDelete,
   } = useSettingsScreen();
 
-  // 🐱 ダブルタップ設定用フックの呼び出し
+  // ダブルタップ設定用フックの呼び出し
   const { enableDoubleTap13, toggleDoubleTap13 } = useDoubleTapSetting();
 
   return (
@@ -52,6 +55,7 @@ export default function SettingsScreen() {
             {t("common.settings")}
           </Text>
 
+          {/* メアド */}
           <View className="mb-6">
             <Text className="text-[11px] font-bold uppercase tracking-widest text-text mb-2.5 ml-1">
               {t("Settings.accountInfo")}
@@ -81,13 +85,15 @@ export default function SettingsScreen() {
                   value={allowBotMatch ?? true}
                   onToggle={handleToggleBotMatch}
                   disabled={isMatching}
+                  backgroundColor={COLORS.primary}
+                  toggleColor={COLORS.foreground}
                 />
               </View>
 
               {/* 区切り線 */}
               <View className="h-[1px] bg-backgroundDark w-full" />
 
-              {/* 🐱 ダブルタップ着手設定 */}
+              {/* ダブルタップ着手設定 */}
               <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px]">
                 <Text className="text-base font-semibold text-text tracking-wide">
                   {t("Settings.enableDoubleTap", {
@@ -98,18 +104,22 @@ export default function SettingsScreen() {
                   value={enableDoubleTap13}
                   onToggle={toggleDoubleTap13}
                   disabled={isMatching}
+                  backgroundColor={COLORS.primary}
+                  toggleColor={COLORS.foreground}
                 />
               </View>
             </View>
           </View>
 
+          {/* インフォメーションセクション */}
           <View className="mb-6">
             <Text className="text-[11px] font-bold uppercase tracking-widest text-text mb-2.5 ml-1">
               {t("Settings.information")}
             </Text>
-            <View className="gap-2">
+            <View className="bg-foreground rounded-xl border-2 border-backgroundDark w-full overflow-hidden">
+              {/* プライバシーポリシー */}
               <TouchableOpacity
-                className="flex-row justify-between items-center bg-foreground rounded-xl border-2 border-backgroundDark px-[18px] py-4 min-h-[56px] w-full"
+                className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full"
                 activeOpacity={0.7}
                 onPress={() => openURL("https://mokuyoubi.org/privacy")}
               >
@@ -121,8 +131,12 @@ export default function SettingsScreen() {
                 </Text>
               </TouchableOpacity>
 
+              {/* 区切り線 */}
+              <View className="h-[1px] bg-backgroundDark w-full" />
+
+              {/* 利用規約 */}
               <TouchableOpacity
-                className="flex-row justify-between items-center bg-foreground rounded-xl border-2 border-backgroundDark px-[18px] py-4 min-h-[56px] w-full"
+                className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full"
                 activeOpacity={0.7}
                 onPress={() => openURL("https://mokuyoubi.org/terms")}
               >
@@ -133,6 +147,32 @@ export default function SettingsScreen() {
                   ›
                 </Text>
               </TouchableOpacity>
+
+              {/* 区切り線 */}
+              <View className="h-[1px] bg-backgroundDark w-full" />
+
+              {/* アプリ本体のバージョン */}
+              <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full">
+                <Text className="text-base font-semibold text-text tracking-wide">
+                  {t("common.appVersion")}
+                </Text>
+                <Text className="text-base font-semibold text-textSub tracking-wide">
+                  {Constants.expoConfig?.version ?? "1.0.0"}
+                </Text>
+              </View>
+
+              {/* 区切り線 */}
+              <View className="h-[1px] bg-backgroundDark w-full" />
+
+              {/* OTAバージョン */}
+              <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full">
+                <Text className="text-base font-semibold text-text tracking-wide">
+                  {t("common.otaVersion")}
+                </Text>
+                <Text className="text-base font-semibold text-textSub tracking-wide">
+                  {OTA_VERSION}
+                </Text>
+              </View>
             </View>
           </View>
 

@@ -1,7 +1,7 @@
 // records-repo.native.ts
 
+import { RecordAnalysis } from "@/packages/go-components/src";
 import type { RecordType } from "@/src/active/types/record";
-import { RecordAnalysis } from "expo-goband";
 import * as SQLite from "expo-sqlite";
 
 export type RecordsRepo = {

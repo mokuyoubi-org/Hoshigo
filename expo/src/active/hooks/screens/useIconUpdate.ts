@@ -1,5 +1,5 @@
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useTranslation } from "@/src/active/language/i18n";
+import { useTranslation } from "@/src/active/i18n";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { Alert } from "react-native";
 

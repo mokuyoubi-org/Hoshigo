@@ -9,11 +9,9 @@
 // と同じ入れ物)にして返す。MoveEditScreenに渡すのはこの形。
 // ──────────────────────────────────────────────────
 
+
+import { MoveAnalysisEntry, RecordAnalysis } from "@/packages/go-core/src";
 import { buildMoveAnalysisEntry } from "@/src/stable/logics/analysis";
-import {
-  MoveAnalysisEntry,
-  RecordAnalysis,
-} from "expo-goband";
 import { AnalyzeResult } from "expo-katago";
 import { useRef } from "react";
 

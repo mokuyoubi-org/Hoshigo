@@ -1,13 +1,13 @@
 // textFormatter.ts
 
-import { TranslationKey } from "@/src/active/language/lang";
-import { BLACK, Color, MatchType, WHITE } from "expo-goband";
+import { BLACK, Color, MatchType, WHITE } from "@/packages/go-core/src";
+import { TFunction } from "@/src/active/i18n/types";
 
 // "B+R"のような結果を、you won by resignationのようなコメントへ変換。
 export const resultToComment = (
   result: string,
   playerColor: Color,
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
+  t: TFunction,
 ): string => {
   if (result === "DRAW") {
     return t("GameResult.draw");
@@ -60,10 +60,7 @@ export const resultToComment = (
 };
 
 // "B+R"のような結果を、Reasonと勝敗を使ってシンプルに変換する！
-export const resultToCommentSimple = (
-  result: string,
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
-): string => {
+export const resultToCommentSimple = (result: string, t: TFunction): string => {
   if (result === "DRAW") return t("Reason.draw");
 
   const [winnerStr, reasonCode] = result.split("+");
@@ -85,9 +82,6 @@ export const resultToCommentSimple = (
   return `${t("Reason.points", { points: reasonCode })}`;
 };
 
-export const matchTypeToText = (
-  matchType: MatchType,
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
-): string => {
-  return t(`MatchType.matchType_${matchType}` as TranslationKey);
+export const matchTypeToText = (matchType: MatchType, t: TFunction): string => {
+  return t(`MatchType.matchType_${matchType}`);
 };

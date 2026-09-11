@@ -6,7 +6,13 @@
 // ====================================================================================
 
 import React, { useEffect, useState } from "react";
-import { Animated, Platform, Pressable, StyleSheet } from "react-native";
+import {
+  Animated,
+  ColorValue,
+  Platform,
+  Pressable,
+  StyleSheet,
+} from "react-native";
 
 // ====================================================================================
 // 【型定義・定数】
@@ -17,6 +23,8 @@ type ToggleSwitchProps = {
   value: boolean;
   onToggle: (value: boolean) => void;
   disabled?: boolean;
+  backgroundColor: ColorValue;
+  toggleColor: ColorValue;
 };
 
 // 🟨その他パラメータ。
@@ -50,6 +58,8 @@ export const ToggleSwitch = ({
   value,
   onToggle,
   disabled,
+  backgroundColor,
+  toggleColor,
 }: ToggleSwitchProps) => {
   // 🌟 useState の初期化関数を使うことで、ref を使わずにインスタンスを1度だけ保持する！
   const [opacityAnim] = useState(
@@ -83,9 +93,23 @@ export const ToggleSwitch = ({
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled: !!disabled }}
     >
-      <Animated.View style={[styles.track, { opacity: opacityAnim }]}>
+      <Animated.View
+        style={[
+          styles.track,
+          {
+            opacity: opacityAnim,
+            backgroundColor: backgroundColor, // primary
+          },
+        ]}
+      >
         <Animated.View
-          style={[styles.knob, { transform: [{ translateX: knobAnim }] }]}
+          style={[
+            styles.knob,
+            {
+              transform: [{ translateX: knobAnim }],
+              backgroundColor: toggleColor, // foreground
+            },
+          ]}
         />
       </Animated.View>
     </Pressable>
@@ -99,12 +123,10 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 3,
     justifyContent: "center",
-    backgroundColor: "#b4c9db", // primary
   },
   knob: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#ffffff", // foreground
   },
 });

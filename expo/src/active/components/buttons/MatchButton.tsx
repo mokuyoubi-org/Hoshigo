@@ -1,6 +1,6 @@
 // MatchButton.tsx
 
-import { BoardSize } from "expo-goband";
+import { BoardSize } from "go-core";
 import React, { useState } from "react";
 import { Animated, Platform, Text, TouchableOpacity, View } from "react-native";
 

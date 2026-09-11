@@ -15,7 +15,7 @@
 // 後、追加で1回だけ最終局面を解析してこれを埋める。
 // ──────────────────────────────────────────────────
 
-import { BLACK, isNoOkiishi, movesToBoardHistory, WHITE } from "expo-goband";
+
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -24,9 +24,9 @@ import {
   getAnalyzedCount,
 } from "@/src/stable/logics/analysis";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
-import { RecordAnalysis } from "expo-goband";
 import { RecordType } from "../../types/record";
 import { useKataGoTask } from "./useKataGoTask";
+import { isNoOkiishi, movesToBoardHistory, RecordAnalysis, BLACK, WHITE } from "@/packages/go-core/src";
 
 const ANALYSIS_MODEL_ID = "b6";
 
@@ -121,17 +121,6 @@ export function useBotAnalysis(record: RecordType) {
       let current = analysisRef.current;
       let completedAllMoves = true;
 
-
-
-
-
-
-
-
-
-
-
-
       for (let i = getAnalyzedCount(current, totalMoves); i < totalMoves; i++) {
         if (stopRequestedRef.current) {
           completedAllMoves = false;
@@ -154,7 +143,11 @@ export function useBotAnalysis(record: RecordType) {
         setAnalysis(current);
 
         try {
-          await recordsRepo.updateAnalysis(record.board_size, record.id, current);
+          await recordsRepo.updateAnalysis(
+            record.board_size,
+            record.id,
+            current,
+          );
         } catch (e) {
           // 🐱 DB保存に失敗した場合、原因究明のため必ずログに残す
           console.error(
@@ -165,20 +158,6 @@ export function useBotAnalysis(record: RecordType) {
           break;
         }
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
       // 🐱 手ごとのループが最後まで完走した(中断も失敗もなかった)場合だけ、
       //    最終局面(最後の1手の効果を測るためのperMove[totalMoves])を埋める。

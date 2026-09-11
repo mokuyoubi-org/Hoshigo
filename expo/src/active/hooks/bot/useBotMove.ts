@@ -9,22 +9,12 @@
 // 無駄を避けるため、onDecidedにbestMoveと一緒にanalysisも渡す。
 // ──────────────────────────────────────────────────
 
-import {
-  BLACK,
-  Board,
-  BoardSize,
-  Color,
-  getOppositeColor,
-  Grid,
-  makeGrid,
-  MatchType,
-  PASS_GRID,
-  WHITE,
-} from "expo-goband";
+
 
 import { AnalyzeResult, DEFAULT_MODEL_ID, ModelId } from "expo-katago";
 import { useRef } from "react";
 import { useKataGoTask } from "./useKataGoTask";
+import { Color, BoardSize, Board, Grid, MatchType, BLACK, WHITE, PASS_GRID, getOppositeColor, makeGrid } from "@/packages/go-core/src";
 
 // ★ボットのユーザー名とモデルIDの対応表
 const BOT_MODEL_MAP: Record<string, ModelId> = {
@@ -105,7 +95,6 @@ export function useBotMove(
         return;
       }
 
-
       // 初手はハードコード
 
       // if(movesSoFar.length === 0){
@@ -123,10 +112,6 @@ export function useBotMove(
       //    await onDecided(, null);
       // }
 
-
-
-
-
       const result = await kataGoTask.run({
         board,
         movesSoFar,
@@ -141,15 +126,11 @@ export function useBotMove(
         return;
       }
 
-
-// 1手目: ハードコードする。
-// 2or3手目: 最善手40%, 2番手24%, 3番手18%, 4番手12%, 5番手6%
-// 4or5手目: 最善手60%, 2番手16%, 3番手12%, 4番手8%, 5番手4%
-// 6or7手目: 最善手80%, 2番手8%, 3番手6%, 4番手4%, 5番手2%
-// 8手目以降: 最善手100%
-
-
-
+      // 1手目: ハードコードする。
+      // 2or3手目: 最善手40%, 2番手24%, 3番手18%, 4番手12%, 5番手6%
+      // 4or5手目: 最善手60%, 2番手16%, 3番手12%, 4番手8%, 5番手4%
+      // 6or7手目: 最善手80%, 2番手8%, 3番手6%, 4番手4%, 5番手2%
+      // 8手目以降: 最善手100%
 
       const best = result.moves[0];
       const bestMove: Grid =

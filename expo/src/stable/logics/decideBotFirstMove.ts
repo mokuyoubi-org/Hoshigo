@@ -1,4 +1,4 @@
-import { BoardSize, Grid, MatchType } from "expo-goband";
+import { Grid, MatchType, BoardSize } from "@/packages/go-core/src";
 
 type CategoryChoice = {
   candidates: Grid[];

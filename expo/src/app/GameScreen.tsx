@@ -8,11 +8,12 @@
 import { GameResultModal } from "@/src/active/components/modals/GameResultModal";
 import LoadingModal from "@/src/active/components/modals/LoadingModal";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
-import { useTranslation } from "@/src/active/language/i18n";
+import { useTranslation } from "@/src/active/i18n";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { BLACK, GoBoard, PASS_GRID } from "expo-goband";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GoBoard } from "go-components";
+import { BLACK, Grid, PASS_GRID } from "go-core";
 import React, { useEffect } from "react";
 import {
   Text,
@@ -21,14 +22,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useOverlay } from "react-overlay";
 import { IconButton } from "ui-atoms";
-import { PlayerCard } from "../active/components/go/PlayerCard";
+import { PlayerCard } from "../active/components/cards/PlayerCard";
 import { GameStartModal } from "../active/components/modals/GameStartModal";
 import { COLORS } from "../active/constants/colors";
+import { useOverlay } from "../active/contexts/OverlayContext";
 import { useProfile } from "../active/contexts/ProfileContexts";
 import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
-import { useSounds } from "../active/hooks/useSounds";
+import { useSounds } from "../active/hooks/useGameSounds";
 import {
   GameScreenParams,
   getPassState,
@@ -306,19 +307,43 @@ export default function GameScreen() {
 
           {/* 碁盤 */}
           <GoBoard
+            // 盤面サイズ: 1
             boardSize={boardSize}
-            agehamaHistory={agehamaHistory}
+            // プレイヤの色: 1
+            playerColor={myColor}
+            // 現在の盤面、インデックス、テリトリーボード: 3
             board={boardHistory[currentIndex] ?? {}}
-            onPutStone={handlePutStone}
-            moveHistory={moves}
+            currentIndex={currentIndex}
             territoryBoard={territoryBoard}
+            // history系: 3
+            moveHistory={moves}
+            boardHistory={boardHistory}
+            agehamaHistory={agehamaHistory}
+            // タッチした時の処理: 1
+            onPutStone={handlePutStone}
+            // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
             disabled={!isMyTurn || isGameEnded}
             isGameEnded={isGameEnded}
-            boardHistory={boardHistory}
-            currentIndex={currentIndex}
-            boardWidth={boardWidth}
-            playerColor={myColor}
             enableDoubleTap={boardSize === 13 ? enableDoubleTap13 : false}
+            // その他情報: 5
+            forceShowTerritory={false} // ダミーだけどちゃんとfalse
+            editMarkers={new Map<Grid, "human" | "bot">()} // ダミー
+            candidatePoints={[]} // ダミー
+            moveEvaluationPoint={0} // ダミー
+            moveEvaluation={undefined} // ダミー
+            // 物理サイズ: 1
+            boardWidth={boardWidth}
+            // 色: 10
+            boardColor={COLORS.primary}
+            lineColor={COLORS.background}
+            blackStoneColor={COLORS.darkObject}
+            blackStoneAccentColor={COLORS.darkObjectAccent}
+            whiteStoneColor={COLORS.lightObject}
+            whiteStoneAccentColor={COLORS.lightObjectAccent}
+            humanMoveColor={COLORS.humanMoveColor}
+            botMoveColor={COLORS.botMoveColor}
+            goodMoveColor={COLORS.goodMoveColor}
+            badMoveColor={COLORS.badMoveColor}
           />
 
           {/* 自分情報 */}

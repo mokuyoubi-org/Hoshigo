@@ -1,7 +1,7 @@
 // ✅active
 // useLoginModal.ts
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useTranslation } from "@/src/active/language/i18n";
+import { useTranslation } from "@/src/active/i18n";
 import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { isValidEmail } from "@/src/stable/logics/validationLogics";
 import { supabase } from "@/src/stable/services/supabase/supabase";

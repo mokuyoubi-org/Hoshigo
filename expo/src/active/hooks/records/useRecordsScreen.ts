@@ -1,16 +1,8 @@
 // useRecordsScreen.ts
 
+
 import { useRecordsSync } from "@/src/active/hooks/records/useRecordsSync";
 import { RecordOrSkeleton, RecordType } from "@/src/active/types/record";
-import {
-  Agehama,
-  Board,
-  BoardSize,
-  generateTerritoryBoard,
-  MatchType,
-  movesToFinalBoard,
-  TerritoryBoard,
-} from "expo-goband";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -24,12 +16,13 @@ import {
   makeSkeletonCard,
 } from "../../../stable/logics/recordCardLogics";
 import { useProfile } from "../../contexts/ProfileContexts";
+import { Board, TerritoryBoard, MatchType, BoardSize, movesToFinalBoard, generateTerritoryBoard, AgehamaCount } from "@/packages/go-core/src";
 
 export type ProcessedRecord = {
   finalBoard: Board;
   territoryBoard: TerritoryBoard;
   matchType: MatchType;
-  agehama: Agehama;
+  agehama: AgehamaCount;
 };
 
 // 🐱 レンダーに使う「見た目のデータ」だけをここに持たせる

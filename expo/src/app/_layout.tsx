@@ -7,13 +7,14 @@ import { RootProvider } from "@/src/active/contexts/providers/RootProvider";
 import { KataGoGate } from "expo-katago";
 import { Stack } from "expo-router";
 import React from "react";
-import { OverlayProvider } from "react-overlay";
 import "../../global.css";
 
 import { View } from "react-native";
-import { LoadingScreenForLayout } from "../active/components/common/LoadingScreenForLayout";
+import { LoadingScreen } from "ui-atoms";
 import { ForceUpdateModal } from "../active/components/modals/ForceUpdateModal";
 import { MaintenanceModal } from "../active/components/modals/MaintenanceModal";
+import { COLORS } from "../active/constants/colors";
+import { OverlayProvider } from "../active/contexts/OverlayContext";
 import { MatchingProvider } from "../active/contexts/providers/MatchingContext";
 function RoutedContent() {
   const { isInitializing, maintenance, maintenanceMessage, needsUpdate } =
@@ -44,9 +45,13 @@ function RoutedContent() {
         >
           {/* AuthGate.tsx の initialize() が待ち先。セッション確認〜匿名ログイン
         〜プロフィール同期までを一括してこの1状態で表現している(子段階なし) */}
-          <LoadingScreenForLayout
+          <LoadingScreen
             label="Checking authentication..."
             percent={null}
+            backgroundColor={COLORS.background}
+            textColor={COLORS.textSub}
+            trackColor={COLORS.backgroundDark}
+            fillColor={COLORS.primary}
           />
         </View>
       )}
@@ -90,7 +95,13 @@ export default function Layout() {
   return (
     <RootProvider>
       <AuthGate>
-        <KataGoGate>
+        <KataGoGate
+          backgroundColor={COLORS.background}
+          textColor={COLORS.textSub}
+          fillColor={COLORS.primary}
+          trackColor={COLORS.backgroundDark}
+          errorColor={COLORS.coral}
+        >
           <MatchingProvider>
             <RoutedContent />
           </MatchingProvider>

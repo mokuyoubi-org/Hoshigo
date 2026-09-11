@@ -1,5 +1,5 @@
+import { useRealtimeChannel } from "@/packages/supabase-kit/src";
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { useRealtimeChannel } from "supabase-toolkit";
 
 export type GameChannelHandlers = {
   onMove: (payload: any) => void;

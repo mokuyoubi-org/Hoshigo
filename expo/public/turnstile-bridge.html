@@ -22,8 +22,6 @@
         padding: 32px 28px;
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        color: #1a1a1a;
-        background: #ffffff;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -34,8 +32,8 @@
       #cf-spinner {
         width: 40px;
         height: 40px;
-        border: 3px solid #e5e5e5;
-        border-top-color: #f38020; /* Cloudflareオレンジ */
+        border-width: 3px;
+        border-style: solid;
         border-radius: 50%;
         animation: cf-spin 0.8s linear infinite;
         margin-bottom: 20px;
@@ -55,7 +53,6 @@
 
       #cf-subtitle {
         font-size: 14px;
-        color: #666666;
         margin: 0;
         line-height: 1.5;
         max-width: 280px;
@@ -71,20 +68,51 @@
   <body>
     <div id="cf-message">
       <div id="cf-spinner"></div>
-      <p id="cf-title">Verifying you're human</p>
-      <p id="cf-subtitle">Please don't close this — it only takes a moment.</p>
+      <p id="cf-title"></p>
+      <p id="cf-subtitle"></p>
       <div id="cf-container"></div>
     </div>
 
     <script>
-      // sitekeyとactionは、RN(expo-web-browser)が組み立てたURLの
-      // クエリパラメータから受け取る。このページは常に
-      // Custom Tabs / SFSafariViewController(本物のブラウザエンジン)で
-      // 開かれる前提なので、redirect分岐やpostMessage経路は無く、
-      // 常にカスタムスキームへのリダイレクトでトークンを持ち帰る。
       var params = new URLSearchParams(window.location.search);
       var sitekey = params.get("sitekey");
-      var action = params.get("action") || "anonymous_signin";
+
+      // 言語設定：指定がなければブラウザ設定（navigator.language）にフォールバック
+      var rawLang = params.get("lang") || navigator.language;
+      var lang = rawLang.split("-")[0]; // "ja-JP" などを "ja" に正規化
+
+      // 色とテーマの設定
+      var bgColor = params.get("bgColor");
+      var textColor = params.get("textColor");
+      var spinnerColor = params.get("spinnerColor");
+      var spinnerTrackColor = params.get("spinnerTrackColor");
+
+      // スタイルの適用
+      var messageEl = document.getElementById("cf-message");
+      var subtitleEl = document.getElementById("cf-subtitle");
+      var spinnerEl = document.getElementById("cf-spinner");
+
+      messageEl.style.background = "#" + bgColor;
+      messageEl.style.color = "#" + textColor;
+      subtitleEl.style.color = "#" + textColor;
+      spinnerEl.style.borderColor = "#" + spinnerTrackColor;
+      spinnerEl.style.borderTopColor = "#" + spinnerColor;
+
+      // 言語ごとのメッセージ切替
+      var messages = {
+        ja: {
+          title: "人間であることを確認しています",
+          subtitle: "画面を閉じずにお待ちください。",
+        },
+        en: {
+          title: "Verifying you're human",
+          subtitle: "Please don't close this — it only takes a moment.",
+        },
+      };
+
+      var msg = messages[lang];
+      document.getElementById("cf-title").textContent = msg.title;
+      subtitleEl.textContent = msg.subtitle;
 
       function initTurnstile() {
         if (!window.turnstile) {
@@ -93,10 +121,8 @@
         }
         window.turnstile.render("#cf-container", {
           sitekey: sitekey,
-          action: action,
+          language: lang,
           appearance: "interaction-only",
-          // RN側からexecuteの合図を送る手段が無いので、
-          // レンダリングされたら自動で実行する。
           execution: "render",
           callback: function (token) {
             window.location.href =

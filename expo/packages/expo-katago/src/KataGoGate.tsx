@@ -1,37 +1,33 @@
-// expo-katago/src/KataGoGate.tsx
-
 import React, { ReactNode } from "react";
-import { Text, View } from "react-native";
-import { LoadingScreenForKataGoGate } from "./components/LoadingScreenForKataGoGate";
+import { ColorValue, Text, View } from "react-native";
+import { LoadingScreen } from "ui-atoms";
 import { KataGoEngineProvider, useKataGoEngine } from "./KataGoEngineContext";
+import { getGateStatus } from "./gateStatus";
+import { LangProvider, useTranslation } from "./i18n";
 
-function stagePercent(stage: {
-  phase: string;
-  loaded?: number;
-  total?: number;
-  step?: number;
-  totalSteps?: number;
-}): number | null {
-  if (stage.phase === "downloading") {
-    return stage.total! > 0
-      ? Math.min(100, Math.round((stage.loaded! / stage.total!) * 100))
-      : null;
-  }
-  return Math.round((stage.step! / stage.totalSteps!) * 100);
-}
+// 1. 型定義は1つだけに集約！すべて必須（Required）にする
+export type KataGoGateProps = {
+  children: ReactNode;
+  backgroundColor: ColorValue;
+  errorColor: ColorValue;
+  textColor: ColorValue;
+  trackColor: ColorValue;
+  fillColor: ColorValue;
+};
 
-// loadProgressがnull = Bridge接続待ち（warmupはまだ始まっていない）
-// downloading / warming_up は analyzeBoard.ts の ModelLoadStage 由来
-function stageLabel(phase: string): string {
-  return phase === "downloading"
-    ? "Downloading AI model..."
-    : "Starting AI engine...";
-}
-
-function KataGoGateView({ children }: { children: ReactNode }) {
+function KataGoGateView({
+  children,
+  backgroundColor,
+  errorColor,
+  textColor,
+  trackColor,
+  fillColor,
+}: KataGoGateProps) {
   const { engineReady, setupError, loadProgress } = useKataGoEngine();
+  const t = useTranslation();
+  const status = getGateStatus(engineReady, setupError, loadProgress);
 
-  if (setupError) {
+  if (status.status === "error") {
     return (
       <View
         style={{
@@ -39,40 +35,49 @@ function KataGoGateView({ children }: { children: ReactNode }) {
           justifyContent: "center",
           alignItems: "center",
           padding: 20,
-          backgroundColor: "white",
+          backgroundColor: backgroundColor,
         }}
       >
         <Text
           style={{
             fontSize: 16,
-            color: "orange",
+            color: errorColor,
             marginBottom: 10,
             fontWeight: "bold",
           }}
         >
-          failed to prepare katago
+          {t("gate.errorTitle")}
         </Text>
-        <Text style={{ fontSize: 12, color: "#4e5256" }}>{setupError}</Text>
+        <Text style={{ fontSize: 12, color: textColor }}>
+          {status.message}
+        </Text>
       </View>
     );
   }
 
-  if (!engineReady) {
-    const percent = loadProgress ? stagePercent(loadProgress.stage) : null;
-    const label = loadProgress
-      ? stageLabel(loadProgress.stage.phase)
-      : "Connecting to AI engine...";
-
-    return <LoadingScreenForKataGoGate label={label} percent={percent} />;
+  if (status.status === "loading") {
+    return (
+      <LoadingScreen
+        label={t(`gate.${status.phase}`)}
+        percent={status.percent}
+        backgroundColor={backgroundColor}
+        textColor={textColor}
+        trackColor={trackColor}
+        fillColor={fillColor}
+      />
+    );
   }
 
   return <>{children}</>;
 }
 
-export function KataGoGate({ children }: { children: ReactNode }) {
+// 2. スプレッド構文で丸ごと展開して渡す
+export function KataGoGate(props: KataGoGateProps) {
   return (
-    <KataGoEngineProvider>
-      <KataGoGateView>{children}</KataGoGateView>
-    </KataGoEngineProvider>
+    <LangProvider>
+      <KataGoEngineProvider>
+        <KataGoGateView {...props} />
+      </KataGoEngineProvider>
+    </LangProvider>
   );
 }

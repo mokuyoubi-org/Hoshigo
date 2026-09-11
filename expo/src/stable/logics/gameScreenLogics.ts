@@ -1,13 +1,7 @@
 // logics/gameScreenLogics.ts
-import {
-  BLACK,
-  BoardSize,
-  Color,
-  isNoOkiishi,
-  MatchType,
-  PASS_GRID,
-  WHITE,
-} from "expo-goband";
+
+import { MatchType, Color, BLACK, WHITE, BoardSize, PASS_GRID, isNoOkiishi } from "@/packages/go-core/src";
+
 
 export type GameScreenParams = {
   matchId: string;

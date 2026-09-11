@@ -1,10 +1,10 @@
 // src/components/IconSelectModal.tsx
 import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
-import { useTranslation } from "@/src/active/language/i18n";
+import { useTranslation } from "@/src/active/i18n";
 
+import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { MaterialIcons } from "@expo/vector-icons";
-import { ModalShell } from "modal-shell";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -29,7 +29,6 @@ export default function IconSelectModal({
   onSelectIcon,
   currentIconIndex,
 }: Props) {
-  
   const t = useTranslation();
   const { height: windowHeight } = useWindowDimensions();
   const iconSize: number = 96;

@@ -33,4 +33,10 @@ export const COLORS = {
   yellow: "#e8d26d",
   coral: "#f19688",
   purple: "#c182d8",
+
+  goodMoveColor: "#3bce428f", // デフォルトは緑色
+  badMoveColor: "#ff7474a2", // デフォルトは赤色
+
+  humanMoveColor: "#e2a1a17b", // 🐱 人間の編集(赤)
+  botMoveColor: "#75b384d7", // 🐱 ボットの着手(緑)
 } as const;

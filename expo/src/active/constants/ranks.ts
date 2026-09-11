@@ -1,6 +1,6 @@
 // constants/ranks.ts
 
-import { TranslationKey } from "../language/lang";
+import { TranslationKey } from "../i18n/types";
 
 export type Rank = {
   nameKey: TranslationKey;

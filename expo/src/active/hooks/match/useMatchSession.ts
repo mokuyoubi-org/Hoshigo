@@ -8,19 +8,19 @@ import {
 } from "@/src/stable/logics/resultLogics";
 import { resultToComment } from "@/src/stable/logics/textFormatter";
 import { supabase } from "@/src/stable/services/supabase/supabase";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { useGoGame } from "@/packages/go-components/src";
 import {
   BoardSize,
   Color,
   Grid,
   MatchType,
   PASS_GRID,
-  useGoGame,
-} from "expo-goband";
-import { useCallback, useEffect, useRef, useState } from "react";
-
+  RecordAnalysis,
+} from "@/packages/go-core/src";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
-import { RecordAnalysis } from "expo-goband";
-import { useTranslation } from "../../language/i18n";
+import { useTranslation } from "../../i18n";
 import { useBotCalculation } from "../bot/useBotCalculation";
 import { useBotMove } from "../bot/useBotMove";
 import { useKataGoTask } from "../bot/useKataGoTask";
@@ -141,14 +141,21 @@ export function useMatchSession({
       movesRef.current,
       matchType,
       async (grid: Grid, analysis) => {
-        // 🐱 着手決定のついでに手に入った分析結果を、二重に呼び直さず記録する。
-        liveAnalysis.record(botMoveIndex, analysis);
-
-        await supabase.rpc("add_move", {
+        // 🐱 着手決定のついでに手に入った分析結果は、まだ記録しない。
+        //    supabaseへの送信が成功して初めて「この手は本当に打たれた」と
+        //    確定するので、記録もそのタイミングまで待つ。
+        const { error } = await supabase.rpc("add_move", {
           p_match_id: matchId,
           p_move: grid,
           p_is_bot: true,
         });
+
+        if (error) {
+          console.error("ボットの着手送信失敗:", error);
+          return;
+        }
+
+        liveAnalysis.record(botMoveIndex, analysis);
         // ボットの着手成功時にハートビートタイマーをリセット
         clock.resetHeartbeat();
       },
@@ -169,25 +176,12 @@ export function useMatchSession({
       return;
     }
 
-    // 🐱 この手が何手目(0-indexed)として記録されるか。やり直しの場合は
-    //    同じインデックスに対してrecordが上書きされるので、後始末は不要。
-    const myMoveIndex = goBoard.movesRef.current.length - 1;
-
-    // 🥶 kataGo計算・RPC送信をまとめて1つのtry/catch/finallyで保護する。
-    // どちらで失敗・例外が起きても、必ず「石を戻す→自分の番に戻す→送信フラグを解放する」
-    // という後始末に辿り着けるようにするための一本化。
+    // 🥶 RPC送信をtry/catch/finallyで保護する。失敗・例外どちらでも
+    // 必ず「石を戻す→自分の番に戻す→送信フラグを解放する」という
+    // 後始末に辿り着けるようにするための一本化。
+    // 🐱 この手の分析(perMove記録)は、この局面になった瞬間に盤面変化
+    //    監視用のuseEffectが既に済ませているので、ここでは計算しない。
     try {
-      const x = goBoard.boardHistoryRef.current[goBoard.currentIndex];
-      const analysis = await kataGoTask.run({
-        board: x,
-        movesSoFar: goBoard.moves,
-        matchType,
-        boardSize,
-        modelId: opponentModelId,
-        currentPlayer: myColor,
-      });
-      liveAnalysis.record(myMoveIndex, analysis);
-
       // 🥶 ここから実際にサーバーへ送信する。以降frozenが3秒以上続いたら
       // useMatchClock側のタイムアウト救済が働く(通信ロス等の異常検知用)。
       clock.markWaitingForServer();
@@ -218,7 +212,7 @@ export function useMatchSession({
         clock.unfreeze(oppColor);
       }
     } catch (e) {
-      // kataGoの計算失敗・RPC通信の例外、どちらもここでまとめて拾う
+      // RPC通信の例外をここで拾う
       console.error("着手処理で例外発生:", e);
       goBoard.loadMoves(goBoard.movesRef.current.slice(0, -1));
       clock.unfreeze(myColor); // 例外でも自分の番へ戻す
@@ -233,28 +227,9 @@ export function useMatchSession({
 
     clock.freeze(); // 🥶 投了確定までボットの自動着手・自分のタップを止める
 
-    // 🐱 投了はダブルパスを経由しないので、gameCh_double_passの
-    //    endgame.analyzeTerritory相当の「最終局面の分析」がここでしか
-    //    埋められない。既に打たれている最後の手の効果を測るための、
-    //    perMove[movesRef.current.length]をここで記録する。
-    try {
-      const finalMoveIndex = goBoard.movesRef.current.length;
-      const analysis = await kataGoTask.run({
-        board: goBoard.boardRef.current,
-        movesSoFar: goBoard.movesRef.current,
-        matchType,
-        boardSize,
-        modelId: opponentModelId,
-        // 投了直前の最終局面なので、次に打つ側(実際にはもう打たれないが)を渡す。
-        // handlePutStoneの修正時と同じ理屈で、直前に打ったのはoppColorのはず。
-        currentPlayer: myColor,
-      });
-      liveAnalysis.record(finalMoveIndex, analysis);
-    } catch (e) {
-      console.error("投了前の最終局面分析で例外発生:", e);
-      // 分析に失敗しても投了処理自体は続行する(採点できないだけで、
-      // 投了そのものをブロックする理由にはならない)
-    }
+    // 🐱 「今、自分の番である」ということは、この局面(=投了する直前の
+    //    局面)の分析は、盤面変化監視用のuseEffectが自分の番になった
+    //    瞬間に既に計算・記録済みのはず。ここで改めて計算する必要はない。
 
     try {
       const { error } = await supabase.rpc("resign", {
@@ -293,23 +268,8 @@ export function useMatchSession({
       // 相手の手を受信(相手のadd_move)したタイミングでハートビートタイマーをリセット
       clock.resetHeartbeat();
 
-      // 🐱 相手が人間の場合だけ、ここで分析する。相手がbotの場合は
-      //    handleRunBotTurn側で着手決定のついでに既に記録済みなので、
-      //    ここで二重に呼ばない。
-      if (!botMatch) {
-        const oppMoveIndex = goBoard.movesRef.current.length - 1;
-        const x =
-          goBoard.boardHistoryRef.current[goBoard.movesRef.current.length];
-        const analysis = await kataGoTask.run({
-          board: x,
-          movesSoFar: goBoard.movesRef.current,
-          matchType,
-          boardSize,
-          modelId: "b18", // 相手が人間ならb18
-          currentPlayer: myColor, // 相手が打った直後は自分の番
-        });
-        liveAnalysis.record(oppMoveIndex, analysis);
-      }
+      // 🐱 この手を受けて自分の番になった局面の分析は、盤面変化監視用の
+      //    useEffectが自動的に発火して記録してくれるので、ここでは呼ばない。
 
       const moves = goBoard.movesRef.current;
       const isDoublePass =
@@ -440,6 +400,76 @@ export function useMatchSession({
     };
     execute();
   }, [botMatch, clock.turnState, handleRunBotTurn, oppColor, isGameEnded]);
+
+  // 🐱 盤面が変わるたびに発火する「次の一手」の事前分析。
+  //    盤面変化(=誰かが手を打った/resyncで巻き戻った、など理由を問わず)
+  //    を検知したら、その時点の局面を「次に打つ人」の視点で分析し、
+  //    次の一手が占めるはずのindex(=現在のmoves.length)に記録しておく。
+  //    実際にその手が打たれた時には、ここで先回りして記録した分析を
+  //    そのまま使う(handlePutStone・gameCh_move・handleResignでは計算しない)。
+  const analysisRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (isGameEnded) return;
+
+    // ボットの番はここでは分析しない。useBotMove側が着手決定のついでに
+    // 分析結果を既に持っているので、それをそのまま使う(handleRunBotTurn参照)。
+    const isBotTurn = botMatch && clock.turnState === oppColor;
+    if (isBotTurn) return;
+
+    // 次に打つ人が定まらない場合は何もしない。
+    // 🐱 clock.turnStateは Color | "frozen" の型で、"frozen"は通信対局特有の
+    //    「着手が確定するまで誰の番でもない」状態(Colorには存在しない概念)。
+    //    frozen中に先回り分析をしても、その間に送信失敗→取り消しが起きれば
+    //    無駄になるだけなので、Colorが確定してから分析する。
+    const currentPlayer = clock.turnState;
+    if (currentPlayer === "frozen" || !currentPlayer) return;
+
+    const moves = goBoard.moves;
+    const nextMoveIndex = moves.length;
+
+    // ダブルパス(終局)後は「次の一手」が存在しないので対象外。
+    // 最終局面の分析はgameCh_double_pass側のanalyzeTerritoryに任せる。
+    const isDoublePass =
+      moves.length >= 2 &&
+      moves[moves.length - 1] === PASS_GRID &&
+      moves[moves.length - 2] === PASS_GRID;
+    if (isDoublePass) return;
+
+    const board = goBoard.boardHistoryRef.current[nextMoveIndex];
+    if (!board) return;
+
+    const requestId = ++analysisRequestIdRef.current;
+
+    (async () => {
+      const analysis = await kataGoTask.run({
+        board,
+        movesSoFar: moves,
+        matchType,
+        boardSize,
+        modelId: opponentModelId,
+        currentPlayer,
+      });
+
+      // 🥶 発火後に盤面がさらに変わっていたら(取り消し→打ち直し等)、
+      //    この結果は古いので捨てる。
+      if (analysisRequestIdRef.current !== requestId) return;
+
+      liveAnalysis.record(nextMoveIndex, analysis);
+    })();
+  }, [
+    goBoard.moves,
+    goBoard.boardHistoryRef,
+    isGameEnded,
+    botMatch,
+    clock.turnState,
+    oppColor,
+    matchType,
+    boardSize,
+    opponentModelId,
+    kataGoTask,
+    liveAnalysis,
+  ]);
 
   // -------- return --------
   return {

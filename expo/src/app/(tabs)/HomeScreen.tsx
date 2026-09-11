@@ -1,18 +1,18 @@
+import { BoardSize, BOARD_SIZE_OPTIONS } from "@/packages/go-core/src";
+import { IconButton, SegmentedControl } from "@/packages/ui-atoms/src";
 import { MatchButton } from "@/src/active/components/buttons/MatchButton";
 import { Header } from "@/src/active/components/common/Header";
 import { MainTitle } from "@/src/active/components/common/MainTitile";
 import RankingsModal from "@/src/active/components/modals/RankingsModal";
 import { RuleModal } from "@/src/active/components/modals/RuleModal";
 import { COLORS } from "@/src/active/constants/colors";
+import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
-import { BOARD_SIZE_OPTIONS, BoardSize } from "expo-goband";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useOverlay } from "react-overlay";
-import { IconButton, SegmentedControl } from "ui-atoms";
 
 export default function HomeScreen() {
   const { startMatching, isMatching } = useMatching();

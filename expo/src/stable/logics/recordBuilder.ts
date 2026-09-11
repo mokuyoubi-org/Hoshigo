@@ -1,14 +1,14 @@
 // recordBuilder.ts
 
-import { TranslationKey } from "@/src/active/language/lang";
-import { RecordType } from "@/src/active/types/record";
 import {
   BLACK,
   BoardSize,
   Color,
   MatchType,
   RecordAnalysis,
-} from "expo-goband";
+} from "@/packages/go-core/src";
+import { TFunction } from "@/src/active/i18n/types";
+import { RecordType } from "@/src/active/types/record";
 import { getRankInfo } from "./rankLogics";
 
 type BuildRecordArgs = {
@@ -29,7 +29,7 @@ type BuildRecordArgs = {
   oppIconIndex: number;
   oppRatingBefore: number;
   oppRatingAfter: number;
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+  t: TFunction;
   analysis: RecordAnalysis | null;
 };
 

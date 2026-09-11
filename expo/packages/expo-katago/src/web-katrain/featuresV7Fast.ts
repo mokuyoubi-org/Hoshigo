@@ -1,9 +1,11 @@
-
-import { BLACK, Color, EMPTY, PASS_GRID, WHITE } from "../types";
-import { BOARD_SIZE, computeLibertyMap, computeAreaMapV7KataGo } from "./fastBoard";
+import { BLACK, Color, EMPTY, PASS_GRID, WHITE } from "go-core";
+import {
+  BOARD_SIZE,
+  computeAreaMapV7KataGo,
+  computeLibertyMap,
+} from "./fastBoard";
 import { getOpponent } from "./gameLogic";
 import { GameRules } from "./types";
-
 
 const INPUT_SPATIAL_CHANNELS_V7 = 22;
 const INPUT_GLOBAL_CHANNELS_V7 = 19; // 無関係の19。features数

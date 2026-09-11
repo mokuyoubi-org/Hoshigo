@@ -1,5 +1,11 @@
-import { getOppositeColor } from "../utils";
-import { BLACK, Color, EMPTY, PASS_GRID, WHITE } from "../types";
+import {
+  BLACK,
+  Color,
+  EMPTY,
+  getOppositeColor,
+  PASS_GRID,
+  WHITE,
+} from "go-core";
 
 /*
 🌟export let BOARD_SIZE = 9;についての説明🌟

@@ -1,7 +1,7 @@
 // types/record.ts
 
-import { BoardSize, MatchType } from "expo-goband";
-import { RecordAnalysis } from "expo-goband";
+import { BoardSize, MatchType, RecordAnalysis } from "@/packages/go-core/src";
+
 
 
 export type RecordType = {

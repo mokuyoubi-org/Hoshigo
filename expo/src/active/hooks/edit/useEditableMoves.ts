@@ -6,18 +6,9 @@
 // 分析結果には一切触れない。
 // ──────────────────────────────────────────────────
 
+
+import { BoardSize, Grid, movesToBoardHistory, generateTerritoryBoard, PASS_GRID, initBoard, getColorToMove, isLegalMove, isNoOkiishi } from "@/packages/go-core/src";
 import { RecordType } from "@/src/active/types/record";
-import {
-  BoardSize,
-  generateTerritoryBoard,
-  getColorToMove,
-  Grid,
-  initBoard,
-  isLegalMove,
-  isNoOkiishi,
-  movesToBoardHistory,
-  PASS_GRID,
-} from "expo-goband";
 import { useMemo, useState } from "react";
 
 export function useEditableMoves(record: RecordType) {
@@ -61,12 +52,6 @@ export function useEditableMoves(record: RecordType) {
   const maxIdx = Math.max(0, processed.boardHistory.length - 1);
   const [currentIndex, setCurrentIndex] = useState(maxIdx);
 
-
-
-
-
-
-
   // 🐱 その地点に今乗ってる石を、直近では誰が打ったか(人間/ボット)を表すMap。
   //    1地点につき1つの値しか持てないMapを使うことで、同じ座標が取り返しで
   //    複数回打たれても「人間かボットか」が矛盾なく1つに定まる。
@@ -100,16 +85,6 @@ export function useEditableMoves(record: RecordType) {
     currentIndex,
     botMoveIndices,
   ]);
-
-
-
-
-
-
-
-
-
-
 
   // 🐱 着手を1手挿入する。合法性チェックのみ担当。分析のキックオフは呼び出し側(orchestrator)に任せる
   const tryPutStone = (grid: Grid, source: "human" | "bot") => {

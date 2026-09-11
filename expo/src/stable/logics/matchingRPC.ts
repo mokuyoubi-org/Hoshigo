@@ -1,7 +1,7 @@
 // matchingRPC.ts
 
+import { BoardSize } from "@/packages/go-core/src";
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { BoardSize } from "expo-goband";
 
 export type PlayingParams = {
   matchId: number;

@@ -1,6 +1,6 @@
 // LoginModal.tsx
+import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { COLORS } from "@/src/active/constants/colors";
-import { ModalShell } from "modal-shell";
 import React, { useRef } from "react";
 import {
   ActivityIndicator,
@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { useLoginModal } from "../../hooks/screens/useLoginModal";
+import { useLang } from "../../i18n";
 
 type Props = {
   visible: boolean;
@@ -22,6 +23,7 @@ type Props = {
 
 export function LoginModal({ visible, onClose }: Props) {
   const turnstileRef = useRef<TurnstileHandle>(null);
+  const {lang} = useLang()
 
   const {
     t,
@@ -55,10 +57,15 @@ export function LoginModal({ visible, onClose }: Props) {
 
   return (
     <ModalShell size="lg">
-      <TurnstileWidget
-        ref={turnstileRef}
-        sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
-      />
+<TurnstileWidget
+  ref={turnstileRef}
+  sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
+  bgColor={COLORS.background}
+  textColor={COLORS.text}
+  spinnerColor={COLORS.primary}
+  spinnerTrackColor={COLORS.backgroundDark}
+  lang={lang}
+/>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full"

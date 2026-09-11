@@ -6,7 +6,9 @@
 // branchIndex以前は本編を、それより後は編集後データを参照する。
 // ──────────────────────────────────────────────────
 
-import { MoveAnalysisEntry, RecordAnalysis } from "expo-goband";
+import { MoveAnalysisEntry, RecordAnalysis } from "@/packages/go-core/src";
+
+
 
 export const EMPTY_ENTRY: MoveAnalysisEntry = {
   winRate: 50,

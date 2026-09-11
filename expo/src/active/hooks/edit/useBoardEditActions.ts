@@ -2,19 +2,19 @@
 
 import {
   BoardSize,
-  generateTerritoryBoard,
-  makeGrid,
   MatchType,
-  ownershipToDeadStones,
   PASS_GRID,
   TerritoryBoard,
-} from "expo-goband";
+  generateTerritoryBoard,
+  makeGrid,
+  ownershipToDeadStones,
+} from "@/packages/go-core/src";
 import { useEffect, useState } from "react";
 import { useEditableGoBoard } from "./useEditableGoBoard";
 
 type EditableGoBoard = ReturnType<typeof useEditableGoBoard>;
 
-// 🐱 今実行中の処理を管理する型にゃ！
+// 🐱 今実行中の処理を管理する型
 type ProcessingType = "bot" | "territory" | null;
 
 export function useBoardEditActions(
@@ -27,7 +27,7 @@ export function useBoardEditActions(
     result: string;
   } | null>(null);
 
-  // 🐱 今どちらの処理が動いているかを保持するにゃ
+  // 🐱 今どちらの処理が動いているかを保持する
   const [activeProcessing, setActiveProcessing] =
     useState<ProcessingType>(null);
 
@@ -45,7 +45,7 @@ export function useBoardEditActions(
   const handleBotSuggest = async () => {
     if (board.isAnalyzing || activeProcessing !== null) return;
 
-    setActiveProcessing("bot"); // 🤖 ボット計算開始にゃ！
+    setActiveProcessing("bot"); // 🤖 ボット計算開始
     try {
       const entry = await board.runAndStoreAnalysis(
         board.currentIndex,
@@ -68,7 +68,7 @@ export function useBoardEditActions(
   const handleCalculateTerritory = async () => {
     if (board.isAnalyzing || activeProcessing !== null) return;
 
-    setActiveProcessing("territory"); // 🧮 地計算開始にゃ！
+    setActiveProcessing("territory"); // 🧮 地計算開始
     try {
       const currentBoard = board.processed.boardHistory[board.currentIndex];
       const entry = await board.runAndStoreAnalysis(
@@ -97,7 +97,7 @@ export function useBoardEditActions(
     manualTerritory,
     handleBotSuggest,
     handleCalculateTerritory,
-    // 🐱 それぞれのボタン専用の状態を画面側に渡してあげるにゃ！
+    // 🐱 それぞれのボタン専用の状態を画面側に渡してあげる
     isBotSuggesting: activeProcessing === "bot",
     isCalculatingTerritory: activeProcessing === "territory",
     isAnyProcessing: activeProcessing !== null || board.isAnalyzing,

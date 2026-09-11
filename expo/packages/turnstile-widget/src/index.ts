@@ -1,6 +1,3 @@
 // TurnstileWidget/index.ts
 
-export {
-  TurnstileHandle,
-  TurnstileWidget,
-} from "./TurnstileWidget";
+export { TurnstileHandle, TurnstileWidget } from "./TurnstileWidget";

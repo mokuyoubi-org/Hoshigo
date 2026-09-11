@@ -1,15 +1,16 @@
 // GameStartModal.tsx
-import { AvatarWithPass } from "@/src/active/components/go/AvatarWithPass";
-import { useTranslation } from "@/src/active/language/i18n";
+
+import { useTranslation } from "@/src/active/i18n";
 import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
-import { Color, MatchType } from "expo-goband";
-import { ModalShell } from "modal-shell";
+
+import { Color, MatchType } from "@/packages/go-core/src";
+import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import React, { useEffect } from "react";
 import { Text, View } from "react-native";
 import { COLORS } from "../../constants/colors";
-import { TranslationKey } from "../../language/lang";
+import { AvatarWithPass } from "../common/AvatarWithPass";
 
 type Props = {
   myUsername: string;
@@ -47,7 +48,7 @@ export const GameStartModal = ({
   }, [onClose]);
 
   // dictionary の新しいキー形式に合わせて取得する
-  const matchTypeText = t(`MatchType.matchType_${matchType}` as TranslationKey);
+  const matchTypeText = t(`MatchType.matchType_${matchType}`);
 
   // 自分（左）と相手（右）のデータを整理
   const leftPlayer = {

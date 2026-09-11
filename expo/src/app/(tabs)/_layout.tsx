@@ -1,7 +1,7 @@
 // @/src/app/(tabs)/_layout.tsx
 
 import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/language/i18n";
+import { useTranslation } from "@/src/active/i18n";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { NavigationBar } from "expo-navigation-bar";
 import { Tabs } from "expo-router";

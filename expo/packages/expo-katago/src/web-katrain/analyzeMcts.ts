@@ -1,15 +1,13 @@
-import { getOppositeColor } from "../utils";
-
 import * as tf from "@tensorflow/tfjs";
 import {
   BLACK,
   Color,
   EMPTY,
-  FloatArray,
   MoveObject,
   PASS_GRID,
   WHITE,
-} from "../types";
+  getOppositeColor,
+} from "go-core";
 import { postprocessKataGoV8 } from "./evalV8";
 import {
   BOARD_AREA,
@@ -33,7 +31,7 @@ import { ENGINE_MAX_TIME_MS, ENGINE_MAX_VISITS } from "./limits";
 import { KataGoModelV8Tf } from "./modelV8";
 import { expectedWhiteScoreValue, getSqrtBoardArea } from "./scoreValue";
 import { POLICY_OPTIMISM, ROOT_POLICY_OPTIMISM } from "./searchParams";
-import { BoardState, GameRules, RegionOfInterest } from "./types";
+import { BoardState, FloatArray, GameRules, RegionOfInterest } from "./types";
 
 export type OwnershipMode = "none" | "root" | "tree";
 

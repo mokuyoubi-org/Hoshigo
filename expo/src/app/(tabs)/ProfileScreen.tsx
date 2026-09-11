@@ -11,22 +11,21 @@ import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BOARD_SIZE_OPTIONS } from "@/packages/go-core/src";
+import { IconButton, SegmentedControl } from "@/packages/ui-atoms/src";
 import { GuestNoticeCard } from "@/src/active/components/cards/GuestNoticeCard";
 import { RankCard } from "@/src/active/components/cards/RankCard";
+import { Avatar } from "@/src/active/components/common/Avatar";
 import { Header } from "@/src/active/components/common/Header";
-import { Avatar } from "@/src/active/components/go/Avatar";
 import IconSelectModal from "@/src/active/components/modals/IconSelectModal";
 import { LoginModal } from "@/src/active/components/modals/LoginModal";
 import RankInfoModal from "@/src/active/components/modals/RankInfoModal";
 import UsernameEditModal from "@/src/active/components/modals/UsernameEditModal";
 import { COLORS } from "@/src/active/constants/colors";
+import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { useProfileScreen } from "@/src/active/hooks/screens/useProfileScreen";
-import { useTranslation } from "@/src/active/language/i18n";
-import { BOARD_SIZE_OPTIONS } from "expo-goband";
-import { useOverlay } from "react-overlay";
-import { IconButton, SegmentedControl } from "ui-atoms";
-import { StatsCard } from "@/src/active/components/cards/StatsCard";
+import { useTranslation } from "@/src/active/i18n";
 
 export default function ProfileScreen() {
   const t = useTranslation();
@@ -169,36 +168,8 @@ export default function ProfileScreen() {
               }
             />
 
-
-
-
-
-
-
-{/* 戦績カード */}
-{/* <StatsCard /> */}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            {/* 戦績カード */}
+            {/* <StatsCard /> */}
 
             {/* クラウドメニュー */}
             <TouchableOpacity

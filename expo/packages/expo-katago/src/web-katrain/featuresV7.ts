@@ -1,9 +1,4 @@
-import {
-  BLACK,
-  Color,
-  MoveObject,
-  WHITE,
-} from "../types";
+import { BLACK, Color, MoveObject, WHITE } from "go-core";
 import { BOARD_SIZE } from "./fastBoard";
 import { getOpponent } from "./gameLogic";
 import { BoardState, GameRules } from "./types";

@@ -1,4 +1,4 @@
-import { Color, MoveObject } from "../types";
+import { Color, MoveObject } from "go-core";
 
 export interface KataGoInitRequest {
   type: "katago:init";

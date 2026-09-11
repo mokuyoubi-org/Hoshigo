@@ -1,5 +1,5 @@
 // 移植
-import { BLACK, Color, WHITE } from "../types";
+import { BLACK, Color, WHITE } from "go-core";
 import { BoardState } from "./types";
 
 export const getOpponent = (player: Color): Color =>

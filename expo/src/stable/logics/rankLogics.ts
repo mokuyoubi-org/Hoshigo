@@ -1,4 +1,4 @@
-import { TranslationKey } from "@/src/active/language/lang";
+import { TFunction } from "@/src/active/i18n/types";
 import { RankInfo, RANKS } from "../../active/constants/ranks";
 
 const RATING_PER_WIN = 10;
@@ -17,10 +17,7 @@ const ratingNeededToWinsNeeded = (
   return Math.ceil(rating / ratingPerWin);
 };
 
-export function getRankInfo(
-  rating: number | null,
-  t: (key: TranslationKey, params?: Record<string, string | number>) => string,
-): RankInfo {
+export function getRankInfo(rating: number | null, t: TFunction): RankInfo {
   const safeRating = Math.max(0, rating ?? 0);
   const rankIndex = ratingToRankIndex(safeRating);
   const rank = RANKS[rankIndex];
@@ -36,10 +33,7 @@ export function getRankInfo(
       Math.floor((currentProgress / totalRange) * 100),
     );
     const ratingNeeded = Math.max(0, nextMin - safeRating);
-    const winsNeeded = ratingNeededToWinsNeeded(
-      ratingNeeded,
-      RATING_PER_WIN,
-    );
+    const winsNeeded = ratingNeededToWinsNeeded(ratingNeeded, RATING_PER_WIN);
 
     return {
       index: rankIndex,
