@@ -9,6 +9,8 @@
 // 無駄を避けるため、onDecidedにbestMoveと一緒にanalysisも渡す。
 // ──────────────────────────────────────────────────
 
+import { decideBotFirstMove } from "@/src/stable/logics/decideBotFirstMove";
+import { selectBotCandidateMove } from "@/src/stable/logics/selectBotCandidateMove";
 import { AnalyzeResult, DEFAULT_MODEL_ID, ModelId } from "expo-katago";
 import {
   BLACK,
@@ -104,23 +106,6 @@ export function useBotMove(
         return;
       }
 
-      // 初手はハードコード
-
-      // if(movesSoFar.length === 0){
-      //   if(matchType === 0){}
-      //   else{
-      //     // matchType1はbotは必ず後攻なのであり得ない。なので置き碁の場合ということになる
-      //     if(boardSize === 9){
-      //       if(matchType === 2){}else if(matchType === 3){}else if(matchType === 4){}else if(matchType === 5){}
-      //     }
-      //     else if(boardSize === 13){
-      //       if(matchType === 2){}else if(matchType === 3){}else if(matchType === 4){}else if(matchType === 5){}else if(matchType === 6){}else if(matchType === 7){}else if(matchType === 8){}else if(matchType === 9){}
-      //     }
-
-      //   }
-      //    await onDecided(, null);
-      // }
-
       const result = await kataGoTask.run({
         board,
         movesSoFar,
@@ -135,33 +120,31 @@ export function useBotMove(
         return;
       }
 
-      // 1手目: ハードコードする。
-      // 2or3手目: 最善手40%, 2番手24%, 3番手18%, 4番手12%, 5番手6%
-      // 4or5手目: 最善手60%, 2番手16%, 3番手12%, 4番手8%, 5番手4%
-      // 6or7手目: 最善手80%, 2番手8%, 3番手6%, 4番手4%, 5番手2%
-      // 8手目以降: 最善手100%
+      // 手数（これまでに打たれた手の数）
+      const moveCount = movesSoFar.length;
 
-      const best = result.moves[0];
-      const bestMove: Grid =
-        best.x === -1 || best.y === -1
-          ? PASS_GRID
-          : makeGrid(best.y, best.x, boardSize);
-
-      // ⚠️bot3のmatchType===5つまり5子局は、初手からパスしてしまうので、それを禁止する。
-      // 10手も経ってないのにパスするのは禁止 ⚠️これを20とかにすると流石に意味わからん手を打つようになるのでng
-      if (
-        modelId === "b18" &&
-        matchType === 5 &&
-        movesSoFar.length < 10 &&
-        bestMove === PASS_GRID
-      ) {
-        const best2 = result.moves[1];
-        const bestMove2 = makeGrid(best2.y, best2.x, boardSize);
-        await onDecided(bestMove2, result);
+      // 1手目: ハードコード（条件に合う場合）
+      if (moveCount === 0 && boardSize === 9 && matchType !== 1) {
+        const grid = decideBotFirstMove(matchType, boardSize);
+        console.log("ハードコードされた初手: ", grid);
+        await onDecided(grid, result);
         return;
       }
 
-      await onDecided(bestMove, result);
+      // 2手目以降: 手数と盤サイズに応じた重み付きランダムで1手選ぶ
+      // (揺らぎ区間を過ぎたら常に最善手。詳細な計算はselectBotCandidateMove側に集約)
+      const selectedMove = selectBotCandidateMove(
+        result.moves,
+        moveCount,
+        boardSize,
+      );
+
+      const chosenGrid: Grid =
+        selectedMove.x === -1 || selectedMove.y === -1
+          ? PASS_GRID
+          : makeGrid(selectedMove.y, selectedMove.x, boardSize);
+
+      await onDecided(chosenGrid, result);
     } finally {
       isBotRunningRef.current = false;
     }

@@ -140,7 +140,7 @@ export function useMatchSession({
       boardRef.current,
       movesRef.current,
       matchType,
-      async (grid: Grid, analysis) => {
+      async (grid: Grid, analysis) => { // 💡ここでrunBotTurnのanalysisつまりresultを受け取っている
         // 🐱 着手決定のついでに手に入った分析結果は、まだ記録しない。
         //    supabaseへの送信が成功して初めて「この手は本当に打たれた」と
         //    確定するので、記録もそのタイミングまで待つ。
