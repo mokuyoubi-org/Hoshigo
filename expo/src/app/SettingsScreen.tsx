@@ -3,6 +3,7 @@ import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
 import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
 import { useTranslation } from "@/src/active/i18n";
 import * as Application from "expo-application";
+import Constants from "expo-constants";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
@@ -157,7 +158,8 @@ export default function SettingsScreen() {
                   {t("common.appVersion")}
                 </Text>
                 <Text className="text-base font-semibold text-textSub tracking-wide">
-                  {Application.nativeApplicationVersion}
+                  {Application.nativeApplicationVersion ??
+                    Constants.expoConfig?.version}
                 </Text>
               </View>
 
