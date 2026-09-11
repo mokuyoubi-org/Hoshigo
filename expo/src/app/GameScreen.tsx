@@ -309,6 +309,7 @@ export default function GameScreen() {
           <GoBoard
             // 盤面サイズ: 1
             boardSize={boardSize}
+            matchType={matchType}
             // プレイヤの色: 1
             playerColor={myColor}
             // 現在の盤面、インデックス、テリトリーボード: 3

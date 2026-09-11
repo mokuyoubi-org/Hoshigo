@@ -101,6 +101,7 @@ export const RecordCard = ({
           <GoBoard
             // 盤面サイズ: 1
             boardSize={boardSize}
+            matchType={matchType}
             // プレイヤの色: 1
             playerColor={BLACK} // ダミー
             // 現在の盤面、インデックス、テリトリーボード: 3

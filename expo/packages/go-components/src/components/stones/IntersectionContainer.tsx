@@ -1,6 +1,6 @@
 // IntersectionContainer.tsx
 
-import { BLACK, Color, GoString, Grid, PASS_GRID } from "go-core";
+import { BLACK, Color, GoString, Grid, MatchType, PASS_GRID } from "go-core";
 import React, { memo } from "react";
 import { ColorValue, Pressable, StyleSheet } from "react-native";
 import { Marker } from "./Marker";
@@ -35,6 +35,7 @@ type Props = {
   botMoveColor: ColorValue;
   goodMoveColor: ColorValue;
   badMoveColor: ColorValue;
+  matchType: MatchType
 };
 
 export const IntersectionContainer = memo(function DecoratedStone({
@@ -65,10 +66,13 @@ export const IntersectionContainer = memo(function DecoratedStone({
   botMoveColor,
   goodMoveColor,
   badMoveColor,
+  matchType
 }: Props) {
   const row = Math.floor(grid / boardSize);
   const col = grid % boardSize;
   const isDead = territoryValue === 3; // 1は黒の陣地、2は白の陣地、3は死に石
+  // console.log("currentTurn: ", currentTurn);
+  // console.log("playerColor: ", playerColor);
 
   return (
     <Pressable
@@ -174,7 +178,7 @@ export const IntersectionContainer = memo(function DecoratedStone({
       */}
       {!goString &&
         isCandidate &&
-        currentTurn !== playerColor &&
+        (matchType <= 1 && currentTurn !== playerColor ||matchType >= 2 && currentTurn === playerColor  ) &&
         lastMove !== PASS_GRID && (
           <>
             {/* 薄い石 */}

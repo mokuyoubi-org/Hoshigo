@@ -285,6 +285,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 <GoBoard
                   // 盤面サイズ: 1
                   boardSize={board.boardSize}
+                  matchType={record.match_type}
                   // プレイヤの色: 1
                   playerColor={isPlayerBlack ? BLACK : WHITE}
                   // 現在の盤面、インデックス、テリトリーボード: 3

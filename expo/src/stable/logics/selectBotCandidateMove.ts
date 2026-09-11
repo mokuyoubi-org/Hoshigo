@@ -80,7 +80,7 @@ export function selectBotCandidateMove(
   // 打とうとしている)ならmoveNumber=2。
   const moveNumber = moveCount + 1;
 
-  const validMoves = moves.filter((m) => m.x !== -1 && m.y !== -1);
+  const validMoves = moves.filter((m) => m.x !== -1 && m.y !== -1 &&  m.x !== 1 && m.y !== 1); // ⚠️⚠️⚠️⚠️⚠️⚠️端っこも禁止してる。要注意
   if (validMoves.length === 0) return bestMove;
 
   const topWeight = getTopWeight(moveNumber, boardSize);

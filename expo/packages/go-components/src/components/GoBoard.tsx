@@ -17,6 +17,7 @@ import {
   Color,
   GoString,
   Grid,
+  MatchType,
   PASS_GRID,
   WHITE,
 } from "../../../go-core/src/types/go";
@@ -28,6 +29,7 @@ const EMPTY_EDIT_MARKERS = new Map<Grid, "human" | "bot">();
 type Props = {
   // 盤面サイズ: 1
   boardSize: BoardSize;
+  matchType: MatchType;
   // プレイヤの色: 1
   playerColor: Color;
   // 現在の盤面、インデックス、テリトリーボード: 3
@@ -93,6 +95,7 @@ export function GoBoard({
   botMoveColor,
   goodMoveColor,
   badMoveColor,
+  matchType,
 }: Props) {
   const [pendingGrid, setPendingGrid] = useState<Grid | null>(null);
 
@@ -101,10 +104,7 @@ export function GoBoard({
   const [prevBoard, setPrevBoard] = useState(board);
   const currentTurn: Color = currentIndex % 2 === 0 ? BLACK : WHITE;
 
-  if (
-    prevIndex !== currentIndex ||
-    prevBoard !== board
-  ) {
+  if (prevIndex !== currentIndex || prevBoard !== board) {
     setPrevIndex(currentIndex);
     setPrevBoard(board);
     setPendingGrid(null);
@@ -264,6 +264,7 @@ export function GoBoard({
                 botMoveColor={botMoveColor}
                 goodMoveColor={goodMoveColor}
                 badMoveColor={badMoveColor}
+                matchType={matchType}
               />
             );
           })}
