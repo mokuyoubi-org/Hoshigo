@@ -1063,21 +1063,21 @@ begin
     -- プロフィール情報をとってくる
     select * into v_waiter_profile from private.profiles pf where pf.uid = v_waiter.player_uid;
 
-    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得するにゃ
+    -- ★ 新しい user_stats テーブルから対象盤サイズのポイントを取得する
     select coalesce(rating, 0)
       into v_waiter_rating
       from private.user_stats
      where uid = v_waiter.player_uid
        and board_size = p_board_size;
 
-    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得するにゃ
+    -- ★ 新しい user_settings テーブルからボット対戦許可フラグを取得する
     select coalesce(allow_bot_match, true)
       into v_allow_bot_match
       from private.user_settings
      where uid = v_waiter.player_uid;
 
     -- 🤖🤖🤖 ボット戦分岐 🤖🤖🤖
-    if v_waiter.try_count >= 3 and v_allow_bot_match then
+    if v_waiter.try_count >= 4 and v_allow_bot_match then
       -- 対戦ボットとmatch_typeを取得する
       select o_bot_uid, o_match_type
       into v_bot_uid, v_match_type
@@ -1109,10 +1109,12 @@ begin
       continue;
     end if;
 
-    -- 👦👦👦 人間戦分岐（match_typeは常に0＆白黒ランダム） 👦👦👦
+    -- 👦👦👦 人間戦分岐（match_typeは常に0＆白黒ランダム） 👦👦👦 なお、try_countのデフォルト値は0から1に変更した。
+    -- よく考えたら、0 * 300 = 0 の計算をしていて、これだと丸々3秒が無駄になってるだけだったからだ。
+    -- 1回目: +-300差 2回目: +-600差 3回目: +- 900差。これでマッチングしないとボットとマッチになる
     v_rating_diff := least(v_waiter.try_count::int * 300, 1000)::smallint; -- 1000は最大ポイント差。
 
-    -- ★ user_stats と JOIN して相手のポイントを直接比較するように書き換えたにゃ
+    -- ★ user_stats と JOIN して相手のポイントを直接比較する
     select wl.* into v_opponent
     from private.waitlist wl
     join private.user_stats us on us.uid = wl.player_uid and us.board_size = p_board_size
@@ -2089,7 +2091,7 @@ ALTER TABLE "private"."user_stats" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "private"."waitlist" (
     "player_uid" "uuid" NOT NULL,
-    "try_count" smallint DEFAULT '0'::smallint,
+    "try_count" smallint DEFAULT '1'::smallint,
     "board_size" smallint
 );
 
