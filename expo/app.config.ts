@@ -18,7 +18,7 @@ dotenv.config({
 const config: ExpoConfig = {
   name: "Hoshigo",
   slug: "Hoshigo",
-  version: "1.0.0", // 🌟
+  version: "1.0.1", // 🌟
   orientation: "portrait",
   icon: "./assets/icons/icon.png",
   scheme: "hoshigo",
@@ -124,7 +124,7 @@ const config: ExpoConfig = {
 
   assetBundlePatterns: ["assets/images/*"],
 
-  runtimeVersion: "1.0.0",
+  runtimeVersion: "1.0.1",
 };
 
 export default config;

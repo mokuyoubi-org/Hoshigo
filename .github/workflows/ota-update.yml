@@ -31,4 +31,4 @@ jobs:
       - name: Pull EAS environment variables
         run: npx eas-cli env:pull production --non-interactive
       - name: Run EAS Update
-        run: npx eas-cli update --channel default --auto --non-interactive
+        run: npx eas-cli update --channel default --auto --non-interactive --clear-cache

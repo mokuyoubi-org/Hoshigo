@@ -157,7 +157,7 @@ export default function SettingsScreen() {
                   {t("common.appVersion")}
                 </Text>
                 <Text className="text-base font-semibold text-textSub tracking-wide">
-                  {Constants.expoConfig?.version ?? "1.0.0"}
+                  {Constants.expoConfig?.version}
                 </Text>
               </View>
 
