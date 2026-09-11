@@ -11,8 +11,6 @@ import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BOARD_SIZE_OPTIONS } from "@/packages/go-core/src";
-import { IconButton, SegmentedControl } from "@/packages/ui-atoms/src";
 import { GuestNoticeCard } from "@/src/active/components/cards/GuestNoticeCard";
 import { RankCard } from "@/src/active/components/cards/RankCard";
 import { Avatar } from "@/src/active/components/common/Avatar";
@@ -26,6 +24,8 @@ import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { useProfileScreen } from "@/src/active/hooks/screens/useProfileScreen";
 import { useTranslation } from "@/src/active/i18n";
+import { BOARD_SIZE_OPTIONS } from "go-core";
+import { IconButton, SegmentedControl } from "ui-atoms";
 
 export default function ProfileScreen() {
   const t = useTranslation();

@@ -1,8 +1,7 @@
 // analysis.ts
 
-import { AnalyzeResult } from "@/packages/expo-katago/src";
-import { MoveAnalysisEntry, RecordAnalysis } from "@/packages/go-core/src";
-
+import { AnalyzeResult } from "expo-katago";
+import { MoveAnalysisEntry, RecordAnalysis } from "go-core";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const toPercent = (n: number) => Math.round(n * 100);

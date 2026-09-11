@@ -1,7 +1,6 @@
 // MatchingContext.tsx
 // プレイボタンを押して、マッチングを開始したり、サーチングボタンでキャンセルボタンを押した時の処理が書いてある。
 
-import { BoardSize } from "@/packages/go-core/src";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import {
   cancelWaitlistRPC,
@@ -11,6 +10,7 @@ import {
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { router } from "expo-router";
+import { BoardSize } from "go-core";
 import React, {
   createContext,
   useCallback,

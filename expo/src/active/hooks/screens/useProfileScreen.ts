@@ -1,11 +1,11 @@
 // ✅active
 // useProfileScreen.ts
-import { BoardSize } from "@/packages/go-core/src/types/go";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
 import { supabase } from "@/src/stable/services/supabase/supabase";
+import { BoardSize } from "go-core";
 import { useState } from "react";
 import { Alert } from "react-native";
 

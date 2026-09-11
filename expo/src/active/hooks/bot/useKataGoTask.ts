@@ -11,10 +11,9 @@
 // 呼び出し側は「フォールバックする」という事実自体を意識しなくていい。
 // ──────────────────────────────────────────────────
 
-
-import { Board, Grid, Color, BoardSize, MatchType } from "@/packages/go-core/src";
 import { printCustomKataGoResult } from "@/src/stable/logics/debugLogics";
 import { AnalyzeResult, ModelId, useKataGo } from "expo-katago";
+import { Board, BoardSize, Color, Grid, MatchType } from "go-core";
 
 export type KataGoTaskParams = {
   board: Board;

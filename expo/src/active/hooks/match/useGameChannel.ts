@@ -1,4 +1,4 @@
-import { useRealtimeChannel } from "@/packages/supabase-kit/src";
+import { useRealtimeChannel } from "supabase-kit";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 
 export type GameChannelHandlers = {

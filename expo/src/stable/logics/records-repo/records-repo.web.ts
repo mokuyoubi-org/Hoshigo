@@ -1,5 +1,5 @@
-import { RecordAnalysis } from "@/packages/go-components/src";
 import type { RecordType } from "@/src/active/types/record";
+import { RecordAnalysis } from "go-core";
 
 export type RecordsRepo = {
   insertMany: (records: RecordType[]) => Promise<void>;

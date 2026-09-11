@@ -1,7 +1,7 @@
 // textFormatter.ts
 
-import { BLACK, Color, MatchType, WHITE } from "@/packages/go-core/src";
 import { TFunction } from "@/src/active/i18n/types";
+import { BLACK, Color, MatchType, WHITE } from "go-core";
 
 // "B+R"のような結果を、you won by resignationのようなコメントへ変換。
 export const resultToComment = (

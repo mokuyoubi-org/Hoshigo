@@ -1,5 +1,4 @@
 import { OTA_VERSION } from "@/ota-version";
-import { ToggleSwitch } from "@/packages/ui-atoms/src";
 import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
 import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
 import { useTranslation } from "@/src/active/i18n";
@@ -9,6 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ToggleSwitch } from "ui-atoms";
 import { COLORS } from "../active/constants/colors";
 import { useOverlay } from "../active/contexts/OverlayContext";
 import { useProfile } from "../active/contexts/ProfileContexts";
@@ -156,9 +156,9 @@ export default function SettingsScreen() {
                 <Text className="text-base font-semibold text-text tracking-wide">
                   {t("common.appVersion")}
                 </Text>
-               <Text className="text-base font-semibold text-textSub tracking-wide">
-  {Application.nativeApplicationVersion}
-</Text>
+                <Text className="text-base font-semibold text-textSub tracking-wide">
+                  {Application.nativeApplicationVersion}
+                </Text>
               </View>
 
               {/* 区切り線 */}

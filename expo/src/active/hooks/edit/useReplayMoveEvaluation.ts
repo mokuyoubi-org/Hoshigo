@@ -5,12 +5,12 @@
 // 手の算出を担当する。編集モードでの分岐先には適用しない。
 // ──────────────────────────────────────────────────
 
-import { BoardSize } from "@/packages/go-core/src/types/go";
 import { RecordType } from "@/src/active/types/record";
 import {
   candidateGridsForMove,
   computeMoveEvaluations,
 } from "@/src/stable/logics/moveEvaluation";
+import { BoardSize } from "go-core";
 import { useMemo } from "react";
 
 export function useReplayMoveEvaluation(

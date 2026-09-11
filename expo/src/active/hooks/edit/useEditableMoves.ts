@@ -6,9 +6,18 @@
 // 分析結果には一切触れない。
 // ──────────────────────────────────────────────────
 
-
-import { BoardSize, Grid, movesToBoardHistory, generateTerritoryBoard, PASS_GRID, initBoard, getColorToMove, isLegalMove, isNoOkiishi } from "@/packages/go-core/src";
 import { RecordType } from "@/src/active/types/record";
+import {
+  BoardSize,
+  generateTerritoryBoard,
+  getColorToMove,
+  Grid,
+  initBoard,
+  isLegalMove,
+  isNoOkiishi,
+  movesToBoardHistory,
+  PASS_GRID,
+} from "go-core";
 import { useMemo, useState } from "react";
 
 export function useEditableMoves(record: RecordType) {

@@ -5,12 +5,19 @@
 // 合成(combinedAnalysis)を担当する。着手の管理には一切関知しない。
 // ──────────────────────────────────────────────────
 
-
 import { buildMoveAnalysisEntry } from "@/src/stable/logics/analysis";
 import { EMPTY_ENTRY, mergeAnalysis } from "@/src/stable/logics/analysisMerge";
+import {
+  Board,
+  BoardSize,
+  Grid,
+  MatchType,
+  MoveAnalysisEntry,
+  RecordAnalysis,
+  getColorToMove,
+} from "go-core";
 import { useMemo, useRef, useState } from "react";
 import { useKataGoTask } from "../bot/useKataGoTask";
-import { RecordAnalysis, MatchType, BoardSize, MoveAnalysisEntry, Board, Grid, getColorToMove } from "@/packages/go-core/src";
 
 export function useAnalysisCache(
   recordAnalysis: RecordAnalysis | null | undefined, // ← ここを修正

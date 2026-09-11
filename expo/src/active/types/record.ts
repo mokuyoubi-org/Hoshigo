@@ -1,8 +1,6 @@
 // types/record.ts
 
-import { BoardSize, MatchType, RecordAnalysis } from "@/packages/go-core/src";
-
-
+import { BoardSize, MatchType, RecordAnalysis } from "go-core";
 
 export type RecordType = {
   id: number;

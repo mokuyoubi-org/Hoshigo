@@ -1,5 +1,4 @@
 // UsernameEditModal.tsx
-import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { COLORS } from "@/src/active/constants/colors";
 import { useTranslation } from "@/src/active/i18n";
 import { validateUsername } from "@/src/stable/logics/validationLogics";
@@ -14,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ModalShell } from "ui-atoms";
 import { dictionary } from "../../i18n/dictionary";
 
 type Props = {

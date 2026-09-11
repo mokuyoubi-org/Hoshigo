@@ -9,12 +9,21 @@
 // 無駄を避けるため、onDecidedにbestMoveと一緒にanalysisも渡す。
 // ──────────────────────────────────────────────────
 
-
-
 import { AnalyzeResult, DEFAULT_MODEL_ID, ModelId } from "expo-katago";
+import {
+  BLACK,
+  Board,
+  BoardSize,
+  Color,
+  Grid,
+  MatchType,
+  PASS_GRID,
+  WHITE,
+  getOppositeColor,
+  makeGrid,
+} from "go-core";
 import { useRef } from "react";
 import { useKataGoTask } from "./useKataGoTask";
-import { Color, BoardSize, Board, Grid, MatchType, BLACK, WHITE, PASS_GRID, getOppositeColor, makeGrid } from "@/packages/go-core/src";
 
 // ★ボットのユーザー名とモデルIDの対応表
 const BOT_MODEL_MAP: Record<string, ModelId> = {

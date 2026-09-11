@@ -1,4 +1,4 @@
-import { Grid, MatchType, BoardSize } from "@/packages/go-core/src";
+import { BoardSize, Grid, MatchType } from "go-core";
 
 type CategoryChoice = {
   candidates: Grid[];

@@ -1,5 +1,4 @@
 // RankInfoModal.tsx
-import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { COLORS } from "@/src/active/constants/colors";
 import { useTranslation } from "@/src/active/i18n";
 import React, { useMemo } from "react";
@@ -10,6 +9,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { ModalShell } from "ui-atoms";
 import { RankInfo, RANKS } from "../../constants/ranks";
 import { RankProgressBar } from "../common/RankProgressBar";
 

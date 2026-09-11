@@ -8,7 +8,7 @@ import {
   generateTerritoryBoard,
   makeGrid,
   ownershipToDeadStones,
-} from "@/packages/go-core/src";
+} from "go-core";
 import { useEffect, useState } from "react";
 import { useEditableGoBoard } from "./useEditableGoBoard";
 

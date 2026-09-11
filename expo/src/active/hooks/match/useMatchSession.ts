@@ -10,7 +10,8 @@ import { resultToComment } from "@/src/stable/logics/textFormatter";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useGoGame } from "@/packages/go-components/src";
+import { useGoGame } from "go-components";
+import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import {
   BoardSize,
   Color,
@@ -18,8 +19,7 @@ import {
   MatchType,
   PASS_GRID,
   RecordAnalysis,
-} from "@/packages/go-core/src";
-import { getRankInfo } from "@/src/stable/logics/rankLogics";
+} from "go-core";
 import { useTranslation } from "../../i18n";
 import { useBotCalculation } from "../bot/useBotCalculation";
 import { useBotMove } from "../bot/useBotMove";

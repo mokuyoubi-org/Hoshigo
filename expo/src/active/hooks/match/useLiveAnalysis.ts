@@ -9,10 +9,9 @@
 // と同じ入れ物)にして返す。MoveEditScreenに渡すのはこの形。
 // ──────────────────────────────────────────────────
 
-
-import { MoveAnalysisEntry, RecordAnalysis } from "@/packages/go-core/src";
 import { buildMoveAnalysisEntry } from "@/src/stable/logics/analysis";
 import { AnalyzeResult } from "expo-katago";
+import { MoveAnalysisEntry, RecordAnalysis } from "go-core";
 import { useRef } from "react";
 
 export function useLiveAnalysis() {

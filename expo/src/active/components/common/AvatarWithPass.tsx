@@ -1,7 +1,7 @@
 // AvatarWithPass.tsx
 
-import { Pass } from "@/packages/go-components/src";
-import { Color } from "@/packages/go-core/src";
+import { Pass } from "go-components";
+import { Color } from "go-core";
 import React from "react";
 import { View } from "react-native";
 import { COLORS } from "../../constants/colors";

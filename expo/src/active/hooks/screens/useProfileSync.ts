@@ -1,9 +1,9 @@
-// ✅acive
 // useProfileSync.ts
 
 import { compareVersions } from "@/src/stable/logics/compareVersions";
 import { fetchProfileRPC } from "@/src/stable/logics/profileRPC";
 import * as Application from "expo-application";
+import { Platform } from "react-native";
 import { useApp } from "../../contexts/AppContexts";
 import { useProfile } from "../../contexts/ProfileContexts";
 
@@ -32,13 +32,16 @@ export const useProfileSync = () => {
 
       // 2.5 バージョンチェック。サーバーが要求する最低バージョンより
       // 自分の今のバージョンが古ければ、強制アップデートフラグを立てる。
-      const requiredVersion = result.appStatus.version;
-      const currentVersion = Application.nativeApplicationVersion ?? "0.0.0";
-      if (
-        requiredVersion &&
-        compareVersions(currentVersion, requiredVersion) < 0
-      ) {
-        setNeedsUpdate(true);
+      // webにはネイティブバイナリという概念が無く、常に最新のはずなのでスキップする。
+      if (Platform.OS !== "web") {
+        const requiredVersion = result.appStatus.version;
+        const currentVersion = Application.nativeApplicationVersion ?? "0.0.0";
+        if (
+          requiredVersion &&
+          compareVersions(currentVersion, requiredVersion) < 0
+        ) {
+          setNeedsUpdate(true);
+        }
       }
     }
 

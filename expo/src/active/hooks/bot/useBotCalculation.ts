@@ -12,10 +12,18 @@
 // analysisごと返す。
 // ──────────────────────────────────────────────────
 
-
 import { AnalyzeResult } from "expo-katago";
+import {
+  BLACK,
+  Board,
+  BoardSize,
+  Color,
+  Grid,
+  MatchType,
+  WHITE,
+  ownershipToDeadStones,
+} from "go-core";
 import { useKataGoTask } from "./useKataGoTask";
-import { Board, Grid, MatchType, BoardSize, Color, BLACK, WHITE, ownershipToDeadStones } from "@/packages/go-core/src";
 
 export function useBotCalculation() {
   const kataGoTask = useKataGoTask();

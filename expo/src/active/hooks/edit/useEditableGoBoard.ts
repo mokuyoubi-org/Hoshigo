@@ -10,8 +10,8 @@ import { RecordType } from "@/src/active/types/record";
 import { useAnalysisCache } from "./useAnalysisCache";
 import { useEditableMoves } from "./useEditableMoves";
 
+import { Grid } from "go-core";
 import { useState } from "react"; // ← 追加
-import { Grid } from "@/packages/go-core/src";
 
 export function useEditableGoBoard(record: RecordType) {
   const moves = useEditableMoves(record);

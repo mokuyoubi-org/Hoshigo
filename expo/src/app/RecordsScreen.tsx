@@ -1,10 +1,10 @@
 // RecordsScreen.tsx
 
-import { BOARD_SIZE_OPTIONS } from "@/packages/go-core/src";
 import { useTranslation } from "@/src/active/i18n";
 import { RecordOrSkeleton } from "@/src/active/types/record";
 import { router, useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { BOARD_SIZE_OPTIONS } from "go-core";
 import React, { useCallback, useEffect } from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

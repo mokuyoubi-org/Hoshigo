@@ -8,7 +8,7 @@ import React, {
   useImperativeHandle,
   useRef,
 } from "react";
-import { ColorValue, View } from "react-native";
+import { View } from "react-native";
 
 console.log("TurnstileWidget.web.tsx");
 

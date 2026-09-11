@@ -15,7 +15,6 @@
 // 後、追加で1回だけ最終局面を解析してこれを埋める。
 // ──────────────────────────────────────────────────
 
-
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -24,9 +23,15 @@ import {
   getAnalyzedCount,
 } from "@/src/stable/logics/analysis";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
+import {
+  BLACK,
+  isNoOkiishi,
+  movesToBoardHistory,
+  RecordAnalysis,
+  WHITE,
+} from "go-core";
 import { RecordType } from "../../types/record";
 import { useKataGoTask } from "./useKataGoTask";
-import { isNoOkiishi, movesToBoardHistory, RecordAnalysis, BLACK, WHITE } from "@/packages/go-core/src";
 
 const ANALYSIS_MODEL_ID = "b6";
 

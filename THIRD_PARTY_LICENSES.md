@@ -6,7 +6,7 @@ We would like to express our deepest gratitude to the creators and contributors 
 
 - **KataGo Neural Network Model Weights** (by David J Wu)
 - **lightvector/goscorer** (by David J Wu)
-- **Sir-Teo/web-katrain** (by Sir Teo)
+- **Sir-Teo/web-katrain** (by Web KatRain Contributors)
 
 ---
 

@@ -1,4 +1,12 @@
-import { BLACK, Board, BoardSize, Color, Grid, gridToMoveObject, WHITE } from "@/packages/go-core";
+import {
+  BLACK,
+  Board,
+  BoardSize,
+  Color,
+  Grid,
+  gridToMoveObject,
+  WHITE,
+} from "go-core";
 
 export const printCustomKataGoResult = (
   board: Board,

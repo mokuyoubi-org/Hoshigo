@@ -1,10 +1,10 @@
 import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
 import { AntDesign } from "@expo/vector-icons";
+import { BLACK, Color, WHITE } from "go-core";
 import React from "react";
 import { Image, View } from "react-native";
 import { RANKS } from "../../constants/ranks";
-import { Color, WHITE, BLACK } from "@/packages/go-core/src";
 
 type Props = {
   rankIndex: number;

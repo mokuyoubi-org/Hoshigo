@@ -1,8 +1,16 @@
 // useRecordsScreen.ts
 
-
 import { useRecordsSync } from "@/src/active/hooks/records/useRecordsSync";
 import { RecordOrSkeleton, RecordType } from "@/src/active/types/record";
+import {
+  AgehamaCount,
+  Board,
+  BoardSize,
+  generateTerritoryBoard,
+  MatchType,
+  movesToFinalBoard,
+  TerritoryBoard,
+} from "go-core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -16,7 +24,6 @@ import {
   makeSkeletonCard,
 } from "../../../stable/logics/recordCardLogics";
 import { useProfile } from "../../contexts/ProfileContexts";
-import { Board, TerritoryBoard, MatchType, BoardSize, movesToFinalBoard, generateTerritoryBoard, AgehamaCount } from "@/packages/go-core/src";
 
 export type ProcessedRecord = {
   finalBoard: Board;

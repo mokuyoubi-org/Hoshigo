@@ -17,9 +17,14 @@
 //   2. scoreLeadが5ポイント以上下がった
 // ──────────────────────────────────────────────────
 
-import { RecordAnalysis, BoardSize, MatchType, isNoOkiishi, Grid, makeGrid } from "@/packages/go-core/src";
-
-
+import {
+  BoardSize,
+  Grid,
+  MatchType,
+  RecordAnalysis,
+  isNoOkiishi,
+  makeGrid,
+} from "go-core";
 
 export type MoveEvaluation = "good" | "bad" | undefined;
 

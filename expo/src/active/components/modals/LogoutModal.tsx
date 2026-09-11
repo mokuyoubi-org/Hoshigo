@@ -1,9 +1,9 @@
 // LogoutModal.tsx
-import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { COLORS } from "@/src/active/constants/colors";
 import { useTranslation } from "@/src/active/i18n";
 import React, { useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ModalShell } from "ui-atoms";
 
 type Props = {
   title: string;

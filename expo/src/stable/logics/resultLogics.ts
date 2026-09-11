@@ -1,7 +1,7 @@
 // resultLogics.ts
 
-import { BoardSize } from "@/packages/go-core/src";
 import { TFunction } from "@/src/active/i18n/types";
+import { BoardSize } from "go-core";
 import { getRankInfo } from "./rankLogics";
 
 // UserPointResultの定義もこちらに引っ越し(stableがactiveの型に依存しないように)

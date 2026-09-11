@@ -1,9 +1,9 @@
 // useMatchClock.ts
 
 import { supabase } from "@/src/stable/services/supabase/supabase";
+import { BLACK, Color, stringToColor } from "go-core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSounds } from "../useGameSounds";
-import { Color, BLACK, stringToColor } from "@/packages/go-core/src";
 
 export type ServerSyncPayload = {
   moves: number[];

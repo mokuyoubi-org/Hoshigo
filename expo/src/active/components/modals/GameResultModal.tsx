@@ -1,11 +1,10 @@
-import { BoardSize } from "@/packages/go-core/src";
-import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { COLORS } from "@/src/active/constants/colors";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useLang, useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { FontAwesome, Octicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { BoardSize } from "go-core";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ModalShell } from "ui-atoms";
 import { ICONS } from "../../constants/icons";
 import { useMatching } from "../../contexts/providers/MatchingContext";
 import { useIconUpdate } from "../../hooks/screens/useIconUpdate";

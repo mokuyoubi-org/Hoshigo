@@ -1,14 +1,8 @@
 // recordBuilder.ts
 
-import {
-  BLACK,
-  BoardSize,
-  Color,
-  MatchType,
-  RecordAnalysis,
-} from "@/packages/go-core/src";
 import { TFunction } from "@/src/active/i18n/types";
 import { RecordType } from "@/src/active/types/record";
+import { BLACK, BoardSize, Color, MatchType, RecordAnalysis } from "go-core";
 import { getRankInfo } from "./rankLogics";
 
 type BuildRecordArgs = {

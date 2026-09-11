@@ -1,8 +1,8 @@
 // ForceUpdateModal.tsx
-import { ModalShell } from "@/packages/ui-atoms/src/ModalShell";
 import { useTranslation } from "@/src/active/i18n";
 import React from "react";
 import { Linking, Platform, Pressable, Text } from "react-native";
+import { ModalShell } from "ui-atoms";
 
 export function ForceUpdateModal() {
   const t = useTranslation();

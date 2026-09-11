@@ -1,5 +1,4 @@
 // RankingsModal.tsx
-import { BOARD_SIZE_OPTIONS, BoardSize } from "@/packages/go-core/src";
 import {
   Profile,
   RankingCard,
@@ -7,6 +6,7 @@ import {
 import { COLORS } from "@/src/active/constants/colors";
 import { fetchWithDailyCache } from "@/src/stable/logics/syncUtils"; // 🐱 追加！
 import { supabase } from "@/src/stable/services/supabase/supabase";
+import { BOARD_SIZE_OPTIONS, BoardSize } from "go-core";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,

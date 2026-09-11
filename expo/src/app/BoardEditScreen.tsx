@@ -1,7 +1,4 @@
 // app/BoardEditScreen.tsx
-import { GoBoard, ScoreLeadReplayControls } from "@/packages/go-components/src";
-import { BLACK, WHITE } from "@/packages/go-core/src";
-import { IconButton, SegmentedIconControl } from "@/packages/ui-atoms/src";
 import { RecordCardHeader } from "@/src/active/components/common/RecordCardHeader";
 import { useTranslation } from "@/src/active/i18n";
 import { RecordType } from "@/src/active/types/record";
@@ -13,7 +10,12 @@ import {
 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ReplayTapOverlay } from "go-components";
+import {
+  GoBoard,
+  ReplayTapOverlay,
+  ScoreLeadReplayControls,
+} from "go-components";
+import { BLACK, WHITE } from "go-core";
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,6 +25,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { IconButton, SegmentedIconControl } from "ui-atoms";
 import { TerritoryCalculatorButton } from "../active/components/buttons/TerritoryCalculatorButton";
 import { COLORS } from "../active/constants/colors";
 import { useProfile } from "../active/contexts/ProfileContexts";
