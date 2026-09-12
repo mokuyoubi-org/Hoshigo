@@ -91,21 +91,6 @@ export function useBotMove(
 
     isBotRunningRef.current = true;
     try {
-      // ⚠️人間が2回連続でパス（3手前と1手前がパス）していたら、ボットも即座にパスする
-      if (
-        ((boardSize === 9 && movesSoFar.length >= 50) ||
-          (boardSize === 13 && movesSoFar.length >= 100) ||
-          (boardSize === 19 && movesSoFar.length >= 200)) &&
-        movesSoFar[movesSoFar.length - 1] === PASS_GRID && // 人間の1手前（直前の着手）
-        movesSoFar[movesSoFar.length - 3] === PASS_GRID // 人間の2手前（ボットの手を挟むので3手前）
-      ) {
-        console.log(
-          "🤖 [useBotMove] 人間が2回連続パスしたため、ボットも強制パスする",
-        );
-        await onDecided(PASS_GRID, null);
-        return;
-      }
-
       const result = await kataGoTask.run({
         board,
         movesSoFar,
@@ -120,6 +105,21 @@ export function useBotMove(
         return;
       }
 
+      // ⚠️人間が2回連続でパス（3手前と1手前がパス）していたら、ボットも即座にパスする
+      if (
+        ((boardSize === 9 && movesSoFar.length >= 50) ||
+          (boardSize === 13 && movesSoFar.length >= 100) ||
+          (boardSize === 19 && movesSoFar.length >= 200)) &&
+        movesSoFar[movesSoFar.length - 1] === PASS_GRID && // 人間の1手前（直前の着手）
+        movesSoFar[movesSoFar.length - 3] === PASS_GRID // 人間の2手前（ボットの手を挟むので3手前）
+      ) {
+        console.log(
+          "🤖 [useBotMove] 人間が2回連続パスしたため、ボットも強制パスする",
+        );
+        await onDecided(PASS_GRID, result); // 💡実際にbotの手は使用しないが、ちゃんとkatagoを回し、resultを返すことが大事
+        return;
+      }
+
       // 手数（これまでに打たれた手の数）
       const moveCount = movesSoFar.length;
 
@@ -127,7 +127,7 @@ export function useBotMove(
       if (moveCount === 0 && boardSize === 9 && matchType !== 1) {
         const grid = decideBotFirstMove(matchType, boardSize);
         console.log("ハードコードされた初手: ", grid);
-        await onDecided(grid, result);
+        await onDecided(grid, result); // 💡実際にbotの手は使用しないが、ちゃんとkatagoを回し、resultを返すことが大事
         return;
       }
 
@@ -144,7 +144,7 @@ export function useBotMove(
           ? PASS_GRID
           : makeGrid(selectedMove.y, selectedMove.x, boardSize);
 
-      await onDecided(chosenGrid, result);
+      await onDecided(chosenGrid, result); // 💡実際にbotの手は使用する
     } finally {
       isBotRunningRef.current = false;
     }
