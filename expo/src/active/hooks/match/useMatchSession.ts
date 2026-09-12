@@ -8,10 +8,7 @@ import { useKataGoTask } from "@/src/active/hooks//bot/useKataGoTask";
 import { useBotCalculation } from "@/src/active/hooks/bot/useBotCalculation";
 import { useGameChannel } from "@/src/active/hooks/match/useGameChannel";
 import { useLiveAnalysis } from "@/src/active/hooks/match/useLiveAnalysis";
-import {
-  ServerSyncPayload,
-  useMatchClock,
-} from "@/src/active/hooks/match/useMatchClock";
+import { useMatchClock } from "@/src/active/hooks/match/useMatchClock";
 import { useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import {
@@ -110,12 +107,15 @@ export function useMatchSession({
   // =========================================================================================
 
   // 通信トラブルで相手の手を受けとり損ねたときに、自動で最新の状態に追いつかせる処理
-  const handleServerSync = async (payload: ServerSyncPayload) => {
+  const handleServerSync = async (moves: Grid[]) => {
     // 🛡️ガード
     if (isGameEnded) return;
 
     const localCount = goBoard.movesRef.current.length;
-    const serverCount = payload.moves.length;
+    const serverCount = moves.length;
+    console.log("localCount: ", localCount);
+    console.log("serverCount: ", serverCount);
+    console.log("moves: ", moves);
 
     if (serverCount > localCount && !isResyncingRef.current) {
       isResyncingRef.current = true;
@@ -125,8 +125,8 @@ export function useMatchSession({
 
       reconnect();
 
-      const serverTurn = goBoard.loadMoves(payload.moves);
-      liveAnalysis.truncate(payload.moves.length); // 🐱 moves差し替えに合わせて分析データも整合させる
+      const serverTurn = goBoard.loadMoves(moves);
+      liveAnalysis.truncate(moves.length); // 🐱 moves差し替えに合わせて分析データも整合させる
       clock.unfreeze(serverTurn);
       isResyncingRef.current = false;
     }

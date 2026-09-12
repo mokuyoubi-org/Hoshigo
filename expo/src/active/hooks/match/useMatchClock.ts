@@ -2,14 +2,9 @@
 // 2026/09/12コメント
 
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { BLACK, Color, stringToColor } from "go-core";
+import { BLACK, Color, Grid } from "go-core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSounds } from "../useGameSounds";
-
-export type ServerSyncPayload = {
-  moves: number[];
-  turn: Color;
-};
 
 // 🥶 対局の「今、誰が動けるか」を表す唯一の状態。
 // 黒の番・白の番・誰も動けない(frozen)の3択。これ以外の値は存在しない。
@@ -22,7 +17,7 @@ type Args = {
   initialMySeconds: number;
   initialOppSeconds: number;
   isGameEnded: boolean;
-  handleServerSync?: (payload: ServerSyncPayload) => void;
+  handleServerSync?: (moves: Grid[]) => void;
 };
 
 export function useMatchClock({
@@ -145,15 +140,7 @@ export function useMatchClock({
 
       // まず、ハートビートからの返信を、frozen以外の時に受け取った場合。そのまま受け取る
       if (turnRef.current !== "frozen") {
-        //
-        console.log("ハートビートの返事を適用");
-        const row = data?.[0];
-        if (!row) return;
-
-        handleServerSyncRef.current?.({
-          moves: row.out_moves ?? [],
-          turn: stringToColor(row.out_turn),
-        });
+        handleServerSyncRef.current?.(data ?? []);
       } else if (turnRef.current === "frozen") {
         // 🥶 frozenが「本当は解除されるべきなのに解除されていない」と判断するまでの猶予時間。
         // これより短いfreezeは正常な処理待ち(kataGo計算・RPC往復など)として無視される。
@@ -173,13 +160,7 @@ export function useMatchClock({
           console.log(
             `frozenになってから${frozenDuration}ms経過、異常なのでハートビートの返事を適用`,
           );
-          const row = data?.[0];
-          if (!row) return;
-
-          handleServerSyncRef.current?.({
-            moves: row.out_moves ?? [],
-            turn: stringToColor(row.out_turn),
-          });
+          handleServerSyncRef.current?.(data ?? []);
         }
       }
     } catch (e) {
