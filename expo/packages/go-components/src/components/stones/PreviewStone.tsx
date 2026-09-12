@@ -2,7 +2,7 @@
 
 import React, { memo } from "react";
 import { ColorValue, StyleSheet, View } from "react-native";
-import { BLACK, Color } from "../../../../go-core/src/types/go";
+import { BLACK, Color } from "go-core";
 
 type Props = {
   stoneSize: number;

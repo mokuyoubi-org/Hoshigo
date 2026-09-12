@@ -9,8 +9,8 @@
 // 無駄を避けるため、onDecidedにbestMoveと一緒にanalysisも渡す。
 // ──────────────────────────────────────────────────
 
-import { decideBotFirstMove } from "@/src/stable/logics/decideBotFirstMove";
-import { selectBotCandidateMove } from "@/src/stable/logics/selectBotCandidateMove";
+import { decideBotFirstMove } from "@/src/stable/logics/bot/decideBotFirstMove";
+import { selectBotCandidateMove } from "@/src/stable/logics/bot/selectBotCandidateMove";
 import { AnalyzeResult, DEFAULT_MODEL_ID, ModelId } from "expo-katago";
 import {
   BLACK,

@@ -54,6 +54,20 @@ const BOARD_SIZE_SCALE: Record<BoardSize, number> = {
 //    「弱すぎる」とみなして抽選から除外する。
 const WINRATE_CUTOFF = 0.03;
 
+// パス判定・端っこ判定。isValidCandidateと選択ロジック本体の両方から
+// 使うので、関数の外(モジュールレベル)に置いている。
+const isPass = (m: CandidateMove) => m.x === -1 && m.y === -1;
+const isEdge = (m: CandidateMove) => m.x === 1 || m.y === 1;
+
+// 候補手が抽選対象として有効かどうかを判定する。
+// 禁止条件を上から順番に弾いていく書き方にして、
+// 「パスなら禁止」「端っこは最善手以外禁止」を素直に読めるようにしている。
+function isValidCandidate(m: CandidateMove, bestMove: CandidateMove): boolean {
+  if (isPass(m)) return false; // パスは常に禁止
+  if (isEdge(m) && m !== bestMove) return false; // 端っこは最善手以外禁止
+  return true;
+}
+
 // moveNumber(これから打とうとしている手が何手目か、1-indexed)と盤サイズ
 // から、その時点の「1位の取り分」を求める。
 function getTopWeight(moveNumber: number, boardSize: BoardSize): number {
@@ -80,7 +94,9 @@ export function selectBotCandidateMove(
   // 打とうとしている)ならmoveNumber=2。
   const moveNumber = moveCount + 1;
 
-  const validMoves = moves.filter((m) => m.x !== -1 && m.y !== -1 &&  m.x !== 1 && m.y !== 1); // ⚠️⚠️⚠️⚠️⚠️⚠️端っこも禁止してる。要注意
+  // パスは禁止。また、最善手でない場合の端っこ(xyいずれかが1)も禁止。
+  const validMoves = moves.filter((m) => isValidCandidate(m, bestMove));
+
   if (validMoves.length === 0) return bestMove;
 
   const topWeight = getTopWeight(moveNumber, boardSize);

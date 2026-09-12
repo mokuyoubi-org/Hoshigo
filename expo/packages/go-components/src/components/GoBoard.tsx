@@ -20,17 +20,16 @@ import {
   MatchType,
   PASS_GRID,
   WHITE,
-} from "../../../go-core/src/types/go";
+} from "go-core";
 import { useSounds } from "../hooks/useGoSounds";
 import { BoardLines } from "./BoardLines";
 import { IntersectionContainer } from "./stones/IntersectionContainer";
 const EMPTY_EDIT_MARKERS = new Map<Grid, "human" | "bot">();
 
 type Props = {
-  // 盤面サイズ: 1
+  // 盤面サイズ、マッチタイプ、プレイヤの色: 3
   boardSize: BoardSize;
   matchType: MatchType;
-  // プレイヤの色: 1
   playerColor: Color;
   // 現在の盤面、インデックス、テリトリーボード: 3
   board: Board;

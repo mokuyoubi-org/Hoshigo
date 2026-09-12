@@ -1,4 +1,5 @@
 import Slider from "@react-native-community/slider";
+import { RecordAnalysis } from "go-core";
 import React, { useCallback, useState } from "react";
 import {
   ColorValue,
@@ -9,7 +10,6 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
-import { RecordAnalysis } from "../../../go-core/src/types/analysis";
 
 type Props = {
   showScoreLeadGraph?: boolean;

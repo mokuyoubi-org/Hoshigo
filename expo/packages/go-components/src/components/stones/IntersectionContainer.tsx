@@ -71,8 +71,6 @@ export const IntersectionContainer = memo(function DecoratedStone({
   const row = Math.floor(grid / boardSize);
   const col = grid % boardSize;
   const isDead = territoryValue === 3; // 1は黒の陣地、2は白の陣地、3は死に石
-  // console.log("currentTurn: ", currentTurn);
-  // console.log("playerColor: ", playerColor);
 
   return (
     <Pressable
