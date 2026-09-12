@@ -1356,7 +1356,7 @@ BEGIN
   IF v_row.uid IS NULL THEN -- 「よし、プロフィールないね」
     LOOP
       v_retry_count := v_retry_count + 1;
-      v_username := 'player_' || substr(md5(random()::text), 1, 5);
+      v_username := substr(md5(random()::text), 1, 5);
 
       BEGIN
         INSERT INTO private.profiles (uid, username) -- ▶️ここから（自動でトリガーが発動して user_settings / user_stats も作成される）
@@ -2058,8 +2058,7 @@ CREATE TABLE IF NOT EXISTS "private"."profiles" (
     "icon_index" smallint DEFAULT '0'::smallint,
     "lastseen" "date",
     "is_bot" boolean DEFAULT false,
-    "acquired_icons" smallint[] DEFAULT '{0}'::smallint[],
-    CONSTRAINT "profiles_username_check" CHECK (("username" ~ '^[A-Za-z0-9_]{3,12}$'::"text"))
+    "acquired_icons" smallint[] DEFAULT '{0}'::smallint[]
 );
 
 
