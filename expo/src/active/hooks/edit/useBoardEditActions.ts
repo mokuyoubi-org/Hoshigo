@@ -43,6 +43,7 @@ export function useBoardEditActions(
   }, [board.currentIndex, board.isEditMode]);
 
   const handleBotSuggest = async () => {
+    // 🛡️ガード
     if (board.isAnalyzing || activeProcessing !== null) return;
 
     setActiveProcessing("bot"); // 🤖 ボット計算開始
@@ -54,7 +55,7 @@ export function useBoardEditActions(
       );
       const best = entry?.candidates[0];
       if (!best) return;
-      board.handlePutStone(
+      board.handleEditStone(
         best.x === -1 || best.y === -1
           ? PASS_GRID
           : makeGrid(best.y, best.x, boardSize),
@@ -66,6 +67,7 @@ export function useBoardEditActions(
   };
 
   const handleCalculateTerritory = async () => {
+    // 🛡️ガード
     if (board.isAnalyzing || activeProcessing !== null) return;
 
     setActiveProcessing("territory"); // 🧮 地計算開始

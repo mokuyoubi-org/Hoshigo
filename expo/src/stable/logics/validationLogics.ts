@@ -24,11 +24,11 @@ export type UsernameValidationError =
   | null;
 
 export const validateUsername = (text: string): UsernameValidationError => {
-  const regex = /^[A-Za-z0-9_]{3,12}$/;
+  const regex = /^[A-Za-z0-9_]{1,8}$/;
   if (!text) {
     return "required";
   }
-  if (text.length < 3 || text.length > 12) {
+  if (text.length < 1 || text.length > 8) {
     return "length";
   }
   if (!regex.test(text)) {

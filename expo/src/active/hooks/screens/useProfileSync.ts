@@ -1,11 +1,11 @@
 // useProfileSync.ts
 
+import { useApp } from "@/src/active/contexts/AppContexts";
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { compareVersions } from "@/src/stable/logics/compareVersions";
 import { fetchProfileRPC } from "@/src/stable/logics/profileRPC";
 import * as Application from "expo-application";
 import { Platform } from "react-native";
-import { useApp } from "../../contexts/AppContexts";
-import { useProfile } from "../../contexts/ProfileContexts";
 
 // 要は、データベースと通信してプロフィール(メンテナンス情報もついでに)を取ってくる。そしてそれをcontextにしまっておく。
 export const useProfileSync = () => {

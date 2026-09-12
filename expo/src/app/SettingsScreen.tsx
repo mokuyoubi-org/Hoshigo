@@ -1,7 +1,13 @@
 import { OTA_VERSION } from "@/ota-version";
 import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
 import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
+import { COLORS } from "@/src/active/constants/colors";
+import { useOverlay } from "@/src/active/contexts/OverlayContext";
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useDoubleTapSetting } from "@/src/active/hooks/screens/useDoubleTapSetting";
+import { useSettingsScreen } from "@/src/active/hooks/screens/useSettingsScreen";
 import { useTranslation } from "@/src/active/i18n";
+import { openURL } from "@/src/stable/logics/linking";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import { router } from "expo-router";
@@ -10,12 +16,6 @@ import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ToggleSwitch } from "ui-atoms";
-import { COLORS } from "../active/constants/colors";
-import { useOverlay } from "../active/contexts/OverlayContext";
-import { useProfile } from "../active/contexts/ProfileContexts";
-import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
-import { useSettingsScreen } from "../active/hooks/screens/useSettingsScreen";
-import { openURL } from "../stable/logics/linking";
 
 export default function SettingsScreen() {
   const t = useTranslation();
@@ -115,7 +115,7 @@ export default function SettingsScreen() {
           {/* インフォメーションセクション */}
           <View className="mb-6">
             <Text className="text-[11px] font-bold uppercase tracking-widest text-text mb-2.5 ml-1">
-              {t("Settings.information")}
+              {t("common.information")}
             </Text>
             <View className="bg-foreground rounded-xl border-2 border-backgroundDark w-full overflow-hidden">
               {/* プライバシーポリシー */}

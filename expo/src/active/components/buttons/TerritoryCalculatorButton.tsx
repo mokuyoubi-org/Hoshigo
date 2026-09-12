@@ -3,6 +3,7 @@
  * 地計算ボタンと計算結果を一つにまとめたコンポーネント
  */
 
+import { COLORS } from "@/src/active/constants/colors";
 import { FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
 import {
@@ -12,7 +13,6 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from "react-native";
-import { COLORS } from "../../constants/colors";
 
 type Props = TouchableOpacityProps & {
   isCalculating: boolean;

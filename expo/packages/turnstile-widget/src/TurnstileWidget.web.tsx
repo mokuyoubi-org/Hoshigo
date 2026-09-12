@@ -77,6 +77,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
 
       loadTurnstileScript()
         .then(() => {
+          // 🛡️ガード
           if (cancelled || !containerRef.current || !window.turnstile) return;
 
           widgetIdRef.current = window.turnstile.render(containerRef.current, {

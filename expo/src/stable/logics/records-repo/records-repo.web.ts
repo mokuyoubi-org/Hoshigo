@@ -39,6 +39,7 @@ function openDb(): Promise<IDBDatabase> {
 
 export const recordsRepo: RecordsRepo = {
   insertMany: async (records) => {
+    // 🛡️ガード
     if (typeof indexedDB === "undefined" || records.length === 0) return;
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -111,6 +112,7 @@ export const recordsRepo: RecordsRepo = {
   },
 
   updateAnalysis: async (boardSize, id, analysis) => {
+    // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -132,6 +134,7 @@ export const recordsRepo: RecordsRepo = {
   },
 
   clearAll: async () => {
+    // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     return new Promise((resolve, reject) => {
       const req = indexedDB.deleteDatabase(DB_NAME);
@@ -141,6 +144,7 @@ export const recordsRepo: RecordsRepo = {
   },
 
   updateUsername: async (uid, newUsername) => {
+    // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
     return new Promise((resolve, reject) => {

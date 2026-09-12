@@ -1,5 +1,7 @@
 // LoginModal.tsx
 import { COLORS } from "@/src/active/constants/colors";
+import { useLoginModal } from "@/src/active/hooks/screens/useLoginModal";
+import { useLang } from "@/src/active/i18n";
 import React, { useRef } from "react";
 import {
   ActivityIndicator,
@@ -13,8 +15,6 @@ import {
 } from "react-native";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { ModalShell } from "ui-atoms";
-import { useLoginModal } from "../../hooks/screens/useLoginModal";
-import { useLang } from "../../i18n";
 
 type Props = {
   visible: boolean;

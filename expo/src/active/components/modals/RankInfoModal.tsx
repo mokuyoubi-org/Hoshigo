@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { RankInfo, RANKS } from "../../constants/ranks";
+import { RankInfo, RANKS } from "@/src/active/constants/ranks";
 import { RankProgressBar } from "../common/RankProgressBar";
 
 type Props = {

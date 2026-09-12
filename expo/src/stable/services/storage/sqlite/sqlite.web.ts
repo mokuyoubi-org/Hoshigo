@@ -45,6 +45,7 @@ export const sqliteKv: KVAdapter = {
     });
   },
   setItem: async (key, value) => {
+    // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -55,6 +56,7 @@ export const sqliteKv: KVAdapter = {
     });
   },
   removeItem: async (key) => {
+    // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -66,6 +68,7 @@ export const sqliteKv: KVAdapter = {
   },
 
   clear: async () => {
+    // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
     return new Promise((resolve, reject) => {

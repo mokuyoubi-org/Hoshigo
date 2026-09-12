@@ -1,5 +1,5 @@
+import { RankInfo, RANKS } from "@/src/active/constants/ranks";
 import { TFunction } from "@/src/active/i18n/types";
-import { RankInfo, RANKS } from "../../active/constants/ranks";
 
 const RATING_PER_WIN = 10;
 

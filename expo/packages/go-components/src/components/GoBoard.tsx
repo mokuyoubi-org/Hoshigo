@@ -142,8 +142,8 @@ export function GoBoard({
     const prevIdx = prevIndexRef.current;
     prevIndexRef.current = currentIndex;
 
-    if (prevIdx === null) return;
-    if (currentIndex !== prevIdx + 1) return;
+    // 🛡️ガード
+    if (prevIdx === null || currentIndex !== prevIdx + 1) return;
 
     const appliedMove = moveHistory[currentIndex - 1];
 
@@ -157,6 +157,7 @@ export function GoBoard({
 
   const handlePressGrid = useCallback(
     (grid: Grid, goString: GoString | null) => {
+      // 🛡️ガード
       if (disabled) return;
 
       if (goString) {

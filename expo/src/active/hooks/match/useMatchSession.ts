@@ -1,17 +1,27 @@
 // useMatchSession.ts
-// 対局のUIの責任者がGameScreenなら、useMatchSessionは対局のロジックの責任者。
+// 対局のUIの責任者がGameScreen
+// 対局のロジックの責任者がuseMatchSession
 
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useBotMove } from "@/src/active/hooks//bot/useBotMove";
+import { useKataGoTask } from "@/src/active/hooks//bot/useKataGoTask";
+import { useBotCalculation } from "@/src/active/hooks/bot/useBotCalculation";
+import { useGameChannel } from "@/src/active/hooks/match/useGameChannel";
+import { useLiveAnalysis } from "@/src/active/hooks/match/useLiveAnalysis";
+import {
+  ServerSyncPayload,
+  useMatchClock,
+} from "@/src/active/hooks/match/useMatchClock";
+import { useTranslation } from "@/src/active/i18n";
+import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import {
   computeMatchResultUpdate,
   MatchResultUpdate,
 } from "@/src/stable/logics/resultLogics";
 import { resultToComment } from "@/src/stable/logics/textFormatter";
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { useCallback, useEffect, useRef, useState } from "react";
-
+import { ModelId } from "expo-katago";
 import { useGoGame } from "go-components";
-import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import {
   BoardSize,
   Color,
@@ -20,13 +30,7 @@ import {
   PASS_GRID,
   RecordAnalysis,
 } from "go-core";
-import { useTranslation } from "../../i18n";
-import { useBotCalculation } from "../bot/useBotCalculation";
-import { useBotMove } from "../bot/useBotMove";
-import { useKataGoTask } from "../bot/useKataGoTask";
-import { useGameChannel } from "./useGameChannel";
-import { useLiveAnalysis } from "./useLiveAnalysis";
-import { ServerSyncPayload, useMatchClock } from "./useMatchClock";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Args = {
   matchId: number;
@@ -53,8 +57,10 @@ export function useMatchSession({
   initialMySeconds,
   initialOppSeconds,
 }: Args) {
+  // =========================================================================================
+  // 🌟 ===================================== state =====================================
+  // =========================================================================================
   const kataGoTask = useKataGoTask();
-  // -------- state --------
   const t = useTranslation();
   const goBoard = useGoGame({ boardSize, matchType, movesInt });
   const { boardRef, movesRef } = goBoard;
@@ -73,7 +79,6 @@ export function useMatchSession({
   const [liveAnalysisResult, setLiveAnalysisResult] = useState<RecordAnalysis>({
     perMove: [],
   });
-
   const [matchResult, setMatchResult] = useState<
     Omit<MatchResultUpdate, "profilePatch">
   >(() => {
@@ -86,18 +91,27 @@ export function useMatchSession({
       newlyAcquiredIcons: [],
     };
   });
-
   const isResyncingRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const isBotThinkingRef = useRef(false);
+  // 相手が使っているモデルに合わせて分析する。人間戦で使われるのはb6。
+  const modelId: ModelId =
+    oppUsername === "bot1"
+      ? "b6"
+      : oppUsername === "bot2"
+        ? "b10"
+        : oppUsername === "bot3"
+          ? "b18"
+          : "b6";
+  const analysisRequestIdRef = useRef(0);
 
-  // 相手が使っているモデルに合わせて分析する。人間相手ならb18。
-  const opponentModelId: "b6" | "b10" | "b18" =
-    oppUsername === "bot1" ? "b6" : oppUsername === "bot2" ? "b10" : "b18";
+  // =========================================================================================
+  // 🌟 ===================================== 関数 =====================================
+  // =========================================================================================
 
-  // 🌟 -------- 関数 --------
-
+  // 通信トラブルで相手の手を受けとり損ねたときに、自動で最新の状態に追いつかせる処理
   const handleServerSync = async (payload: ServerSyncPayload) => {
+    // 🛡️ガード
     if (isGameEnded) return;
 
     const localCount = goBoard.movesRef.current.length;
@@ -118,7 +132,10 @@ export function useMatchSession({
     }
   };
 
-  // 🌟 -------- 時計の用意！ --------
+  // =========================================================================================
+  // 🌟 ===================================== 時計の用意 =====================================
+  // =========================================================================================
+  // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
   const clock = useMatchClock({
     matchId,
     myColor,
@@ -129,8 +146,10 @@ export function useMatchSession({
     handleServerSync,
   });
 
-  // 🌟 -------- 着手系--------
-  // katagoが手を打つ
+  // =========================================================================================
+  // 🌟 ===================================== 着手系処理 =====================================
+  // =========================================================================================
+  // 🌟ボットのターンになったら、useEffectによって自動的に行われる処理。
   const handleRunBotTurn = useCallback(async () => {
     // 🐱 botの手がこの後何手目として記録されるか。add_move呼び出し前(まだ
     //    ローカルに反映されていない)時点のmovesRef長がそのままインデックス。
@@ -140,7 +159,8 @@ export function useMatchSession({
       boardRef.current,
       movesRef.current,
       matchType,
-      async (grid: Grid, analysis) => { // 💡ここでrunBotTurnのanalysisつまりresultを受け取っている
+      async (grid: Grid, analysis) => {
+        // 💡ここでrunBotTurnのanalysisつまりresultを受け取っている
         // 🐱 着手決定のついでに手に入った分析結果は、まだ記録しない。
         //    supabaseへの送信が成功して初めて「この手は本当に打たれた」と
         //    確定するので、記録もそのタイミングまで待つ。
@@ -162,13 +182,14 @@ export function useMatchSession({
     );
   }, [botMove, matchType, matchId, clock, liveAnalysis, boardRef, movesRef]);
 
-  // 人間が手を打つ
+  // 🌟人間が手を打った時の処理
   const handlePutStone = async (grid: Grid) => {
     if (!clock.isMyTurn || isGameEnded || isSubmittingRef.current) return;
 
     isSubmittingRef.current = true;
     clock.freeze(); // 🥶 タップした瞬間から結果が確定するまで、誰の番でもない
 
+    // 手を打つ。非合法手ならfalseが返ってくる
     const applied = goBoard.applyLegalMove(grid, myColor);
     if (!applied) {
       clock.unfreeze(myColor); // 非合法手なら即座に自分の番へ戻す
@@ -182,10 +203,6 @@ export function useMatchSession({
     // 🐱 この手の分析(perMove記録)は、この局面になった瞬間に盤面変化
     //    監視用のuseEffectが既に済ませているので、ここでは計算しない。
     try {
-      // 🥶 ここから実際にサーバーへ送信する。以降frozenが3秒以上続いたら
-      // useMatchClock側のタイムアウト救済が働く(通信ロス等の異常検知用)。
-      clock.markWaitingForServer();
-
       // supabase送信
       const { error } = await supabase.rpc("add_move", {
         p_match_id: matchId,
@@ -221,7 +238,7 @@ export function useMatchSession({
     }
   };
 
-  // 人間が投了
+  // 🌟人間が投了した時の処理
   const handleResign = async () => {
     if (!clock.isMyTurn || isGameEnded) return;
 
@@ -246,8 +263,11 @@ export function useMatchSession({
     }
   };
 
-  // 🌟 -------- チャンネル系 --------
-  // gameチャンネルから手の通知が来た時の処理。
+  // =========================================================================================
+  // 🌟 ===================================== チャンネル系 =====================================
+  // =========================================================================================
+
+  // gameチャンネルからmoveイベントが来た時に行われる処理
   const gameCh_move = async (payload: any) => {
     if (isGameEnded) return;
     const data = payload.payload ?? payload;
@@ -283,7 +303,7 @@ export function useMatchSession({
     }
   };
 
-  // gameチャンネルからダブルパス通知が来た時の処理。
+  // gameチャンネルからdouble_passイベントが来た時に行われる処理
   const gameCh_double_pass = async (payload: any) => {
     if (isGameEnded) return;
     setLoading(true);
@@ -325,7 +345,7 @@ export function useMatchSession({
     }
   };
 
-  // gameチャンネルからポイント更新の通知が来た時の処理。
+  // gameチャンネルからrating_updatedイベントが来た時に行われる処理
   const gameCh_rating_updated = (payload: any) => {
     const data = payload.payload ?? payload;
     if (!data) return;
@@ -367,11 +387,15 @@ export function useMatchSession({
 
       console.log("🏁 対局中の全処理が終了！");
       setIsGameEnded(true);
-      clock.stopClock();
+      clock.destroyAllClocks();
       setLoading(false);
     }
   };
 
+  // 🌟🌟🌟ここでチャンネルに登録し、そして万が一の時のreconnect関数も受け取っている。
+  // ここでuseGameChannelを呼ぶと、useGameChannelはチャンネル名とかイベント名を用意して内部でuseRealtimeChannelを呼ぶ。
+  // そしてuseRealtimeChannelが実際にsupabaseとリアルタイム通信する。
+  // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
   const { reconnect } = useGameChannel(
     matchId,
     {
@@ -382,9 +406,15 @@ export function useMatchSession({
     !isGameEnded,
   );
 
-  // -------- useEffect --------
+  // =========================================================================================
+  // 🌟 ===================================== トリガー =====================================
+  // =========================================================================================
+  // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
+  // 🌟ボットの番になったら自動的にボットに打たせるトリガー。
   useEffect(() => {
     const isBotTurn = clock.turnState === oppColor;
+
+    // 🛡️ガード
     if (!botMatch || !isBotTurn || isGameEnded || isBotThinkingRef.current)
       return;
 
@@ -401,29 +431,20 @@ export function useMatchSession({
     execute();
   }, [botMatch, clock.turnState, handleRunBotTurn, oppColor, isGameEnded]);
 
-  // 🐱 盤面が変わるたびに発火する「次の一手」の事前分析。
-  //    盤面変化(=誰かが手を打った/resyncで巻き戻った、など理由を問わず)
-  //    を検知したら、その時点の局面を「次に打つ人」の視点で分析し、
-  //    次の一手が占めるはずのindex(=現在のmoves.length)に記録しておく。
-  //    実際にその手が打たれた時には、ここで先回りして記録した分析を
-  //    そのまま使う(handlePutStone・gameCh_move・handleResignでは計算しない)。
-  const analysisRequestIdRef = useRef(0);
-
+  // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
+  // 🌟ボットの番じゃない時は自動で分析を開始するトリガー。
   useEffect(() => {
-    if (isGameEnded) return;
-
-    // ボットの番はここでは分析しない。useBotMove側が着手決定のついでに
-    // 分析結果を既に持っているので、それをそのまま使う(handleRunBotTurn参照)。
     const isBotTurn = botMatch && clock.turnState === oppColor;
-    if (isBotTurn) return;
-
-    // 次に打つ人が定まらない場合は何もしない。
-    // 🐱 clock.turnStateは Color | "frozen" の型で、"frozen"は通信対局特有の
-    //    「着手が確定するまで誰の番でもない」状態(Colorには存在しない概念)。
-    //    frozen中に先回り分析をしても、その間に送信失敗→取り消しが起きれば
-    //    無駄になるだけなので、Colorが確定してから分析する。
     const currentPlayer = clock.turnState;
-    if (currentPlayer === "frozen" || !currentPlayer) return;
+
+    // 🛡️ガード
+    if (
+      isGameEnded ||
+      isBotTurn ||
+      currentPlayer === "frozen" ||
+      !currentPlayer
+    )
+      return;
 
     const moves = goBoard.moves;
     const nextMoveIndex = moves.length;
@@ -447,7 +468,7 @@ export function useMatchSession({
         movesSoFar: moves,
         matchType,
         boardSize,
-        modelId: opponentModelId,
+        modelId: modelId,
         currentPlayer,
       });
 
@@ -466,12 +487,14 @@ export function useMatchSession({
     oppColor,
     matchType,
     boardSize,
-    opponentModelId,
+    modelId,
     kataGoTask,
     liveAnalysis,
   ]);
 
-  // -------- return --------
+  // =========================================================================================
+  // 🌟 ===================================== return =====================================
+  // =========================================================================================
   return {
     boardHistory: goBoard.boardHistory,
     boardHistoryRef: goBoard.boardHistoryRef,

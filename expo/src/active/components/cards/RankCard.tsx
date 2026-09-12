@@ -4,11 +4,11 @@
 
 import { RankProgressBar } from "@/src/active/components/common/RankProgressBar";
 import { COLORS } from "@/src/active/constants/colors";
+import { RankInfo } from "@/src/active/constants/ranks";
 import { useLang, useTranslation } from "@/src/active/i18n";
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { RankInfo } from "../../constants/ranks";
 
 type Props = {
   rankInfo: RankInfo;

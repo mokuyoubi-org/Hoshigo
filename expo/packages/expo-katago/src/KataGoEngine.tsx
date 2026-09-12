@@ -51,6 +51,7 @@ export default function KataGoEngine({
   const initializedRef = useRef(false);
 
   useEffect(() => {
+    // 🛡️ガード
     if (initializedRef.current) return;
     initializedRef.current = true;
     initTf()

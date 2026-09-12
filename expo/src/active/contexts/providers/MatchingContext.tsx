@@ -51,6 +51,7 @@ export const MatchingProvider = ({
 
   // マッチング開始！
   const startMatching = async (boardSize: BoardSize) => {
+    // 🛡️ガード
     if (isMatching || !uid) return;
 
     unsubscribeUserChannel(); // 開始前に古い接続があれば切る

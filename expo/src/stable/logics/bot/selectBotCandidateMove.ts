@@ -96,6 +96,9 @@ export function selectBotCandidateMove(
 
   // パスは禁止。また、最善手でない場合の端っこ(xyいずれかが1)も禁止。
   const validMoves = moves.filter((m) => isValidCandidate(m, bestMove));
+  console.log(
+    `🔍 [selectBotCandidateMove] moveNumber=${moveNumber}(${boardSize}路): 入力moves=${JSON.stringify(moves)} / bestMove=${JSON.stringify(bestMove)} / validMoves=${JSON.stringify(validMoves)}`,
+  );
 
   if (validMoves.length === 0) return bestMove;
 

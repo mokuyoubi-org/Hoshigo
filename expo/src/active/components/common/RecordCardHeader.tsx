@@ -59,12 +59,12 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
     () =>
       simpleComment
         ? (resultToCommentSimple(record.result ?? "", t) ??
-          t("MyRecords.unknown"))
+          t("common.unknown"))
         : (resultToComment(
             record.result ?? "",
             isPlayerBlack ? BLACK : WHITE,
             t,
-          ) ?? t("MyRecords.unknown")),
+          ) ?? t("common.unknown")),
     [record.result, isPlayerBlack, t],
   );
 

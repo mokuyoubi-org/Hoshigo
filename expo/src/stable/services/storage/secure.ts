@@ -19,10 +19,12 @@ const WebStorageAdapter = {
     return localStorage.getItem(key);
   },
   setItem: (key: string, value: string) => {
+    // 🛡️ガード
     if (typeof localStorage === "undefined") return;
     localStorage.setItem(key, value);
   },
   removeItem: (key: string) => {
+    // 🛡️ガード
     if (typeof localStorage === "undefined") return;
     localStorage.removeItem(key);
   },

@@ -11,7 +11,7 @@ import { useAnalysisCache } from "./useAnalysisCache";
 import { useEditableMoves } from "./useEditableMoves";
 
 import { Grid } from "go-core";
-import { useState } from "react"; // ← 追加
+import { useState } from "react";
 
 export function useEditableGoBoard(record: RecordType) {
   const moves = useEditableMoves(record);
@@ -36,7 +36,8 @@ export function useEditableGoBoard(record: RecordType) {
     }
   };
 
-  const handlePutStone = (grid: Grid, source: "human" | "bot" = "human") => {
+  const handleEditStone = (grid: Grid, source: "human" | "bot" = "human") => {
+    // 🛡️ガード
     if (!moves.isEditMode || analysis.isAnalyzing) return;
     const inserted = moves.tryPutStone(grid, source);
     if (!inserted) return; // 非合法手
@@ -60,7 +61,7 @@ export function useEditableGoBoard(record: RecordType) {
     maxIdx: moves.maxIdx,
     processed: moves.processed,
     editMarkers: moves.editMarkers,
-    handlePutStone,
+    handleEditStone,
     isBlackPass: moves.isBlackPass,
     isWhitePass: moves.isWhitePass,
     currentAgehama: moves.currentAgehama,

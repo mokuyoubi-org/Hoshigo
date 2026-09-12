@@ -19,6 +19,7 @@ export function MatchButton({ onPress, boardSize, disabled = false }: Props) {
   const [pressScale] = useState(() => new Animated.Value(1));
 
   const handlePressIn = () => {
+    // 🛡️ガード
     if (disabled) return;
     Animated.spring(pressScale, {
       toValue: SCALE_PRESSED,
@@ -28,6 +29,7 @@ export function MatchButton({ onPress, boardSize, disabled = false }: Props) {
   };
 
   const handlePressOut = () => {
+    // 🛡️ガード
     if (disabled) return;
     Animated.spring(pressScale, {
       toValue: 1,

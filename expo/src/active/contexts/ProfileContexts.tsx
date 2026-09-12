@@ -2,7 +2,7 @@
 import React, { createContext, ReactNode, useContext, useState } from "react";
 
 // 1. プロフィールの型（素のデータ）
-export type Profile = {
+type Profile = {
   uid: string | null;
   email: string | null;
   username: string | null;
@@ -21,7 +21,7 @@ export type Profile = {
 };
 
 // Hookから返す全体の型
-export type ProfileContextValue = Profile & {
+type ProfileContextValue = Profile & {
   updateProfile: (partial: Partial<Profile>) => void;
   replaceProfile: (next: Profile) => void;
 };

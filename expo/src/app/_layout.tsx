@@ -9,13 +9,13 @@ import { Stack } from "expo-router";
 import React from "react";
 import "../../global.css";
 
+import { ForceUpdateModal } from "@/src/active/components/modals/ForceUpdateModal";
+import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModal";
+import { COLORS } from "@/src/active/constants/colors";
+import { OverlayProvider } from "@/src/active/contexts/OverlayContext";
+import { MatchingProvider } from "@/src/active/contexts/providers/MatchingContext";
 import { View } from "react-native";
 import { LoadingScreen } from "ui-atoms";
-import { ForceUpdateModal } from "../active/components/modals/ForceUpdateModal";
-import { MaintenanceModal } from "../active/components/modals/MaintenanceModal";
-import { COLORS } from "../active/constants/colors";
-import { OverlayProvider } from "../active/contexts/OverlayContext";
-import { MatchingProvider } from "../active/contexts/providers/MatchingContext";
 function RoutedContent() {
   const { isInitializing, maintenance, maintenanceMessage, needsUpdate } =
     useApp();

@@ -41,7 +41,7 @@ export function SearchingButton() {
       visible={shouldRender}
       label={
         frozen.isCanceling
-          ? t("common.canceling")
+          ? `${t("common.canceling")} ...`
           : `${t("common.searching")} ${frozen.boardSizeText}...`
       }
       busy={frozen.isCanceling}

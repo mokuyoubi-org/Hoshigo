@@ -33,6 +33,7 @@ function ProgressBar({
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // 🛡️ガード
     if (!isIndeterminate) return;
 
     slideAnim.setValue(0);

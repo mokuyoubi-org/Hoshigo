@@ -2,11 +2,11 @@
 
 import { COLORS } from "@/src/active/constants/colors";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
 import { Animated, Platform, Text, TouchableOpacity, View } from "react-native";
-import { useTranslation } from "../../i18n";
 import { Avatar } from "../common/Avatar";
 
 const RANK_COLORS: Record<number, { color: string }> = {

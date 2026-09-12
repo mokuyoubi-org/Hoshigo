@@ -1,7 +1,6 @@
 // OverlayContext.tsx
 //
-// 任意のJSXを画面に浮かせる/引っ込める、それだけの汎用的な仕組み。
-// React標準の機能(createContext/useState)以外への依存は一切無い。
+// オーバーレイ枠は一つ(showやhide関数を使ってるオーバーレイのこと)。今はどのモーダルがその枠を使ってるか？を定めるcontext。
 
 import React, { createContext, ReactNode, useContext, useState } from "react";
 

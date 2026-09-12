@@ -1,5 +1,13 @@
 // app/BoardEditScreen.tsx
+import { TerritoryCalculatorButton } from "@/src/active/components/buttons/TerritoryCalculatorButton";
 import { RecordCardHeader } from "@/src/active/components/common/RecordCardHeader";
+import { COLORS } from "@/src/active/constants/colors";
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useBotAnalysis } from "@/src/active/hooks/bot/useBotAnalysis";
+import { useBoardEditActions } from "@/src/active/hooks/edit/useBoardEditActions";
+import { useEditableGoBoard } from "@/src/active/hooks/edit/useEditableGoBoard";
+import { useReplayMoveEvaluation } from "@/src/active/hooks/edit/useReplayMoveEvaluation";
+import { useDoubleTapSetting } from "@/src/active/hooks/screens/useDoubleTapSetting";
 import { useTranslation } from "@/src/active/i18n";
 import { RecordType } from "@/src/active/types/record";
 import {
@@ -26,14 +34,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, SegmentedIconControl } from "ui-atoms";
-import { TerritoryCalculatorButton } from "../active/components/buttons/TerritoryCalculatorButton";
-import { COLORS } from "../active/constants/colors";
-import { useProfile } from "../active/contexts/ProfileContexts";
-import { useBotAnalysis } from "../active/hooks/bot/useBotAnalysis";
-import { useBoardEditActions } from "../active/hooks/edit/useBoardEditActions";
-import { useEditableGoBoard } from "../active/hooks/edit/useEditableGoBoard";
-import { useReplayMoveEvaluation } from "../active/hooks/edit/useReplayMoveEvaluation";
-import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
 
 export default function BoardEditScreen() {
   const { recordJson } = useLocalSearchParams<{ recordJson: string }>();
@@ -307,7 +307,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                   boardHistory={board.processed.boardHistory}
                   agehamaHistory={board.processed.agehamaHistory}
                   // タッチした時の処理: 1
-                  onPutStone={(grid) => board.handlePutStone(grid, "human")}
+                  onPutStone={(grid) => board.handleEditStone(grid, "human")}
                   // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
                   disabled={!board.isEditMode || board.isAnalyzing}
                   isGameEnded={!board.isEditMode}

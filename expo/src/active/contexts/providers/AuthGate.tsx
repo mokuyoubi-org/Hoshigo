@@ -9,13 +9,13 @@ import {
 } from "@/src/stable/services/supabase/supabase";
 import * as Updates from "expo-updates";
 
+import { COLORS } from "@/src/active/constants/colors";
+import { useProfileSync } from "@/src/active/hooks/screens/useProfileSync";
+import { useLang } from "@/src/active/i18n";
 import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import { useRouter, useSegments } from "expo-router";
 import React, { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
-import { COLORS } from "../../constants/colors";
-import { useProfileSync } from "../../hooks/screens/useProfileSync";
-import { useLang } from "../../i18n";
 import { useProfile } from "../ProfileContexts";
 
 export function AuthGate({ children }: { children: ReactNode }) {
@@ -132,8 +132,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("🐱見張り猫 Auth event:", event, "Has session:", !!session);
-        if (event === "INITIAL_SESSION") return; // ← これを追加。初回判定はinitialize()の役目
-        if (session) return;
+        // 🛡️ガード
+        if (session || event === "INITIAL_SESSION") return; // ← これを追加。初回判定はinitialize()の役目
 
         setIsInitializing(true);
         clearUserState();

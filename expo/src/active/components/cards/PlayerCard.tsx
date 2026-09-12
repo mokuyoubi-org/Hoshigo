@@ -1,5 +1,6 @@
 // PlayerCard.tsx
 
+import { COLORS } from "@/src/active/constants/colors";
 import { useTranslation } from "@/src/active/i18n";
 import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
@@ -9,7 +10,6 @@ import { Agehama } from "go-components";
 import { Color } from "go-core";
 import React from "react";
 import { Text, View } from "react-native";
-import { COLORS } from "../../constants/colors";
 import { AvatarWithPass } from "../common/AvatarWithPass";
 
 type Props = {

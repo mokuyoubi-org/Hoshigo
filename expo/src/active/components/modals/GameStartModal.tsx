@@ -5,11 +5,11 @@ import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
 
+import { COLORS } from "@/src/active/constants/colors";
 import { Color, MatchType } from "go-core";
 import React, { useEffect } from "react";
 import { Text, View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { COLORS } from "../../constants/colors";
 import { AvatarWithPass } from "../common/AvatarWithPass";
 
 type Props = {

@@ -5,10 +5,25 @@
 // ということで、useEffectでモーダルを表示したりする処理はこちらに書いてあります。
 // stateを変更した、その場ではなく、こちらでstateの変更に気づいて発火するようになっています。
 // ひとまず完成。
+import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
 import { GameResultModal } from "@/src/active/components/modals/GameResultModal";
+import { GameStartModal } from "@/src/active/components/modals/GameStartModal";
 import LoadingModal from "@/src/active/components/modals/LoadingModal";
+import { COLORS } from "@/src/active/constants/colors";
+import { useOverlay } from "@/src/active/contexts/OverlayContext";
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
+import { useDoubleTapSetting } from "@/src/active/hooks/screens/useDoubleTapSetting";
+import { useSounds } from "@/src/active/hooks/useGameSounds";
 import { useTranslation } from "@/src/active/i18n";
+import {
+  GameScreenParams,
+  getPassState,
+  parseGameParams,
+} from "@/src/stable/logics/gameScreenLogics";
+import { getRankInfo } from "@/src/stable/logics/rankLogics";
+import { buildRecordFromMatch } from "@/src/stable/logics/recordBuilder";
+import { recordsRepo } from "@/src/stable/logics/records-repo";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -23,21 +38,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton } from "ui-atoms";
-import { PlayerCard } from "../active/components/cards/PlayerCard";
-import { GameStartModal } from "../active/components/modals/GameStartModal";
-import { COLORS } from "../active/constants/colors";
-import { useOverlay } from "../active/contexts/OverlayContext";
-import { useProfile } from "../active/contexts/ProfileContexts";
-import { useDoubleTapSetting } from "../active/hooks/screens/useDoubleTapSetting";
-import { useSounds } from "../active/hooks/useGameSounds";
-import {
-  GameScreenParams,
-  getPassState,
-  parseGameParams,
-} from "../stable/logics/gameScreenLogics";
-import { getRankInfo } from "../stable/logics/rankLogics";
-import { buildRecordFromMatch } from "../stable/logics/recordBuilder";
-import { recordsRepo } from "../stable/logics/records-repo";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -407,7 +407,7 @@ export default function GameScreen() {
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_C }} />
       </View>
 
-      <LoadingModal text={t("common.loading")} visible={loading} />
+      <LoadingModal visible={loading} />
     </SafeAreaView>
   );
   // LoadingModalを無理にここから移動させようとすると、多分いろんなところにshow(<LoadingModal>とか

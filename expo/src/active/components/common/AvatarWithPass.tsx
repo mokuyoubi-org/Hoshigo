@@ -1,11 +1,11 @@
 // AvatarWithPass.tsx
 
+import { COLORS } from "@/src/active/constants/colors";
+import { useTranslation } from "@/src/active/i18n";
 import { Pass } from "go-components";
 import { Color } from "go-core";
 import React from "react";
 import { View } from "react-native";
-import { COLORS } from "../../constants/colors";
-import { useTranslation } from "../../i18n";
 import { Avatar } from "./Avatar";
 
 type Props = {

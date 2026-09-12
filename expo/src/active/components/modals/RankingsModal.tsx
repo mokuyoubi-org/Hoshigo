@@ -34,6 +34,7 @@ export default function RankingsModal({ visible, onClose }: Props) {
   const { height: windowHeight } = useWindowDimensions();
 
   useEffect(() => {
+    // 🛡️ガード
     if (!visible) return;
 
     const fetchTopProfiles = async () => {

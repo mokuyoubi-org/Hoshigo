@@ -3,6 +3,7 @@ import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
 import { useTranslation } from "@/src/active/i18n";
 
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -15,7 +16,6 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { useProfile } from "../../contexts/ProfileContexts";
 type Props = {
   visible: boolean;
   onClose: () => void;

@@ -1,3 +1,12 @@
+// useRealtimeChannel.ts
+
+// 実際のsupabaseとのリアルタイム通信を担当。
+// useRealtimeChannel()は、useGameChannelから呼ばれたら、チャンネルに登録し、万が一接続が切れてしまった時用の、
+// reconnect関数も渡しておく。
+
+// ということは、useGameChannelは呼ばれたら内部でuseRealtimeChannelを呼ぶので、
+// 結局呼び出しているのはuseMatchSessionということになる
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -19,6 +28,7 @@ export function useRealtimeChannel<
 
   // チャンネルを登録（接続）する内部関数
   const subscribeChannel = useCallback(() => {
+    // 🛡️ガード
     if (!channelName || !enabled) return;
 
     // すでに接続があれば削除してから新しく作る
@@ -35,20 +45,20 @@ export function useRealtimeChannel<
     }
 
     channel.subscribe((status, err) => {
-      if (err) console.error(`${channelName} channel error:`, err);
+      if (status) console.log(`${channelName} channel status:`, status);
+      else if (err) console.error(`${channelName} channel error:`, err);
     });
 
     channelRef.current = channel;
   }, [client, channelName, enabled]);
 
-  // 外部から呼べる再接続（再登録）用の関数
+  // 🌟外部から呼べる再接続（再登録）用の関数を用意
   const reconnect = useCallback(() => {
-    console.log(
-      `reconnect ${channelName}`,
-    );
+    console.log(`reconnect ${channelName}`);
     subscribeChannel();
   }, [channelName, subscribeChannel]);
 
+  // 🌟ここでチャンネルにまず登録している
   useEffect(() => {
     subscribeChannel();
 

@@ -1,5 +1,8 @@
 import { COLORS } from "@/src/active/constants/colors";
+import { ICONS } from "@/src/active/constants/icons";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
+import { useIconUpdate } from "@/src/active/hooks/screens/useIconUpdate";
 import { useLang, useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { FontAwesome, Octicons } from "@expo/vector-icons";
@@ -15,9 +18,6 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { ICONS } from "../../constants/icons";
-import { useMatching } from "../../contexts/providers/MatchingContext";
-import { useIconUpdate } from "../../hooks/screens/useIconUpdate";
 
 type Props = {
   visible: boolean;
@@ -53,6 +53,7 @@ export function GameResultModal({
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
   const handleSelectIcon = async (iconId: number) => {
+    // 🛡️ガード
     if (loadingIndex !== null || currentIconIndex === iconId) return;
     try {
       setLoadingIndex(iconId);
@@ -87,11 +88,13 @@ export function GameResultModal({
   const [isRankNew, setIsRankNew] = useState(false);
 
   useEffect(() => {
+    // 🛡️ガード
     if (!visible) {
       hasAnimated.current = false;
       return;
     }
 
+    // 🛡️ガード
     if (hasAnimated.current) return;
     hasAnimated.current = true;
 

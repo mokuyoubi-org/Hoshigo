@@ -1,6 +1,7 @@
 // UsernameEditModal.tsx
 import { COLORS } from "@/src/active/constants/colors";
 import { useTranslation } from "@/src/active/i18n";
+import { dictionary } from "@/src/active/i18n/dictionary";
 import { validateUsername } from "@/src/stable/logics/validationLogics";
 import React, { useState } from "react";
 import {
@@ -14,7 +15,6 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { dictionary } from "../../i18n/dictionary";
 
 type Props = {
   visible: boolean;

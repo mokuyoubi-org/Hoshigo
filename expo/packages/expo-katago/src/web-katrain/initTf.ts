@@ -53,6 +53,7 @@ async function runInitTf(): Promise<void> {
  * 何回同時に呼び出しても、安全に1回だけ初期化されるから環境やタイミングを気にせず安心して使っていい
  */
 export async function initTf(): Promise<void> {
+  // 🛡️ガード
   if (initialized) return;
 
   // 同時に複数回呼ばれた場合は、最初の初期化処理が終わるのをみんなで待つ

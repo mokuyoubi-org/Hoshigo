@@ -32,6 +32,7 @@ export function useSoundPlayer<T extends string>(sources: Record<T, SoundSource>
   const playSound = useCallback(async (name: T, volume: number = 1.0) => {
     try {
       const player = playersRef.current?.[name];
+      // 🛡️ガード
       if (!player) return;
 
       player.volume = volume;

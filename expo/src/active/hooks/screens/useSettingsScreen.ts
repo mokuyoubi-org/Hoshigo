@@ -2,9 +2,9 @@
 // useSettingsScreen.ts
 
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useState } from "react";
-import { useMatching } from "../../contexts/providers/MatchingContext";
 
 export function useSettingsScreen() {
   const { isMatching } = useMatching();

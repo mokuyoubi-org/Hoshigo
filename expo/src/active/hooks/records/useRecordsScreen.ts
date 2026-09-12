@@ -1,5 +1,6 @@
 // useRecordsScreen.ts
 
+import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useRecordsSync } from "@/src/active/hooks/records/useRecordsSync";
 import { RecordOrSkeleton, RecordType } from "@/src/active/types/record";
 import {
@@ -22,8 +23,7 @@ import {
 import {
   isSkeletonCard,
   makeSkeletonCard,
-} from "../../../stable/logics/recordCardLogics";
-import { useProfile } from "../../contexts/ProfileContexts";
+} from "@/src/stable/logics/recordCardLogics";
 
 export type ProcessedRecord = {
   finalBoard: Board;
