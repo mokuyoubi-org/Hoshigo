@@ -124,7 +124,7 @@ export function useBotMove(
       const moveCount = movesSoFar.length;
 
       // 1手目: ハードコード（条件に合う場合）
-      if (moveCount === 0 && boardSize === 9 && matchType !== 1) {
+      if (moveCount === 0 && matchType !== 1) {
         const grid = decideBotFirstMove(matchType, boardSize);
         console.log("ハードコードされた初手: ", grid);
         await onDecided(grid, result); // 💡実際にbotの手は使用しないが、ちゃんとkatagoを回し、resultを返すことが大事
@@ -137,6 +137,7 @@ export function useBotMove(
         result.moves,
         moveCount,
         boardSize,
+        modelId,
       );
 
       const chosenGrid: Grid =

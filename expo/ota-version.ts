@@ -1,3 +1,3 @@
 // ota-version.ts
 
-export const OTA_VERSION = "260912.3";
+export const OTA_VERSION = "260912.4";

@@ -50,7 +50,7 @@ export function useBotCalculation() {
       movesSoFar,
       matchType,
       boardSize,
-      modelId: "b18", // 精度優先の希望。無ければ自動でb10→b6にフォールバック
+      modelId: "b10", // 精度優先の希望。無ければ自動でb6にフォールバック
       currentPlayer: getNextPlayer(matchType, movesSoFar.length),
     });
 

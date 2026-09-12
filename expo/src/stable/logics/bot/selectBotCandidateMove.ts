@@ -17,7 +17,7 @@
 // 数式で持っても事故りにくい)。
 // ──────────────────────────────────────────────────
 
-import { AnalyzeResult } from "expo-katago";
+import { AnalyzeResult, ModelId } from "expo-katago";
 import { BoardSize } from "go-core";
 
 type CandidateMove = AnalyzeResult["moves"][number];
@@ -62,9 +62,15 @@ const isEdge = (m: CandidateMove) => m.x === 1 || m.y === 1;
 // 候補手が抽選対象として有効かどうかを判定する。
 // 禁止条件を上から順番に弾いていく書き方にして、
 // 「パスなら禁止」「端っこは最善手以外禁止」を素直に読めるようにしている。
-function isValidCandidate(m: CandidateMove, bestMove: CandidateMove): boolean {
+function isValidCandidate(
+  m: CandidateMove,
+  bestMove: CandidateMove,
+  boardSize: BoardSize,
+  modelId: ModelId,
+): boolean {
   if (isPass(m)) return false; // パスは常に禁止
-  if (isEdge(m) && m !== bestMove) return false; // 端っこは最善手以外禁止
+  if (isEdge(m) && m !== bestMove && boardSize === 9 && modelId === "b18")
+    return false; // b18の9路盤での変な端っこ打ちは禁止しておく
   return true;
 }
 
@@ -86,6 +92,7 @@ export function selectBotCandidateMove(
   moves: AnalyzeResult["moves"],
   moveCount: number,
   boardSize: BoardSize,
+  modelId: ModelId,
 ): CandidateMove {
   const bestMove = moves[0];
 
@@ -95,7 +102,9 @@ export function selectBotCandidateMove(
   const moveNumber = moveCount + 1;
 
   // パスは禁止。また、最善手でない場合の端っこ(xyいずれかが1)も禁止。
-  const validMoves = moves.filter((m) => isValidCandidate(m, bestMove));
+  const validMoves = moves.filter((m) =>
+    isValidCandidate(m, bestMove, boardSize, modelId),
+  );
   console.log(
     `🔍 [selectBotCandidateMove] moveNumber=${moveNumber}(${boardSize}路): 入力moves=${JSON.stringify(moves)} / bestMove=${JSON.stringify(bestMove)} / validMoves=${JSON.stringify(validMoves)}`,
   );
