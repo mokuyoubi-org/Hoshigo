@@ -186,6 +186,18 @@ export function useLoginModal({ onClose, turnstileRef }: Props) {
           setError(t("AccountLinking.errorVerifyFailed"));
           return;
         }
+      } else if (selection === "existing") {
+        if (guestUid) {
+          const { error: deleteGuestError } = await supabase.rpc(
+            "delete_guest_after_existing_selected",
+            { p_guest_uid: guestUid },
+          );
+
+          if (deleteGuestError) {
+            // ゲストの後始末に失敗しても、既存アカウントでのログイン自体は続行する
+            console.error("ゲスト削除失敗:", deleteGuestError);
+          }
+        }
       }
 
       await clearAllLocalData(); // セッション切れの時
