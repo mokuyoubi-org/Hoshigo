@@ -1889,7 +1889,7 @@ $$;
 ALTER FUNCTION "public"."update_icon_index"("new_icon_index" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."update_last_seen"("p_match_id" integer) RETURNS TABLE("out_moves" smallint[], "out_turn" "text")
+CREATE OR REPLACE FUNCTION "public"."update_last_seen"("p_match_id" integer) RETURNS smallint[]
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
@@ -1925,10 +1925,11 @@ begin
   where id = p_match_id;
 
   -- 4. 最新データを返す
-  return query
-    select m.moves, m.turn
+  return (
+    select m.moves
     from private.matches m
-    where m.id = p_match_id;
+    where m.id = p_match_id
+  );
 end;
 $$;
 
