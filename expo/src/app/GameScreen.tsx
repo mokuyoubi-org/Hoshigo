@@ -204,7 +204,7 @@ export default function GameScreen() {
   // 【役割】結果画面を表示。
   // 【発火条件】対局が終わった時、もしくはresultボタンを押した時。
   // isGameEndedは対局が終了しているか否か。
-  useEffect(() => {
+useEffect(() => {
     if (isGameEnded) {
       const record = buildRecordFromMatch({
         matchId,
@@ -231,16 +231,22 @@ export default function GameScreen() {
       // 🐱 分析結果込みでローカルにも保存しておく。INSERT OR IGNOREなので、
       //    後からsyncNewerがサーバー版(analysisを持たない)を取ってきても
       //    上書きされず、この時点のanalysisがそのまま残り続ける。
-      recordsRepo
-        .insertMany([record])
-        .catch((e) => console.error("対局記録のローカル保存に失敗:", e));
+      const saveAndNavigate = async () => {
+        try {
+          await recordsRepo.insertMany([record]);
+        } catch (e) {
+          console.error("対局記録のローカル保存に失敗:", e);
+        }
 
-      router.replace({
-        pathname: "/BoardEditScreen",
-        params: { matchId: matchId },
-      });
+        router.replace({
+          pathname: "/BoardEditScreen",
+          params: { matchId: matchId },
+        });
 
-      showResultModal();
+        showResultModal();
+      };
+
+      saveAndNavigate();
     }
   }, [isGameEnded]);
 

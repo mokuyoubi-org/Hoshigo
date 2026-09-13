@@ -66,6 +66,7 @@ export function useMatchSession({
   const liveAnalysis = useLiveAnalysis();
   const { rating9, rating13, acquiredIcons, updateProfile } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
+  const isGameEndedRef = useRef(false);
   const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
   // 🐱 対局終了直後、RecordType組み立てに必要だけど今まで捨てていたデータたち
@@ -91,6 +92,7 @@ export function useMatchSession({
   const isResyncingRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const isBotThinkingRef = useRef(false);
+  const isAnalyzingRef = useRef(false);
   // 相手が使っているモデルに合わせて分析する。人間戦で使われるのはb6。
   const modelId: ModelId =
     oppUsername === "bot1"
@@ -100,7 +102,6 @@ export function useMatchSession({
         : oppUsername === "bot3"
           ? "b18"
           : "b6";
-  const analysisRequestIdRef = useRef(0);
 
   // =========================================================================================
   // 🌟 ===================================== 関数 =====================================
@@ -387,6 +388,7 @@ export function useMatchSession({
 
       console.log("🏁 対局中の全処理が終了！");
       setIsGameEnded(true);
+      isGameEndedRef.current = true;
       clock.destroyAllClocks();
       setLoading(false);
     }
@@ -410,15 +412,21 @@ export function useMatchSession({
   // 🌟 ===================================== トリガー =====================================
   // =========================================================================================
   // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
-  // 🌟ボットの番になったら自動的にボットに打たせるトリガー。
+  // 🌟ボットの番になったら自動的にボットに打たせるトリガー(3秒おきの確認付き)
   useEffect(() => {
     const isBotTurn = clock.turnState === oppColor;
 
-    // 🛡️ガード
-    if (!botMatch || !isBotTurn || isGameEnded || isBotThinkingRef.current)
-      return;
-
     const execute = async () => {
+      // 🛡️ガード
+      if (
+        !botMatch ||
+        !isBotTurn ||
+        isGameEndedRef.current ||
+        isBotThinkingRef.current
+      )
+        return;
+      console.log("ボットのターンだ！発火🔥");
+
       isBotThinkingRef.current = true;
       try {
         await handleRunBotTurn();
@@ -428,7 +436,19 @@ export function useMatchSession({
         isBotThinkingRef.current = false;
       }
     };
+
+    // 1. ターンの切り替わり時にすぐ実行する
     execute();
+
+    // 2. 3秒ごとに定期実行するタイマーを仕込む
+    const intervalId = setInterval(() => {
+      execute();
+    }, 3000);
+
+    // 3. クリーンアップ処理
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [clock.turnState]);
 
   // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
@@ -439,12 +459,13 @@ export function useMatchSession({
 
     // 🛡️ガード
     if (
-      isGameEnded ||
+      isGameEndedRef.current ||
       isBotTurn ||
       currentPlayer === "frozen" ||
       !currentPlayer
     )
       return;
+    console.log("自分のターンだ！分析発火🔥");
 
     const moves = goBoard.moves;
     const nextMoveIndex = moves.length;
@@ -460,8 +481,6 @@ export function useMatchSession({
     const board = goBoard.boardHistoryRef.current[nextMoveIndex];
     if (!board) return;
 
-    const requestId = ++analysisRequestIdRef.current;
-
     (async () => {
       const analysis = await kataGoTask.run({
         board,
@@ -471,10 +490,6 @@ export function useMatchSession({
         modelId: modelId,
         currentPlayer,
       });
-
-      // 🥶 発火後に盤面がさらに変わっていたら(取り消し→打ち直し等)、
-      //    この結果は古いので捨てる。
-      if (analysisRequestIdRef.current !== requestId) return;
 
       liveAnalysis.record(nextMoveIndex, analysis);
     })();
