@@ -2,7 +2,6 @@
 
 import type { RecordType } from "@/src/active/types/record";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
-import { runOncePerDay } from "@/src/stable/logics/syncUtils";
 import { sqliteKv } from "@/src/stable/services/storage/sqlite";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useCallback } from "react";
@@ -12,34 +11,35 @@ const SYNC_BATCH = 10; // 差分キャッチアップ1回あたりの取得件�
 export function useRecordsSync() {
   // ---- 新着キャッチアップ ----
   const syncNewer = useCallback(async (uid: string, boardSize: number) => {
-    // 🐱 runOncePerDay で包むだけ！
-    await runOncePerDay(`records_${boardSize}`, async () => {
-      const localNewestId = await recordsRepo.getNewestId(boardSize);
-      if (localNewestId == null) return;
+    const localNewestId = await recordsRepo.getNewestId(boardSize);
+    const localOldestId = await recordsRepo.getOldestId(boardSize);
+    console.log("localNewestId: ", localNewestId);
+    console.log("localOldestId: ", localOldestId);
 
-      let cursor = localNewestId;
-      while (true) {
-        const { data, error } = await supabase.rpc("get_records_newer", {
-          p_uid: uid,
-          p_limit: SYNC_BATCH,
-          p_board_size: boardSize,
-          p_after_id: cursor,
-        });
-        if (error) {
-          console.error("新着棋譜の取得失敗:", error);
-          // エラー時は throwIfError 等を入れない限り日付が更新されないので、
-          // 次回リトライしてくれる安全設計
-          return;
-        }
-        const fetched: RecordType[] = data ?? [];
-        if (fetched.length === 0) break;
+    if (localNewestId == null) return;
 
-        await recordsRepo.insertMany(fetched);
-        cursor = fetched[fetched.length - 1].id;
-
-        if (fetched.length < SYNC_BATCH) break;
+    let cursor = localNewestId;
+    while (true) {
+      const { data, error } = await supabase.rpc("get_records_newer", {
+        p_uid: uid,
+        p_limit: SYNC_BATCH,
+        p_board_size: boardSize,
+        p_after_id: cursor,
+      });
+      if (error) {
+        console.error("新着棋譜の取得失敗:", error);
+        // エラー時は throwIfError 等を入れない限り日付が更新されないので、
+        // 次回リトライしてくれる安全設計
+        return;
       }
-    });
+      const fetched: RecordType[] = data ?? [];
+      if (fetched.length === 0) break;
+
+      await recordsRepo.insertMany(fetched);
+      cursor = fetched[fetched.length - 1].id;
+
+      if (fetched.length < SYNC_BATCH) break;
+    }
   }, []);
   // ---- ページ取得(表示用) ----
   const fetchOlderPage = useCallback(
@@ -49,6 +49,11 @@ export function useRecordsSync() {
       beforeId: number | null,
       limit: number,
     ): Promise<RecordType[]> => {
+      const localNewestId = await recordsRepo.getNewestId(boardSize);
+      const localOldestId = await recordsRepo.getOldestId(boardSize);
+      console.log("localNewestId: ", localNewestId);
+      console.log("localOldestId: ", localOldestId);
+
       // 1. ローカルから取得を試みる
       const localPage = await recordsRepo.getPage(boardSize, beforeId, limit);
       if (localPage.length >= limit) {
@@ -59,6 +64,7 @@ export function useRecordsSync() {
       // 2. 「これ以上古い棋譜はない」と分かっているかチェックする！
       const oldestKey = `oldest_record_id_${boardSize}`;
       const knownOldestIdStr = await sqliteKv.getItem(oldestKey);
+      console.log("knownOldestIdStr: ", knownOldestIdStr);
 
       if (knownOldestIdStr !== null) {
         const knownOldestId = JSON.parse(knownOldestIdStr) as number;
@@ -110,6 +116,9 @@ export function useRecordsSync() {
       if (fetched.length > 0) {
         await recordsRepo.insertMany(fetched);
       }
+
+      console.log("localNewestId: ", localNewestId);
+      console.log("localOldestId: ", localOldestId);
 
       // 5. 保存できたので、あらためてローカルから読み直して返す
       return recordsRepo.getPage(boardSize, beforeId, limit);

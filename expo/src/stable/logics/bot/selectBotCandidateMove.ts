@@ -105,9 +105,9 @@ export function selectBotCandidateMove(
   const validMoves = moves.filter((m) =>
     isValidCandidate(m, bestMove, boardSize, modelId),
   );
-  console.log(
-    `🔍 [selectBotCandidateMove] moveNumber=${moveNumber}(${boardSize}路): 入力moves=${JSON.stringify(moves)} / bestMove=${JSON.stringify(bestMove)} / validMoves=${JSON.stringify(validMoves)}`,
-  );
+  // console.log(
+  //   `🔍 [selectBotCandidateMove] moveNumber=${moveNumber}(${boardSize}路): 入力moves=${JSON.stringify(moves)} / bestMove=${JSON.stringify(bestMove)} / validMoves=${JSON.stringify(validMoves)}`,
+  // );
 
   if (validMoves.length === 0) return bestMove;
 

@@ -237,7 +237,7 @@ export default function GameScreen() {
 
       router.replace({
         pathname: "/BoardEditScreen",
-        params: { recordJson: JSON.stringify(record) },
+        params: { matchId: matchId },
       });
 
       showResultModal();

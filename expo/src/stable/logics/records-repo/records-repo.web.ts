@@ -3,6 +3,7 @@ import { RecordAnalysis } from "go-core";
 
 export type RecordsRepo = {
   insertMany: (records: RecordType[]) => Promise<void>;
+  getById: (id: number) => Promise<RecordType | null>;
   getNewestId: (boardSize: number) => Promise<number | null>;
   getOldestId: (boardSize: number) => Promise<number | null>;
   getPage: (
@@ -50,6 +51,20 @@ export const recordsRepo: RecordsRepo = {
       tx.onerror = () => reject(tx.error);
     });
   },
+
+  // 🐱 ここから追加！
+  getById: async (id) => {
+    if (typeof indexedDB === "undefined") return null;
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get(id);
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  // 🐱 ここまで追加！
 
   getNewestId: async (boardSize) => {
     if (typeof indexedDB === "undefined") return null;

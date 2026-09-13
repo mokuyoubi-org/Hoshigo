@@ -1,23 +1,9 @@
 // MatchingContext.tsx
-// プレイボタンを押して、マッチングを開始したり、サーチングボタンでキャンセルボタンを押した時の処理が書いてある。
+// Contextの定義と、Providerの箱だけ。中身のロジックは useMatchingProvider に集約されている。
 
-import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import {
-  cancelWaitlistRPC,
-  formatPlayingParams,
-  joinWaitlistRPC,
-} from "@/src/stable/logics/matchingRPC";
-import { supabase } from "@/src/stable/services/supabase/supabase";
-import { RealtimeChannel } from "@supabase/supabase-js";
-import { router } from "expo-router";
 import { BoardSize } from "go-core";
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useContext } from "react";
+import { useMatchingProvider } from "../../hooks/useMatchingProvider";
 
 type MatchingContextType = {
   isMatching: boolean;
@@ -33,133 +19,10 @@ export const MatchingProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [isMatching, setIsMatching] = useState(false);
-  const [matchingBoardSize, setMatchingBoardSize] = useState<BoardSize | null>(
-    null,
-  );
-  const { uid } = useProfile();
-  const userChannelRef = useRef<RealtimeChannel | null>(null);
-
-  // 🔒公開しない
-  const unsubscribeUserChannel = useCallback(() => {
-    if (userChannelRef.current) {
-      console.log("🐱 userChannel を切断した");
-      supabase.removeChannel(userChannelRef.current);
-      userChannelRef.current = null;
-    }
-  }, []);
-
-  // マッチング開始！
-  const startMatching = async (boardSize: BoardSize) => {
-    // 🛡️ガード
-    if (isMatching || !uid) return;
-
-    unsubscribeUserChannel(); // 開始前に古い接続があれば切る
-
-    console.log("🐱 マッチング開始！");
-    setIsMatching(true);
-    setMatchingBoardSize(boardSize);
-
-    const userChannel = supabase.channel(`user:${uid}`);
-    userChannelRef.current = userChannel;
-
-    // 🐱 1. まずイベントを受け取る準備を書く
-    userChannel.on("broadcast", { event: "matched" }, (payload) => {
-      // サブスク通知が届いた時の処理
-      const data = payload.payload ?? payload;
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
-
-      console.log("[MatchingContext]data: ", data);
-
-      setTimeout(() => {
-        router.replace({
-          pathname: "/GameScreen",
-          params: formatPlayingParams(data),
-        });
-      }, 0);
-    });
-
-    // 🐱 2. サブスクの接続完了を待って、状態を受け取る
-    const status = await new Promise<string>((resolve) => {
-      userChannel.subscribe((status) => {
-        resolve(status);
-      });
-    });
-
-    // 🐱 3. もしサブスクが失敗したら、安全にキャンセルして終わる
-    if (status !== "SUBSCRIBED") {
-      // CLOSED（意図的な切断）の時はエラーログを出さずに静かに終わる
-      if (status !== "CLOSED") {
-        console.error("🐱 サブスクの接続に失敗… status:", status);
-      } else {
-        console.log("🐱 接続中にキャンセルされた");
-      }
-
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
-      return;
-    }
-
-    console.log("userチャンネル接続OK!join_waitlistを呼びます");
-
-    // 🐱 4. 準備が100%整ってからRPCを呼ぶ！
-    const { data, error } = await joinWaitlistRPC(boardSize);
-
-    // エラーだった場合全部取りやめ
-    if (error) {
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
-      console.error("join_waitlist error:", error);
-      return;
-    }
-
-    // 🐱 すでに対局中でデータが返ってきたら、即座に対局画面へ復帰！
-    if (data) {
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
-
-      setTimeout(() => {
-        router.replace({
-          pathname: "/GameScreen",
-          params: formatPlayingParams(data),
-        });
-      }, 0);
-    }
-  };
-
-  // キャンセルボタン押した
-  const cancelMatching = async () => {
-    const { data } = await cancelWaitlistRPC();
-
-    // キャンセル成功にせよ、すでに対局が存在していたにせよ、userchannelはもう不要だし、matchingフェーズでもない
-    unsubscribeUserChannel();
-    setIsMatching(false);
-    setMatchingBoardSize(null);
-
-    if (data) {
-      setTimeout(() => {
-        router.replace({
-          pathname: "/GameScreen",
-          params: formatPlayingParams(data),
-        });
-      }, 0);
-    }
-  };
+  const value = useMatchingProvider();
 
   return (
-    <MatchingContext.Provider
-      value={{
-        isMatching,
-        matchingBoardSize,
-        startMatching,
-        cancelMatching,
-      }}
-    >
+    <MatchingContext.Provider value={value}>
       {children}
     </MatchingContext.Provider>
   );

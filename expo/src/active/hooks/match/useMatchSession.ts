@@ -429,7 +429,7 @@ export function useMatchSession({
       }
     };
     execute();
-  }, [botMatch, clock.turnState, handleRunBotTurn, oppColor, isGameEnded]);
+  }, [clock.turnState]);
 
   // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
   // 🌟ボットの番じゃない時は自動で分析を開始するトリガー。
@@ -478,19 +478,7 @@ export function useMatchSession({
 
       liveAnalysis.record(nextMoveIndex, analysis);
     })();
-  }, [
-    goBoard.moves,
-    goBoard.boardHistoryRef,
-    isGameEnded,
-    botMatch,
-    clock.turnState,
-    oppColor,
-    matchType,
-    boardSize,
-    modelId,
-    kataGoTask,
-    liveAnalysis,
-  ]);
+  }, [clock.turnState]);
 
   // =========================================================================================
   // 🌟 ===================================== return =====================================

@@ -4,7 +4,7 @@ import {
   RankingCard,
 } from "@/src/active/components/cards/RankingCard";
 import { COLORS } from "@/src/active/constants/colors";
-import { fetchWithDailyCache } from "@/src/stable/logics/syncUtils"; // 🐱 追加！
+import { fetchWithPeriodicCache } from "@/src/stable/logics/syncUtils"; // 🐱 追加！
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BOARD_SIZE_OPTIONS, BoardSize } from "go-core";
 import React, { useEffect, useState } from "react";
@@ -41,8 +41,9 @@ export default function RankingsModal({ visible, onClose }: Props) {
       setLoading(true);
 
       // 🐱 1日1回だけ Supabase から取得し、2回目以降は sqliteKv のキャッシュを使う
-      const data = await fetchWithDailyCache<RankingItem[]>(
+      const data = await fetchWithPeriodicCache<RankingItem[]>(
         "global_rankings",
+        60,
         async () => {
           const { data, error } = await supabase.rpc("get_rankings");
           if (error) throw error;

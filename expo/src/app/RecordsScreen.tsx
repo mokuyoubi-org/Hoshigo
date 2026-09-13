@@ -6,10 +6,10 @@ import { useRecordsScreen } from "@/src/active/hooks/records/useRecordsScreen";
 import { useTranslation } from "@/src/active/i18n";
 import { RecordOrSkeleton } from "@/src/active/types/record";
 import { isSkeletonCard } from "@/src/stable/logics/recordCardLogics";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { BOARD_SIZE_OPTIONS } from "go-core";
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect } from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SegmentedControl } from "ui-atoms";
@@ -30,7 +30,6 @@ export default function RecordsScreen() {
     handleToggle,
     loadMore,
     handleScroll,
-    syncNewData,
   } = useRecordsScreen();
 
   // 関数
@@ -66,20 +65,12 @@ export default function RecordsScreen() {
         onPress={() => {
           router.push({
             pathname: "/BoardEditScreen",
-            params: { recordJson: JSON.stringify(item) },
+            params: { matchId: item.id },
           });
         }}
       />
     );
   };
-
-  // 🐱 3. 画面にフォーカスが戻ってくる（Backで戻った時など）たびに実行されるエフェクト
-  useFocusEffect(
-    useCallback(() => {
-      // BoardEdit画面から戻ってきた時に、最新のDB状態を同期してメモリ（caches）を更新する
-      syncNewData();
-    }, []),
-  );
 
   useEffect(() => {
     // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
@@ -96,7 +87,6 @@ export default function RecordsScreen() {
   // そして、そのidをkeyとして使うためにstringにしている。
   const keyExtractor = (item: RecordOrSkeleton) => String(item.id);
 
-  // 何これ？
   const contentContainerStyle =
     records.length === 0
       ? {

@@ -24,7 +24,7 @@ import {
   ScoreLeadReplayControls,
 } from "go-components";
 import { BLACK, WHITE } from "go-core";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   LayoutChangeEvent,
@@ -34,24 +34,55 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, SegmentedIconControl } from "ui-atoms";
+import { recordsRepo } from "../stable/logics/records-repo";
 
 export default function BoardEditScreen() {
-  const { recordJson } = useLocalSearchParams<{ recordJson: string }>();
-
-  const record = useMemo<RecordType | null>(() => {
-    if (!recordJson) return null;
-    try {
-      return JSON.parse(recordJson) as RecordType;
-    } catch (e) {
-      console.error("Failed to parse recordJson:", e);
-      return null;
+  const { matchId } = useLocalSearchParams<{ matchId: string }>();
+  const [record, setRecord] = useState<RecordType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
+    if (
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+    ) {
+      document.activeElement.blur();
     }
-  }, [recordJson]);
+  }, []);
+  useEffect(() => {
+    if (!matchId) return;
 
-  if (!record) {
+    let isMounted = true;
+    const fetchRecord = async () => {
+      try {
+        setIsLoading(true);
+        // 🐱 matchId は string で渡ってくることがあるから、数値（number）に変換して渡す
+        const targetId = Number(matchId);
+        if (!isNaN(targetId)) {
+          const data = await recordsRepo.getById(targetId);
+          if (isMounted) setRecord(data);
+        }
+      } catch (e) {
+        console.error("Failed to fetch record by id:", e);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    
+
+    fetchRecord();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [matchId]);
+
+  if (isLoading || !record) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
-        <Text className="text-text">Loading...</Text>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text className="text-text mt-2">データを読み込んでます...</Text>
       </SafeAreaView>
     );
   }

@@ -6,6 +6,7 @@ import { RecordAnalysis } from "go-core";
 
 export type RecordsRepo = {
   insertMany: (records: RecordType[]) => Promise<void>;
+  getById: (id: number) => Promise<RecordType | null>;
   getNewestId: (boardSize: number) => Promise<number | null>;
   getOldestId: (boardSize: number) => Promise<number | null>;
   getPage: (
@@ -112,6 +113,17 @@ export const recordsRepo: RecordsRepo = {
       }
     });
   },
+
+  // 🐱 ここから追加！
+  getById: async (id) => {
+    const db = await getDb();
+    const row = await db.getFirstAsync<any>(
+      `SELECT * FROM records WHERE id = ?`,
+      [id],
+    );
+    return row ? rowToRecord(row) : null;
+  },
+  // 🐱 ここまで追加！
 
   getNewestId: async (boardSize) => {
     const db = await getDb();

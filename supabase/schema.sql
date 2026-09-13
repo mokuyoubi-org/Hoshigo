@@ -817,7 +817,7 @@ begin
   from private.profiles
   where uid = new.white_uid;
 
-  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得するにゃ
+  -- ★ 新しい user_stats テーブルから、対象の盤サイズに応じたポイントを取得する
   select coalesce(rating, 0) into v_black_rating
   from private.user_stats
   where uid = new.black_uid and board_size = new.board_size;

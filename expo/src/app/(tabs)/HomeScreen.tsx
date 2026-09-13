@@ -9,7 +9,7 @@ import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { BOARD_SIZE_OPTIONS, BoardSize } from "go-core";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, SegmentedControl } from "ui-atoms";
@@ -22,6 +22,16 @@ export default function HomeScreen() {
   const onMainbutton = () => {
     startMatching(boardSize);
   };
+
+  useEffect(() => {
+    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
+    if (
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+    ) {
+      document.activeElement.blur();
+    }
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-background">

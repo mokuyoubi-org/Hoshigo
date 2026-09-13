@@ -4,6 +4,10 @@ import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useRecordsSync } from "@/src/active/hooks/records/useRecordsSync";
 import { RecordOrSkeleton, RecordType } from "@/src/active/types/record";
 import {
+  isSkeletonCard,
+  makeSkeletonCard,
+} from "@/src/stable/logics/recordCardLogics";
+import {
   AgehamaCount,
   Board,
   BoardSize,
@@ -20,10 +24,6 @@ import {
   PixelRatio,
   useWindowDimensions,
 } from "react-native";
-import {
-  isSkeletonCard,
-  makeSkeletonCard,
-} from "@/src/stable/logics/recordCardLogics";
 
 export type ProcessedRecord = {
   finalBoard: Board;
@@ -53,7 +53,7 @@ function makeInitialCache(): BoardCache {
 
 export function useRecordsScreen() {
   const { uid } = useProfile();
-  const { syncNewer, fetchOlderPage } = useRecordsSync();
+  const { fetchOlderPage } = useRecordsSync();
   const { width, height } = useWindowDimensions();
   const aspectRatio = height / width;
   const heightRatio = 1 - aspectRatio * 0.24;
@@ -170,7 +170,6 @@ export function useRecordsScreen() {
       setIsLoading(true);
 
       try {
-        await syncNewer(uid, targetBoardSize);
         if (!isMounted) return;
 
         const page = await fetchOlderPage(
@@ -206,7 +205,7 @@ export function useRecordsScreen() {
     return () => {
       isMounted = false;
     };
-  }, [boardSize, uid, syncNewer, fetchOlderPage, processRecords]);
+  }, [boardSize, uid, fetchOlderPage, processRecords]);
 
   // ---- 追加読み込み (loadMore) ----
   const loadMore = () => {
@@ -267,32 +266,6 @@ export function useRecordsScreen() {
     }
   };
 
-  const syncNewData = useCallback(async () => {
-    if (!uid) return;
-    const targetBoardSize = boardSizeRef.current;
-
-    try {
-      // 1. 最新のDB変更を同期する
-      await syncNewer(uid, targetBoardSize);
-
-      // 2. 現在のページデータを最新のDBから取得し直す
-      const page = await fetchOlderPage(
-        uid,
-        targetBoardSize,
-        null,
-        records.filter((r) => !isSkeletonCard(r)).length || FETCH_NUM,
-      );
-
-      if (page.length > 0) {
-        // 3. 盤面や分析結果（analysis）を再計算してキャッシュを上書き更新！
-        processRecords(page, targetBoardSize);
-        updateCache(targetBoardSize, { records: page });
-      }
-    } catch (e) {
-      console.error("[syncNewData] 同期に失敗しました:", e);
-    }
-  }, [uid, syncNewer, fetchOlderPage, processRecords, records]);
-
   return {
     uid,
     isLoading,
@@ -308,6 +281,5 @@ export function useRecordsScreen() {
     handleToggle,
     loadMore,
     handleScroll,
-    syncNewData,
   };
 }
