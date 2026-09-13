@@ -38,6 +38,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton } from "ui-atoms";
+import { clearPeriodicCache } from "../stable/logics/syncUtils";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -204,7 +205,7 @@ export default function GameScreen() {
   // 【役割】結果画面を表示。
   // 【発火条件】対局が終わった時、もしくはresultボタンを押した時。
   // isGameEndedは対局が終了しているか否か。
-useEffect(() => {
+  useEffect(() => {
     if (isGameEnded) {
       const record = buildRecordFromMatch({
         matchId,
@@ -245,6 +246,8 @@ useEffect(() => {
 
         showResultModal();
       };
+
+      clearPeriodicCache("global_rankings"); // ランキングのキャッシュ消しておく(レートが変動するから)
 
       saveAndNavigate();
     }

@@ -1,5 +1,3 @@
-// @/src/stable/services/api/profileRPC.ts
-
 import { supabase } from "@/src/stable/services/supabase/supabase";
 
 export type ProfileData = {
@@ -17,28 +15,23 @@ export type ProfileData = {
   allowBotMatch: boolean;
 };
 
-export type AppStatusData = {
-  maintenance: boolean;
-  message: string | null;
-  version: string | null;
-};
-
-export type SessionUserData = {
+type SessionUserData = {
   id: string;
   email: string | null;
   isAnonymous: boolean;
 };
 
-export type FetchProfileResult = {
+type FetchProfileResult = {
   sessionUser: SessionUserData | null;
-  appStatus: AppStatusData | null;
   profile: ProfileData | null;
+  newerRecords9: any[];
+  newerRecords13: any[];
 };
 
-/**
- * サーバーからプロフィールとアプリ状態を取得するだけの純粋なAPI関数
- */
-export async function fetchProfileRPC(): Promise<FetchProfileResult | null> {
+export async function fetchProfileRPC(
+  afterId9?: number | null,
+  afterId13?: number | null,
+): Promise<FetchProfileResult | null> {
   const { data: sessionData } = await supabase.auth.getSession();
   const session = sessionData?.session;
 
@@ -46,30 +39,22 @@ export async function fetchProfileRPC(): Promise<FetchProfileResult | null> {
     return null;
   }
 
-  const { data, error } = await supabase.rpc("get_my_profile");
+  const { data, error } = await supabase.rpc("get_my_profile", {
+    p_after_id_9: afterId9 ?? null,
+    p_after_id_13: afterId13 ?? null,
+  });
 
   if (error || !data) {
     console.error("fetch profile failed:", error);
     return null;
   }
 
-  // 1. セッション情報
   const sessionUser: SessionUserData = {
     id: session.user.id,
     email: session.user.email ?? null,
     isAnonymous: session.user.is_anonymous ?? false,
   };
 
-  // 2. メンテ情報
-  const appStatus: AppStatusData | null = data.app_status
-    ? {
-        maintenance: data.app_status.maintenance ?? false,
-        message: data.app_status.message ?? null,
-        version: data.app_status.version ?? null,
-      }
-    : null;
-
-  // 3. プロフィール情報
   const rawProfile = data.profile;
   const profile: ProfileData | null = rawProfile
     ? {
@@ -88,5 +73,10 @@ export async function fetchProfileRPC(): Promise<FetchProfileResult | null> {
       }
     : null;
 
-  return { sessionUser, appStatus, profile };
+  return {
+    sessionUser,
+    profile,
+    newerRecords9: data.newer_records_9 ?? [],
+    newerRecords13: data.newer_records_13 ?? [],
+  };
 }

@@ -1,10 +1,13 @@
 // createResilientClient.ts
 //
-// 通常のSupabaseクライアントに2つの上乗せをする:
-//  1. rpc()の結果を横取りして、特定のエラー文字列(デフォルトは"MAINTENANCE_MODE")が
-//     含まれていたら、登録済みのコールバックへ通知する
+// 通常のSupabaseクライアントに3つの上乗せをする:
+//  1. rpc()の結果を横取りして、登録済みの複数のエラーマーカーのいずれかが
+//     含まれていたら、対応するコールバックへ通知する
 //  2. rpc()が失敗したとき、それが「論理エラー」(error.codeあり)でなければ
 //     自動的に再送する(デフォルト最大3回、指数バックオフ)
+//  3. appVersion/otaVersionをHTTPヘッダー(x-app-version/x-ota-version)として
+//     全リクエストに自動付与する。サーバ側は current_setting('request.header.x-app-version', true)
+//     等で読み取れるので、呼び出し元は個々のrpc呼び出しで明示的に渡す必要がない。
 //
 // どのURL/anonKey/エラーマーカー文字列を使うかは、呼び出し元がすべて引数で渡す。
 // このファイル自体はどのSupabaseプロジェクトかを一切知らない。
@@ -18,13 +21,22 @@ type StorageAdapter = {
   removeItem: (key: string) => void | Promise<void>;
 };
 
+type ErrorMarkerHandler = {
+  /** このマーカー文字列がerror.messageに含まれていたら発火する。メッセージは "MARKER: 詳細" の形式を前提とする */
+  marker: string;
+  onDetected: (extractedMessage: string) => void;
+};
+
 export type CreateResilientClientArgs = {
   url: string;
   anonKey: string;
   storage: StorageAdapter;
-  /** このエラーメッセージが含まれていたら onErrorMarkerDetected を呼ぶ。デフォルト "MAINTENANCE_MODE" */
-  errorMarker?: string;
-  onErrorMarkerDetected?: (extractedMessage: string) => void;
+  /** x-app-versionヘッダーとして全リクエストに自動付与される */
+  appVersion: string;
+  /** x-ota-versionヘッダーとして全リクエストに自動付与される */
+  otaVersion: string;
+  /** 検知したいエラーマーカーのリスト。デフォルトは何も登録しない */
+  errorMarkers?: ErrorMarkerHandler[];
   /** rpc()失敗時の最大リトライ回数(初回を除く)。デフォルト 3 */
   maxRetries?: number;
   /** リトライの基本待機時間(ms)。指数バックオフのベースになる。デフォルト 500 */
@@ -58,8 +70,9 @@ export function createResilientClient({
   url,
   anonKey,
   storage,
-  errorMarker = "MAINTENANCE_MODE",
-  onErrorMarkerDetected,
+  appVersion,
+  otaVersion,
+  errorMarkers = [],
   maxRetries = 3,
   retryBaseDelayMs = 500,
   isRetryableError = defaultIsRetryableError,
@@ -71,14 +84,28 @@ export function createResilientClient({
       autoRefreshToken: true,
       detectSessionInUrl: Platform.OS === "web",
     },
+    global: {
+      // ここで一度だけセットすれば、以後の全リクエスト(rpc含む)に自動で付く。
+      // サーバ側は current_setting('request.header.x-app-version', true) 等で読める。
+      headers: {
+        "x-app-version": appVersion,
+        "x-ota-version": otaVersion,
+      },
+    },
   });
 
   const checkError = (error: { message: string } | null) => {
-    if (error && error.message.includes(errorMarker)) {
-      const extracted = error.message
-        .replace(new RegExp(`.*${errorMarker}:\\s*`), "")
-        .trim();
-      onErrorMarkerDetected?.(extracted);
+    if (!error) return;
+    for (const { marker, onDetected } of errorMarkers) {
+      if (error.message.includes(marker)) {
+        const extracted = error.message
+          .replace(new RegExp(`.*${marker}:\\s*`), "")
+          .trim();
+        onDetected(extracted);
+        // サーバ側は1回のRAISE EXCEPTIONにつき1マーカーしか投げない設計なので、
+        // 最初に一致したものだけ処理すれば十分。
+        return;
+      }
     }
   };
 

@@ -4,6 +4,7 @@ import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
+import { clearPeriodicCache } from "@/src/stable/logics/syncUtils";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BoardSize } from "go-core";
 import { useState } from "react";
@@ -67,6 +68,7 @@ export function useProfileScreen() {
         }
 
         updateProfile({ username: newUsername });
+        clearPeriodicCache("global_rankings"); // ランキングのキャッシュ消しておく(名前が変わるから)
         return null;
       }
     } finally {

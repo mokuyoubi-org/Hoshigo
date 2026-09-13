@@ -237,6 +237,12 @@ export const dictionary = {
       message:
         "A new version is available. Please update to the latest version to continue.",
       updateButton: "Update",
+      reloadMessage:
+        "A new version is available. Please reload the page to continue.",
+      reloadButton: "Reload",
+      restartMessage:
+        "An update has been downloaded. Please restart the app to continue.",
+      restartButton: "Restart",
     },
   },
   UsernameEditModal: {

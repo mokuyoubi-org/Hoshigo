@@ -14,11 +14,24 @@ import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModa
 import { COLORS } from "@/src/active/constants/colors";
 import { OverlayProvider } from "@/src/active/contexts/OverlayContext";
 import { MatchingProvider } from "@/src/active/contexts/providers/MatchingContext";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { LoadingScreen } from "ui-atoms";
+
 function RoutedContent() {
-  const { isInitializing, maintenance, maintenanceMessage, needsUpdate } =
+  const { isInitializing, maintenance, maintenanceMessage, updateReason } =
     useApp();
+
+  // updateReasonとPlatform.OSから、出すべきモーダルの種類を決める。
+  // web: appでもotaでも「リロードして」の一種類
+  // native: app不足→ストア誘導、ota不足→再起動誘導
+  const modalKind =
+    updateReason === null
+      ? null
+      : Platform.OS === "web"
+        ? ("reload" as const)
+        : updateReason === "app"
+          ? ("store" as const)
+          : ("restart" as const);
 
   return (
     // ここでStackを使うことによって、router.back()が機能する。つまりStackがないということは履歴がないということ
@@ -57,7 +70,7 @@ function RoutedContent() {
       )}
 
       {/* 🐱 メンテナンス画面 */}
-      {maintenance && !needsUpdate && (
+      {maintenance && !modalKind && (
         <View
           style={{
             position: "absolute",
@@ -73,7 +86,7 @@ function RoutedContent() {
       )}
 
       {/* 🐱 強制アップデート画面(メンテより優先度を高くする) */}
-      {needsUpdate && !isInitializing && (
+      {modalKind && !isInitializing && (
         <View
           style={{
             position: "absolute",
@@ -84,7 +97,7 @@ function RoutedContent() {
             zIndex: 302,
           }}
         >
-          <ForceUpdateModal />
+          <ForceUpdateModal kind={modalKind} />
         </View>
       )}
     </OverlayProvider>

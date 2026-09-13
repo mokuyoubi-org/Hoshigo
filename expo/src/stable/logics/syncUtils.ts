@@ -2,42 +2,6 @@
 import { sqliteKv } from "@/src/stable/services/storage/sqlite";
 
 /**
- * 🐱 指定した期間（分）に1回だけ実行する処理を包むためのマジック関数！（syncNewer用）
- * @param key 保存用のユニークなキー（例: "records_9"）
- * @param periodMinutes この期間（分）内に実行済みならスキップする（例: 1日なら1440）
- * @param task 期間内にまだ実行されていなければ走らせたい非同期処理
- */
-
-// 2026/09/13追記：現在は誰にも使われていないが、使いやすいはずなので残しておく
-export async function runOncePerPeriod(
-  key: string,
-  periodMinutes: number,
-  task: () => Promise<void>,
-): Promise<void> {
-  const lastSyncKey = `last_sync_at_${key}`;
-  const now = Date.now();
-
-  // 1. 期間内にすでに実行したかチェック
-  const lastSyncAtStr = await sqliteKv.getItem(lastSyncKey);
-  const lastSyncAt = lastSyncAtStr !== null ? Number(lastSyncAtStr) : null;
-
-  if (lastSyncAt !== null && now - lastSyncAt < periodMinutes * 60_000) {
-    console.log(`[${key}] まだ期間内（${periodMinutes}分）だからスキップする`);
-    return;
-  }
-
-  // 2. タスクを実行する
-  await task();
-
-  // 3. 成功したら実行時刻を保存
-  await sqliteKv.setItem(lastSyncKey, String(now));
-  console.log(
-    `[${key}] 実行完了時刻を記録したよ:`,
-    new Date(now).toISOString(),
-  );
-}
-
-/**
  * 🐱 指定した期間（分）に1回だけデータを取得し、それ以外はローカルキャッシュを返す関数！（ランキング用）
  * @param key キャッシュのユニークキー（例: "global_rankings"）
  * @param periodMinutes キャッシュを有効とみなす期間（分）（例: 1日なら1440）
@@ -89,5 +53,23 @@ export async function fetchWithPeriodicCache<T>(
       return JSON.parse(cachedDataStr) as T;
     }
     return null;
+  }
+}
+
+
+/**
+ * 指定したキーのキャッシュと最終更新時間を削除する関数
+ * @param key キャッシュのユニークキー（例: "global_rankings"）
+ */
+export async function clearPeriodicCache(key: string): Promise<void> {
+  const lastSyncKey = `last_sync_at_${key}`;
+  const dataCacheKey = `cached_data_${key}`;
+
+  try {
+    await sqliteKv.removeItem(lastSyncKey);
+    await sqliteKv.removeItem(dataCacheKey);
+    console.log(`[${key}] キャッシュを綺麗に消したよ！`);
+  } catch (e) {
+    console.error(`[${key}] キャッシュの削除に失敗したよ:`, e);
   }
 }

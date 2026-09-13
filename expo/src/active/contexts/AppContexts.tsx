@@ -11,6 +11,11 @@
 
 import React, { createContext, ReactNode, useContext, useState } from "react";
 
+// 🟨バージョン不足の種別。null = 不足なし。
+// "app" = ネイティブアプリのバージョンが足りない(ストア誘導)
+// "ota" = OTAバンドルのバージョンが足りない(再起動誘導)
+export type UpdateReason = "app" | "ota" | null;
+
 // 🟨型定義
 // バージョン情報など、将来的に増える可能性あり。
 type AppContextType = {
@@ -20,8 +25,8 @@ type AppContextType = {
   setMaintenanceMessage: (v: string | null) => void;
   isInitializing: boolean;
   setIsInitializing: (v: boolean) => void;
-  needsUpdate: boolean;
-  setNeedsUpdate: (v: boolean) => void;
+  updateReason: UpdateReason;
+  setUpdateReason: (v: UpdateReason) => void;
 };
 
 // 🟩🏢Context（外部には見せない）
@@ -42,7 +47,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     null,
   );
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
-  const [needsUpdate, setNeedsUpdate] = useState<boolean>(false);
+  const [updateReason, setUpdateReason] = useState<UpdateReason>(null);
 
   return (
     // AppContext.Providerは、電波塔。
@@ -55,8 +60,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setMaintenanceMessage,
         isInitializing,
         setIsInitializing,
-        needsUpdate,
-        setNeedsUpdate,
+        updateReason,
+        setUpdateReason,
       }}
     >
       {children}

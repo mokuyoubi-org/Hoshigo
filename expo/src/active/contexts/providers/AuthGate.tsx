@@ -1,18 +1,22 @@
 // ✅2026/08/31コメント入れた。メンテナンス仕込み系、見張り猫は完全には理解していない。
 // ✅2026/09/01 Turnstile(Cloudflare CAPTCHA)によるボット対策を追加。
 //   匿名ログインの直前に必ずトークンを取得し、取れなければログインさせない(厳格モード)。
+// ✅2026/09/13 バージョンチェック仕込み系を追加。メンテと同じ形。
 // AuthGate.tsx
 import { useApp } from "@/src/active/contexts/AppContexts";
 import {
   setMaintenanceHandler,
+  setUpdateNeededHandler,
   supabase,
 } from "@/src/stable/services/supabase/supabase";
 import * as Updates from "expo-updates";
-
+import { OTA_VERSION } from "@/ota-version";
 import { COLORS } from "@/src/active/constants/colors";
 import { useProfileSync } from "@/src/active/hooks/screens/useProfileSync";
 import { useLang } from "@/src/active/i18n";
 import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
+import * as Application from "expo-application";
+import Constants from "expo-constants";
 import { useRouter, useSegments } from "expo-router";
 import React, { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
@@ -22,7 +26,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
   const { updateProfile } = useProfile();
-  const { setMaintenance, setMaintenanceMessage, setIsInitializing } = useApp();
+  const {
+    setMaintenance,
+    setMaintenanceMessage,
+    setIsInitializing,
+    setUpdateReason,
+  } = useApp();
   const { syncProfile } = useProfileSync();
   const turnstileRef = useRef<TurnstileHandle>(null);
   const { lang } = useLang();
@@ -57,13 +66,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return token;
   };
 
-  // ①メンテナンス仕込み + ②initialize + ③見張り猫設置。
+  // ①メンテナンス/バージョン仕込み + ②initialize + ③見張り猫設置。
   useEffect(() => {
     console.log("🔎 実行中のビルド情報:", {
-      runtimeVersion: Updates.runtimeVersion,
-      channel: Updates.channel,
-      updateId: Updates.updateId,
-      isEmbeddedLaunch: Updates.isEmbeddedLaunch, // trueならOTAではなくビルド埋め込みのJSで起動してる
+      runtimeVersion: Updates.runtimeVersion, // app.config.tsからruntimeVersion: を読み込んでいるだけ
+      nativeApplicationVersion: Application.nativeApplicationVersion, // アプリ自体の実際のバージョンを読んでいる
+      expoConfigVersion: Constants.expoConfig?.version, // app.config.tsからversion: を読み込んでいるだけ
+      otaVersion: OTA_VERSION,
     });
 
     // RPCを呼んだ時にメンテ中だった時にメッセージを表示できる設定を、あらかじめ仕込んでおく
@@ -71,6 +80,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
     setMaintenanceHandler((message) => {
       setMaintenance(true);
       setMaintenanceMessage(message);
+    });
+
+    // RPCを呼んだ時にバージョン不足だった時にモーダルを出せる設定を、あらかじめ仕込んでおく
+    // 詳細はsupabase.tsを参照(メンテと全く同じ仕組み)
+    setUpdateNeededHandler((reason) => {
+      setUpdateReason(reason);
     });
 
     // 初期化処理。①ログイン(匿名含む) + ②syncProfile + ③セグメント分岐による遷移

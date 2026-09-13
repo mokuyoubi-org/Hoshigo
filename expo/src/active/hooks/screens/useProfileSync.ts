@@ -1,22 +1,36 @@
-// useProfileSync.ts
-
 import { useApp } from "@/src/active/contexts/AppContexts";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { compareVersions } from "@/src/stable/logics/compareVersions";
 import { fetchProfileRPC } from "@/src/stable/logics/profileRPC";
-import * as Application from "expo-application";
-import { Platform } from "react-native";
+import { recordsRepo } from "@/src/stable/logics/records-repo";
 
-// 要は、データベースと通信してプロフィール(メンテナンス情報もついでに)を取ってくる。そしてそれをcontextにしまっておく。
 export const useProfileSync = () => {
   const { updateProfile } = useProfile();
-  const { setMaintenance, setMaintenanceMessage, setNeedsUpdate } = useApp();
 
   const syncProfile = async (): Promise<boolean> => {
-    const result = await fetchProfileRPC();
-    if (!result) return false; // 失敗したら false を返す
+    // 🐱 1. 9路盤と13路盤の最新IDをローカルDBから取ってくる！
+    const [afterId9, afterId13] = await Promise.all([
+      recordsRepo.getNewestId(9),
+      recordsRepo.getNewestId(13),
+    ]);
 
-    // 1. セッション反映
+    // 🐱 2. IDを渡してプロフィールを取得
+    const result = await fetchProfileRPC(afterId9, afterId13);
+    if (!result) return false;
+
+    // 🐱 3. 差分棋譜があれば裏でひっそり保存（awaitせずにスルー！）
+    const allNewerRecords = [...result.newerRecords9, ...result.newerRecords13];
+    if (allNewerRecords.length > 0) {
+      console.log(
+        `🐱 プロフィール取得時に ${allNewerRecords.length} 件の新着棋譜を見つけたので裏で保存する`,
+      );
+      recordsRepo.insertMany(allNewerRecords).catch((e) => {
+        console.error("🐱 棋譜のローカル保存に失敗…", e);
+      });
+    } else {
+      console.log("取りこぼし棋譜なし");
+    }
+
+    // 🐱 4. Contextの更新
     if (result.sessionUser) {
       updateProfile({
         uid: result.sessionUser.id,
@@ -25,32 +39,11 @@ export const useProfileSync = () => {
       });
     }
 
-    // 2. メンテ情報反映
-    if (result.appStatus) {
-      setMaintenance(result.appStatus.maintenance);
-      setMaintenanceMessage(result.appStatus.message);
-
-      // 2.5 バージョンチェック。サーバーが要求する最低バージョンより
-      // 自分の今のバージョンが古ければ、強制アップデートフラグを立てる。
-      // webにはネイティブバイナリという概念が無く、常に最新のはずなのでスキップする。
-      if (Platform.OS !== "web") {
-        const requiredVersion = result.appStatus.version;
-        const currentVersion = Application.nativeApplicationVersion ?? "0.0.0";
-        if (
-          requiredVersion &&
-          compareVersions(currentVersion, requiredVersion) < 0
-        ) {
-          setNeedsUpdate(true);
-        }
-      }
-    }
-
-    // 3. プロフィール反映
     if (result.profile) {
       updateProfile(result.profile);
     }
 
-    return true; // 成功したら true を返す
+    return true;
   };
 
   return { syncProfile };
