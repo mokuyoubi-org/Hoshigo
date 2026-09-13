@@ -385,35 +385,6 @@ $$;
 ALTER FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_white_rating" smallint, "p_is_bot_match" boolean, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_white_rating" smallint, "p_is_black_bot" boolean, "p_is_white_bot" boolean, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) RETURNS "record"
-    LANGUAGE "plpgsql"
-    SET "search_path" TO ''
-    AS $$
-declare
-  v_diff smallint; -- (白のレート - 黒のレート)
-begin
-  -- Bot戦（どちらかがBot）の場合は変動なし（0pt）
-  if p_is_black_bot or p_is_white_bot then
-    o_black_delta := 0;
-    o_white_delta := 0;
-  else
-    -- 人間同士の場合: レート差100ごとに±1pt調整
-    -- ※ (+50/-50) は四捨五入処理
-    v_diff := p_white_rating - p_black_rating;
-
-    -- 黒視点: 相手（白）の方が高ければプラス、低ければマイナス
-    o_black_delta := (v_diff + case when v_diff >= 0 then 50 else -50 end) / 100;
-    
-    -- 白視点: 黒の逆符号（ゼロサム）
-    o_white_delta := -o_black_delta;
-  end if;
-end;
-$$;
-
-
-ALTER FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_white_rating" smallint, "p_is_black_bot" boolean, "p_is_white_bot" boolean, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "private"."calculate_icons"("p_rating9" smallint, "p_rating13" smallint) RETURNS smallint[]
     LANGUAGE "plpgsql" IMMUTABLE
     SET "search_path" TO ''
@@ -498,68 +469,6 @@ $$;
 ALTER FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_black_bot" boolean, "p_is_white_bot" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) RETURNS "record"
-    LANGUAGE "plpgsql"
-    SET "search_path" TO ''
-    AS $$
-declare
-  v_diff smallint;       -- 勝者と敗者のレーティング差（敗者 - 勝者）
-  v_base_delta smallint; -- 基準となる計算変動量
-begin
-
-  -- 1. レーティング差分および基準変動量（v_base_delta）の計算
-  -- ─────────────────────────────────────────────────────────────
-  -- 敗者と勝者のレート差を算出（正の値であれば格上勝利、負の値であれば格下勝利）
-  v_diff := p_loser_rating - p_winner_rating;
-
-  -- 基準変動量を算出（基本値10とし、レート差100ごとに±1調整）
-  v_base_delta := greatest(0, least(20,
-    10 + (v_diff + case when v_diff >= 0 then 50 else -50 end) / 100
-  ));
-
-  -- Bot戦
-  if p_is_black_bot or p_is_white_bot then
-    if v_diff < 0 then -- ボットを超えるレベルになったら旨みは減るようになる
-      null; 
-    else
-      -- それ以外なら+-10
-      v_base_delta := 10 ;
-    end if;
-  end if;
-
-  -- ─────────────────────────────────────────────────────────────
-  -- 2. 勝者側の変動量・格上連勝数の計算
-  -- ─────────────────────────────────────────────────────────────
-  -- 格上（自分よりレートが高い相手）に勝利した場合、ジャイアントキリングカウントをインクリメント
-  o_winner_giantkill := p_winner_giantkill + case when v_diff > 0 then 1 else 0 end;
-
-  -- 格上勝利の場合は「基準変動量 × 格上連勝数」のボーナスを適用
-  if v_diff > 0 then
-    o_winner_delta := v_base_delta * o_winner_giantkill;
-  else
-    o_winner_delta := v_base_delta;
-  end if;
-
-  -- ─────────────────────────────────────────────────────────────
-  -- 3. 敗者側の変動量・格上連勝数の計算
-  -- ─────────────────────────────────────────────────────────────
-  -- 敗者の格上連勝数はリセット（0に初期化）
-  o_loser_giantkill := 0;
-
-  -- 相手の対局数が30以下の場合、相手のレートが適正とは限らないので、負けてもレートは下がらない
-  -- つまり、相手が「偽の格下」の場合の保護の仕組み。
-  if v_diff > 0 and p_winner_games <= 30 then
-    o_loser_delta := 0;
-  else
-    o_loser_delta := -v_base_delta;
-  end if;
-end;
-$$;
-
-
-ALTER FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_black_bot" boolean, "p_is_white_bot" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "private"."calculate_new_icons"("p_old_icons" smallint[], "p_rating_9" smallint, "p_rating_13" smallint, OUT "o_updated_icons" smallint[], OUT "o_new_icons" smallint[]) RETURNS "record"
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
@@ -610,6 +519,36 @@ $$;
 
 
 ALTER FUNCTION "private"."check_maintenance"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "private"."check_version"() RETURNS "void"
+    LANGUAGE "plpgsql" STABLE
+    SET "search_path" TO ''
+    AS $$
+DECLARE
+  v_rec RECORD;
+  v_headers json := current_setting('request.headers', true)::json;
+  v_client_app_version text := v_headers ->> 'x-app-version';
+  v_client_ota_version text := v_headers ->> 'x-ota-version';
+BEGIN
+  SELECT app_version, ota_version INTO v_rec FROM private.app_status LIMIT 1;
+
+  -- app_versionが設定されていて、完全一致していなければ強制アップデート対象
+  IF v_rec.app_version IS NOT NULL
+     AND v_client_app_version IS DISTINCT FROM v_rec.app_version THEN
+    RAISE EXCEPTION 'VERSION_INSUFFICIENT_APP: %', v_rec.app_version;
+  END IF;
+
+  -- ota_versionが設定されていて、完全一致していなければ再起動対象
+  IF v_rec.ota_version IS NOT NULL
+     AND v_client_ota_version IS DISTINCT FROM v_rec.ota_version THEN
+    RAISE EXCEPTION 'VERSION_INSUFFICIENT_OTA: %', v_rec.ota_version;
+  END IF;
+END;
+$$;
+
+
+ALTER FUNCTION "private"."check_version"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."cleanup_cron_logs"() RETURNS "void"
@@ -1336,6 +1275,7 @@ declare
   v_match      private.matches%rowtype;
   v_player_uid uuid := auth.uid();
 begin
+  PERFORM private.check_version();
   perform private.check_maintenance();
   
   -- 対局中かチェック
@@ -1370,6 +1310,7 @@ DECLARE
   calling_uid uuid := auth.uid();
   guest_is_anonymous boolean;
 BEGIN
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
 
@@ -1410,6 +1351,7 @@ CREATE OR REPLACE FUNCTION "public"."delete_user_account"() RETURNS "void"
 DECLARE
   calling_uid uuid;
 BEGIN
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
   
@@ -1432,7 +1374,7 @@ $$;
 ALTER FUNCTION "public"."delete_user_account"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."get_my_profile"() RETURNS json
+CREATE OR REPLACE FUNCTION "public"."get_my_profile"("p_after_id_9" integer DEFAULT NULL::integer, "p_after_id_13" integer DEFAULT NULL::integer) RETURNS json
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'private'
     AS $$
@@ -1443,80 +1385,83 @@ DECLARE
   v_username TEXT;
   v_retry_count INT := 0;
 
-  -- ★ 新テーブルから取得する変数を用意した
+  -- 設定・戦績用
   v_allow_bot_match BOOLEAN := true;
-  -- 9
   v_rating_9 SMALLINT := 0;
   v_wins_9 SMALLINT := 0;
   v_losses_9 SMALLINT := 0;
   v_draws_9 SMALLINT := 0;
-  -- 13
+
   v_rating_13 SMALLINT := 0;
   v_wins_13 SMALLINT := 0;
   v_losses_13 SMALLINT := 0;
   v_draws_13 SMALLINT := 0;
-BEGIN
-  -- 1. 🐱 アプリステータスを取得
-  SELECT maintenance, message, version INTO v_status FROM private.app_status LIMIT 1;
 
-  -- 2. 🐱 未認証なら即終了
+  -- 差分棋譜用
+  v_records_9_json JSONB := '[]'::jsonb;
+  v_records_13_json JSONB := '[]'::jsonb;
+BEGIN
+  -- 0. ガード
+  PERFORM private.check_version();
+  PERFORM private.check_maintenance();
+
+  -- 2. 未認証なら即終了
   IF v_uid IS NULL THEN
     RETURN json_build_object(
-      'app_status', json_build_object(
-        'maintenance', COALESCE(v_status.maintenance, false),
-        'message', v_status.message,
-        'version', v_status.version
-      ),
-      'profile', NULL
+      'profile', NULL,
+      'newer_records_9', '[]'::jsonb,
+      'newer_records_13', '[]'::jsonb
     );
   END IF;
 
-  -- 3. 🐱 既存のプロフィールを取得＆最終ログイン更新
+  -- 差分棋譜を取得（ヘルパー関数を呼び出す）
+  v_records_9_json := private.fetch_newer_records(v_uid, 9::smallint, p_after_id_9);
+  v_records_13_json := private.fetch_newer_records(v_uid, 13::smallint, p_after_id_13);
+
+  -- 3. プロフィールを取得＆最終ログイン更新
   UPDATE private.profiles
   SET lastseen = now()
   WHERE profiles.uid = v_uid
   RETURNING * INTO v_row;
 
-  -- 4. 🐱 プロフィールが存在しない場合は、その場で自動生成（ゲスト初期化）！
-  IF v_row.uid IS NULL THEN -- 「よし、プロフィールないね」
+  -- 4. 存在しない場合は自動生成
+  IF v_row.uid IS NULL THEN
     LOOP
       v_retry_count := v_retry_count + 1;
       v_username := substr(md5(random()::text), 1, 5);
 
       BEGIN
-        INSERT INTO private.profiles (uid, username) -- ▶️ここから（自動でトリガーが発動して user_settings / user_stats も作成される）
+        INSERT INTO private.profiles (uid, username)
         VALUES (v_uid, v_username)
-        ON CONFLICT (uid) DO NOTHING  -- 「あれ、プロフィールあるやんけ！ま、ええわ、何もせんとこ」
-        RETURNING * INTO v_row; -- ▶️ここまでがひとセット。成功したら全部やるし、失敗したら全部やらない
+        ON CONFLICT (uid) DO NOTHING
+        RETURNING * INTO v_row;
 
         IF v_row.uid IS NOT NULL THEN
-          EXIT; -- 一回目の方。v_rowに格納できたので4.のお仕事は終了
+          EXIT;
         END IF;
 
-        -- 二回目の方。「さっきは何もせんかったけど、すでにあるやつをv_rowに入れとけばええわ」4.のお仕事は終了
         SELECT * INTO v_row FROM private.profiles WHERE profiles.uid = v_uid;
         EXIT;
       EXCEPTION
-        WHEN unique_violation THEN -- 名前被った
-          -- ここに来るのは純粋にusername側の重複の時だけ。次のusernameでリトライ
+        WHEN unique_violation THEN
           NULL;
       END;
 
       EXIT WHEN v_retry_count >= 10;
     END LOOP;
 
-    IF v_row.uid IS NULL THEN -- ほぼありえない。10回連続でミス
+    IF v_row.uid IS NULL THEN
       RAISE EXCEPTION 'failed_to_generate_unique_username';
     END IF;
   END IF;
 
-  -- ★ 5. 分離された設定（user_settings）を取得する
+  -- 5. user_settings
   SELECT COALESCE(allow_bot_match, true)
     INTO v_allow_bot_match
     FROM private.user_settings
    WHERE uid = v_uid;
 
-  -- ★ 6. 分離された戦績（user_stats）を取得する（9路盤・13路盤）
+  -- 6. user_stats (9路盤・13路盤)
   SELECT COALESCE(rating, 0), COALESCE(wins, 0), COALESCE(losses, 0), COALESCE(draws, 0)
     INTO v_rating_9, v_wins_9, v_losses_9, v_draws_9
     FROM private.user_stats
@@ -1527,34 +1472,31 @@ BEGIN
     FROM private.user_stats
    WHERE uid = v_uid AND board_size = 13;
 
-  -- 7. 🐱 メンテ情報とプロフィール（新しく作った場合はそのデータ）をまとめて返す
+  -- 7. まとめて返却
   RETURN json_build_object(
-    'app_status', json_build_object(
-      'maintenance', COALESCE(v_status.maintenance, false),
-      'message', v_status.message,
-      'version', v_status.version
-    ),
     'profile', json_build_object(
       'uid',             v_row.uid,
       'username',        v_row.username,
       'rating_9',        COALESCE(v_rating_9, 0),
       'rating_13',       COALESCE(v_rating_13, 0),
       'icon_index',      v_row.icon_index,
-      'wins_9',         COALESCE(v_wins_9, 0),
-      'losses_9',         COALESCE(v_losses_9, 0),
+      'wins_9',          COALESCE(v_wins_9, 0),
+      'losses_9',        COALESCE(v_losses_9, 0),
       'draws_9',         COALESCE(v_draws_9, 0),
       'wins_13',         COALESCE(v_wins_13, 0),
-      'losses_13',         COALESCE(v_losses_13, 0),
-      'draws_13',         COALESCE(v_draws_13, 0),
+      'losses_13',        COALESCE(v_losses_13, 0),
+      'draws_13',        COALESCE(v_draws_13, 0),
       'acquired_icons',  v_row.acquired_icons,
       'allow_bot_match', COALESCE(v_allow_bot_match, true)
-    )
+    ),
+    'newer_records_9',  v_records_9_json,
+    'newer_records_13', v_records_13_json
   );
 END;
 $$;
 
 
-ALTER FUNCTION "public"."get_my_profile"() OWNER TO "postgres";
+ALTER FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_own_profile_preview"() RETURNS json
@@ -1567,6 +1509,7 @@ DECLARE
   v_rating_9 smallint := 0;
   v_rating_13 smallint := 0;
 BEGIN
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
 
@@ -1608,6 +1551,7 @@ CREATE OR REPLACE FUNCTION "public"."get_rankings"() RETURNS TABLE("username" "t
     SET "search_path" TO ''
     AS $$
 BEGIN
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
 
@@ -1650,6 +1594,7 @@ CREATE OR REPLACE FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit
     SET "search_path" TO ''
     AS $$
 BEGIN
+  PERFORM private.check_version();
   PERFORM private.check_maintenance();
  
   RETURN QUERY
@@ -1686,11 +1631,12 @@ $$;
 ALTER FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_after_id" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer DEFAULT NULL::integer) RETURNS TABLE("id" integer, "created_at" "date", "result" "text", "match_type" smallint, "moves" smallint[], "dead_stones" smallint[], "black_rating" smallint, "white_rating" smallint, "board_size" smallint, "black_uid" "uuid", "black_username" "text", "black_icon_index" smallint, "black_rank_index" smallint, "white_uid" "uuid", "white_username" "text", "white_icon_index" smallint, "white_rank_index" smallint)
+CREATE OR REPLACE FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer DEFAULT NULL::integer) RETURNS TABLE("id" integer, "created_at" "date", "result" "text", "match_type" smallint, "moves" smallint[], "dead_stones" smallint[], "black_points" smallint, "white_points" smallint, "board_size" smallint, "black_uid" "uuid", "black_username" "text", "black_icon_index" smallint, "black_rank_index" smallint, "white_uid" "uuid", "white_username" "text", "white_icon_index" smallint, "white_rank_index" smallint)
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
 BEGIN
+  PERFORM private.check_version();
   PERFORM private.check_maintenance();
  
   RETURN QUERY
@@ -1701,13 +1647,13 @@ BEGIN
     r.match_type,
     r.moves,
     r.dead_stones,
-    r.black_rating,
-    r.white_rating,
+    r.black_rating, -- r.black_points から r.black_rating に修正！
+    r.white_rating, -- r.white_points から r.white_rating に修正！
     r.board_size,
     r.black_uid,
     bp.username,
     bp.icon_index,
-    private.rating_to_rank_index(r.black_rating),
+    private.rating_to_rank_index(r.black_rating), 
     r.white_uid,
     wp.username,
     wp.icon_index,
@@ -1727,44 +1673,6 @@ $$;
 ALTER FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."join_waitlist"("p_board_size" smallint) RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO ''
-    AS $$
-declare
-  v_match      private.matches%rowtype;
-  v_player_uid uuid := auth.uid();
-begin
-  perform private.check_maintenance();
-  
-  -- 対局中かチェック
-  select * into v_match
-  from private.matches m
-  where (m.black_uid = v_player_uid or m.white_uid = v_player_uid)
-    and m.status = 'playing'
-  limit 1;
-
-  -- 既に対局が始まっていれば、その対局情報を返す
-  if found then
-    return private.build_match_json(v_match, v_player_uid);
-  end if;
-
-  -- 待機列に追加（既に待機中なら何もしない）
-  begin
-    insert into private.waitlist (player_uid, board_size)
-    values (v_player_uid, p_board_size);
-  exception
-    when unique_violation then null;
-  end;
-
-  return null;
-end;
-$$;
-
-
-ALTER FUNCTION "public"."join_waitlist"("p_board_size" smallint) OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_after_id" integer DEFAULT NULL::integer) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -1775,6 +1683,7 @@ declare
   v_match_json   jsonb := null;
   v_records_json jsonb := '[]'::jsonb;
 begin
+  PERFORM private.check_version();
   perform private.check_maintenance();
 
   -- 1. 差分棋譜の取得（ヘルパー関数を呼ぶだけ！）
@@ -1826,6 +1735,7 @@ DECLARE
   guest_profile private.profiles;
   guest_settings private.user_settings%rowtype;
 BEGIN
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
 
@@ -2033,6 +1943,7 @@ CREATE OR REPLACE FUNCTION "public"."update_allow_bot_match"("new_allow_bot_matc
     SET "search_path" TO ''
     AS $$
 BEGIN
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
 
@@ -2052,6 +1963,7 @@ CREATE OR REPLACE FUNCTION "public"."update_icon_index"("new_icon_index" integer
     SET "search_path" TO ''
     AS $$
 BEGIN
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
 
@@ -2119,6 +2031,7 @@ CREATE OR REPLACE FUNCTION "public"."update_username"("new_username" "text") RET
 declare
   current_user_id uuid;
 begin
+  PERFORM private.check_version();
   -- 🐱 メンテチェック
   PERFORM private.check_maintenance();
   
@@ -2160,7 +2073,8 @@ CREATE TABLE IF NOT EXISTS "private"."app_status" (
     "id" smallint NOT NULL,
     "maintenance" boolean DEFAULT false,
     "message" "text" DEFAULT ''::"text",
-    "version" "text"
+    "app_version" "text",
+    "ota_version" "text"
 );
 
 
@@ -2515,10 +2429,10 @@ GRANT ALL ON FUNCTION "public"."delete_user_account"() TO "service_role";
 
 
 
-REVOKE ALL ON FUNCTION "public"."get_my_profile"() FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."get_my_profile"() TO "anon";
-GRANT ALL ON FUNCTION "public"."get_my_profile"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."get_my_profile"() TO "service_role";
+REVOKE ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) TO "service_role";
 
 
 
@@ -2547,13 +2461,6 @@ REVOKE ALL ON FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" sm
 GRANT ALL ON FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer) TO "service_role";
-
-
-
-REVOKE ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint) FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint) TO "anon";
-GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint) TO "service_role";
 
 
 
