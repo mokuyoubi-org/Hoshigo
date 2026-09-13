@@ -1589,48 +1589,6 @@ $$;
 ALTER FUNCTION "public"."get_rankings"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_after_id" integer) RETURNS TABLE("id" integer, "created_at" "date", "result" "text", "match_type" smallint, "moves" smallint[], "dead_stones" smallint[], "black_rating" smallint, "white_rating" smallint, "board_size" smallint, "black_uid" "uuid", "black_username" "text", "black_icon_index" smallint, "black_rank_index" smallint, "white_uid" "uuid", "white_username" "text", "white_icon_index" smallint, "white_rank_index" smallint)
-    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
-    SET "search_path" TO ''
-    AS $$
-BEGIN
-  PERFORM private.check_version();
-  PERFORM private.check_maintenance();
- 
-  RETURN QUERY
-  SELECT
-    r.id,
-    r.created_at,
-    r.result,
-    r.match_type,
-    r.moves,
-    r.dead_stones,
-    r.black_rating,
-    r.white_rating,
-    r.board_size,
-    r.black_uid,
-    bp.username,
-    bp.icon_index,
-    private.rating_to_rank_index(r.black_rating),
-    r.white_uid,
-    wp.username,
-    wp.icon_index,
-    private.rating_to_rank_index(r.white_rating)
-  FROM private.records r
-  LEFT JOIN private.profiles bp ON bp.uid = r.black_uid
-  LEFT JOIN private.profiles wp ON wp.uid = r.white_uid
-  WHERE (r.black_uid = p_uid OR r.white_uid = p_uid)
-    AND r.board_size = p_board_size
-    AND r.id > p_after_id
-  ORDER BY r.id ASC
-  LIMIT p_limit;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_after_id" integer) OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer DEFAULT NULL::integer) RETURNS TABLE("id" integer, "created_at" "date", "result" "text", "match_type" smallint, "moves" smallint[], "dead_stones" smallint[], "black_points" smallint, "white_points" smallint, "board_size" smallint, "black_uid" "uuid", "black_username" "text", "black_icon_index" smallint, "black_rank_index" smallint, "white_uid" "uuid", "white_username" "text", "white_icon_index" smallint, "white_rank_index" smallint)
     LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
@@ -2447,13 +2405,6 @@ REVOKE ALL ON FUNCTION "public"."get_rankings"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."get_rankings"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_rankings"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_rankings"() TO "service_role";
-
-
-
-REVOKE ALL ON FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_after_id" integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_after_id" integer) TO "anon";
-GRANT ALL ON FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_after_id" integer) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."get_records_newer"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_after_id" integer) TO "service_role";
 
 
 
