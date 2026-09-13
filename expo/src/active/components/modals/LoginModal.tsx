@@ -1,6 +1,6 @@
 // LoginModal.tsx
 import { COLORS } from "@/src/active/constants/colors";
-import { useLoginModal } from "@/src/active/hooks/screens/useLoginModal";
+import { useLoginModal } from "@/src/active/hooks/useLoginModal";
 import { useLang } from "@/src/active/i18n";
 import React, { useRef } from "react";
 import {

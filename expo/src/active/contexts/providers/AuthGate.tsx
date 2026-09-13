@@ -3,21 +3,21 @@
 //   匿名ログインの直前に必ずトークンを取得し、取れなければログインさせない(厳格モード)。
 // ✅2026/09/13 バージョンチェック仕込み系を追加。メンテと同じ形。
 // AuthGate.tsx
+import { OTA_VERSION } from "@/ota-version";
+import { COLORS } from "@/src/active/constants/colors";
 import { useApp } from "@/src/active/contexts/AppContexts";
+import { useProfileSync } from "@/src/active/hooks/useProfileSync";
+import { useLang } from "@/src/active/i18n";
+import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import {
   setMaintenanceHandler,
   setUpdateNeededHandler,
   supabase,
 } from "@/src/stable/services/supabase/supabase";
-import * as Updates from "expo-updates";
-import { OTA_VERSION } from "@/ota-version";
-import { COLORS } from "@/src/active/constants/colors";
-import { useProfileSync } from "@/src/active/hooks/screens/useProfileSync";
-import { useLang } from "@/src/active/i18n";
-import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import { useRouter, useSegments } from "expo-router";
+import * as Updates from "expo-updates";
 import React, { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { useProfile } from "../ProfileContexts";

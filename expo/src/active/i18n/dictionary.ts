@@ -232,13 +232,13 @@ export const dictionary = {
     },
   },
 
-  ForceUpdateModal: {
+  UpdateModal: {
     en: {
       message:
         "A new version is available. Please update to the latest version to continue.",
       updateButton: "Update",
       reloadMessage:
-        "A new version is available. Please reload the page to continue.",
+        "A new version is available. Please reload the page to continue. If reloading doesn't help, please wait a few minutes and try again.",
       reloadButton: "Reload",
       restartMessage:
         "An update has been downloaded. Please restart the app to continue.",

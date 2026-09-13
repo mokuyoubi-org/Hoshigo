@@ -1,4 +1,3 @@
-import { useApp } from "@/src/active/contexts/AppContexts";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { fetchProfileRPC } from "@/src/stable/logics/profileRPC";
 import { recordsRepo } from "@/src/stable/logics/records-repo";

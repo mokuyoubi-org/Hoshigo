@@ -9,8 +9,8 @@ import { Stack } from "expo-router";
 import React from "react";
 import "../../global.css";
 
-import { ForceUpdateModal } from "@/src/active/components/modals/ForceUpdateModal";
 import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModal";
+import { UpdateModal } from "@/src/active/components/modals/UpdateModal";
 import { COLORS } from "@/src/active/constants/colors";
 import { OverlayProvider } from "@/src/active/contexts/OverlayContext";
 import { MatchingProvider } from "@/src/active/contexts/providers/MatchingContext";
@@ -97,7 +97,7 @@ function RoutedContent() {
             zIndex: 302,
           }}
         >
-          <ForceUpdateModal kind={modalKind} />
+          <UpdateModal kind={modalKind} />
         </View>
       )}
     </OverlayProvider>

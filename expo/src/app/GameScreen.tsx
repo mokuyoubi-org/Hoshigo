@@ -13,7 +13,7 @@ import { COLORS } from "@/src/active/constants/colors";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
-import { useDoubleTapSetting } from "@/src/active/hooks/screens/useDoubleTapSetting";
+import { useDoubleTapSetting } from "@/src/active/hooks/useDoubleTapSetting";
 import { useSounds } from "@/src/active/hooks/useGameSounds";
 import { useTranslation } from "@/src/active/i18n";
 import {

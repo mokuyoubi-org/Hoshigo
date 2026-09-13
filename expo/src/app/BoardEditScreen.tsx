@@ -7,7 +7,7 @@ import { useBotAnalysis } from "@/src/active/hooks/bot/useBotAnalysis";
 import { useBoardEditActions } from "@/src/active/hooks/edit/useBoardEditActions";
 import { useEditableGoBoard } from "@/src/active/hooks/edit/useEditableGoBoard";
 import { useReplayMoveEvaluation } from "@/src/active/hooks/edit/useReplayMoveEvaluation";
-import { useDoubleTapSetting } from "@/src/active/hooks/screens/useDoubleTapSetting";
+import { useDoubleTapSetting } from "@/src/active/hooks/useDoubleTapSetting";
 import { useTranslation } from "@/src/active/i18n";
 import { RecordType } from "@/src/active/types/record";
 import {
@@ -68,8 +68,6 @@ export default function BoardEditScreen() {
         if (isMounted) setIsLoading(false);
       }
     };
-
-    
 
     fetchRecord();
 

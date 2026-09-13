@@ -2,7 +2,7 @@ import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
-import { useIconUpdate } from "@/src/active/hooks/screens/useIconUpdate";
+import { useIconUpdate } from "@/src/active/hooks/useIconUpdate";
 import { useLang, useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { FontAwesome, Octicons } from "@expo/vector-icons";

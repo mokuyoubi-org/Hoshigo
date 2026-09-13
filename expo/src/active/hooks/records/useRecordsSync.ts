@@ -6,41 +6,7 @@ import { sqliteKv } from "@/src/stable/services/storage/sqlite";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useCallback } from "react";
 
-const SYNC_BATCH = 10; // 差分キャッチアップ1回あたりの取得件数
-
 export function useRecordsSync() {
-  // ---- 新着キャッチアップ ----
-  const syncNewer = useCallback(async (uid: string, boardSize: number) => {
-    const localNewestId = await recordsRepo.getNewestId(boardSize);
-    const localOldestId = await recordsRepo.getOldestId(boardSize);
-    console.log("localNewestId: ", localNewestId);
-    console.log("localOldestId: ", localOldestId);
-
-    if (localNewestId == null) return;
-
-    let cursor = localNewestId;
-    while (true) {
-      const { data, error } = await supabase.rpc("get_records_newer", {
-        p_uid: uid,
-        p_limit: SYNC_BATCH,
-        p_board_size: boardSize,
-        p_after_id: cursor,
-      });
-      if (error) {
-        console.error("新着棋譜の取得失敗:", error);
-        // エラー時は throwIfError 等を入れない限り日付が更新されないので、
-        // 次回リトライしてくれる安全設計
-        return;
-      }
-      const fetched: RecordType[] = data ?? [];
-      if (fetched.length === 0) break;
-
-      await recordsRepo.insertMany(fetched);
-      cursor = fetched[fetched.length - 1].id;
-
-      if (fetched.length < SYNC_BATCH) break;
-    }
-  }, []);
   // ---- ページ取得(表示用) ----
   const fetchOlderPage = useCallback(
     async (
@@ -126,5 +92,5 @@ export function useRecordsSync() {
     [],
   );
 
-  return { syncNewer, fetchOlderPage };
+  return { fetchOlderPage };
 }

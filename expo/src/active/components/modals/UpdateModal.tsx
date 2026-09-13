@@ -1,13 +1,13 @@
-// ForceUpdateModal.tsx
+// UpdateModal.tsx
 import { useTranslation } from "@/src/active/i18n";
 import * as Updates from "expo-updates";
 import React from "react";
 import { Linking, Platform, Pressable, Text } from "react-native";
 import { ModalShell } from "ui-atoms";
 
-export type ForceUpdateModalKind = "reload" | "store" | "restart";
+export type UpdateModalKind = "reload" | "store" | "restart";
 
-export function ForceUpdateModal({ kind }: { kind: ForceUpdateModalKind }) {
+export function UpdateModal({ kind }: { kind: UpdateModalKind }) {
   const t = useTranslation();
 
   const handlePress = async () => {
@@ -35,17 +35,17 @@ export function ForceUpdateModal({ kind }: { kind: ForceUpdateModalKind }) {
 
   const messageKey =
     kind === "reload"
-      ? "ForceUpdateModal.reloadMessage"
+      ? "UpdateModal.reloadMessage"
       : kind === "restart"
-        ? "ForceUpdateModal.restartMessage"
-        : "ForceUpdateModal.message";
+        ? "UpdateModal.restartMessage"
+        : "UpdateModal.message";
 
   const buttonKey =
     kind === "reload"
-      ? "ForceUpdateModal.reloadButton"
+      ? "UpdateModal.reloadButton"
       : kind === "restart"
-        ? "ForceUpdateModal.restartButton"
-        : "ForceUpdateModal.updateButton";
+        ? "UpdateModal.restartButton"
+        : "UpdateModal.updateButton";
 
   return (
     <ModalShell size="md" style={{ alignItems: "center", gap: 12 }}>
