@@ -121,9 +121,6 @@ const config: ExpoConfig = {
       projectId: "0c034fcf-9b3f-4ae4-be56-052d71e47d52",
     },
   },
-
-  assetBundlePatterns: ["assets/images/*"],
-
   runtimeVersion: "1.0.2", // 誰に対してotaを配信するか。
 };
 

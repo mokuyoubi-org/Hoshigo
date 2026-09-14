@@ -4,11 +4,11 @@ import { ImageSourcePropType } from "react-native";
 export const ICONS: Record<number | string, ImageSourcePropType> = {
   // 自分
   0: require("@/assets/images/0.png"), // デフォルト
-  1: require("@/assets/images/1.png"), // 計20勝
-  2: require("@/assets/images/2.png"), // 計50勝
-  3: require("@/assets/images/3.png"), // 計100勝
-  4: require("@/assets/images/4.png"), // 計200勝
-  5: require("@/assets/images/5.png"), // 計500勝
+  1: require("@/assets/images/1.png"), // 計100勝
+  2: require("@/assets/images/2.png"), // 計200勝
+  3: require("@/assets/images/3.png"), // 計300勝
+  4: require("@/assets/images/4.png"), // 計500勝
+  5: require("@/assets/images/5.png"), // 計700勝
 
   6: require("@/assets/images/6.png"), // 9路で1000勝
   7: require("@/assets/images/7.png"), // 9路で2000勝
