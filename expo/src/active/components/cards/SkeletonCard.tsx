@@ -16,8 +16,7 @@ export const SkeletonCard = ({ height }: { height: number }) => {
       <Image
         source={ICONS[0]}
         className="rounded-[12px] opacity-50 z-10"
-        style={{ width: 72, height: 72 }}
-        resizeMode="contain"
+        style={{ width: 72, height: 72, resizeMode: "contain" }}
       />
     </View>
   );

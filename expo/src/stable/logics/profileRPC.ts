@@ -1,6 +1,6 @@
 import { supabase } from "@/src/stable/services/supabase/supabase";
 
-export type ProfileData = {
+ type ProfileData = {
   username: string;
   rating9: number;
   rating13: number;
@@ -11,7 +11,6 @@ export type ProfileData = {
   wins13: number;
   losses13: number;
   draws13: number;
-  acquiredIcons: number[];
   allowBotMatch: boolean;
 };
 
@@ -68,7 +67,6 @@ export async function fetchProfileRPC(
         wins13: rawProfile.wins_13 ?? 0,
         losses13: rawProfile.losses_13 ?? 0,
         draws13: rawProfile.draws_13 ?? 0,
-        acquiredIcons: rawProfile.acquired_icons ?? [],
         allowBotMatch: rawProfile.allow_bot_match ?? false,
       }
     : null;

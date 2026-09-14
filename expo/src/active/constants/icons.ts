@@ -3,14 +3,22 @@ import { ImageSourcePropType } from "react-native";
 
 export const ICONS: Record<number | string, ImageSourcePropType> = {
   // 自分
-  0: require("@/assets/images/chick.png"), // 10~8k
-  1: require("@/assets/images/frog.png"), // 7~5k
-  2: require("@/assets/images/jellyfish.png"), // 4~2k
-  3: require("@/assets/images/ghost.png"), // 1k~2D
-  4: require("@/assets/images/koala.png"), // 3~5D
-  5: require("@/assets/images/owl.png"), // 6~8D
+  0: require("@/assets/images/0.png"), // デフォルト
+  1: require("@/assets/images/1.png"), // 計20勝
+  2: require("@/assets/images/2.png"), // 計50勝
+  3: require("@/assets/images/3.png"), // 計100勝
+  4: require("@/assets/images/4.png"), // 計200勝
+  5: require("@/assets/images/5.png"), // 計500勝
+
+  6: require("@/assets/images/6.png"), // 9路で1000勝
+  7: require("@/assets/images/7.png"), // 9路で2000勝
+  8: require("@/assets/images/8.png"), // 13路で1000勝
+  9: require("@/assets/images/9.png"), // 13路で2000勝
+  10: require("@/assets/images/10.png"), // 19路で1000勝
+  11: require("@/assets/images/11.png"), // 19路で2000勝
+
   // ボット
-  100: require("@/assets/images/Sena.png"), // bot1
-  101: require("@/assets/images/Luna.png"), // bot2
-  102: require("@/assets/images/MrRabbit.png"), // bot3
+  100: require("@/assets/images/100.png"), // bot1
+  101: require("@/assets/images/101.png"), // bot2
+  102: require("@/assets/images/102.png"), // bot3
 };

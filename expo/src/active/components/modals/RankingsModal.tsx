@@ -43,7 +43,7 @@ export default function RankingsModal({ visible, onClose }: Props) {
       // 🐱 1日1回だけ Supabase から取得し、2回目以降は sqliteKv のキャッシュを使う
       const data = await fetchWithPeriodicCache<RankingItem[]>(
         "global_rankings",
-        60,
+        1440,
         async () => {
           const { data, error } = await supabase.rpc("get_rankings");
           if (error) throw error;

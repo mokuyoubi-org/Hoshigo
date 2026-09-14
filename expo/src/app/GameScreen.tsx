@@ -109,9 +109,8 @@ export default function GameScreen() {
     ratingAfter,
     rankIndexBefore,
     rankIndexAfter,
-    newlyAcquiredIcons,
+    // wins,
     resultRaw,
-    oppRatingAfter,
     finalDeadStones,
     analysis,
   } = useMatchSession({
@@ -174,7 +173,6 @@ export default function GameScreen() {
         ratingAfter={ratingAfter}
         rankIndexBefore={rankIndexBefore}
         rankIndexAfter={rankIndexAfter}
-        newlyAcquiredIcons={newlyAcquiredIcons}
       />,
     );
   };
@@ -218,13 +216,12 @@ export default function GameScreen() {
         myUid: uid ?? "",
         myUsername: username ?? "",
         myIconIndex: iconIndex ?? 0,
-        myRatingBefore: ratingBefore,
+        myRating: ratingAfter,
         myRankIndexAfter: rankIndexAfter,
         oppUid,
         oppUsername: oppUsername ?? "",
         oppIconIndex: oppIconIndex ?? 0,
-        oppRatingBefore: oppRating ?? 0,
-        oppRatingAfter,
+        oppRating: oppRating ?? 0,
         t,
         analysis,
       });

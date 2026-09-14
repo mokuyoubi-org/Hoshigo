@@ -11,6 +11,8 @@ export const resultToComment = (
 ): string => {
   if (result === "DRAW") {
     return t("GameResult.draw");
+  } else if (result === "VOID") {
+    return t("GameResult.void");
   } else if (
     (result === "W+R" && playerColor === WHITE) ||
     (result === "B+R" && playerColor === BLACK)
@@ -62,6 +64,7 @@ export const resultToComment = (
 // "B+R"のような結果を、Reasonと勝敗を使ってシンプルに変換する！
 export const resultToCommentSimple = (result: string, t: TFunction): string => {
   if (result === "DRAW") return t("Reason.draw");
+  else if (result === "VOID") return t("Reason.void");
 
   const [winnerStr, reasonCode] = result.split("+");
   if (!winnerStr || !reasonCode) return "";

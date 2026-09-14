@@ -5,6 +5,7 @@ import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { useIconUpdate } from "@/src/active/hooks/useIconUpdate";
 import { useLang, useTranslation } from "@/src/active/i18n";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
+import { winsToNewlyAcquiredIconIndex } from "@/src/stable/logics/winsToAcquiredIcons";
 import { FontAwesome, Octicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { BoardSize } from "go-core";
@@ -28,7 +29,6 @@ type Props = {
   rankIndexBefore: number;
   rankIndexAfter: number;
   boardSize: BoardSize;
-  newlyAcquiredIcons?: number[] | null;
 };
 
 export function GameResultModal({
@@ -40,8 +40,13 @@ export function GameResultModal({
   ratingAfter,
   rankIndexBefore,
   rankIndexAfter,
-  newlyAcquiredIcons,
 }: Props) {
+  const { wins13, wins9 } = useProfile();
+
+  const newlyAcquiredIcon = winsToNewlyAcquiredIconIndex(
+    wins9 ?? 0,
+    wins13 ?? 0,
+  );
   const { startMatching, isMatching } = useMatching();
   const t = useTranslation();
   const { lang } = useLang();
@@ -154,16 +159,14 @@ export function GameResultModal({
 
         <Text
           className={`text-[40px] font-[800] tracking-[1px] text-center ${
-            newlyAcquiredIcons && newlyAcquiredIcons.length > 0
-              ? "mb-0"
-              : "mb-[20px]"
+            newlyAcquiredIcon !== undefined ? "mb-0" : "mb-[20px]"
           }`}
           style={{ color: rankColor }}
         >
           {displayRankName}
         </Text>
 
-        {newlyAcquiredIcons && newlyAcquiredIcons.length > 0 && (
+        {newlyAcquiredIcon !== undefined && (
           <View className="my-[16px] w-full items-center justify-center">
             <Text
               className="text-[14px] font-bold mb-[8px] text-center"
@@ -173,16 +176,15 @@ export function GameResultModal({
             </Text>
 
             <View className="flex-row flex-wrap justify-center items-center gap-[12px]">
-              {newlyAcquiredIcons.map((iconId) => {
-                const isSelected = currentIconIndex === iconId;
-                const isLoadingThis = loadingIndex === iconId;
+              {(() => {
+                const isSelected = currentIconIndex === newlyAcquiredIcon;
+                const isLoadingThis = loadingIndex === newlyAcquiredIcon;
 
                 return (
                   <TouchableOpacity
-                    key={iconId}
                     activeOpacity={0.7}
                     disabled={loadingIndex !== null}
-                    onPress={() => handleSelectIcon(iconId)}
+                    onPress={() => handleSelectIcon(newlyAcquiredIcon)}
                     className={`items-center justify-center p-[8px] rounded-[12px] border-2 ${
                       isSelected ? "border-primary" : "border-primaryLight"
                     }`}
@@ -196,7 +198,7 @@ export function GameResultModal({
                       <ActivityIndicator size="small" color={COLORS.primary} />
                     ) : (
                       <Image
-                        source={ICONS[iconId]}
+                        source={ICONS[newlyAcquiredIcon]}
                         style={{
                           width: 64,
                           height: 64,
@@ -207,7 +209,7 @@ export function GameResultModal({
                     )}
                   </TouchableOpacity>
                 );
-              })}
+              })()}
             </View>
           </View>
         )}

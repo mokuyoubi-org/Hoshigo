@@ -131,6 +131,7 @@ export const dictionary = {
       disconnection: "Disconnection",
       points: "{{points}} points",
       draw: "Draw",
+      void: "Void",
     },
   },
   GameResult: {
@@ -155,6 +156,7 @@ export const dictionary = {
       whitePointsWin: "○Win by {{points}} points",
       // draw
       draw: "Draw",
+      void: "Void",
     },
   },
   IconSelectModal: {

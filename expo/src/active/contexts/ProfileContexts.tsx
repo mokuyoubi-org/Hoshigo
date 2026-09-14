@@ -7,7 +7,6 @@ type Profile = {
   email: string | null;
   username: string | null;
   iconIndex: number | null;
-  acquiredIcons: number[] | null;
   wins9: number | null;
   losses9: number | null;
   draws9: number | null;
@@ -23,7 +22,6 @@ type Profile = {
 // Hookから返す全体の型
 type ProfileContextValue = Profile & {
   updateProfile: (partial: Partial<Profile>) => void;
-  replaceProfile: (next: Profile) => void;
 };
 
 // 2. 初期値
@@ -32,7 +30,6 @@ const initialProfile: Profile = {
   email: null,
   username: null,
   iconIndex: 0,
-  acquiredIcons: [0],
   rating9: 0,
   wins9: 0,
   losses9: 0,
@@ -48,7 +45,6 @@ const initialProfile: Profile = {
 type ProfileContextType = {
   profile: Profile;
   updateProfile: (partial: Partial<Profile>) => void;
-  replaceProfile: (next: Profile) => void;
 };
 
 // 3. 🏢Context本体
@@ -62,12 +58,8 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
     setProfile((prev) => ({ ...prev, ...partial }));
   };
 
-  const replaceProfile = (next: Profile) => {
-    setProfile(next);
-  };
-
   return (
-    <ProfileContext.Provider value={{ profile, updateProfile, replaceProfile }}>
+    <ProfileContext.Provider value={{ profile, updateProfile }}>
       {children}
     </ProfileContext.Provider>
   );
@@ -78,11 +70,10 @@ export const useProfile = (): ProfileContextValue => {
   const ctx = useContext(ProfileContext);
   if (!ctx) throw new Error("useProfile must be used within a ProfileProvider");
 
-  const { profile, updateProfile, replaceProfile } = ctx;
+  const { profile, updateProfile } = ctx;
 
   return {
     ...profile,
     updateProfile,
-    replaceProfile,
   };
 };

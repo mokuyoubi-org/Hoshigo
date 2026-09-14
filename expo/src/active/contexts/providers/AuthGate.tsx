@@ -42,7 +42,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
       email: null,
       username: null,
       iconIndex: 0,
-      acquiredIcons: [0],
       wins9: 0,
       losses9: 0,
       draws9: 0,

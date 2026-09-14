@@ -43,8 +43,7 @@ export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
       >
         <Image
           source={ICONS[iconIndex]}
-          style={{ width: size - 4, height: size - 4 }}
-          resizeMode="contain"
+          style={{ width: size - 4, height: size - 4, resizeMode: "contain" }}
         />
 
         {playerColor && (

@@ -64,14 +64,13 @@ export function useMatchSession({
   const botMove = useBotMove(myColor, boardSize, oppUsername);
   const endgame = useBotCalculation();
   const liveAnalysis = useLiveAnalysis();
-  const { rating9, rating13, acquiredIcons, updateProfile } = useProfile();
+  const { rating9, rating13, updateProfile } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
   const isGameEndedRef = useRef(false);
   const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
   // 🐱 対局終了直後、RecordType組み立てに必要だけど今まで捨てていたデータたち
   const [resultRaw, setResultRaw] = useState<string | null>(null);
-  const [oppRatingAfter, setOppRatingAfter] = useState(0);
   const [finalDeadStones, setFinalDeadStones] = useState<number[]>([]);
   // 🐱 対局終了時にそのままrecordへ乗せる、裏で溜め続けた分析結果
   const [liveAnalysisResult, setLiveAnalysisResult] = useState<RecordAnalysis>({
@@ -86,7 +85,6 @@ export function useMatchSession({
       rankIndexBefore: getRankInfo(initialRating, t).index,
       ratingAfter: 0,
       rankIndexAfter: 0,
-      newlyAcquiredIcons: [],
     };
   });
   const isResyncingRef = useRef(false);
@@ -352,7 +350,11 @@ export function useMatchSession({
     if (!data) return;
 
     const myData = myColor === 1 ? data.black : data.white;
-    const oppData = myColor === 1 ? data.white : data.black;
+    if (boardSize === 9) {
+      updateProfile({ wins9: myData.wins }); // dataじゃなくてmyDataね！！！
+    } else if (boardSize === 13) {
+      updateProfile({ wins13: myData.wins }); // dataじゃなくてmyDataね！！！
+    }
 
     if (myData) {
       const updated = computeMatchResultUpdate(
@@ -360,7 +362,6 @@ export function useMatchSession({
         myData,
         rating9 ?? 0,
         rating13 ?? 0,
-        acquiredIcons ?? [],
         t,
       );
       if (updated) {
@@ -368,10 +369,6 @@ export function useMatchSession({
         setMatchResult(displayResult);
         updateProfile(profilePatch);
       }
-    }
-
-    if (oppData?.new_rating != null) {
-      setOppRatingAfter(oppData.new_rating);
     }
 
     if (data.result) {
@@ -520,7 +517,6 @@ export function useMatchSession({
     handlePutStone,
     handleResign,
     resultRaw,
-    oppRatingAfter,
     finalDeadStones,
     analysis: liveAnalysisResult,
     ...matchResult,

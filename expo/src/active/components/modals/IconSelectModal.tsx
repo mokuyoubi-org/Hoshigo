@@ -4,6 +4,7 @@ import { ICONS } from "@/src/active/constants/icons";
 import { useTranslation } from "@/src/active/i18n";
 
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { winsToAcquiredIcons } from "@/src/stable/logics/winsToAcquiredIcons";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -33,7 +34,8 @@ export default function IconSelectModal({
   const { height: windowHeight } = useWindowDimensions();
   const iconSize: number = 96;
   const imageSize: number = iconSize * (5 / 6);
-  const { acquiredIcons } = useProfile();
+  const { wins9, wins13 } = useProfile();
+  const acquiredIcons = winsToAcquiredIcons(wins9 ?? 0, wins13 ?? 0);
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
@@ -87,8 +89,11 @@ export default function IconSelectModal({
                   <>
                     <Image
                       source={icon}
-                      style={{ height: imageSize, width: imageSize }}
-                      resizeMode="contain"
+                      style={{
+                        height: imageSize,
+                        width: imageSize,
+                        resizeMode: "contain",
+                      }}
                     />
                     {isSelected && (
                       <View className="absolute top-1 right-1 w-6 h-6 rounded-full bg-primary justify-center items-center">

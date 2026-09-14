@@ -16,13 +16,12 @@ type BuildRecordArgs = {
   myUid: string;
   myUsername: string;
   myIconIndex: number;
-  myRatingBefore: number;
+  myRating: number; // 更新後の値
   myRankIndexAfter: number;
   oppUid: string;
   oppUsername: string;
   oppIconIndex: number;
-  oppRatingBefore: number;
-  oppRatingAfter: number;
+  oppRating: number; // 更新前の値。相手のレーティングの上がり下がりはどうでもいい
   t: TFunction;
   analysis: RecordAnalysis | null;
 };
@@ -41,18 +40,17 @@ export function buildRecordFromMatch({
   myUid,
   myUsername,
   myIconIndex,
-  myRatingBefore,
+  myRating,
   myRankIndexAfter,
   oppUid,
   oppUsername,
   oppIconIndex,
-  oppRatingBefore,
-  oppRatingAfter,
+  oppRating,
   t,
   analysis,
 }: BuildRecordArgs): RecordType {
   const isMeBlack = myColor === BLACK;
-  const oppRankIndexAfter = getRankInfo(oppRatingAfter, t).index;
+  const oppRankIndex = getRankInfo(oppRating, t).index;
 
   return {
     id: matchId,
@@ -63,10 +61,10 @@ export function buildRecordFromMatch({
     white_username: isMeBlack ? oppUsername : myUsername,
     black_icon_index: isMeBlack ? myIconIndex : oppIconIndex,
     white_icon_index: isMeBlack ? oppIconIndex : myIconIndex,
-    black_rank_index: isMeBlack ? myRankIndexAfter : oppRankIndexAfter,
-    white_rank_index: isMeBlack ? oppRankIndexAfter : myRankIndexAfter,
-    black_rating: isMeBlack ? myRatingBefore : oppRatingBefore,
-    white_rating: isMeBlack ? oppRatingBefore : myRatingBefore,
+    black_rank_index: isMeBlack ? myRankIndexAfter : oppRankIndex,
+    white_rank_index: isMeBlack ? oppRankIndex : myRankIndexAfter,
+    black_rating: isMeBlack ? myRating : oppRating,
+    white_rating: isMeBlack ? oppRating : myRating,
     board_size: boardSize,
     result,
     moves,

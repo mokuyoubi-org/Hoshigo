@@ -34,6 +34,7 @@ export function useProfileScreen() {
         Alert.alert(t("Profile.iconUpdateFailed"));
       } else {
         updateProfile({ iconIndex: selectedIconIndex });
+        clearPeriodicCache("global_rankings"); // ランキングのキャッシュ消しておく(アイコンが変わるから)
       }
     } finally {
       setLoading(false);
