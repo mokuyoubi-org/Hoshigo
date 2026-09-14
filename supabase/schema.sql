@@ -46,6 +46,8 @@ declare
   v_white_giantkill smallint := 0;
   v_black_new_rating smallint;
   v_white_new_rating smallint;
+  v_black_wins smallint := 0;
+  v_white_wins smallint := 0;
 
   -- 勝敗・引き分けインクリメント用
   v_black_win_inc smallint := 0;
@@ -59,14 +61,6 @@ declare
   v_black_rating_other smallint := 0;
   v_white_rating_other smallint := 0;
 
-  -- アイコン関連
-  v_black_old_icons smallint[];
-  v_white_old_icons smallint[];
-  v_black_updated_icons smallint[];
-  v_white_updated_icons smallint[];
-  v_black_new_icons smallint[] := '{}';
-  v_white_new_icons smallint[] := '{}';
-
   v_other_board_size smallint;
   v_calc_res record;
 begin
@@ -74,13 +68,13 @@ begin
 
   -- ─── 1. プロフィール＆戦績情報の取得 ─────────────────────────────
   -- 黒（⚫️）
-  select is_bot, coalesce(acquired_icons, '{0}'::smallint[])
-  into v_is_black_bot, v_black_old_icons
+  select is_bot
+  into v_is_black_bot
   from private.profiles
   where uid = new.black_uid;
 
-  select coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giantkill, 0)
-  into v_black_games, v_black_rating, v_black_giantkill
+  select coalesce(wins, 0), coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giantkill, 0)
+  into v_black_wins, v_black_games, v_black_rating, v_black_giantkill
   from private.user_stats
   where uid = new.black_uid and board_size = new.board_size;
 
@@ -90,13 +84,13 @@ begin
   where uid = new.black_uid and board_size = v_other_board_size;
 
   -- 白（⚪️）
-  select is_bot, coalesce(acquired_icons, '{0}'::smallint[])
-  into v_is_white_bot, v_white_old_icons
+  select is_bot
+  into v_is_white_bot
   from private.profiles
   where uid = new.white_uid;
 
-  select coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giantkill, 0)
-  into v_white_games, v_white_rating, v_white_giantkill
+  select coalesce(wins, 0), coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giantkill, 0)
+  into v_white_wins, v_white_games, v_white_rating, v_white_giantkill
   from private.user_stats
   where uid = new.white_uid and board_size = new.board_size;
 
@@ -111,7 +105,7 @@ begin
 
     v_calc_res := private.calculate_match_delta(
       v_black_rating, v_white_rating, v_black_giantkill, v_black_games, 
-      (v_is_black_bot or v_is_white_bot) -- 【ここ！】どちらかがBotなら true
+      (v_is_black_bot or v_is_white_bot) 
     );
     v_black_delta      := v_calc_res.o_winner_delta;
     v_white_delta      := v_calc_res.o_loser_delta;
@@ -124,21 +118,21 @@ begin
 
     v_calc_res := private.calculate_match_delta(
       v_white_rating, v_black_rating, v_white_giantkill, v_white_games, 
-      (v_is_black_bot or v_is_white_bot) -- 【ここ！】どちらかがBotなら true
+      (v_is_black_bot or v_is_white_bot) 
     );
     v_white_delta      := v_calc_res.o_winner_delta;
     v_black_delta      := v_calc_res.o_loser_delta;
     v_white_giantkill  := v_calc_res.o_winner_giantkill;
     v_black_giantkill  := v_calc_res.o_loser_giantkill;
 
-else
+  elsif new.result = 'DRAW' then
     v_black_draw_inc := 1;
     v_white_draw_inc := 1;
 
     v_calc_res := private.calculate_draw_delta(
       v_black_rating, 
       v_white_rating, 
-      (v_is_black_bot or v_is_white_bot) -- 【ここ！】どちらかがBotなら true
+      (v_is_black_bot or v_is_white_bot)
     );
     v_black_delta := v_calc_res.o_black_delta;
     v_white_delta := v_calc_res.o_white_delta;
@@ -147,23 +141,6 @@ else
   -- 新レート計算
   v_black_new_rating := greatest(0, v_black_rating + v_black_delta);
   v_white_new_rating := greatest(0, v_white_rating + v_white_delta);
-
-  -- ─── 3. アイコン獲得計算 ─────────────────────────────────
-  if new.board_size = 9 then
-    v_calc_res := private.calculate_new_icons(v_black_old_icons, v_black_new_rating, v_black_rating_other);
-  else
-    v_calc_res := private.calculate_new_icons(v_black_old_icons, v_black_rating_other, v_black_new_rating);
-  end if;
-  v_black_updated_icons := v_calc_res.o_updated_icons;
-  v_black_new_icons     := v_calc_res.o_new_icons;
-
-  if new.board_size = 9 then
-    v_calc_res := private.calculate_new_icons(v_white_old_icons, v_white_new_rating, v_white_rating_other);
-  else
-    v_calc_res := private.calculate_new_icons(v_white_old_icons, v_white_rating_other, v_white_new_rating);
-  end if;
-  v_white_updated_icons := v_calc_res.o_updated_icons;
-  v_white_new_icons     := v_calc_res.o_new_icons;
 
   -- ─── 4. テーブル更新 ───────────────────────────────────
   -- 黒（⚫️）
@@ -175,10 +152,6 @@ else
       rating    = v_black_new_rating,
       giantkill = v_black_giantkill
     where uid = new.black_uid and board_size = new.board_size;
-
-    update private.profiles set
-      acquired_icons = v_black_updated_icons
-    where uid = new.black_uid;
   else
     update private.user_stats set
       wins   = wins + v_black_win_inc,
@@ -196,10 +169,6 @@ else
       rating    = v_white_new_rating,
       giantkill = v_white_giantkill
     where uid = new.white_uid and board_size = new.board_size;
-
-    update private.profiles set
-      acquired_icons = v_white_updated_icons
-    where uid = new.white_uid;
   else
     update private.user_stats set
       wins   = wins + v_white_win_inc,
@@ -221,14 +190,12 @@ perform realtime.send(
     jsonb_build_object(
       'result', new.result,
       'black', jsonb_build_object(
-        'delta', case when v_is_black_bot then 0 else v_black_delta end,
         'new_rating', case when v_is_black_bot then v_black_rating else v_black_new_rating end,
-        'acquired_icons', case when v_is_black_bot then '{}'::smallint[] else v_black_new_icons end
+        'wins', v_black_wins + v_black_win_inc
       ),
       'white', jsonb_build_object(
-        'delta', case when v_is_white_bot then 0 else v_white_delta end,
         'new_rating', case when v_is_white_bot then v_white_rating else v_white_new_rating end,
-        'acquired_icons', case when v_is_white_bot then '{}'::smallint[] else v_white_new_icons end
+        'wins', v_white_wins + v_white_win_inc
       )
     ),
     'rating_updated',
@@ -385,35 +352,6 @@ $$;
 ALTER FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_white_rating" smallint, "p_is_bot_match" boolean, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "private"."calculate_icons"("p_rating9" smallint, "p_rating13" smallint) RETURNS smallint[]
-    LANGUAGE "plpgsql" IMMUTABLE
-    SET "search_path" TO ''
-    AS $$
-declare
-  v_icons smallint[] := '{}';
-  v_rank smallint;
-begin
-  -- 9路盤・13路盤の強い方のランクを採用する
-  v_rank := greatest(
-    private.rating_to_rank_index(p_rating9),
-    private.rating_to_rank_index(p_rating13)
-  );
-
-  -- ランクに応じたアイコン (0 〜 5) を追加する
-  for i in 0..5 loop
-    if v_rank >= (i * 3) then
-      v_icons := array_append(v_icons, i::smallint);
-    end if;
-  end loop;
-
-  return v_icons;
-end;
-$$;
-
-
-ALTER FUNCTION "private"."calculate_icons"("p_rating9" smallint, "p_rating13" smallint) OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) RETURNS "record"
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
@@ -455,9 +393,10 @@ begin
   o_loser_giantkill := 0;
 
   -- 7. 敗者のレーティング変動量を決定
-  -- 勝者が格上 かつ 対局数が30以下（初心者）の場合はペナルティなし(0)
+  -- 勝者のレートが敗者より低く、勝者の対局数が30以下で、ボット戦ではないなら、
+  -- それは対局数が少ないだけの偽の格下に負けたということなので、敗者のレートは下げない
   -- それ以外は基本変動量分マイナス
-  if v_diff > 0 and p_winner_games <= 30 then
+  if v_diff > 0 and p_winner_games <= 30 and not p_is_bot_match then
     o_loser_delta := 0;
   else
     o_loser_delta := -v_base_delta;
@@ -467,37 +406,6 @@ $$;
 
 
 ALTER FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "private"."calculate_new_icons"("p_old_icons" smallint[], "p_rating_9" smallint, "p_rating_13" smallint, OUT "o_updated_icons" smallint[], OUT "o_new_icons" smallint[]) RETURNS "record"
-    LANGUAGE "plpgsql"
-    SET "search_path" TO ''
-    AS $$
-declare
-  v_calculated_icons smallint[];
-  v_icon_item smallint;
-begin
-  o_new_icons := '{}';
-
-  -- レートに基づく獲得可能アイコンの計算
-  v_calculated_icons := private.calculate_icons(p_rating_9, p_rating_13);
-
-  -- 今回新しく増えたアイコンの抽出
-  foreach v_icon_item in array v_calculated_icons loop
-    if not (v_icon_item = any(p_old_icons)) then
-      o_new_icons := array_append(o_new_icons, v_icon_item);
-    end if;
-  end loop;
-
-  -- 既存アイコンと新規獲得アイコンを結合し重複排除
-  select array_agg(distinct elem order by elem)
-  into o_updated_icons
-  from unnest(p_old_icons || v_calculated_icons) as elem;
-end;
-$$;
-
-
-ALTER FUNCTION "private"."calculate_new_icons"("p_old_icons" smallint[], "p_rating_9" smallint, "p_rating_13" smallint, OUT "o_updated_icons" smallint[], OUT "o_new_icons" smallint[]) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."check_maintenance"() RETURNS "void"
@@ -660,11 +568,44 @@ CREATE OR REPLACE FUNCTION "private"."get_bot_match_info"("p_rating" smallint, "
 declare
   v_rank smallint;
   v_bot_username text;
+  v_rand double precision;
 begin
   -- ポイントからランク(0: 10k 〜 17: 8D)を計算する
   v_rank := private.rating_to_rank_index(p_rating);
 
-  -- 盤の広さとランクに応じた (bot_username, match_type) の判定
+  -- ----------------------------------------------------
+  -- 1. ランクの揺らぎ（確率計算）
+  -- ----------------------------------------------------
+  v_rand := random();
+
+  if p_board_size = 9 then
+    -- 9路盤：全ランク（10k〜8D）でランク上昇確率を適用
+    if v_rank <= 15 then
+      if v_rand < 0.50 then v_rank := v_rank;
+      elsif v_rand < 0.80 then v_rank := v_rank + 1;
+      else v_rank := v_rank + 2;
+      end if;
+    elsif v_rank = 16 then
+      if v_rand >= 0.50 then v_rank := v_rank + 1; end if;
+    end if;
+
+  elsif p_board_size = 13 or p_board_size = 19 then
+    -- 13路・19路盤：4k(ランク6)以上のみ、9路と同じランク上昇確率を適用
+    if v_rank >= 6 then
+      if v_rank <= 15 then
+        if v_rand < 0.50 then v_rank := v_rank;
+        elsif v_rand < 0.80 then v_rank := v_rank + 1;
+        else v_rank := v_rank + 2;
+        end if;
+      elsif v_rank = 16 then
+        if v_rand >= 0.50 then v_rank := v_rank + 1; end if;
+      end if;
+    end if;
+  end if;
+
+  -- ----------------------------------------------------
+  -- 2. 盤サイズと確定後のランクに応じた bot・match_type の決定
+  -- ----------------------------------------------------
   if p_board_size = 9 then
     case v_rank
       when 0 then v_bot_username := 'bot1'; o_match_type := 5; -- 10k
@@ -689,50 +630,58 @@ begin
     end case;
 
   elsif p_board_size = 13 then
-    case v_rank
-      when 0 then v_bot_username := 'bot1'; o_match_type := 9; -- 10k
-      when 1 then v_bot_username := 'bot1'; o_match_type := 8; -- 9k
-      when 2 then v_bot_username := 'bot1'; o_match_type := 7; -- 8k
-      when 3 then v_bot_username := 'bot1'; o_match_type := 6; -- 7k
-      when 4 then v_bot_username := 'bot1'; o_match_type := 5; -- 6k
-      when 5 then v_bot_username := 'bot1'; o_match_type := 4; -- 5k
-      when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
-      when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
-      when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
-      when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
-      when 10 then v_bot_username := 'bot2'; o_match_type := 2; -- 1D
-      when 11 then v_bot_username := 'bot3'; o_match_type := 2; -- 2D
-      when 12 then v_bot_username := 'bot1'; o_match_type := 1; -- 3D
-      when 13 then v_bot_username := 'bot1'; o_match_type := 0; -- 4D
-      when 14 then v_bot_username := 'bot2'; o_match_type := 1; -- 5D
-      when 15 then v_bot_username := 'bot2'; o_match_type := 0; -- 6D
-      when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
-      when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
-      else null;
-    end case;
+    if v_rank <= 5 then
+      -- 10k〜5k: 50% bot1 / 30% bot2 / 20% bot3
+      if v_rand < 0.50 then v_bot_username := 'bot1';
+      elsif v_rand < 0.80 then v_bot_username := 'bot2';
+      else v_bot_username := 'bot3';
+      end if;
+      o_match_type := 9 - v_rank;
+    else
+      -- 4k〜8D: 本来の13路の条件表
+      case v_rank
+        when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
+        when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
+        when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
+        when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
+        when 10 then v_bot_username := 'bot2'; o_match_type := 2; -- 1D
+        when 11 then v_bot_username := 'bot3'; o_match_type := 2; -- 2D
+        when 12 then v_bot_username := 'bot1'; o_match_type := 1; -- 3D
+        when 13 then v_bot_username := 'bot1'; o_match_type := 0; -- 4D
+        when 14 then v_bot_username := 'bot2'; o_match_type := 1; -- 5D
+        when 15 then v_bot_username := 'bot2'; o_match_type := 0; -- 6D
+        when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
+        when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
+        else null;
+      end case;
+    end if;
 
   elsif p_board_size = 19 then
-    case v_rank
-      when 0 then v_bot_username := 'bot1'; o_match_type := 9; -- 10k
-      when 1 then v_bot_username := 'bot1'; o_match_type := 8; -- 9k
-      when 2 then v_bot_username := 'bot1'; o_match_type := 7; -- 8k
-      when 3 then v_bot_username := 'bot1'; o_match_type := 6; -- 7k
-      when 4 then v_bot_username := 'bot1'; o_match_type := 5; -- 6k
-      when 5 then v_bot_username := 'bot1'; o_match_type := 4; -- 5k
-      when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
-      when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
-      when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
-      when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
-      when 10 then v_bot_username := 'bot1'; o_match_type := 1; -- 1D
-      when 11 then v_bot_username := 'bot1'; o_match_type := 0; -- 2D
-      when 12 then v_bot_username := 'bot2'; o_match_type := 2; -- 3D
-      when 13 then v_bot_username := 'bot2'; o_match_type := 1; -- 4D
-      when 14 then v_bot_username := 'bot2'; o_match_type := 0; -- 5D
-      when 15 then v_bot_username := 'bot3'; o_match_type := 2; -- 6D
-      when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
-      when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
-      else null;
-    end case;
+    if v_rank <= 5 then
+      -- 10k〜5k: 50% bot1 / 30% bot2 / 20% bot3
+      if v_rand < 0.50 then v_bot_username := 'bot1';
+      elsif v_rand < 0.80 then v_bot_username := 'bot2';
+      else v_bot_username := 'bot3';
+      end if;
+      o_match_type := 9 - v_rank;
+    else
+      -- 4k〜8D: 本来の19路の条件表
+      case v_rank
+        when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
+        when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
+        when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
+        when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
+        when 10 then v_bot_username := 'bot1'; o_match_type := 1; -- 1D
+        when 11 then v_bot_username := 'bot1'; o_match_type := 0; -- 2D
+        when 12 then v_bot_username := 'bot2'; o_match_type := 2; -- 3D
+        when 13 then v_bot_username := 'bot2'; o_match_type := 1; -- 4D
+        when 14 then v_bot_username := 'bot2'; o_match_type := 0; -- 5D
+        when 15 then v_bot_username := 'bot3'; o_match_type := 2; -- 6D
+        when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
+        when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
+        else null;
+      end case;
+    end if;
   end if;
 
   -- ボット名からUIDを取得する
@@ -1032,13 +981,11 @@ begin
   -- ------------------------------
   -- pending状態のまま一定時間動きがない対局を、強制的に確定させる。
   -- 片方だけ結果が届いていればその結果を採用(coalesce)、
-  -- 誰も届いていなければ引き分け(draw)。
-  -- どちらの場合もarchive_playing側は新規のresultフォーマットに対応済み
-  -- (B+/W+以外は自動的にdelta=0扱いになるので、drawは無条件で成立する)
+  -- 誰も届いていなければ無効(VOID)。
   update private.matches
   set
     status = 'finished',
-    result = coalesce(result, 'DRAW')
+    result = coalesce(result, 'VOID')
   where status = 'pending'
     and turn_switched_at < now() - interval '30 seconds';
 
@@ -1486,7 +1433,6 @@ BEGIN
       'wins_13',         COALESCE(v_wins_13, 0),
       'losses_13',        COALESCE(v_losses_13, 0),
       'draws_13',        COALESCE(v_draws_13, 0),
-      'acquired_icons',  v_row.acquired_icons,
       'allow_bot_match', COALESCE(v_allow_bot_match, true)
     ),
     'newer_records_9',  v_records_9_json,
@@ -1754,8 +1700,7 @@ BEGIN
   UPDATE private.profiles
   SET
     username = guest_profile.username,
-    icon_index = guest_profile.icon_index,
-    acquired_icons = guest_profile.acquired_icons
+    icon_index = guest_profile.icon_index
   WHERE uid = calling_uid;
 
   -- ✏️ private.user_settings の上書き
@@ -2106,8 +2051,7 @@ CREATE TABLE IF NOT EXISTS "private"."profiles" (
     "created_at" "date" DEFAULT "now"(),
     "icon_index" smallint DEFAULT '0'::smallint,
     "lastseen" "date",
-    "is_bot" boolean DEFAULT false,
-    "acquired_icons" smallint[] DEFAULT '{0}'::smallint[]
+    "is_bot" boolean DEFAULT false
 );
 
 
@@ -2130,7 +2074,8 @@ CREATE TABLE IF NOT EXISTS "private"."user_stats" (
     "giantkill" smallint DEFAULT '0'::smallint,
     "wins" smallint DEFAULT '0'::smallint,
     "losses" smallint DEFAULT '0'::smallint,
-    "draws" smallint DEFAULT '0'::smallint
+    "draws" smallint DEFAULT '0'::smallint,
+    "highest_rating" smallint DEFAULT '0'::smallint
 );
 
 
