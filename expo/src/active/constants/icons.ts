@@ -1,6 +1,6 @@
 // constants/icons.ts
 import { ImageSourcePropType } from "react-native";
-import { getImageUrl } from "./r2";
+import { getImageUrl } from "sound-kit/src/r2";
 
 export const ICONS: Record<number | string, ImageSourcePropType> = {
   // 自分

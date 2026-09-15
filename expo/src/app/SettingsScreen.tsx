@@ -12,7 +12,7 @@ import * as Application from "expo-application";
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ToggleSwitch } from "ui-atoms";
@@ -29,6 +29,16 @@ export default function SettingsScreen() {
     onLogout,
     handleConfirmDelete,
   } = useSettingsScreen();
+
+    useEffect(() => {
+      // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
+      if (
+        typeof document !== "undefined" &&
+        document.activeElement instanceof HTMLElement
+      ) {
+        document.activeElement.blur();
+      }
+    }, []);
 
   // ダブルタップ設定用フックの呼び出し
   const { enableDoubleTap13, toggleDoubleTap13 } = useDoubleTapSetting();

@@ -5,10 +5,13 @@ import { getModelFromIDB, saveModelToIDB } from "./modelStorage";
 export type ModelId = "b6" | "b10" | "b18";
 export const DEFAULT_MODEL_ID: ModelId = "b6";
 
+
+const R2_KATAGO_MODELS_BASE_URL = "https://katagomodels.hoshigo.app";
+
 const MODEL_URLS: Record<ModelId, string> = {
-  b6: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/g170-b6c96-s175395328-d26788732.bin.gz",
-  b10: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/g170e-b10c128-s1141046784-d204142634.bin.gz",
-  b18: "https://pub-e440846f26924bb3a010471dc49d0d32.r2.dev/kata1-b18c384nbt-s9996604416-d4316597426.bin.gz",
+  b6: `${R2_KATAGO_MODELS_BASE_URL}/g170-b6c96-s175395328-d26788732.bin.gz`,
+  b10: `${R2_KATAGO_MODELS_BASE_URL}/g170e-b10c128-s1141046784-d204142634.bin.gz`,
+  b18: `${R2_KATAGO_MODELS_BASE_URL}/kata1-b18c384nbt-s9996604416-d4316597426.bin.gz`,
 };
 
 export type ModelDownloadProgress = {

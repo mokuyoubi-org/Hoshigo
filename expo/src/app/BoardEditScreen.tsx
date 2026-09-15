@@ -11,6 +11,7 @@ import { useDoubleTapSetting } from "@/src/active/hooks/useDoubleTapSetting";
 import { useTranslation } from "@/src/active/i18n";
 import { RecordType } from "@/src/active/types/record";
 import {
+  Feather,
   FontAwesome6,
   MaterialCommunityIcons,
   MaterialIcons,
@@ -207,19 +208,16 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
               />
             )}
 
-            {board.isEditMode && (
+            <IconButton
               // ✏️編集モード: auto on offボタン
-              <IconButton
-                icon={
-                  <MaterialCommunityIcons
-                    name={board.isAutoAnalysisEnabled ? "flash" : "flash-off"}
-                  />
-                }
-                color={board.isAutoAnalysisEnabled ? COLORS.primary : "#9999"}
-                onPress={board.toggleAutoAnalysis}
-              />
-            )}
-
+              icon={
+                <Feather
+                  name={board.isAutoAnalysisEnabled ? "eye" : "eye-off"}
+                />
+              }
+              color={board.isAutoAnalysisEnabled ? COLORS.primary : "#9999"}
+              onPress={board.toggleAutoAnalysis}
+            />
             {board.isEditMode && (
               // ✏️編集モード: ボットが次の一手を考えてくれるボタン
               <IconButton
@@ -230,7 +228,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                     <MaterialCommunityIcons name="robot" />
                   )
                 }
-                color={"#75b384d7"}
+                color={COLORS.botMoveColor}
                 onPress={handleBotSuggest}
                 disabled={isAnyProcessing}
                 // 🐱 自分が実行中ではなく、他の処理が動いて押せない時は薄く(opacity: 0.4)する
@@ -239,7 +237,6 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 }}
               />
             )}
-
             {/* ✏️編集モード: 一体型になった地計算ボタンを使う */}
             {board.isEditMode && (
               <View
@@ -258,7 +255,6 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 />
               </View>
             )}
-
             {/* 🔄 モード切り替えスイッチ（編集モード ↔ 閲覧・再現モード） */}
             <SegmentedIconControl
               value={board.isEditMode}
@@ -276,7 +272,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                 {
                   value: true, // 編集モード（ペン）
                   icon: <MaterialIcons name="edit" />,
-                  color: "#a45c5c7b",
+                  color: COLORS.humanMoveColor,
                 },
               ]}
             />
@@ -347,7 +343,7 @@ function BoardEditScreenContent({ record }: { record: RecordType }) {
                   forceShowTerritory={!!manualTerritory}
                   editMarkers={board.editMarkers}
                   candidatePoints={candidatePoints}
-                  moveEvaluationPoint={lastMoveGrid}
+                  moveEvaluationPoint={board.isAutoAnalysisEnabled?lastMoveGrid:null}
                   moveEvaluation={lastMoveEvaluation}
                   // 物理サイズ: 1
                   boardWidth={boardWidth}

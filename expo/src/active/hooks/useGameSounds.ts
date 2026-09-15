@@ -1,5 +1,6 @@
-import { useSoundPlayer } from "sound-kit";
-import { getSoundUrl } from "../constants/r2"; // 作成したR2用ヘルパー
+// useGameSounds.ts
+
+import { getSoundUrl, useSoundPlayer } from "sound-kit";
 
 export type SoundName = "gamestart" | "pip";
 

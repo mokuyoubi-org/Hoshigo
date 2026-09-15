@@ -6,15 +6,17 @@ import { AuthGate } from "@/src/active/contexts/providers/AuthGate";
 import { RootProvider } from "@/src/active/contexts/providers/RootProvider";
 import { KataGoGate } from "expo-katago";
 import { Stack } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import "../../global.css";
 
 import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModal";
 import { UpdateModal } from "@/src/active/components/modals/UpdateModal";
 import { COLORS } from "@/src/active/constants/colors";
+import { preloadAssets } from "@/src/active/constants/preload";
 import { OverlayProvider } from "@/src/active/contexts/OverlayContext";
 import { MatchingProvider } from "@/src/active/contexts/providers/MatchingContext";
 import { Platform, View } from "react-native";
+import { configureAudioMode } from "sound-kit";
 import { LoadingScreen } from "ui-atoms";
 
 function RoutedContent() {
@@ -32,6 +34,17 @@ function RoutedContent() {
         : updateReason === "app"
           ? ("store" as const)
           : ("restart" as const);
+
+  useEffect(() => {
+    // 効果音がBGMを中断しないようにする設定。
+    configureAudioMode();
+
+    // 起動直後にバックグラウンドで画像/音声を先読みしておく。
+    // 失敗しても致命的ではないので、エラーは握りつぶして良い。
+    preloadAssets().catch((error) => {
+      console.warn("Failed to preload assets:", error);
+    });
+  }, []);
 
   return (
     // ここでStackを使うことによって、router.back()が機能する。つまりStackがないということは履歴がないということ

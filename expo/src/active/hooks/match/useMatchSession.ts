@@ -502,7 +502,6 @@ export function useMatchSession({
     moves: goBoard.moves,
     movesRef: goBoard.movesRef,
     currentIndex: goBoard.currentIndex,
-    setCurrentIndex: goBoard.setCurrentIndex,
     territoryBoard: goBoard.territoryBoard,
     goToLatest: goBoard.goToLatest,
     // 時間・手番

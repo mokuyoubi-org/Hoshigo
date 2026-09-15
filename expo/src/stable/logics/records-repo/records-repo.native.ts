@@ -176,10 +176,7 @@ export const recordsRepo: RecordsRepo = {
       await SQLite.deleteDatabaseAsync("hoshigo-records.db");
     } catch (error) {
       // ファイルが存在しないだけのエラーなら「はいはい」って流す
-      if (
-        error instanceof Error &&
-        error.message.includes("DatabaseNotFoundException")
-      ) {
+      if (error instanceof Error && error.message.includes("not found")) {
         return;
       }
       throw error;

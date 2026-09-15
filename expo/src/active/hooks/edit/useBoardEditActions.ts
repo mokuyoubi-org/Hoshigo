@@ -48,11 +48,16 @@ export function useBoardEditActions(
 
     setActiveProcessing("bot"); // 🤖 ボット計算開始
     try {
-      const entry = await board.runAndStoreAnalysis(
-        board.currentIndex,
-        board.processed.boardHistory[board.currentIndex],
-        board.processed.moves.slice(0, board.currentIndex),
-      );
+      // 🐱 この局面の分析が既にキャッシュにあるなら、KataGoを叩き直さず使い回す
+      const cached = board.combinedAnalysis.perMove[board.currentIndex];
+      const entry =
+        cached && cached.candidates.length > 0
+          ? cached
+          : await board.runAndStoreAnalysis(
+              board.currentIndex,
+              board.processed.boardHistory[board.currentIndex],
+              board.processed.moves.slice(0, board.currentIndex),
+            );
       const best = entry?.candidates[0];
       if (!best) return;
       board.handleEditStone(
@@ -73,11 +78,16 @@ export function useBoardEditActions(
     setActiveProcessing("territory"); // 🧮 地計算開始
     try {
       const currentBoard = board.processed.boardHistory[board.currentIndex];
-      const entry = await board.runAndStoreAnalysis(
-        board.currentIndex,
-        currentBoard,
-        board.processed.moves.slice(0, board.currentIndex),
-      );
+      // 🐱 ownership込みの分析が既にキャッシュにあるなら、KataGoを叩き直さず使い回す
+      const cached = board.combinedAnalysis.perMove[board.currentIndex];
+      const entry =
+        cached && cached.ownership.length > 0
+          ? cached
+          : await board.runAndStoreAnalysis(
+              board.currentIndex,
+              currentBoard,
+              board.processed.moves.slice(0, board.currentIndex),
+            );
       if (!entry) return;
 
       const deadStones = ownershipToDeadStones(currentBoard, entry.ownership);

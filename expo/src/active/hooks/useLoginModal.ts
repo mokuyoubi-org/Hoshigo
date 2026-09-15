@@ -95,7 +95,6 @@ export function useLoginModal({ onClose, turnstileRef }: Props) {
       }
 
       if (updateError.code === "email_exists") {
-        console.log("updateError:", JSON.stringify(updateError, null, 2));
         const { error: signInError } = await supabase.auth.signInWithOtp({
           email,
           options: {

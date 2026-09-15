@@ -57,7 +57,15 @@ const WINRATE_CUTOFF = 0.03;
 // パス判定・端っこ判定。isValidCandidateと選択ロジック本体の両方から
 // 使うので、関数の外(モジュールレベル)に置いている。
 const isPass = (m: CandidateMove) => m.x === -1 && m.y === -1;
-const isEdge = (m: CandidateMove) => m.x === 1 || m.y === 1;
+const isNearEdge = (m: CandidateMove) =>
+  m.x === 1 ||
+  m.y === 1 ||
+  m.x === 9 ||
+  m.y === 9 ||
+  m.x === 2 ||
+  m.y === 2 ||
+  m.x === 8 ||
+  m.y === 8;
 
 // 候補手が抽選対象として有効かどうかを判定する。
 // 禁止条件を上から順番に弾いていく書き方にして、
@@ -69,7 +77,7 @@ function isValidCandidate(
   modelId: ModelId,
 ): boolean {
   if (isPass(m)) return false; // パスは常に禁止
-  if (isEdge(m) && m !== bestMove && boardSize === 9 && modelId === "b18")
+  if (isNearEdge(m) && m !== bestMove && boardSize === 9 && modelId === "b18")
     return false; // b18の9路盤での変な端っこ打ちは禁止しておく
   return true;
 }

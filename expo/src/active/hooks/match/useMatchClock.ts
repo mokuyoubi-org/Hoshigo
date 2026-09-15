@@ -206,7 +206,7 @@ export function useMatchClock({
         return;
       }
       // 2. 自分の番！！
-      else if (turnRef.current !== myColorRef.current) {
+      else if (turnRef.current === myColorRef.current) {
         mySecondsRef.current = Math.max(0, mySecondsRef.current - 1);
         setMySeconds(mySecondsRef.current);
 

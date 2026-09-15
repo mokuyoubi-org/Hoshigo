@@ -95,6 +95,10 @@ export function useEditableMoves(record: RecordType) {
     botMoveIndices,
   ]);
 
+
+
+  
+
   // 🐱 着手を1手挿入する。合法性チェックのみ担当。分析のキックオフは呼び出し側(orchestrator)に任せる
   const tryPutStone = (grid: Grid, source: "human" | "bot") => {
     const currentBoard =
@@ -120,9 +124,18 @@ export function useEditableMoves(record: RecordType) {
     const newIndex = currentIndex;
     const newMoves = [...editableMoves.slice(0, currentIndex), grid];
     setEditableMoves(newMoves);
+
+    // 🐱 分岐点の更新。ここが「本編の分析(record.analysis)」と「編集後の分析
+    //    (editableAnalysis)」の境界線そのものになる(mergeAnalysisが参照する)。
+    //    一度分岐したあと、さらに手前まで戻って別の手を打った場合は
+    //    Math.minで一番古い分岐点だけを残す(＝分岐点は手前にしか動かない)。
     setBranchIndex((prev) =>
       prev === null ? currentIndex : Math.min(prev, currentIndex),
     );
+
+    // 🐱 「その手がボット由来か」の記録。ここがeditMarkers(石の色分け)の元ネタ。
+    //    今回の着手位置(newIndex)より後ろにあった古い記録は、取り返しで
+    //    同じ場所に打ち直した時に前の色が残らないよう、毎回まとめて掃除する。
     setBotMoveIndices((prev) => {
       const pruned = new Set([...prev].filter((i) => i < newIndex));
       if (source === "bot") pruned.add(newIndex);
@@ -137,6 +150,13 @@ export function useEditableMoves(record: RecordType) {
     ).boardHistory.at(-1)!;
     return { newIndex, newBoard, newMoves };
   };
+
+
+
+
+
+
+
 
   const enterEditMode = () => {
     setSavedIndex(currentIndex);
