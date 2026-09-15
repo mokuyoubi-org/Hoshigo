@@ -328,7 +328,7 @@ ALTER FUNCTION "private"."build_match_json"("p_match" "private"."matches", "p_pl
 
 
 CREATE OR REPLACE FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_white_rating" smallint, "p_is_bot_match" boolean, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) RETURNS "record"
-    LANGUAGE "plpgsql"
+    LANGUAGE "plpgsql" IMMUTABLE
     SET "search_path" TO ''
     AS $$
 declare
@@ -353,7 +353,7 @@ ALTER FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_wh
 
 
 CREATE OR REPLACE FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) RETURNS "record"
-    LANGUAGE "plpgsql"
+    LANGUAGE "plpgsql" IMMUTABLE
     SET "search_path" TO ''
     AS $$
 declare
@@ -488,7 +488,7 @@ ALTER FUNCTION "private"."cleanup_old_anonymous_profiles"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."fetch_newer_records"("p_player_uid" "uuid", "p_board_size" smallint, "p_after_id" integer, "p_limit" smallint DEFAULT 10) RETURNS "jsonb"
-    LANGUAGE "plpgsql" SECURITY DEFINER
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
 declare
@@ -1930,6 +1930,7 @@ ALTER FUNCTION "public"."update_last_seen"("p_match_id" integer) OWNER TO "postg
 
 CREATE OR REPLACE FUNCTION "public"."update_username"("new_username" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
     AS $_$
 declare
   current_user_id uuid;
@@ -2050,7 +2051,7 @@ CREATE TABLE IF NOT EXISTS "private"."profiles" (
     "username" "text" NOT NULL,
     "created_at" "date" DEFAULT "now"(),
     "icon_index" smallint DEFAULT '0'::smallint,
-    "lastseen" "date",
+    "lastseen" "date" DEFAULT CURRENT_DATE,
     "is_bot" boolean DEFAULT false
 );
 
