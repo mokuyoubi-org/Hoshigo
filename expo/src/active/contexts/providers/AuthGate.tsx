@@ -1,7 +1,7 @@
 // ✅2026/08/31コメント入れた。メンテナンス仕込み系、見張り猫は完全には理解していない。
 // ✅2026/09/01 Turnstile(Cloudflare CAPTCHA)によるボット対策を追加。
 //   匿名ログインの直前に必ずトークンを取得し、取れなければログインさせない(厳格モード)。
-// ✅2026/09/13 バージョンチェック仕込み系を追加。メンテと同じ形。
+// ✅2026/09/14 バージョンチェック仕込み系を追加。メンテと同じ形。
 // AuthGate.tsx
 import { OTA_VERSION } from "@/ota-version";
 import { COLORS } from "@/src/active/constants/colors";
@@ -42,16 +42,28 @@ export function AuthGate({ children }: { children: ReactNode }) {
       email: null,
       username: null,
       iconIndex: 0,
+      // 9
       wins9: 0,
       losses9: 0,
       draws9: 0,
+      rating9: 0,
+      giantKillingStreak9: 0,
+      // 13
       wins13: 0,
       losses13: 0,
       draws13: 0,
-      rating9: 0,
       rating13: 0,
+      giantKillingStreak13: 0,
+      // 19
+      wins19: 0,
+      losses19: 0,
+      draws19: 0,
+      rating19: 0,
+      giantKillingStreak19: 0,
+      // others
       allowBotMatch: true,
       isAnonymous: true,
+      country: null,
     });
   };
 
@@ -87,8 +99,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
       setUpdateReason(reason);
     });
 
+    // 🛡️ 2重実行ガード(デバッグ用に追加)
+    let didInit = false;
+
     // 初期化処理。①ログイン(匿名含む) + ②syncProfile + ③セグメント分岐による遷移
     const initialize = async () => {
+      if (didInit) {
+        return;
+      }
+      didInit = true;
+
       const { data } = await supabase.auth.getSession();
       let session = data.session ?? null;
 
@@ -96,7 +116,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
         let captchaToken: string;
         try {
           captchaToken = await getCaptchaToken();
-          console.log("取得したトークン:", captchaToken);
         } catch (err) {
           console.error("匿名ログイン失敗(CAPTCHA)だよ:", err);
           clearUserState();
@@ -171,7 +190,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
           return;
         }
 
-        await clearAllLocalData();
         const profile = await syncProfile();
         if (!profile) {
           console.error("再匿名化後のプロフィール取得に失敗");

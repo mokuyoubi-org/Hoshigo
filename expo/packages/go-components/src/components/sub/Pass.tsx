@@ -53,7 +53,6 @@ export function Pass({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     alignSelf: "flex-start",

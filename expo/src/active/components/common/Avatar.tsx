@@ -1,10 +1,13 @@
+// Avatar.tsx
+
 import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
 import { RANKS } from "@/src/active/constants/ranks";
 import { AntDesign } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { BLACK, Color, WHITE } from "go-core";
 import React from "react";
-import { Image, View } from "react-native";
+import { View } from "react-native";
 
 type Props = {
   rankIndex: number;
@@ -26,6 +29,10 @@ export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
   const starInnerSize = size * 0.3;
   const starOffset = starOuterSize / 2;
 
+  // 石のサイズと位置を size に合わせる（例: アバターの30%の大きさ）
+  const stoneSize = size * 0.45;
+  const stoneRadius = stoneSize / 2;
+
   // 9時方向（左）を中心に、上・中・下へ広がる角度
   const angles = [40, 0, -40]; // 度数法（9時方向 = 180°を基準）
 
@@ -43,15 +50,19 @@ export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
       >
         <Image
           source={ICONS[iconIndex]}
-          style={{ width: size - 4, height: size - 4, resizeMode: "contain" }}
+          style={{ width: size - 4, height: size - 4 }}
+          contentFit="contain"
         />
 
         {playerColor && (
           <View
-            className={`w-[20px] h-[20px] rounded-full absolute -bottom-[2px] -right-[2px] ${
+            className={`absolute -bottom-[2px] -right-[2px] ${
               playerColor === WHITE ? "border-[1px] border-primary" : ""
             }`}
             style={{
+              width: stoneSize,
+              height: stoneSize,
+              borderRadius: stoneRadius,
               backgroundColor:
                 playerColor === BLACK ? COLORS.darkObject : COLORS.lightObject,
             }}

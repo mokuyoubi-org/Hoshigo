@@ -3,6 +3,7 @@
 import type { RecordType } from "@/src/active/types/record";
 import * as SQLite from "expo-sqlite";
 import { RecordAnalysis } from "go-core";
+import { notifyRecordsChange } from "./records-repo-events";
 
 export type RecordsRepo = {
   insertMany: (records: RecordType[]) => Promise<void>;
@@ -53,6 +54,7 @@ function getDb() {
           CREATE INDEX IF NOT EXISTS idx_records_board_id
             ON records (board_size, id);
         `);
+
         return db;
       },
     );
@@ -79,8 +81,8 @@ export const recordsRepo: RecordsRepo = {
           id, result, created_at, black_uid, white_uid, moves, match_type,
           black_rating, white_rating, board_size, dead_stones,
           black_username, black_icon_index, black_rank_index,
-          white_username, white_icon_index, white_rank_index, analysis
-        ) VALUES ($id, $result, $created_at, $black_uid, $white_uid, $moves, $match_type,
+          white_username, white_icon_index, white_rank_index, analysis)
+          VALUES ($id, $result, $created_at, $black_uid, $white_uid, $moves, $match_type,
           $black_rating, $white_rating, $board_size, $dead_stones,
           $black_username, $black_icon_index, $black_rank_index,
           $white_username, $white_icon_index, $white_rank_index, $analysis)
@@ -112,9 +114,10 @@ export const recordsRepo: RecordsRepo = {
         await stmt.finalizeAsync();
       }
     });
+    // 🔔 一覧が変わったので通知
+    notifyRecordsChange();
   },
 
-  // 🐱 ここから追加！
   getById: async (id) => {
     const db = await getDb();
     const row = await db.getFirstAsync<any>(
@@ -164,6 +167,8 @@ export const recordsRepo: RecordsRepo = {
       `UPDATE records SET analysis = ? WHERE board_size = ? AND id = ?`,
       [analysis ? JSON.stringify(analysis) : null, boardSize, id],
     );
+    // 🔔 このレコードのanalysisが変わったので通知
+    notifyRecordsChange();
   },
 
   clearAll: async () => {
@@ -181,6 +186,8 @@ export const recordsRepo: RecordsRepo = {
       }
       throw error;
     }
+    // 🔔 全消去したので通知
+    notifyRecordsChange();
   },
 
   updateUsername: async (uid, newUsername) => {
@@ -193,5 +200,7 @@ export const recordsRepo: RecordsRepo = {
       `UPDATE records SET white_username = ? WHERE white_uid = ?`,
       [newUsername, uid],
     );
+    // 🔔 ユーザー名が変わったので通知
+    notifyRecordsChange();
   },
 };

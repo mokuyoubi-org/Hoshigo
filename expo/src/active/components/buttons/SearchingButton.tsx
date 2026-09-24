@@ -1,5 +1,5 @@
 import { COLORS } from "@/src/active/constants/colors";
-import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
+import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useTranslation } from "@/src/active/i18n";
 import React, { useMemo, useState } from "react";
 import { FloatingToast, useTransientVisibility } from "ui-atoms";

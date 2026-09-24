@@ -55,6 +55,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
         const bridgeUrl = `${BRIDGE_URL}?${searchParams.toString()}`;
 
         try {
+
           const result = await Promise.race([
             WebBrowser.openAuthSessionAsync(bridgeUrl, REDIRECT_URL),
             new Promise<never>((_, reject) =>
@@ -86,6 +87,8 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
 
     useImperativeHandle(ref, () => ({
       getToken: () => {
+        console.log("🔍⓪ getToken()が呼ばれた");
+
         const run = queueRef.current
           .catch(() => {
             // 前の呼び出しが失敗していても、キューは止めない

@@ -1,7 +1,9 @@
 // SkeletonCard.tsx
+
 import { ICONS } from "@/src/active/constants/icons";
+import { Image } from "expo-image";
 import React from "react";
-import { Image, View } from "react-native";
+import { View } from "react-native";
 
 export const SkeletonCard = ({ height }: { height: number }) => {
   return (
@@ -16,7 +18,8 @@ export const SkeletonCard = ({ height }: { height: number }) => {
       <Image
         source={ICONS[0]}
         className="rounded-[12px] opacity-50 z-10"
-        style={{ width: 72, height: 72, resizeMode: "contain" }}
+        style={{ width: 72, height: 72 }}
+        contentFit="contain"
       />
     </View>
   );

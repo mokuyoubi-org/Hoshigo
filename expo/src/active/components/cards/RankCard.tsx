@@ -1,4 +1,3 @@
-// ✅active
 // RankCard.tsx
 // プロフィール画面のランク表示カードコンポーネント
 
@@ -27,24 +26,22 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
   const winText = lang === "en" ? (winsNeeded === 1 ? "win" : "wins") : "";
 
   return (
-    <View className="bg-foreground rounded-3xl border-2 border-backgroundDark p-7 items-center">
-      {/* YOUR RANK & インフォボタン */}
+    <TouchableOpacity
+      onPress={onOpenInfo}
+      activeOpacity={0.8}
+      className="bg-foreground rounded-3xl border-2 border-backgroundDark p-7 items-center"
+    >
+      {/* YOUR RANK & インフォアイコン */}
       <View className="flex-row items-center gap-1.5">
-        <Text className="text-[11px] text-text tracking-[2px] font-bold">
+        <Text className="text-sm text-text tracking-[2px] font-bold uppercase">
           {t("Profile.youAre")}
         </Text>
-        <TouchableOpacity
-          onPress={onOpenInfo}
-          activeOpacity={0.6}
-          className="p-0.5"
-        >
-          <MaterialIcons name="info-outline" size={18} color={COLORS.primary} />
-        </TouchableOpacity>
+        <MaterialIcons name="info-outline" size={18} color={COLORS.primary} />
       </View>
 
       {/* ランク名（翻訳済みの name が届いてる） */}
       <Text
-        className="text-[40px] font-extrabold tracking-wide my-2.5"
+        className="text-5xl font-extrabold tracking-wide my-2.5"
         style={{ color: textColor }}
       >
         {rankInfo.name}
@@ -53,10 +50,10 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
       {/* ゲージ＆昇級情報 */}
       <View className="w-full">
         <View className="flex-row justify-between items-center">
-          <Text className="text-xs text-text font-semibold opacity-70">
+          <Text className="text-sm text-text font-semibold opacity-70">
             {rankInfo.next ? `${rankInfo.next.name} ▶︎` : "MAX RANK"}
           </Text>
-          <Text className="text-xs font-bold" style={{ color: textColor }}>
+          <Text className="text-sm font-bold" style={{ color: textColor }}>
             {rankInfo.next
               ? t("Profile.remaining", {
                   wins: winsNeeded,
@@ -72,6 +69,6 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
           animationType="simple"
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }

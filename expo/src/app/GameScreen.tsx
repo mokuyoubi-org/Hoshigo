@@ -4,17 +4,14 @@
 // UIのことはGameScreenが管理役を務める。
 // ということで、useEffectでモーダルを表示したりする処理はこちらに書いてあります。
 // stateを変更した、その場ではなく、こちらでstateの変更に気づいて発火するようになっています。
-// ひとまず完成。
 import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
-import { GameResultModal } from "@/src/active/components/modals/GameResultModal";
+import { GameResultModal } from "@/src/active/components/modals/gameresult/GameResultModal";
 import { GameStartModal } from "@/src/active/components/modals/GameStartModal";
 import LoadingModal from "@/src/active/components/modals/LoadingModal";
 import { COLORS } from "@/src/active/constants/colors";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
-import { useDoubleTapSetting } from "@/src/active/hooks/useDoubleTapSetting";
-import { useSounds } from "@/src/active/hooks/useGameSounds";
 import { useTranslation } from "@/src/active/i18n";
 import {
   GameScreenParams,
@@ -37,39 +34,60 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useKVStorage } from "storage-kit";
 import { IconButton } from "ui-atoms";
 import { clearPeriodicCache } from "../stable/logics/syncUtils";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
   // 余白の比率（flex）を設定する
-  // a: ヘッダーと三兄弟の間のスペーサー
-  // b: 三兄弟と二兄弟の間のスペーサー
-  // c: 二兄弟の下のスペーサー
+  // A: ヘッダーと三兄弟の間のスペーサー
+  // B: 三兄弟と二兄弟の間のスペーサー
+  // C: 二兄弟の下のスペーサー
   FLEX_A: 1,
   FLEX_B: 1,
   FLEX_C: 2,
-
-  // 盤面サイズの調整（画面幅・高さに対する割合）
-  BOARD_WIDTH_RATIO: 0.94,
-  BOARD_HEIGHT_RATIO: 0.6,
 };
+
+// 盤面サイズの調整（画面幅・高さに対する割合）
+const BOARD_WIDTH_RATIO = 0.94;
+const BOARD_HEIGHT_RATIO = 0.6;
 
 export default function GameScreen() {
   // ---------- stateなど ----------
   // その他
   const t = useTranslation();
   const { show, hide } = useOverlay();
-  const { enableDoubleTap13 } = useDoubleTapSetting();
+  const { value: doubleTap9 } = useKVStorage<boolean>(
+    "global.doubleTap9",
+    false,
+  );
+  const { value: doubleTap13 } = useKVStorage<boolean>(
+    "global.doubleTap13",
+    true,
+  );
+  const { value: doubleTap19 } = useKVStorage<boolean>(
+    "global.doubleTap19",
+    true,
+  );
+  const { value: isSoundEnabled } = useKVStorage<boolean>(
+    "global.sound",
+    false,
+  );
   // 碁盤サイズ
   const { height, width } = useWindowDimensions();
   const boardWidth = Math.min(
-    width * LAYOUT_CONFIG.BOARD_WIDTH_RATIO,
-    height * LAYOUT_CONFIG.BOARD_HEIGHT_RATIO,
+    width * BOARD_WIDTH_RATIO,
+    height * BOARD_HEIGHT_RATIO,
   );
   // 対局する人の情報
-  const { uid, iconIndex, username, rating9, rating13 } = useProfile();
-  const [rank9, rank13] = [getRankInfo(rating9, t), getRankInfo(rating13, t)];
+  const { uid, iconIndex, username, rating9, rating13, rating19 } =
+    useProfile();
+  const [rank9, rank13, rank19] = [
+    getRankInfo(rating9, t),
+    getRankInfo(rating13, t),
+    getRankInfo(rating19, t),
+  ];
   const params = useLocalSearchParams<GameScreenParams>();
   const {
     matchId,
@@ -84,10 +102,15 @@ export default function GameScreen() {
     oppIconIndex,
     oppUid,
   } = parseGameParams(params);
-  const myRankIndex = (boardSize === 9 ? rank9.index : rank13.index) ?? 0;
-  const myRating = (boardSize === 9 ? rating9 : rating13) ?? 0;
+  const myRankIndex =
+    (boardSize === 9
+      ? rank9.index
+      : boardSize === 13
+        ? rank13.index
+        : rank19.index) ?? 0;
+  const myRating =
+    (boardSize === 9 ? rating9 : boardSize === 13 ? rating13 : rating19) ?? 0;
 
-  const { playSound } = useSounds();
   // 🌟useMatchSession呼び出し！
   const {
     boardHistory,
@@ -111,6 +134,8 @@ export default function GameScreen() {
     resultRaw,
     finalDeadStones,
     analysis,
+    giantKillingStreak,
+    giantKillingStreakBonusApplied,
   } = useMatchSession({
     matchId,
     myColor,
@@ -142,17 +167,40 @@ export default function GameScreen() {
   // iボタン押した時には、対局開始モーダルを表示。useEffectでも使うのでここに出してある
   // 音も鳴らす
   const showGameStartModal = () => {
-    playSound("gamestart");
+    const isMyBlack = myColor === BLACK;
+
+    const blackPlayer = isMyBlack
+      ? {
+          username: username ?? "",
+          iconIndex: iconIndex ?? 0,
+          ratingOrRank: myRankIndex,
+          isRankIndex: true,
+        }
+      : {
+          username: oppUsername ?? "",
+          iconIndex: oppIconIndex ?? 0,
+          ratingOrRank: oppRating ?? 0,
+          isRankIndex: false,
+        };
+
+    const whitePlayer = isMyBlack
+      ? {
+          username: oppUsername ?? "",
+          iconIndex: oppIconIndex ?? 0,
+          ratingOrRank: oppRating ?? 0,
+          isRankIndex: false,
+        }
+      : {
+          username: username ?? "",
+          iconIndex: iconIndex ?? 0,
+          ratingOrRank: myRankIndex,
+          isRankIndex: true,
+        };
+
     show(
       <GameStartModal
-        myUsername={username ?? ""}
-        myIconIndex={iconIndex ?? 0}
-        myRankIndex={myRankIndex}
-        myColor={myColor}
-        oppUsername={oppUsername ?? ""}
-        oppIconIndex={oppIconIndex ?? 0}
-        oppRating={oppRating ?? 0}
-        oppColor={oppColor}
+        blackPlayer={blackPlayer}
+        whitePlayer={whitePlayer}
         matchType={matchType}
         onClose={hide}
       />,
@@ -171,6 +219,9 @@ export default function GameScreen() {
         ratingAfter={ratingAfter}
         rankIndexBefore={rankIndexBefore}
         rankIndexAfter={rankIndexAfter}
+        from={"GameScreen"}
+        giantKillingStreak={giantKillingStreak}
+        giantKillingStreakBonusApplied={giantKillingStreakBonusApplied}
       />,
     );
   };
@@ -203,6 +254,9 @@ export default function GameScreen() {
   // isGameEndedは対局が終了しているか否か。
   useEffect(() => {
     if (isGameEnded) {
+      const isMyBlack = myColor === BLACK;
+      const oppRankIndex = getRankInfo(oppRating, t).index;
+
       const record = buildRecordFromMatch({
         matchId,
         boardSize,
@@ -210,17 +264,16 @@ export default function GameScreen() {
         moves: moves ?? [],
         deadStones: finalDeadStones,
         result: resultRaw,
-        myColor,
-        myUid: uid ?? "",
-        myUsername: username ?? "",
-        myIconIndex: iconIndex ?? 0,
-        myRating: ratingAfter,
-        myRankIndexAfter: rankIndexAfter,
-        oppUid,
-        oppUsername: oppUsername ?? "",
-        oppIconIndex: oppIconIndex ?? 0,
-        oppRating: oppRating ?? 0,
-        t,
+        blackUid: isMyBlack ? (uid ?? "") : oppUid,
+        blackUsername: isMyBlack ? (username ?? "") : (oppUsername ?? ""),
+        blackIconIndex: isMyBlack ? (iconIndex ?? 0) : (oppIconIndex ?? 0),
+        blackRankIndex: isMyBlack ? rankIndexAfter : oppRankIndex,
+        blackRating: isMyBlack ? ratingAfter : (oppRating ?? 0),
+        whiteUid: isMyBlack ? oppUid : (uid ?? ""),
+        whiteUsername: isMyBlack ? (oppUsername ?? "") : (username ?? ""),
+        whiteIconIndex: isMyBlack ? (oppIconIndex ?? 0) : (iconIndex ?? 0),
+        whiteRankIndex: isMyBlack ? oppRankIndex : rankIndexAfter,
+        whiteRating: isMyBlack ? (oppRating ?? 0) : ratingAfter,
         analysis,
       });
 
@@ -236,7 +289,19 @@ export default function GameScreen() {
 
         router.replace({
           pathname: "/BoardEditScreen",
-          params: { matchId: matchId },
+          params: {
+            matchId: matchId,
+            from: "GameScreen",
+            resultComment: resultComment,
+            rankIndexBefore: rankIndexBefore,
+            rankIndexAfter: rankIndexAfter,
+            ratingBefore: ratingBefore,
+            ratingAfter: ratingAfter,
+            giantKillingStreak: giantKillingStreak,
+            giantKillingStreakBonusApplied: String( // なんか、booleanは明示的にキャストしなきゃいけないみたいだ。
+              giantKillingStreakBonusApplied,
+            ),
+          },
         });
 
         showResultModal();
@@ -257,26 +322,8 @@ export default function GameScreen() {
       <StatusBar style="dark" />
 
       <View className="flex-1 px-6 py-5 items-center w-full max-w-[680px] mx-auto">
-        {/* ─── ヘッダー（固定） ─── */}
+        {/* ─── ヘッダー ─── */}
         <View className="w-full mb-2 flex-row justify-between">
-          {/* ─── 戻るボタン ─── */}
-          <TouchableOpacity
-            className={`mb-4 self-start ${!isGameEnded ? "opacity-0" : ""}`}
-            onPress={() => {
-              setTimeout(() => {
-                router.replace({
-                  pathname: "/HomeScreen",
-                });
-              }, 0);
-            }}
-            activeOpacity={0.7}
-            disabled={!isGameEnded}
-          >
-            <Text className="text-base font-bold text-text tracking-wide">
-              ‹ {t("common.back")}
-            </Text>
-          </TouchableOpacity>
-
           {/* ─── infoボタン ─── */}
           <IconButton
             icon={<FontAwesome6 name="info" />}
@@ -285,7 +332,7 @@ export default function GameScreen() {
           />
         </View>
 
-        {/* ─── 余白 a ─── */}
+        {/* ─── 余白 A ─── */}
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_A }} />
 
         {/* ─── 三兄弟 ─── */}
@@ -329,7 +376,13 @@ export default function GameScreen() {
             // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
             disabled={!isMyTurn || isGameEnded}
             isGameEnded={isGameEnded}
-            enableDoubleTap={boardSize === 13 ? enableDoubleTap13 : false}
+            doubleTap={
+              boardSize === 9
+                ? doubleTap9
+                : boardSize === 13
+                  ? doubleTap13
+                  : doubleTap19
+            }
             // その他情報: 5
             forceShowTerritory={false} // ダミーだけどちゃんとfalse
             editMarkers={new Map<Grid, "human" | "bot">()} // ダミー
@@ -349,6 +402,9 @@ export default function GameScreen() {
             botMoveColor={COLORS.botMoveColor}
             goodMoveColor={COLORS.goodMoveColor}
             badMoveColor={COLORS.badMoveColor}
+            // 音
+            sound={isSoundEnabled}
+            practiceMatchStatus={""} // 適当
           />
 
           {/* 自分情報 */}
@@ -371,7 +427,7 @@ export default function GameScreen() {
           </View>
         </View>
 
-        {/* ─── 余白 b ─── */}
+        {/* ─── 余白 B ─── */}
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_B }} />
 
         {/* ─── 二兄弟 ─── */}
@@ -407,7 +463,7 @@ export default function GameScreen() {
           </View>
         )}
 
-        {/* ─── 余白 c ─── */}
+        {/* ─── 余白 C ─── */}
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_C }} />
       </View>
 

@@ -8,15 +8,18 @@ import { KataGoGate } from "expo-katago";
 import { Stack } from "expo-router";
 import React, { useEffect } from "react";
 import "../../global.css";
-
+import "../active/i18n/polyfills";
 import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModal";
 import { UpdateModal } from "@/src/active/components/modals/UpdateModal";
 import { COLORS } from "@/src/active/constants/colors";
 import { preloadAssets } from "@/src/active/constants/preload";
-import { OverlayProvider } from "@/src/active/contexts/OverlayContext";
-import { MatchingProvider } from "@/src/active/contexts/providers/MatchingContext";
+import { MatchingProvider } from "@/src/active/contexts/MatchingContext";
+import {
+  OverlayOutlet,
+  OverlayProvider,
+} from "@/src/active/contexts/OverlayContext";
+import { configureAudioMode } from "assets-kit";
 import { Platform, View } from "react-native";
-import { configureAudioMode } from "sound-kit";
 import { LoadingScreen } from "ui-atoms";
 
 function RoutedContent() {
@@ -48,7 +51,11 @@ function RoutedContent() {
 
   return (
     // ここでStackを使うことによって、router.back()が機能する。つまりStackがないということは履歴がないということ
-    <OverlayProvider>
+    <>
+      {/* 今表示中のオーバーレイ(モーダル)をここで実際に描画する。
+          MatchingProviderの内側にあるので、GameResultModal等はuseMatching()を使える */}
+      <OverlayOutlet />
+
       <Stack screenOptions={{ headerShown: false }}>
         {/* (tabs) グループ自体を1つの画面として登録 */}
         <Stack.Screen name="(tabs)" />
@@ -113,7 +120,7 @@ function RoutedContent() {
           <UpdateModal kind={modalKind} />
         </View>
       )}
-    </OverlayProvider>
+    </>
   );
 }
 
@@ -121,17 +128,19 @@ export default function Layout() {
   return (
     <RootProvider>
       <AuthGate>
-        <KataGoGate
-          backgroundColor={COLORS.background}
-          textColor={COLORS.textSub}
-          fillColor={COLORS.primary}
-          trackColor={COLORS.backgroundDark}
-          errorColor={COLORS.coral}
-        >
-          <MatchingProvider>
-            <RoutedContent />
-          </MatchingProvider>
-        </KataGoGate>
+        <OverlayProvider>
+          <KataGoGate
+            backgroundColor={COLORS.background}
+            textColor={COLORS.textSub}
+            fillColor={COLORS.primary}
+            trackColor={COLORS.backgroundDark}
+            errorColor={COLORS.coral}
+          >
+            <MatchingProvider>
+              <RoutedContent />
+            </MatchingProvider>
+          </KataGoGate>
+        </OverlayProvider>
       </AuthGate>
     </RootProvider>
   );

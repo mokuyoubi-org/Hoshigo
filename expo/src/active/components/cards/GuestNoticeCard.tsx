@@ -15,9 +15,9 @@ export function GuestNoticeCard({ title, description }: Props) {
   return (
     <View className="bg-foreground rounded-3xl border-2 border-backgroundDark p-5 gap-3">
       <View className="flex-row items-center gap-2">
-        <Text className="text-base font-bold text-text flex-1">{title}</Text>
+        <Text className="text-lg font-bold text-text flex-1">{title}</Text>
       </View>
-      <Text className="text-xs text-text opacity-80 leading-5">
+      <Text className="text-sm text-textSub leading-5">
         {description}
       </Text>
     </View>

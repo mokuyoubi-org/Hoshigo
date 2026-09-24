@@ -43,7 +43,7 @@ export const IconButton = ({
       {...props}
     >
       {React.cloneElement(icon, {
-        size: 20,
+        size: 24,
         color: iconColor,
       })}
     </TouchableOpacity>
@@ -52,9 +52,9 @@ export const IconButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 48,
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",

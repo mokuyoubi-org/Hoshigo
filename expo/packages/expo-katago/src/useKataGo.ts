@@ -3,11 +3,11 @@
 // ─── このhookの責務 ───────────────────────────────────
 // 「Board / Grid[]（アプリで普段使っている形）を渡すと、KataGoの解析結果
 // (AnalyzeResult)が返ってくる」という、盤面フォーマットの変換に徹した
-// 薄い層。結果から何を取り出すか(最善手だけ？死に石だけ？)は、
-// 用途ごとの専用hook(useBotMove, useEndgameAnalysis)の仕事にする。
+// 薄い層。
 //
 // WebViewとの通信・多重呼び出しの直列化はKataGoEngineContextのrunAnalysisが
-// 一手に引き受けている。
+// 一手に引き受けている。requestIdを渡すとcancelQueuedAnalysisで後から
+// (まだキューに積まれてるだけの間だけ)取り消せる。
 //
 // getBestAvailableModel は「本当は使いたいモデル」の優先順位リストを渡すと、
 // その中で今すぐ遅延なく使えるモデルIDを返す。例えばb18を使いたいが
@@ -27,8 +27,8 @@ import {
   MatchType,
   movesToMoveObjects,
 } from "go-core";
-import { AnalyzeResult, AnalyzeResultFields } from "./web-katrain/analyzeBoard";
-import { ModelId } from "./web-katrain/modelManager";
+import { AnalyzeResult, AnalyzeResultFields } from "./analyzeBoard";
+import { ModelId } from "./modelManager";
 
 export type KataGoParams = {
   board: Board;
@@ -41,26 +41,33 @@ export type KataGoParams = {
 };
 
 export function useKataGo() {
-  const { runAnalysis, engineReady, readyModelIds } = useKataGoEngine();
+  const { runAnalysis, engineReady, readyModelIds, cancelQueuedAnalysis } =
+    useKataGoEngine();
 
-  const run = async ({
-    board,
-    movesSoFar,
-    currentPlayer,
-    boardSize,
-    matchType,
-    modelId,
-    fields,
-  }: KataGoParams): Promise<AnalyzeResult | null> => {
-    return runAnalysis({
-      board: boardToBoard2D(board, boardSize),
-      moves: movesToMoveObjects(movesSoFar, boardSize, matchType),
+  const run = async (
+    {
+      board,
+      movesSoFar,
       currentPlayer,
-      modelId,
       boardSize,
+      matchType,
+      modelId,
       fields,
-      komi: matchType === 0 ? 6.5 : 0, // ⚠️⚠️⚠️⚠️大事!!!!!!!!!!!!!!!!!⚠️⚠️⚠️⚠️
-    });
+    }: KataGoParams,
+    requestId?: string,
+  ): Promise<AnalyzeResult | null> => {
+    return runAnalysis(
+      {
+        board: boardToBoard2D(board, boardSize),
+        moves: movesToMoveObjects(movesSoFar, boardSize, matchType),
+        currentPlayer,
+        modelId,
+        boardSize,
+        fields,
+        komi: matchType === 0 ? 6.5 : 0, // ⚠️大事
+      },
+      requestId,
+    );
   };
 
   const getBestAvailableModel = (preferenceOrder: ModelId[]): ModelId => {
@@ -70,5 +77,5 @@ export function useKataGo() {
     return preferenceOrder[preferenceOrder.length - 1];
   };
 
-  return { run, engineReady, getBestAvailableModel };
+  return { run, engineReady, getBestAvailableModel, cancelQueuedAnalysis };
 }

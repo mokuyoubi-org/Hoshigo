@@ -4,8 +4,8 @@
 // ロード画面の間にこれを呼んでおくことで、実際の画面遷移後の
 // 表示・再生のラグを減らす。
 
+import { getSoundUrl, preloadSounds } from "assets-kit";
 import { Image } from "react-native";
-import { getSoundUrl, preloadSounds } from "sound-kit";
 import { ICONS } from "./icons";
 
 export const preloadAssets = async (): Promise<void> => {
@@ -16,9 +16,7 @@ export const preloadAssets = async (): Promise<void> => {
     )
     .filter((uri): uri is string => uri !== null);
 
-  const imagePreload = Promise.all(
-    imageUrls.map((uri) => Image.prefetch(uri)),
-  );
+  const imagePreload = Promise.all(imageUrls.map((uri) => Image.prefetch(uri)));
 
   // 音声のプリロード(gamestart/pip/stone/pass など、使ってる全音源)
   preloadSounds([

@@ -40,7 +40,7 @@ export const StatsCard = ({
           </Text>
           <Text className="text-2xl font-black" style={{ color: COLORS.text }}>
             {currentRank}
-            <Text className="text-xs font-bold">（{wins}勝）</Text>
+            <Text className="text-sm font-bold">（{wins}勝）</Text>
           </Text>
         </View>
 
@@ -57,7 +57,7 @@ export const StatsCard = ({
           >
             踏破した領域
           </Text>
-          <Text className="text-xs font-black" style={{ color: COLORS.green }}>
+          <Text className="text-sm font-black" style={{ color: COLORS.green }}>
             10k 〜 {currentRank}
           </Text>
         </View>
@@ -69,7 +69,7 @@ export const StatsCard = ({
         style={{ backgroundColor: COLORS.background }}
       >
         <View className="flex-row justify-between items-center">
-          <Text className="text-xs font-bold" style={{ color: COLORS.text }}>
+          <Text className="text-sm font-bold" style={{ color: COLORS.text }}>
             ランク踏破度（濃淡ログ）
           </Text>
           <Text

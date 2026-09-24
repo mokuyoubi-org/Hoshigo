@@ -11,8 +11,8 @@ export type GoString = {
 export type Board = (GoString | null)[];
 export type MoveObject = { x: number; y: number; player: Color };
 export type AgehamaCount = { black: number; white: number };
-export type BoardSize = 9 | 13 | 19;
-export type MatchType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type BoardSize = 5 | 9 | 13 | 19;
+export type MatchType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 13 |16| 25;
 
 // 定数
 export const PASS_GRID: Grid = -1;
@@ -23,7 +23,7 @@ export const KOMI = 6.5;
 export const BOARD_SIZE_OPTIONS = [
   { value: 9, label: "9×9" },
   { value: 13, label: "13×13" },
-  // { value: 19, label: "19×19" },
+  { value: 19, label: "19×19" },
 ] as const;
 
 // 置き石(2〜9子局)が無いかどうかの判定

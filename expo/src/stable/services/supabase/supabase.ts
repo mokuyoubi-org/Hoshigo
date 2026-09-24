@@ -1,4 +1,4 @@
-// コメント2026/09/13
+// コメント2026/09/14
 // supabase.ts
 
 import { OTA_VERSION } from "@/ota-version";

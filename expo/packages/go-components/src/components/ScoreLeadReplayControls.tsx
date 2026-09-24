@@ -1,3 +1,4 @@
+import { Octicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { RecordAnalysis } from "go-core";
 import React, { useCallback, useState } from "react";
@@ -5,7 +6,6 @@ import {
   ColorValue,
   LayoutChangeEvent,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -17,6 +17,7 @@ type Props = {
   currentIndex: number;
   totalMoves: number;
   onCurrentIndexChange: React.Dispatch<React.SetStateAction<number>>;
+  primaryLight: ColorValue;
   primary: ColorValue;
   primaryDark: ColorValue;
   foreground: ColorValue;
@@ -65,6 +66,7 @@ export function ScoreLeadReplayControls({
   totalMoves,
   onCurrentIndexChange,
   primary,
+  primaryLight,
   background,
   backgroundDark,
   foreground,
@@ -153,13 +155,17 @@ export function ScoreLeadReplayControls({
         <TouchableOpacity
           style={[
             styles.button,
-            { opacity: isAtStart ? 0.4 : 1.0, backgroundColor: primary },
+            { backgroundColor: isAtStart ? backgroundDark : primary },
           ]}
           onPress={onPrevious}
           disabled={isAtStart}
           activeOpacity={0.7}
         >
-          <Text style={[styles.buttonText, { color: darkObject }]}>◀</Text>
+          <Octicons
+            name="chevron-left"
+            size={24}
+            color={isAtStart ? primary : darkObject}
+          />
         </TouchableOpacity>
 
         {/* 中央エリア（グラフ＋バー＋つまみを重ね合わせ） */}
@@ -172,11 +178,7 @@ export function ScoreLeadReplayControls({
                   <Svg width={containerWidth} height={CHART_HEIGHT}>
                     {/* 下側の面 */}
                     {bottomPathD.length > 0 && (
-                      <Path
-                        d={bottomPathD}
-                        fill={primary} // primary
-                        opacity={0.6}
-                      />
+                      <Path d={bottomPathD} fill={primaryLight} />
                     )}
 
                     {/* グラフの線 */}
@@ -184,7 +186,7 @@ export function ScoreLeadReplayControls({
                       <Path
                         d={linePathD}
                         fill="none"
-                        stroke={darkObjectAccent} // darkObjectAccent
+                        stroke={darkObjectAccent}
                         strokeWidth={1.5}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -226,13 +228,17 @@ export function ScoreLeadReplayControls({
         <TouchableOpacity
           style={[
             styles.button,
-            { opacity: isAtEnd ? 0.4 : 1.0, backgroundColor: primary },
+            { backgroundColor: isAtEnd ? backgroundDark : primary },
           ]}
           onPress={onNext}
           disabled={isAtEnd}
           activeOpacity={0.7}
         >
-          <Text style={[styles.buttonText, { color: darkObject }]}>▶</Text>
+          <Octicons
+            name="chevron-right"
+            size={24}
+            color={isAtEnd ? primary : darkObject}
+          />
         </TouchableOpacity>
       </View>
     </View>

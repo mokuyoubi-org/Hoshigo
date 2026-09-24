@@ -107,7 +107,7 @@ export default function UsernameEditModal({
                   placeholderTextColor={COLORS.textSub}
                   value={inputUsername}
                   onChangeText={handleChangeText}
-                  maxLength={20}
+                  maxLength={8}
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!loading}

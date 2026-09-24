@@ -3,6 +3,13 @@
 // ─── このhookの責務 ───────────────────────────────────
 // 編集で積んだ分析結果(editableAnalysis)のキャッシュと、本編分析との
 // 合成(combinedAnalysis)を担当する。着手の管理には一切関知しない。
+//
+// 「今の分岐/編集セッション」を世代(generation)として管理し、分岐が起きた
+// (巻き戻して別の手を打った)時や編集モードを抜けた時に、その世代の解析
+// リクエストをまとめてキャンセルする(cancelPendingAnalysis)。世代が違う
+// 結果は、たとえ後から届いても保存しない(runAndStoreAnalysis内のチェック)。
+// これにより、目を閉じていても常に推論を行いながら連打を許可しつつ、
+// 不要になった仕事がキューに残り続けるのを防いでいる。
 // ──────────────────────────────────────────────────
 
 import { buildMoveAnalysisEntry } from "@/src/stable/logics/analysis";
@@ -31,7 +38,22 @@ export function useAnalysisCache(
     (MoveAnalysisEntry | null)[]
   >([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const requestSeqRef = useRef(0);
+
+  // 🐱 このhookインスタンス自身を一意に識別するID(requestIdの衝突防止用)。
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2, 8));
+
+  // 🐱 「今の分岐/編集セッション」を表す世代番号。同じ世代の間に発行された
+  //    複数の解析リクエストは全部同じrequestId(gen-N)を共有し、まとめて
+  //    キャンセル対象にできる。分岐が起きた時・編集モードを抜けた時だけ
+  //    この番号を進める(=古い世代の解析はもう無関係になる)。
+  const generationRef = useRef(0);
+
+  // 🐱 連打で複数件が同時に(直列だが)進行しうるので、真偽値ではなく
+  //    「今何件走ってるか」で数える。0に戻った時だけisAnalyzingをfalseにする。
+  const inFlightCountRef = useRef(0);
+
+  const currentRequestId = () =>
+    `edit-${instanceIdRef.current}-gen-${generationRef.current}`;
 
   const storeEditableAnalysis = (
     moveIndex: number,
@@ -51,38 +73,63 @@ export function useAnalysisCache(
     [recordAnalysis, editableAnalysis, branchIndex, totalMoves],
   );
 
-  // 🐱 moveIndex手目を打つ前の局面をkataGoで分析し、キャッシュに書き込む唯一の入口
+  // 🐱 moveIndex手目を打つ前の局面をkataGoで分析し、キャッシュに書き込む唯一の入口。
+  //    呼び出し元はawaitせず投げっぱなしにしてよい(連打を妨げないため)。
   const runAndStoreAnalysis = async (
     moveIndex: number,
     board: Board,
     movesSoFar: Grid[],
   ): Promise<MoveAnalysisEntry | null> => {
-    const mySeq = ++requestSeqRef.current;
+    const myGeneration = generationRef.current;
+    inFlightCountRef.current++;
     setIsAnalyzing(true);
     try {
-      const result = await kataGoTask.run({
-        board,
-        movesSoFar,
-        matchType,
-        boardSize,
-        modelId: "b18",
-        currentPlayer: getColorToMove(matchType, moveIndex),
-      });
+      // 🌟runExact(フォールバック無し)を使用。ここでキャッシュされる結果は
+      //   🤖ボット思考と🧮地計算の両方に共有(combinedAnalysis経由)されるため、
+      //   b6へのフォールバックが紛れ込むと地計算の精度が致命的に低下する。
+      //   b18が未準備でも、待ってでも必ずb18の結果を使う。
+      const result = await kataGoTask.runExact(
+        {
+          board,
+          movesSoFar,
+          matchType,
+          boardSize,
+          modelId: "b10",
+          currentPlayer: getColorToMove(matchType, moveIndex),
+        },
+        currentRequestId(),
+      );
 
-      if (mySeq !== requestSeqRef.current) return null; // 古いリクエストは破棄
+      // 実行中/キュー中に分岐や編集モード終了が起きて世代が進んでいたら、
+      // この結果はもう関係ない局面のものなので捨てる。
+      if (myGeneration !== generationRef.current) return null;
 
       const entry = result ? buildMoveAnalysisEntry(result) : null;
       storeEditableAnalysis(moveIndex, entry);
       return entry;
     } finally {
-      if (mySeq === requestSeqRef.current) setIsAnalyzing(false);
+      inFlightCountRef.current--;
+      if (inFlightCountRef.current <= 0) {
+        inFlightCountRef.current = 0;
+        setIsAnalyzing(false);
+      }
     }
+  };
+
+  // 🐱 「今の世代」のうち、まだ実行されていない(キューに積まれてるだけの)
+  //    解析依頼を全部取り消し、世代を1つ進める。分岐が起きた時・編集モードを
+  //    抜けた時に呼ぶ。実行中の1件だけはキャンセルできないが、その結果は
+  //    runAndStoreAnalysis内の世代チェックによってどのみち捨てられる。
+  const cancelPendingAnalysis = () => {
+    kataGoTask.cancelQueuedAnalysis(currentRequestId());
+    generationRef.current++;
   };
 
   const reset = () => {
     setEditableAnalysis([]);
-    requestSeqRef.current++;
+    cancelPendingAnalysis();
     setIsAnalyzing(false);
+    inFlightCountRef.current = 0;
   };
 
   const truncateFrom = (fromIndex: number) => {
@@ -100,6 +147,7 @@ export function useAnalysisCache(
     runAndStoreAnalysis,
     truncateFrom,
     reset,
+    cancelPendingAnalysis,
     storeDefaultEntry, // ← 追加
   };
 }

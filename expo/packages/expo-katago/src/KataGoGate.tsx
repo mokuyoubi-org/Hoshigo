@@ -1,3 +1,5 @@
+// KataGoGate.tsx
+
 import React, { ReactNode } from "react";
 import { ColorValue, Text, View } from "react-native";
 import { LoadingScreen } from "ui-atoms";
@@ -5,7 +7,6 @@ import { KataGoEngineProvider, useKataGoEngine } from "./KataGoEngineContext";
 import { getGateStatus } from "./gateStatus";
 import { LangProvider, useTranslation } from "./i18n";
 
-// 1. 型定義は1つだけに集約！すべて必須（Required）にする
 export type KataGoGateProps = {
   children: ReactNode;
   backgroundColor: ColorValue;
@@ -48,9 +49,7 @@ function KataGoGateView({
         >
           {t("gate.errorTitle")}
         </Text>
-        <Text style={{ fontSize: 12, color: textColor }}>
-          {status.message}
-        </Text>
+        <Text style={{ fontSize: 12, color: textColor }}>{status.message}</Text>
       </View>
     );
   }

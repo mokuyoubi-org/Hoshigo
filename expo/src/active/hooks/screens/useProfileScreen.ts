@@ -8,20 +8,35 @@ import { clearPeriodicCache } from "@/src/stable/logics/syncUtils";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BoardSize } from "go-core";
 import { useState } from "react";
-import { Alert } from "react-native";
+import { useKVStorage } from "storage-kit";
 
 export function useProfileScreen() {
   const t = useTranslation();
-  const { username, iconIndex, isAnonymous, updateProfile, rating9, rating13 } =
-    useProfile();
-  const [rank9, rank13] = [getRankInfo(rating9, t), getRankInfo(rating13, t)];
+  const {
+    username,
+    iconIndex,
+    isAnonymous,
+    updateProfile,
+    rating9,
+    rating13,
+    rating19,
+  } = useProfile();
+  const [rank9, rank13, rank19] = [
+    getRankInfo(rating9, t),
+    getRankInfo(rating13, t),
+    getRankInfo(rating19, t),
+  ];
 
-  // 選択中の盤面サイズ（9路 or 13路）
-  const [boardSize, setBoardSize] = useState<BoardSize>(9);
+  // 選択中の盤面サイズ（9路 or 13路 or 19路）
+  const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
+    "ProfileScreen.boardSize", // ユニークなキーを用意する
+    9,
+  );
   const [loading, setLoading] = useState(false);
 
   // 盤面サイズに応じて、rankInfo を切り替える
-  const currentRankInfo = boardSize === 9 ? rank9 : rank13;
+  const currentRankInfo =
+    boardSize === 9 ? rank9 : boardSize === 13 ? rank13 : rank19;
 
   const handleSelectIcon = async (selectedIconIndex: number) => {
     setLoading(true);
@@ -31,7 +46,6 @@ export function useProfileScreen() {
       });
       if (error) {
         console.error(error);
-        Alert.alert(t("Profile.iconUpdateFailed"));
       } else {
         updateProfile({ iconIndex: selectedIconIndex });
         clearPeriodicCache("global_rankings"); // ランキングのキャッシュ消しておく(アイコンが変わるから)

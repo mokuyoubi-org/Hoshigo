@@ -6,13 +6,17 @@ import { useRecordsScreen } from "@/src/active/hooks/records/useRecordsScreen";
 import { useTranslation } from "@/src/active/i18n";
 import { RecordOrSkeleton } from "@/src/active/types/record";
 import { isSkeletonCard } from "@/src/stable/logics/recordCardLogics";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { BOARD_SIZE_OPTIONS } from "go-core";
+import { BLACK, BOARD_SIZE_OPTIONS, BoardSize, WHITE } from "go-core";
 import React, { useEffect } from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useKVStorage } from "storage-kit";
 import { SegmentedControl } from "ui-atoms";
+import { COLORS } from "../active/constants/colors";
+import { resultToSubjectiveComment } from "../stable/logics/textFormatter";
 
 export default function RecordsScreen() {
   // state
@@ -31,6 +35,10 @@ export default function RecordsScreen() {
     loadMore,
     handleScroll,
   } = useRecordsScreen();
+  const { isLoaded: isBoardSizeLoaded } = useKVStorage<BoardSize>(
+    "RecordScreen.boardSize",
+    9,
+  );
 
   // 関数
   const renderItem = ({ item }: { item: RecordOrSkeleton }) => {
@@ -65,7 +73,16 @@ export default function RecordsScreen() {
         onPress={() => {
           router.push({
             pathname: "/BoardEditScreen",
-            params: { matchId: item.id },
+            params: {
+              matchId: item.id,
+              from: "RecordScreen",
+              resultComment:
+                resultToSubjectiveComment(
+                  item.result ?? "",
+                  isPlayerBlack ? BLACK : WHITE,
+                  t,
+                ) ?? t("common.unknown"),
+            },
           });
         }}
       />
@@ -111,26 +128,35 @@ export default function RecordsScreen() {
         <View className="flex-row justify-between items-center px-5 py-3">
           {/* 戻るボタン */}
           <TouchableOpacity
-            // ✨(tabs)/_layoutをslotからstackに変えたら、backが使えるようになった。✨
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/HomeScreen");
+              }
+            }}
             activeOpacity={0.7}
           >
-            <Text className="text-base font-bold text-text tracking-wide">
-              ‹ {t("common.back")}
-            </Text>
+            <Ionicons
+              name="chevron-back-outline"
+              size={32}
+              color={COLORS.primaryDark}
+            />
           </TouchableOpacity>
           {/* 盤面サイズ選択 */}
-          <SegmentedControl
-            value={boardSize}
-            options={BOARD_SIZE_OPTIONS}
-            onSelect={handleToggle}
-          />
+          {isBoardSizeLoaded && (
+            <SegmentedControl
+              value={boardSize}
+              options={BOARD_SIZE_OPTIONS}
+              onSelect={handleToggle}
+              activeSegmentWidth={72}
+              inactiveSegmentWidth={48}
+            />
+          )}
         </View>
 
         {/* リスト領域 */}
         <View className="flex-1">
-          {/* 何これ？プロパティ多すぎ */}
-
           <FlatList
             ref={flatListRef} // FlatListを直接操作するための参照（スクロール位置の制御など）
             pagingEnabled // カード単位のスワイプになる

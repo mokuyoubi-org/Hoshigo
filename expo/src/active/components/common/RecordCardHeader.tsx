@@ -1,53 +1,56 @@
 import { COLORS } from "@/src/active/constants/colors";
-import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useLang, useTranslation } from "@/src/active/i18n";
 import { RecordType } from "@/src/active/types/record";
-import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
+import { isBot } from "@/src/stable/logics/bot/botLogics";
+import { botNameFormatter } from "@/src/stable/logics/bot/botNameLogics";
 import {
   matchTypeToText,
-  resultToComment,
   resultToCommentSimple,
+  resultToObjectiveComment,
+  resultToSubjectiveComment,
 } from "@/src/stable/logics/textFormatter";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Agehama } from "go-components";
-import { AgehamaCount, BLACK, MatchType, WHITE } from "go-core";
+import { BLACK, Color, MatchType } from "go-core";
 import React, { useMemo } from "react";
 import { Text, View } from "react-native";
 import { AvatarWithPass } from "./AvatarWithPass";
 
-type HeaderProps = {
+// color の型を `Color` (go-coreの型) にした
+export type HeaderPlayerInfo = {
+  username?: string;
+  rankIndex?: number;
+  iconIndex?: number;
+  color: Color;
+  agehama: number;
+  showPass: boolean;
+};
+
+type Props = {
   record: RecordType;
-  isPlayerBlack?: boolean;
+  leftPlayer: HeaderPlayerInfo;
+  rightPlayer: HeaderPlayerInfo;
   playerWin?: boolean;
-  isBlackPass: boolean;
-  isWhitePass: boolean;
-  currentAgehama: AgehamaCount;
   simpleComment?: boolean;
   matchType: MatchType;
   currentIndex: number;
   showWinRateBar?: boolean;
+  practiceMatchStatus?: string;
 };
 
 export const RecordCardHeader = React.memo(function RecordCardHeader({
   record,
-  isPlayerBlack,
+  leftPlayer,
+  rightPlayer,
   playerWin,
-  isBlackPass,
-  isWhitePass,
-  currentAgehama,
   simpleComment = true,
   matchType,
   currentIndex,
   showWinRateBar = true,
-}: HeaderProps) {
+  practiceMatchStatus = "human_human",
+}: Props) {
   const { lang } = useLang();
   const t = useTranslation();
-  const { iconIndex, username } = useProfile();
-
-  const self = <T,>(blackVal: T, whiteVal: T): T =>
-    isPlayerBlack ? blackVal : whiteVal;
-  const opp = <T,>(blackVal: T, whiteVal: T): T =>
-    isPlayerBlack ? whiteVal : blackVal;
 
   // Botの表情決定
   let botFace: React.ComponentProps<typeof MaterialCommunityIcons>["name"] =
@@ -57,15 +60,18 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
 
   const resultText = useMemo(
     () =>
-      simpleComment
-        ? (resultToCommentSimple(record.result ?? "", t) ??
+      practiceMatchStatus === "human_bot"
+        ? (resultToObjectiveComment(record.result ?? "", t) ??
           t("common.unknown"))
-        : (resultToComment(
-            record.result ?? "",
-            isPlayerBlack ? BLACK : WHITE,
-            t,
-          ) ?? t("common.unknown")),
-    [record.result, isPlayerBlack, t],
+        : simpleComment
+          ? (resultToCommentSimple(record.result ?? "", t) ??
+            t("common.unknown"))
+          : (resultToSubjectiveComment(
+              record.result ?? "",
+              leftPlayer.color,
+              t,
+            ) ?? t("common.unknown")),
+    [record.result, leftPlayer.color, simpleComment, t],
   );
 
   const dateText = useMemo(
@@ -91,58 +97,65 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
     record.analysis?.perMove?.[currentIndex]?.winRate ?? null;
   const hasAnalysis = record.analysis != null && currentWinRate != null;
 
-  // 勝率計算（自分/相手）
   const blackPct =
     currentWinRate != null
       ? Math.round(Math.min(Math.max(currentWinRate, 0), 100))
       : 50;
-  const whitePct = 100 - blackPct;
-  const leftPct = isPlayerBlack ? blackPct : whitePct;
-  const rightPct = isPlayerBlack ? whitePct : blackPct;
-  const leftBarWidth = isPlayerBlack ? blackPct : whitePct;
+  const leftPct = leftPlayer.color === BLACK ? blackPct : 100 - blackPct;
+  const rightPct = 100 - leftPct;
 
-  const opponentUsername = opp(record.black_username, record.white_username);
+  const leftUsername = leftPlayer.username ?? "";
+  const rightUsername = rightPlayer.username ?? "";
 
   return (
     <View className="w-full rounded-2xl p-2 bg-white/5">
-      {/* 左右のアバターに全体を挟み込む横並びレイアウト */}
       <View className="w-full flex-row items-center justify-between gap-2">
-        {/* 1. 左アイコン（自分） */}
+        {/* 1. 左アイコン */}
         <AvatarWithPass
-          rankIndex={
-            self(record.black_rank_index, record.white_rank_index) ?? 0
-          }
-          iconIndex={iconIndex ?? 0}
+          rankIndex={leftPlayer.rankIndex ?? 0}
+          iconIndex={leftPlayer.iconIndex ?? 0}
           size={48}
-          color={isPlayerBlack ? BLACK : WHITE}
+          color={leftPlayer.color}
           isLeft={true}
-          showPass={isPlayerBlack ? isBlackPass : isWhitePass}
+          showPass={leftPlayer.showPass}
         />
 
-        {/* 2. 中央エリア（情報 ＋ 勝率ゲージまですべてアイコンの内側に配置） */}
+        {/* 2. 中央エリア */}
         <View className="flex-1 flex-col justify-center min-w-0">
-          {/* 上段：3つのColumnブロック（自分情報・中央情報・相手情報） */}
           <View className="w-full flex-row items-center justify-between min-w-0">
-            {/* 自分情報（名前 ＋ アゲハマ） */}
-            <View className="flex-col items-start min-w-0 max-w-[30%]">
-              <Text
-                className="text-xs font-bold text-text w-full"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {username ?? "me"}
-              </Text>
+            {/* 左情報：幅を固定（w-[80px]）にする */}
+            <View className="w-[80px] flex-col items-start min-w-0">
+              <View className="flex-row items-center w-full">
+                <Text
+                  className="text-base font-bold text-text shrink"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {isBot(leftUsername)
+                    ? botNameFormatter(leftUsername, t)
+                    : (leftPlayer.username ?? "user")}
+                </Text>
+                {isBot(leftUsername) && (
+                  <MaterialCommunityIcons
+                    name={botFace}
+                    size={12}
+                    color={COLORS.textSub}
+                    style={{ marginLeft: 2 }}
+                  />
+                )}
+              </View>
               <Agehama
-                count={self(currentAgehama.black, currentAgehama.white)}
+                count={leftPlayer.agehama}
                 backgroundColor={COLORS.backgroundDark}
+                disabledColor={COLORS.background}
                 textColor={COLORS.textSub}
               />
             </View>
 
-            {/* 中央情報（結果 ＋ マッチタイプ・日付） */}
-            <View className="flex-col items-center justify-center shrink px-1">
+            {/* 中央情報：flex-1 で残りのスペースを全部使う */}
+            <View className="flex-1 flex-col items-center justify-center min-w-0 px-1">
               <Text
-                className="text-xs font-bold text-center leading-[15px]"
+                className={`${simpleComment ? "text-sm" : "text-xs"} font-bold text-center leading-[15px]`}
                 style={{ color: simpleComment ? accentColor : COLORS.textSub }}
                 numberOfLines={1}
               >
@@ -158,17 +171,19 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
               </Text>
             </View>
 
-            {/* 相手情報（名前 ＋ アゲハマ） */}
-            <View className="flex-col items-end min-w-0 max-w-[30%]">
+            {/* 右情報：幅を固定（w-[80px]）にする */}
+            <View className="w-[80px] flex-col items-end min-w-0">
               <View className="flex-row items-center justify-end w-full">
                 <Text
-                  className="text-xs font-bold text-text shrink"
+                  className="text-base font-bold text-text shrink"
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
-                  {botNameFormatter(opponentUsername, t)}
+                  {isBot(rightUsername)
+                    ? botNameFormatter(rightUsername, t)
+                    : (rightPlayer.username ?? "user")}
                 </Text>
-                {isBot(opponentUsername) && (
+                {isBot(rightUsername) && (
                   <MaterialCommunityIcons
                     name={botFace}
                     size={12}
@@ -178,17 +193,17 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
                 )}
               </View>
               <Agehama
-                count={opp(currentAgehama.black, currentAgehama.white)}
+                count={rightPlayer.agehama}
                 backgroundColor={COLORS.backgroundDark}
+                disabledColor={COLORS.background}
                 textColor={COLORS.textSub}
               />
             </View>
           </View>
 
-          {/* 下段：勝率ゲージ（アイコンの間に綺麗に収まる） */}
+          {/* 下段：勝率ゲージ */}
           {hasAnalysis && showWinRateBar && (
-            <View className="w-full flex-row items-center mt-1.5">
-              {/* 「100%」が入っても崩れないように幅を固定（32px） */}
+            <View className="w-full flex-row items-center mt-1">
               <Text
                 className="text-[9px] font-bold w-[32px] text-right pr-0.5"
                 style={{ color: COLORS.text }}
@@ -198,18 +213,20 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
               <View className="flex-1 h-1.5 flex-row rounded-full overflow-hidden mx-1 bg-gray-200">
                 <View
                   style={{
-                    width: `${leftBarWidth}%`,
-                    backgroundColor: isPlayerBlack
-                      ? COLORS.darkObjectAccent
-                      : COLORS.lightObject,
+                    width: `${leftPct}%`,
+                    backgroundColor:
+                      leftPlayer.color === BLACK
+                        ? COLORS.darkObjectAccent
+                        : COLORS.lightObject,
                   }}
                 />
                 <View
                   style={{
-                    width: `${100 - leftBarWidth}%`,
-                    backgroundColor: isPlayerBlack
-                      ? COLORS.lightObject
-                      : COLORS.darkObjectAccent,
+                    width: `${rightPct}%`,
+                    backgroundColor:
+                      rightPlayer.color === BLACK
+                        ? COLORS.darkObjectAccent
+                        : COLORS.lightObject,
                   }}
                 />
               </View>
@@ -223,14 +240,14 @@ export const RecordCardHeader = React.memo(function RecordCardHeader({
           )}
         </View>
 
-        {/* 3. 右アイコン（相手） */}
+        {/* 3. 右アイコン */}
         <AvatarWithPass
-          rankIndex={opp(record.black_rank_index, record.white_rank_index) ?? 0}
-          iconIndex={opp(record.black_icon_index, record.white_icon_index) ?? 0}
+          rankIndex={rightPlayer.rankIndex ?? 0}
+          iconIndex={rightPlayer.iconIndex ?? 0}
           size={48}
-          color={!isPlayerBlack ? BLACK : WHITE}
+          color={rightPlayer.color}
           isLeft={false}
-          showPass={!isPlayerBlack ? isBlackPass : isWhitePass}
+          showPass={rightPlayer.showPass}
         />
       </View>
     </View>

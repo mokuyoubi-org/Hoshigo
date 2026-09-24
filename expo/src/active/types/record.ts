@@ -22,7 +22,6 @@ export type RecordType = {
   match_type: MatchType;
   analysis: RecordAnalysis | null;
 };
-
 export type RecordOrSkeleton = SkeletonOr<RecordType>;
 
 export type Skeleton = { id: number; isSkeleton: true };

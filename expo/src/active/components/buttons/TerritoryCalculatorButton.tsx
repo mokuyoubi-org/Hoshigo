@@ -1,5 +1,5 @@
 /**
- * TerritoryCalculatorButton.tsx
+ * TerritoryCalculateButton.tsx
  * 地計算ボタンと計算結果を一つにまとめたコンポーネント
  */
 
@@ -20,7 +20,7 @@ type Props = TouchableOpacityProps & {
   color: string;
 };
 
-export const TerritoryCalculatorButton = ({
+export const TerritoryCalculateButton = ({
   isCalculating,
   resultText,
   color,
@@ -64,9 +64,9 @@ export const TerritoryCalculatorButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    height: 42,
-    minWidth: 42,
-    borderRadius: 21,
+    height: 48,
+    minWidth: 48,
+    borderRadius: 48,
     borderWidth: 2,
     paddingHorizontal: 10,
     flexDirection: "row",
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   text: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "bold",
   },
 });

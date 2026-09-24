@@ -1,7 +1,6 @@
-// useMatchingProvider.ts
+// useMatchingProvider.ts 🔥2026/09/19現在、騙し騙しtsxになってる。
 // マッチングの状態管理と、開始/キャンセル処理のロジック本体。
 // MatchingContext.tsx から呼ばれる想定。
-
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import {
   cancelWaitlistRPC,
@@ -11,16 +10,24 @@ import {
 import { recordsRepo } from "@/src/stable/logics/records-repo";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { ModelStatus, useKataGoEngine } from "expo-katago";
 import { router } from "expo-router";
 import { BoardSize } from "go-core";
 import { useCallback, useRef, useState } from "react";
 
-export function useMatchingProvider() {
+export function useMatchingProvider(
+  // 「19路を選択したのにb18の準備がまだ」と判定した瞬間に呼ばれる。
+  // モーダル表示などのUI関心事はこの呼び出し元(コンポーネント層)の責務にする。
+  // phaseを渡すことで、「未DL」なのか「DL中/ウォームアップ中」なのかを
+  // 呼び出し元が区別して表示を出し分けられるようにする(readyのときは呼ばれない)。
+  onNeedsB18Download: (phase: ModelStatus["phase"]) => void,
+) {
   const [isMatching, setIsMatching] = useState(false);
   const [matchingBoardSize, setMatchingBoardSize] = useState<BoardSize | null>(
     null,
   );
   const { uid } = useProfile();
+  const { getModelStatus } = useKataGoEngine();
   const userChannelRef = useRef<RealtimeChannel | null>(null);
 
   // 🔒公開しない
@@ -36,6 +43,14 @@ export function useMatchingProvider() {
   const startMatching = async (boardSize: BoardSize) => {
     // 🛡️ガード
     if (isMatching || !uid) return;
+
+    if (boardSize === 19) {
+      const b18Status = getModelStatus("b18");
+      if (b18Status.phase !== "ready") {
+        onNeedsB18Download(b18Status.phase);
+        return;
+      }
+    }
 
     // 🐱 連打対策も兼ねて、フェッチより先にフラグを立てておく
     setIsMatching(true);
@@ -59,6 +74,7 @@ export function useMatchingProvider() {
       console.log("[MatchingContext]data: ", data);
 
       setTimeout(() => {
+        // 通常の対局開始
         router.replace({
           pathname: "/GameScreen",
           params: formatPlayingParams(data),
@@ -91,7 +107,13 @@ export function useMatchingProvider() {
 
     // 🐱 4. ローカルの最新IDを取得して、準備が100%整ってからRPCを呼ぶ！
     const localNewestId = await recordsRepo.getNewestId(boardSize);
-    const { data, error } = await joinWaitlistRPC(boardSize, localNewestId);
+    const modelStatus = getModelStatus("b18");
+    const hasB18 = modelStatus.phase === "ready";
+    const { data, error } = await joinWaitlistRPC(
+      boardSize,
+      hasB18,
+      localNewestId,
+    );
 
     // エラーだった場合全部取りやめ
     if (error) {
@@ -124,6 +146,7 @@ export function useMatchingProvider() {
       setMatchingBoardSize(null);
 
       setTimeout(() => {
+        // 接続復帰
         router.replace({
           pathname: "/GameScreen",
           params: formatPlayingParams(matchData),
@@ -141,6 +164,7 @@ export function useMatchingProvider() {
     setMatchingBoardSize(null);
 
     if (data) {
+      // キャンセルボタン効かなかった
       setTimeout(() => {
         router.replace({
           pathname: "/GameScreen",

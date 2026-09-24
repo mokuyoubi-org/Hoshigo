@@ -74,7 +74,7 @@ export default function TabsLayout() {
             alignSelf: "center",
           },
           tabBarLabelStyle: {
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: "600",
             letterSpacing: 1.2,
             marginTop: 3,

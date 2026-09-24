@@ -2,7 +2,8 @@
 
 import { COLORS } from "@/src/active/constants/colors";
 import { useTranslation } from "@/src/active/i18n";
-import { botNameFormatter, isBot } from "@/src/stable/logics/botNameLogics";
+import { isBot } from "@/src/stable/logics/bot/botLogics";
+import { botNameFormatter } from "@/src/stable/logics/bot/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { secondsToMinutes } from "@/src/stable/logics/timeFormatter";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
@@ -20,8 +21,8 @@ type Props = {
   isLeft: boolean;
   showPass: boolean;
   agehamaCount: number;
-  seconds: number;
-  isMyTurn: boolean;
+  seconds?: number; // 🐱 時計を使わない対局(練習戦)ではundefinedのまま渡す
+  isMyTurn?: boolean;
 };
 
 export function PlayerCard({
@@ -33,7 +34,7 @@ export function PlayerCard({
   showPass,
   agehamaCount,
   seconds,
-  isMyTurn,
+  isMyTurn = true,
 }: Props) {
   const t = useTranslation();
   const rank = getRankInfo(rating, t);
@@ -69,7 +70,7 @@ export function PlayerCard({
           }`}
         >
           <Text
-            className="shrink text-base font-semibold text-text"
+            className="shrink text-xl font-semibold text-text"
             numberOfLines={1}
           >
             {botNameFormatter(username, t)}
@@ -88,11 +89,11 @@ export function PlayerCard({
         </View>
 
         <View className="shrink-0 px-2 py-0.5 bg-backgroundDark/50 rounded-full">
-          <Text className="text-xs font-medium text-textSub">{rank.name}</Text>
+          <Text className="text-sm font-medium text-textSub">{rank.name}</Text>
         </View>
       </View>
 
-      {/* 3. アゲハマと時間（端っこ） */}
+      {/* 3. アゲハマと時間（端っこ）。時間はseconds未指定なら非表示 */}
       <View
         className={`flex-row items-center gap-2 shrink-0 ${
           isLeft ? "flex-row" : "flex-row-reverse"
@@ -101,15 +102,18 @@ export function PlayerCard({
         <Agehama
           count={agehamaCount}
           backgroundColor={COLORS.backgroundDark}
+          disabledColor={COLORS.background}
           textColor={COLORS.textSub}
         />
-        <Text
-          className={`min-w-[44px] text-base font-semibold text-text ${
-            isMyTurn ? "opacity-100" : "opacity-50"
-          } ${isLeft ? "text-right" : "text-left"}`}
-        >
-          {secondsToMinutes(seconds)}
-        </Text>
+        {seconds !== undefined && (
+          <Text
+            className={`min-w-[44px] text-lg font-semibold text-text ${
+              isMyTurn ? "opacity-100" : "opacity-50"
+            } ${isLeft ? "text-right" : "text-left"}`}
+          >
+            {secondsToMinutes(seconds)}
+          </Text>
+        )}
       </View>
     </View>
   );

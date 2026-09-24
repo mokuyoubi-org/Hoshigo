@@ -33,7 +33,7 @@ import {
 import { RecordType } from "../../types/record";
 import { useKataGoTask } from "./useKataGoTask";
 
-const ANALYSIS_MODEL_ID = "b6";
+const ANALYSIS_MODEL_ID = "b10";
 
 export function useBotAnalysis(record: RecordType) {
   const kataGoTask = useKataGoTask();

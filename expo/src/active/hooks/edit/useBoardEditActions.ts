@@ -1,13 +1,17 @@
-// active/hooks/screens/useBoardEditActions.ts
+// useBoardEditActions.ts
 
+import { printDebugBoard } from "@/src/stable/logics/debugLogics";
 import {
   BoardSize,
   MatchType,
   PASS_GRID,
   TerritoryBoard,
   generateTerritoryBoard,
+  isBoardUnfinished,
   makeGrid,
   ownershipToDeadStones,
+  ownershipToTerritoryBoard,
+  scoreLeadToResult,
 } from "go-core";
 import { useEffect, useState } from "react";
 import { useEditableGoBoard } from "./useEditableGoBoard";
@@ -71,6 +75,7 @@ export function useBoardEditActions(
     }
   };
 
+  // 地計算ボタンを押した時の処理
   const handleCalculateTerritory = async () => {
     // 🛡️ガード
     if (board.isAnalyzing || activeProcessing !== null) return;
@@ -78,6 +83,7 @@ export function useBoardEditActions(
     setActiveProcessing("territory"); // 🧮 地計算開始
     try {
       const currentBoard = board.processed.boardHistory[board.currentIndex];
+      printDebugBoard(currentBoard);
       // 🐱 ownership込みの分析が既にキャッシュにあるなら、KataGoを叩き直さず使い回す
       const cached = board.combinedAnalysis.perMove[board.currentIndex];
       const entry =
@@ -89,6 +95,29 @@ export function useBoardEditActions(
               board.processed.moves.slice(0, board.currentIndex),
             );
       if (!entry) return;
+      console.log("ownership: ", entry.ownership);
+
+      // 🐱 goscorer(generateTerritoryBoard)は「終局した正しい盤面」を渡して
+      //    初めて正しい答えを返す道具。終局してない盤面に使うと変な地が出て
+      //    しまうので、その場合はownership/scoreLead由来の暫定表示に切り替える。
+      if (
+        isBoardUnfinished(
+          currentBoard,
+          boardSize,
+          entry.ownership,
+          board.currentIndex, // 🔥これがmovesSoFar.lengthと同じかは疑問、ただ、MIN_MOVES_FOR_TERRITORY_CHECKとの比較に使うだけなのでアバウトでいいと思う
+        )
+      ) {
+        console.log("終局してないよ");
+        const territoryBoard = ownershipToTerritoryBoard(
+          boardSize,
+          currentBoard,
+          entry.ownership,
+        );
+        const result = scoreLeadToResult(entry.scoreLead);
+        setManualTerritory({ territoryBoard, result });
+        return;
+      }
 
       const deadStones = ownershipToDeadStones(currentBoard, entry.ownership);
       const { territoryBoard, result } = generateTerritoryBoard(

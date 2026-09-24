@@ -1,8 +1,8 @@
 // ✅active
 // useSettingsScreen.ts
 
+import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useState } from "react";
 

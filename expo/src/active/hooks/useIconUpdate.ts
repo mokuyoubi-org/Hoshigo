@@ -1,10 +1,7 @@
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useTranslation } from "@/src/active/i18n";
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { Alert } from "react-native";
 
 export function useIconUpdate() {
-  const t = useTranslation();
   const { updateProfile } = useProfile();
 
   const updateIconIndex = async (selectedIconIndex: number) => {
@@ -14,13 +11,11 @@ export function useIconUpdate() {
       });
       if (error) {
         console.error(error);
-        Alert.alert(t("Profile.iconUpdateFailed"));
       } else {
         updateProfile({ iconIndex: selectedIconIndex });
       }
     } catch (e) {
       console.error(e);
-      Alert.alert(t("Profile.iconUpdateFailed"));
     }
   };
 

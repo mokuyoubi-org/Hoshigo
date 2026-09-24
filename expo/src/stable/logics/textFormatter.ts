@@ -4,7 +4,7 @@ import { TFunction } from "@/src/active/i18n/types";
 import { BLACK, Color, MatchType, WHITE } from "go-core";
 
 // "B+R"のような結果を、you won by resignationのようなコメントへ変換。
-export const resultToComment = (
+export const resultToSubjectiveComment = (
   result: string,
   playerColor: Color,
   t: TFunction,
@@ -61,7 +61,40 @@ export const resultToComment = (
   return "";
 };
 
-// "B+R"のような結果を、Reasonと勝敗を使ってシンプルに変換する！
+// "B+R"のような結果を、Black won by resignationのようなコメントへ変換。
+export const resultToObjectiveComment = (
+  result: string,
+  t: TFunction,
+): string => {
+  if (result === "DRAW") {
+    return t("GameResult.draw");
+  } else if (result === "VOID") {
+    return t("GameResult.void");
+  } else if (result === "B+R") {
+    return t("GameResult.blackResignationWin");
+  } else if (result === "W+R") {
+    return t("GameResult.whiteResignationWin");
+  } else if (result === "B+T") {
+    return t("GameResult.blackTimeoutWin");
+  } else if (result === "W+T") {
+    return t("GameResult.whiteTimeoutWin");
+  } else if (result === "B+C") {
+    return t("GameResult.blackDisconnectWin");
+  } else if (result === "W+C") {
+    return t("GameResult.whiteDisconnectWin");
+  } else if (result[0] === "B") {
+    const points = result.slice(2);
+    return t("GameResult.blackPointsWin", { points });
+  } else if (result[0] === "W") {
+    const points = result.slice(2);
+    return t("GameResult.whitePointsWin", { points });
+  }
+
+  // 想定外のresult文字列。undefinedではなく空文字を返す（呼び出し側がstring前提で使えるように）
+  return "";
+};
+
+// "B+R"のような結果を、Reasonと勝敗を使ってシンプルに変換
 export const resultToCommentSimple = (result: string, t: TFunction): string => {
   if (result === "DRAW") return t("Reason.draw");
   else if (result === "VOID") return t("Reason.void");

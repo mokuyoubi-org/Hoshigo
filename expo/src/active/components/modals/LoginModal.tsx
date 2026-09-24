@@ -83,18 +83,18 @@ export function LoginModal({ visible, onClose }: Props) {
           {step === "email" && (
             <>
               <View className="mb-6">
-                <Text className="text-sm font-normal tracking-wide text-textSub">
+                <Text className="text-lg font-normal tracking-wide text-textSub">
                   {t("AccountLinking.subtitleEmail")}
                 </Text>
               </View>
 
               <View className="mb-4">
-                <Text className="text-sm font-semibold mb-1.5 tracking-wide text-text">
+                <Text className="text-lg font-semibold mb-1.5 tracking-wide text-text">
                   {t("common.email")}
                 </Text>
                 <View className="rounded-xl border bg-foreground border-primary">
                   <TextInput
-                    className="h-[50px] px-4 text-base text-text"
+                    className="h-[50px] px-4 text-lg text-text"
                     placeholder={"example@email.com"}
                     placeholderTextColor={COLORS.textSub}
                     value={email}
@@ -108,7 +108,7 @@ export function LoginModal({ visible, onClose }: Props) {
               </View>
 
               {error ? (
-                <Text className="text-sm text-center mb-3 text-coral">
+                <Text className="text-lg text-center mb-3 text-coral">
                   {error}
                 </Text>
               ) : null}
@@ -125,7 +125,7 @@ export function LoginModal({ visible, onClose }: Props) {
                   {loading ? (
                     <ActivityIndicator color={COLORS.foreground} />
                   ) : (
-                    <Text className="text-base font-bold tracking-wide text-foreground">
+                    <Text className="text-lg font-bold tracking-wide text-foreground">
                       {t("AccountLinking.sendCode")}
                     </Text>
                   )}
@@ -137,7 +137,7 @@ export function LoginModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-base font-bold tracking-wide text-textSub">
+                  <Text className="text-lg font-bold tracking-wide text-textSub">
                     {t("common.cancel")}
                   </Text>
                 </TouchableOpacity>
@@ -148,13 +148,13 @@ export function LoginModal({ visible, onClose }: Props) {
           {step === "otp" && (
             <>
               <View className="mb-6">
-                <Text className="text-sm font-normal tracking-wide text-textSub">
+                <Text className="text-lg font-normal tracking-wide text-textSub">
                   {t("AccountLinking.subtitleOtp", { email })}
                 </Text>
               </View>
 
               <View className="mb-4">
-                <Text className="text-sm font-semibold mb-1.5 tracking-wide text-text">
+                <Text className="text-lg font-semibold mb-1.5 tracking-wide text-text">
                   {t("AccountLinking.otpLabel")}
                 </Text>
                 <View className="rounded-xl border bg-foreground border-primary">
@@ -172,7 +172,7 @@ export function LoginModal({ visible, onClose }: Props) {
               </View>
 
               {error ? (
-                <Text className="text-sm text-center mb-3 text-coral">
+                <Text className="text-lg text-center mb-3 text-coral">
                   {error}
                 </Text>
               ) : null}
@@ -191,7 +191,7 @@ export function LoginModal({ visible, onClose }: Props) {
                   ) : (
                     <Text
                       numberOfLines={1}
-                      className="text-base font-bold tracking-wide text-foreground"
+                      className="text-lg font-bold tracking-wide text-foreground"
                     >
                       {t("AccountLinking.verify")}
                     </Text>
@@ -204,7 +204,7 @@ export function LoginModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-base font-bold tracking-wide text-textSub">
+                  <Text className="text-lg font-bold tracking-wide text-textSub">
                     {t("common.cancel")}
                   </Text>
                 </TouchableOpacity>
@@ -215,7 +215,7 @@ export function LoginModal({ visible, onClose }: Props) {
                 onPress={onSendOtp}
                 disabled={loading}
               >
-                <Text className="text-sm font-semibold text-green">
+                <Text className="text-lg font-semibold text-green">
                   {t("AccountLinking.resend")}
                 </Text>
               </TouchableOpacity>
@@ -224,7 +224,7 @@ export function LoginModal({ visible, onClose }: Props) {
 
           {step === "selection" && (
             <>
-              <Text className="text-sm mb-5 leading-5 tracking-wide text-textSub">
+              <Text className="text-lg mb-5 leading-5 tracking-wide text-textSub">
                 {t("AccountLinking.selectionMessage")}
               </Text>
 
@@ -244,15 +244,16 @@ export function LoginModal({ visible, onClose }: Props) {
                     onPress={() => setSelection("guest")}
                     disabled={loading}
                   >
-                    <Text className="text-xs font-bold mb-1 tracking-wide text-textSub">
+                    <Text className="text-lg font-bold mb-1 tracking-wide text-textSub">
                       {t("AccountLinking.thisDevice")}
                     </Text>
-                    <Text className="text-base font-extrabold text-text">
+                    <Text className="text-lg font-extrabold text-text">
                       {guestSnapshot.username}
                     </Text>
-                    <Text className="text-xs mt-1 text-textSub">
-                      9x9: {guestSnapshot.rating9}pts / 13x13:
-                      {guestSnapshot.rating13}pts
+                    <Text className="text-lg mt-1 text-textSub">
+                      9x9: {guestSnapshot.rating9}pts 13x13:
+                      {guestSnapshot.rating13}pts 19x19:
+                      {guestSnapshot.rating19}pts
                     </Text>
                   </TouchableOpacity>
 
@@ -266,22 +267,23 @@ export function LoginModal({ visible, onClose }: Props) {
                     onPress={() => setSelection("existing")}
                     disabled={loading}
                   >
-                    <Text className="text-xs font-bold mb-1 tracking-wide text-primary">
+                    <Text className="text-lg font-bold mb-1 tracking-wide text-primary">
                       {t("AccountLinking.savedAccount")}
                     </Text>
-                    <Text className="text-base font-extrabold text-text">
+                    <Text className="text-lg font-extrabold text-text">
                       {existingPreview.username}
                     </Text>
-                    <Text className="text-xs mt-1 text-textSub">
-                      9x9: {existingPreview.rating_9}pts / 13x13:
-                      {existingPreview.rating_13}pts
+                    <Text className="text-lg mt-1 text-textSub">
+                      9x9: {existingPreview.rating_9}pts 13x13:
+                      {existingPreview.rating_13}pts 19x19:
+                      {existingPreview.rating_19}pts
                     </Text>
                   </TouchableOpacity>
                 </View>
               )}
 
               {error ? (
-                <Text className="text-sm text-center mb-3 text-coral">
+                <Text className="text-lg text-center mb-3 text-coral">
                   {error}
                 </Text>
               ) : null}
@@ -312,7 +314,7 @@ export function LoginModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-base font-bold tracking-wide text-textSub">
+                  <Text className="text-lg font-bold tracking-wide text-textSub">
                     {t("common.cancel")}
                   </Text>
                 </TouchableOpacity>

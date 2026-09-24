@@ -1,3 +1,5 @@
+// okigoLogics.ts
+
 import { BLACK, Board, BoardSize, Grid, MatchType } from "../types/go";
 import { applyMove, initBoard, makeGrid } from "./goLogics";
 
@@ -21,6 +23,9 @@ export const generateOkigoBoard = (
       7: [],
       8: [],
       9: [],
+      13: [],
+      16: [],
+      25: [],
     };
     for (const grid of okiishiGrids[matchType] ?? []) {
       board = applyMove(boardSize, grid, board, BLACK).board;
@@ -56,6 +61,9 @@ export const generateOkigoBoard = (
         m(10, 7),
         m(4, 7),
       ],
+      13: [],
+      16: [],
+      25: [],
     };
     for (const grid of okiishiGrids[matchType] ?? []) {
       board = applyMove(boardSize, grid, board, BLACK).board;
@@ -90,14 +98,79 @@ export const generateOkigoBoard = (
       ],
       9: [
         m(4, 4),
-        m(16, 16),
-        m(16, 4),
-        m(4, 16),
-        m(10, 10),
-        m(10, 4),
-        m(10, 16),
-        m(16, 10),
         m(4, 10),
+        m(4, 16),
+        m(10, 4),
+        m(10, 10),
+        m(10, 16),
+        m(16, 4),
+        m(16, 10),
+        m(16, 16),
+      ],
+      13: [
+        m(4, 4),
+        m(4, 10),
+        m(4, 16),
+        m(10, 4),
+        m(10, 10),
+        m(10, 16),
+        m(16, 4),
+        m(16, 10),
+        m(16, 16),
+
+        m(7, 7),
+        m(7, 13),
+        m(13, 7),
+        m(13, 13),
+      ],
+      16: [
+        m(4, 4),
+        m(4, 8),
+        m(4, 12),
+        m(4, 16),
+        m(8, 4),
+        m(8, 8),
+        m(8, 12),
+        m(8, 16),
+        m(12, 4),
+        m(12, 8),
+        m(12, 12),
+        m(12, 16),
+        m(16, 4),
+        m(16, 8),
+        m(16, 12),
+        m(16, 16),
+      ],
+      25: [
+        m(4, 4),
+        m(4, 7),
+        m(4, 10),
+        m(4, 13),
+        m(4, 16),
+
+        m(7, 4),
+        m(7, 7),
+        m(7, 10),
+        m(7, 13),
+        m(7, 16),
+
+        m(10, 4),
+        m(10, 7),
+        m(10, 10),
+        m(10, 13),
+        m(10, 16),
+
+        m(13, 4),
+        m(13, 7),
+        m(13, 10),
+        m(13, 13),
+        m(13, 16),
+
+        m(16, 4),
+        m(16, 7),
+        m(16, 10),
+        m(16, 13),
+        m(16, 16),
       ],
     };
     for (const grid of okiishiGrids[matchType] ?? []) {

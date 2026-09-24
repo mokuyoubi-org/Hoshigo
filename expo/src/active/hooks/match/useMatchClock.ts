@@ -5,6 +5,7 @@ import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BLACK, Color, Grid } from "go-core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSounds } from "../useGameSounds";
+import { useKVStorage } from "storage-kit";
 
 // 🥶 対局の「今、誰が動けるか」を表す唯一の状態。
 // 黒の番・白の番・誰も動けない(frozen)の3択。これ以外の値は存在しない。
@@ -49,6 +50,9 @@ export function useMatchClock({
   const isGameEndedRef = useRef(isGameEnded);
   // freeze開始時刻のref
   const frozenAtRef = useRef<number | null>(null);
+    const {
+      value: isSoundEnabled,
+    } = useKVStorage<boolean>("global.sound", false);
 
   useEffect(() => {
     isGameEndedRef.current = isGameEnded;
@@ -211,7 +215,7 @@ export function useMatchClock({
         setMySeconds(mySecondsRef.current);
 
         // 自分の残り時間が10秒以下（10秒〜1秒）になったらピッピ音を鳴らす
-        if (mySecondsRef.current <= 10 && mySecondsRef.current > 0) {
+        if (isSoundEnabled && mySecondsRef.current <= 10 && mySecondsRef.current > 0) {
           playSoundRef.current?.("pip");
         }
       }
@@ -237,6 +241,13 @@ export function useMatchClock({
       }
     };
   }, [resetHeartbeat]);
+
+  // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
+  // 一番最初にとりあえず一発ハートビート送っとく。接続復帰用。
+  useEffect(() => {
+    // 1. sendHeartbeat
+    sendHeartbeat();
+  }, []);
 
   // =========================================================================================
   // 🌟 ===================================== return =====================================

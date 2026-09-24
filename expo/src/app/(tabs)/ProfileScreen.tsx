@@ -7,7 +7,7 @@ import {
 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,18 +20,28 @@ import { LoginModal } from "@/src/active/components/modals/LoginModal";
 import RankInfoModal from "@/src/active/components/modals/RankInfoModal";
 import UsernameEditModal from "@/src/active/components/modals/UsernameEditModal";
 import { COLORS } from "@/src/active/constants/colors";
+import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
 import { useProfileScreen } from "@/src/active/hooks/screens/useProfileScreen";
 import { useTranslation } from "@/src/active/i18n";
 import { BOARD_SIZE_OPTIONS } from "go-core";
-import { IconButton, SegmentedControl } from "ui-atoms";
+import { IconButton, SegmentedControl, TextButton } from "ui-atoms";
 
 export default function ProfileScreen() {
   const t = useTranslation();
   const { profileData, handlers } = useProfileScreen();
   const { isMatching } = useMatching();
   const { show, hide } = useOverlay();
+
+  useEffect(() => {
+    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
+    if (
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+    ) {
+      document.activeElement.blur();
+    }
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -44,22 +54,20 @@ export default function ProfileScreen() {
               value={profileData.boardSize}
               options={BOARD_SIZE_OPTIONS}
               onSelect={handlers.setBoardSize}
+              activeSegmentWidth={72}
+              inactiveSegmentWidth={48}
             />
           }
         >
           {profileData.isAnonymous && (
-            <TouchableOpacity
+            <TextButton
               disabled={isMatching}
-              className={`h-[42px] px-3.5 rounded-full border-2 border-backgroundDark bg-foreground justify-center items-center ${
-                isMatching ? "opacity-40" : "opacity-100"
-              }`}
-              activeOpacity={0.7}
+              text={t("common.login")}
+              color={COLORS.primary} // テキストの色
+              backgroundColor={COLORS.foreground} // 背景色
+              borderColor={COLORS.backgroundDark} // 枠線の色
               onPress={() => show(<LoginModal visible={true} onClose={hide} />)}
-            >
-              <Text className="text-sm font-bold text-primary">
-                {t("common.login")}
-              </Text>
-            </TouchableOpacity>
+            />
           )}
 
           <IconButton
@@ -75,8 +83,10 @@ export default function ProfileScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
         >
-          <View className="pb-12 gap-4">
+          <View className="pt-4 pb-12 gap-4">
+            {/* アイコン & username */}
             <View className="justify-center items-center pt-4">
+              {/* アイコン */}
               <TouchableOpacity
                 disabled={isMatching}
                 onPress={() =>
@@ -101,20 +111,21 @@ export default function ProfileScreen() {
                   size={96}
                 />
                 <View
-                  className={`absolute bottom-1 right-1 w-7 h-7 rounded-full bg-primary border-2 border-background justify-center items-center ${
-                    isMatching ? "opacity-40" : "opacity-100"
+                  className={`absolute bottom-1 right-1 w-7 h-7 rounded-full border-2 border-background justify-center items-center ${
+                    isMatching ? "bg-primaryLight" : "bg-primary"
                   }`}
                 >
                   <MaterialIcons
                     name="edit"
-                    size={13}
+                    size={14}
                     color={COLORS.foreground}
                   />
                 </View>
               </TouchableOpacity>
 
+              {/* username */}
               <View className="flex-row items-center gap-1 mb-2.5">
-                <Text className="text-[28px] font-extrabold text-text tracking-wide">
+                <Text className="text-3xl font-extrabold text-text tracking-wide">
                   {profileData.username}
                 </Text>
                 {!profileData.isAnonymous && (
@@ -171,7 +182,7 @@ export default function ProfileScreen() {
             {/* 戦績カード */}
             {/* <StatsCard /> */}
 
-            {/* クラウドメニュー */}
+            {/* 棋譜 */}
             <TouchableOpacity
               className="bg-foreground rounded-3xl border-2 border-backgroundDark p-[18px] flex-row justify-between items-center"
               activeOpacity={0.7}
@@ -183,13 +194,11 @@ export default function ProfileScreen() {
                 <View className="w-9 h-9 rounded-xl bg-background justify-center items-center mr-1.5">
                   <Octicons name="history" size={18} color={COLORS.primary} />
                 </View>
-                <Text className="text-[15px] font-bold text-text">
+                <Text className="text-lg font-bold text-text">
                   {t("common.records")}
                 </Text>
               </View>
-              <Text className="text-2xl font-light text-text opacity-50">
-                ›
-              </Text>
+              <Octicons name="chevron-right" size={24} color={COLORS.primary} />
             </TouchableOpacity>
 
             {profileData.isAnonymous && (

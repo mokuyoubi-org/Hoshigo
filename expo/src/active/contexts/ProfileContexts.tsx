@@ -7,16 +7,28 @@ type Profile = {
   email: string | null;
   username: string | null;
   iconIndex: number | null;
+  // 9
   wins9: number | null;
   losses9: number | null;
   draws9: number | null;
+  rating9: number | null;
+  giantKillingStreak9: number | null;
+  // 13
   wins13: number | null;
   losses13: number | null;
   draws13: number | null;
-  rating9: number | null;
   rating13: number | null;
+  giantKillingStreak13: number | null;
+  // 19
+  wins19: number | null;
+  losses19: number | null;
+  draws19: number | null;
+  rating19: number | null;
+  giantKillingStreak19: number | null;
+  // others
   allowBotMatch: boolean | null;
   isAnonymous: boolean;
+  country: string | null;
 };
 
 // Hookから返す全体の型
@@ -30,16 +42,28 @@ const initialProfile: Profile = {
   email: null,
   username: null,
   iconIndex: 0,
+  // 9
   rating9: 0,
   wins9: 0,
   losses9: 0,
   draws9: 0,
+  giantKillingStreak9: 0,
+  // 13
   rating13: 0,
   wins13: 0,
   losses13: 0,
   draws13: 0,
+  giantKillingStreak13: 0,
+  // 19
+  rating19: 0,
+  wins19: 0,
+  losses19: 0,
+  draws19: 0,
+  giantKillingStreak19: 0,
+  // others
   allowBotMatch: true,
   isAnonymous: true,
+  country: null,
 };
 
 type ProfileContextType = {

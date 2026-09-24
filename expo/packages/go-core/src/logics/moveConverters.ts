@@ -26,12 +26,12 @@ const getGoStrings = (board: Board): GoString[] => {
 };
 
 // 死に石と判定するownership平均の閾値（超えたら「相手に取られている」とみなす）
-const DEAD_STONE_OWNERSHIP_THRESHOLD = 0.6;
+const DEAD_STONE_OWNERSHIP_THRESHOLD = 0.5;
 
 // 盤面とownershipから死に石を判定する
 export const ownershipToDeadStones = (
   board: Board,
-  ownership: any, // ここ直す🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+  ownership: ArrayLike<number>,
 ): Grid[] => {
   const deadStones: Grid[] = [];
   for (const goString of getGoStrings(board)) {
@@ -51,7 +51,6 @@ export const ownershipToDeadStones = (
       deadStones.push(...stoneIndexes);
     }
   }
-  console.log("deadStones: ", deadStones);
   return deadStones;
 };
 
@@ -77,6 +76,8 @@ export const movesToMoveObjects = (
   return moveObjects;
 };
 
+// 2026/09/19修正
+// 大事!!!!!!!!!⚠️⚠️⚠️⚠️⚠️⚠️⚠️useKataGoで使われている。
 // 置き碁用 MoveObject[] の生成
 const generateMoveObjects = (
   boardSize: BoardSize,
@@ -92,7 +93,8 @@ const generateMoveObjects = (
   for (const [keyStr, goString] of Object.entries(okigoBoard)) {
     if (goString?.color === BLACK) {
       if (result.length > 0) result.push(passWhite);
-      result.push(gridToMoveObject(Number(keyStr), boardSize));
+      // 修正：currentPlayer ではなく BLACK を直接渡す⚠️⚠️⚠️⚠️⚠️⚠️ここが大事
+      result.push(gridToMoveObject(Number(keyStr), boardSize, BLACK));
     }
   }
   return result;
@@ -102,8 +104,24 @@ const generateMoveObjects = (
 export const gridToMoveObject = (
   grid: Grid,
   boardSize: BoardSize,
-): MoveObject => ({
-  x: (grid % boardSize) + 1,
-  y: Math.floor(grid / boardSize) + 1,
-  player: BLACK,
-});
+  currentPlayer: Color,
+): MoveObject => {
+  if (grid === PASS_GRID) {
+    return {
+      x: -1,
+      y: -1,
+      player: currentPlayer,
+    };
+  }
+
+  // マスの番号から、横の場所（x）と縦の場所（y）を計算する
+  const x = (grid % boardSize) + 1;
+  const y = Math.floor(grid / boardSize) + 1;
+
+  // 計算した結果をまとめて返す
+  return {
+    x: x,
+    y: y,
+    player: currentPlayer,
+  };
+};

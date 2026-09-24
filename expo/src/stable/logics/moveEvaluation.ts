@@ -12,6 +12,7 @@
 // 良手:
 //   1. winRateが1ポイント以上上がった
 //   2. scoreleadが1ポイント以上上がった
+//   3. 最善手だった
 // 悪手:
 //   1: winRateが5ポイント以上下がった
 //   2. scoreLeadが5ポイント以上下がった
@@ -63,33 +64,36 @@ export function computeMoveEvaluations(
       ? after.scoreLead - before.scoreLead
       : before.scoreLead - after.scoreLead;
 
-    // const playedGrid = moves![i];
-    // const wasTopCandidate = before.candidates.some((c) => {
-    //   if (c.x === -1 || c.y === -1) return playedGrid === undefined; // パスの候補との一致は扱わない
-    //   return makeGrid(c.y, c.x, boardSize) === playedGrid;
-    // });
-
-    // const playedGrid = moves![i];
-    // const topCandidate = before.candidates[0];
+    const playedGrid = moves![i];
+    const topCandidate = before.candidates[0];
 
     // // index 0の候補が存在し、かつパス（x/yが-1）でない場合のみチェックする
-    // const wasTopCandidate =
-    //   topCandidate !== undefined &&
-    //   // !(topCandidate.x === -1 || topCandidate.y === -1) &&
-    //   makeGrid(topCandidate.y, topCandidate.x, boardSize) === playedGrid;
+    const wasTopCandidate =
+      topCandidate !== undefined &&
+      makeGrid(topCandidate.y, topCandidate.x, boardSize) === playedGrid;
 
+    // 悪手判定で代替候補として提示できる手が存在するか
+    // （candidateGridsForMoveの「候補なし/パス」判定と揃える）
+    const hasReplacementCandidate =
+      topCandidate !== undefined &&
+      topCandidate.x !== -1 &&
+      topCandidate.y !== -1;
+
+    // 良手判定が先
     if (
-      winRateDelta <= BAD_THRESHOLD_WIN_RATE ||
-      scoreLeadDelta <= BAD_THRESHOLD_SCORE_LEAD
-    ) {
-      // 悪手判定が先
-      result.push("bad");
-    } else if (
       winRateDelta >= GOOD_THRESHOLD_WIN_RATE ||
-      scoreLeadDelta >= GOOD_THRESHOLD_SCORE_LEAD
-      //  || wasTopCandidate
+      scoreLeadDelta >= GOOD_THRESHOLD_SCORE_LEAD ||
+      wasTopCandidate
     ) {
       result.push("good");
+    }
+    // 悪手判定が後（代替候補を提示できない場合はbadにしない）
+    else if (
+      (winRateDelta <= BAD_THRESHOLD_WIN_RATE ||
+        scoreLeadDelta <= BAD_THRESHOLD_SCORE_LEAD) &&
+      hasReplacementCandidate
+    ) {
+      result.push("bad");
     } else {
       result.push(undefined);
     }
@@ -97,21 +101,8 @@ export function computeMoveEvaluations(
 
   return result;
 }
-
 // 悪手だった手について、代わりにどこが候補だったかをGrid配列で返す。
-// analyzeBoard.ts側で既に上位5件・visits順に絞られているので、
-// ここではパス(x:-1,y:-1)を除外してGridに変換するだけでよい。
-// export function candidateGridsForMove(
-//   analysis: RecordAnalysis | null | undefined,
-//   moveIndex: number,
-//   boardSize: BoardSize,
-// ): Grid[] {
-//   const entry = analysis?.perMove[moveIndex];
-//   if (!entry) return [];
-//   return entry.candidates
-//     .filter((c) => c.x !== -1 && c.y !== -1) // これ必要か？
-//     .map((c) => makeGrid(c.y, c.x, boardSize));
-// }
+// analyzeBoard.ts側で既に上位5件・visits順に絞られている
 
 export function candidateGridsForMove(
   analysis: RecordAnalysis | null | undefined,
@@ -125,10 +116,7 @@ export function candidateGridsForMove(
   const topCandidate = entry.candidates[0];
 
   // 候補が存在しない、またはパス（x/yが-1）の場合は空配列を返す
-  if (
-    !topCandidate
-    //  || topCandidate.x === -1 || topCandidate.y === -1
-  ) {
+  if (!topCandidate || topCandidate.x === -1 || topCandidate.y === -1) {
     return [];
   }
 

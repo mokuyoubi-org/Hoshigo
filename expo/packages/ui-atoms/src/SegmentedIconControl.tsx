@@ -48,7 +48,7 @@ export const SegmentedIconControl = <T extends string | boolean>({
               activeOpacity={0.8}
             >
               {React.cloneElement(option.icon, {
-                size: 18,
+                size: 20,
                 color: iconColor,
               })}
             </TouchableOpacity>
@@ -62,16 +62,16 @@ const styles = StyleSheet.create({
   track: {
     flexDirection: "row",
     backgroundColor: "#e1e8ed",
-    borderRadius: 21, // 丸みを持たせてIconButtonとトーンを合わせる
-    padding: 3,
-    height: 42, // IconButtonの高さ(42px)に揃える
+    borderRadius: 48, // 丸みを持たせてIconButtonとトーンを合わせる
+    padding: 6,
+    height: 48, // IconButtonの高さ(42px)に揃える
     alignItems: "center",
   },
   segment: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 18,
+    borderRadius: 40,
   },
 });

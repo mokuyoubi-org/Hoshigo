@@ -15,19 +15,23 @@ import {
   computeMatchResultUpdate,
   MatchResultUpdate,
 } from "@/src/stable/logics/resultLogics";
-import { resultToComment } from "@/src/stable/logics/textFormatter";
+import { resultToSubjectiveComment } from "@/src/stable/logics/textFormatter";
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { ModelId } from "expo-katago";
+import { AnalyzeResult, ModelId } from "expo-katago";
 import { useGoGame } from "go-components";
 import {
+  BLACK,
   BoardSize,
   Color,
+  getOppositeColor,
   Grid,
   MatchType,
   PASS_GRID,
   RecordAnalysis,
+  WHITE,
 } from "go-core";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isReliableForTerritory } from "../../../stable/logics/territoryReliability";
 
 type Args = {
   matchId: number;
@@ -54,6 +58,10 @@ export function useMatchSession({
   initialMySeconds,
   initialOppSeconds,
 }: Args) {
+  // 🌟 サーバのturnカラムはtext('black'/'white')、アプリ内のColorは数値。
+  //    realtimeのpayloadを受け取るたびにここで変換する。
+const stringToColor = (turn: "black" | "white"): Color =>
+  turn === "black" ? BLACK : WHITE;
   // =========================================================================================
   // 🌟 ===================================== state =====================================
   // =========================================================================================
@@ -61,10 +69,10 @@ export function useMatchSession({
   const t = useTranslation();
   const goBoard = useGoGame({ boardSize, matchType, movesInt });
   const { boardRef, movesRef } = goBoard;
-  const botMove = useBotMove(myColor, boardSize, oppUsername);
+  const botMove = useBotMove(getOppositeColor(myColor), boardSize, oppUsername);
   const endgame = useBotCalculation();
   const liveAnalysis = useLiveAnalysis();
-  const { rating9, rating13, updateProfile } = useProfile();
+  const { rating9, rating13, rating19, updateProfile } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
   const isGameEndedRef = useRef(false);
   const [resultComment, setResultComment] = useState("");
@@ -79,18 +87,39 @@ export function useMatchSession({
   const [matchResult, setMatchResult] = useState<
     Omit<MatchResultUpdate, "profilePatch">
   >(() => {
-    const initialRating = (boardSize === 9 ? rating9 : rating13) ?? 0;
+    const initialRating =
+      (boardSize === 9 ? rating9 : boardSize === 13 ? rating13 : rating19) ?? 0;
     return {
       ratingBefore: initialRating,
       rankIndexBefore: getRankInfo(initialRating, t).index,
       ratingAfter: 0,
       rankIndexAfter: 0,
+      giantKillingStreakBonusApplied: false,
     };
   });
   const isResyncingRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const isBotThinkingRef = useRef(false);
   const isAnalyzingRef = useRef(false);
+  const giantKillingStreakRef = useRef<number>(0);
+  const giantKillingStreakBonusAppliedRef = useRef<boolean>(false);
+
+  // 🌟「直近、どの手数の局面をどのanalysisで評価したか」のキャッシュ。
+  //   ターン交代ごとの自動分析effectから来たものでも、ボットの着手判断
+  //   から来たものでも区別しない。moveCount は「その解析時点での
+  //   movesSoFar.length(=これから打たれる手のインデックス)」。
+  //   ダブルパスを成立させる手は必ずパスであり、パスは盤面を変えない
+  //   ので、このキャッシュがちょうど「ダブルパス直前の局面」を指して
+  //   いれば、gameCh_double_pass側の再推論をまるごと省略できる。
+  //   ただしb6は精度が低いため、modelIdがb10/b18でなければ地計算には
+  //   再利用しない(isReliableForTerritoryで判定)。
+  const lastPositionAnalysisRef = useRef<{
+    moveCount: number;
+    analysis: AnalyzeResult | null;
+    modelId?: ModelId;
+  }>({ moveCount: -1, analysis: null });
+  // 相手が使っているモデルに合わせて分析する。人間戦で使われるのはb6。
+
   // 相手が使っているモデルに合わせて分析する。人間戦で使われるのはb6。
   const modelId: ModelId =
     oppUsername === "bot1"
@@ -100,6 +129,36 @@ export function useMatchSession({
         : oppUsername === "bot3"
           ? "b18"
           : "b6";
+
+  // 🌟投げっぱなしの背景分析(自分の手番になった時の先読み解析)が
+  // 何件「まだ完了していないか」を数える。投了時はkataGoTaskの
+  // キューを経由しないため、明示的にこれがゼロになるまで待ってから
+  // 最終的なanalysisスナップショットを確定させる。
+  const pendingBackgroundAnalysisRef = useRef(0);
+  const pendingAnalysisResolversRef = useRef<(() => void)[]>([]);
+
+  const beginBackgroundAnalysis = () => {
+    pendingBackgroundAnalysisRef.current += 1;
+  };
+
+  const endBackgroundAnalysis = () => {
+    pendingBackgroundAnalysisRef.current = Math.max(
+      0,
+      pendingBackgroundAnalysisRef.current - 1,
+    );
+    if (pendingBackgroundAnalysisRef.current === 0) {
+      const resolvers = pendingAnalysisResolversRef.current;
+      pendingAnalysisResolversRef.current = [];
+      resolvers.forEach((resolve) => resolve());
+    }
+  };
+
+  const waitForPendingBackgroundAnalysis = (): Promise<void> => {
+    if (pendingBackgroundAnalysisRef.current === 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      pendingAnalysisResolversRef.current.push(resolve);
+    });
+  };
 
   // =========================================================================================
   // 🌟 ===================================== 関数 =====================================
@@ -126,6 +185,13 @@ export function useMatchSession({
 
       const serverTurn = goBoard.loadMoves(moves);
       liveAnalysis.truncate(moves.length); // 🐱 moves差し替えに合わせて分析データも整合させる
+      // 🌟movesが差し替わった以上、キャッシュしていたanalysisがどの局面の
+      //   ものか保証できなくなるので破棄する(誤って使い回さないため)。
+      lastPositionAnalysisRef.current = {
+        moveCount: -1,
+        analysis: null,
+        modelId: undefined,
+      };
       clock.unfreeze(serverTurn);
       isResyncingRef.current = false;
     }
@@ -175,9 +241,20 @@ export function useMatchSession({
         }
 
         liveAnalysis.record(botMoveIndex, analysis);
+        // 🌟ボットが着手判断に使ったanalysisをキャッシュしておく。
+        //   このgridがpassで、かつこれがダブルパス成立の手だった場合、
+        //   gameCh_double_pass側で再推論せずこれを使い回すため。
+        //   analysis.modelId(実際に使われたモデル、b6ならフォールバック
+        //   等が起きていない限りbotのモデル対応表通り)も一緒に刻んでおく。
+        lastPositionAnalysisRef.current = {
+          moveCount: botMoveIndex,
+          analysis,
+          modelId: analysis?.modelId,
+        };
         // ボットの着手成功時にハートビートタイマーをリセット
         clock.resetHeartbeat();
       },
+      false, // 練習対局か否か。
     );
   }, [botMove, matchType, matchId, clock, liveAnalysis, boardRef, movesRef]);
 
@@ -272,6 +349,14 @@ export function useMatchSession({
     const data = payload.payload ?? payload;
     const move: number = data.move;
     const moveCount: number = data.move_count;
+    // 🌟サーバが教えてくれる「この手の後、誰の番か」を絶対の正とする。
+    //   複数端末で同じアカウントを開いていても、これさえ信じれば
+    //   「今受け取った手は誰の手か」「次は誰の番か」を自分視点の
+    //   思い込み(常に相手の手のはず)なしに正しく判定できる。
+    //   data.turnはDB由来の文字列('black'/'white')なので、
+    //   アプリ内部の数値Colorに変換してから使う。
+    const nextTurn: Color = stringToColor(data.turn);
+    const moverColor: Color = getOppositeColor(nextTurn);
 
     clock.syncSecondsFromServer(
       Number(data.black_seconds),
@@ -281,7 +366,7 @@ export function useMatchSession({
     const isNewMove = moveCount === goBoard.movesRef.current.length + 1;
 
     if (isNewMove) {
-      goBoard.applyTrustedMove(move, oppColor);
+      goBoard.applyTrustedMove(move, moverColor);
       isSubmittingRef.current = false;
 
       // 相手の手を受信(相手のadd_move)したタイミングでハートビートタイマーをリセット
@@ -297,7 +382,8 @@ export function useMatchSession({
       if (isDoublePass) {
         clock.freeze(); // 🥶 集計待ちの間、誰の番でもない
       } else {
-        clock.unfreeze(myColor);
+        // 🌟myColor決め打ちではなく、サーバが返した次の手番をそのまま採用する。
+        clock.unfreeze(nextTurn);
       }
     }
   };
@@ -308,11 +394,25 @@ export function useMatchSession({
     setLoading(true);
 
     try {
+      // 🌟直前にキャッシュしたanalysisが、ちょうど「このダブルパス直前
+      //   の局面」を指していて(=間に取りこぼしや余計な手が挟まって
+      //   いなければ)、かつそれがb10/b18由来(=精度が信頼できる)なら、
+      //   パスは盤面を変えないのでそのまま使い回せる。
+      //   どちらか一方でも満たさなければ(ズレている/b6由来)undefinedに
+      //   なり、今まで通りanalyzeTerritory側で新規に推論する。
+      const cached = lastPositionAnalysisRef.current;
+      const precomputedAnalysis =
+        cached.moveCount === goBoard.movesRef.current.length - 1 &&
+        isReliableForTerritory(cached.modelId)
+          ? cached.analysis
+          : undefined;
+
       const { deadStones, analysis } = await endgame.analyzeTerritory(
         goBoard.boardRef.current,
         goBoard.movesRef.current,
         matchType,
         boardSize,
+        precomputedAnalysis,
       );
       goBoard.setDeadStones(deadStones);
       setFinalDeadStones(deadStones);
@@ -345,7 +445,7 @@ export function useMatchSession({
   };
 
   // gameチャンネルからrating_updatedイベントが来た時に行われる処理
-  const gameCh_rating_updated = (payload: any) => {
+  const gameCh_rating_updated = async (payload: any) => {
     const data = payload.payload ?? payload;
     if (!data) return;
 
@@ -354,7 +454,12 @@ export function useMatchSession({
       updateProfile({ wins9: myData.wins }); // dataじゃなくてmyDataね！！！
     } else if (boardSize === 13) {
       updateProfile({ wins13: myData.wins }); // dataじゃなくてmyDataね！！！
+    } else if (boardSize === 19) {
+      updateProfile({ wins19: myData.wins }); // dataじゃなくてmyDataね！！！
     }
+    giantKillingStreakRef.current = myData.giant_killing_streak;
+    giantKillingStreakBonusAppliedRef.current =
+      myData.giant_killing_streak_bonus_applied ?? false;
 
     if (myData) {
       const updated = computeMatchResultUpdate(
@@ -362,6 +467,7 @@ export function useMatchSession({
         myData,
         rating9 ?? 0,
         rating13 ?? 0,
+        rating19 ?? 0,
         t,
       );
       if (updated) {
@@ -371,16 +477,21 @@ export function useMatchSession({
       }
     }
 
+    // 2026/09/23
     if (data.result) {
       const resTmp = goBoard.computeTerritory();
       goBoard.setTerritoryBoard(resTmp.territoryBoard);
 
       setResultRaw(data.result);
       setResultComment(
-        resultToComment(data.result, myColor, t) ?? t("common.matchComplete"),
+        resultToSubjectiveComment(data.result, myColor, t) ??
+          t("common.matchComplete"),
       );
 
       // 🐱 裏で溜め続けた分析結果を、この時点で確定させてstateに移す。
+      //    浮いてる背景分析(投了時は特に、間に合ってない可能性がある)が
+      //    あれば、それが終わるまで待ってからスナップショットを取る。
+      await waitForPendingBackgroundAnalysis();
       setLiveAnalysisResult(liveAnalysis.getRecordAnalysis());
 
       console.log("🏁 対局中の全処理が終了！");
@@ -478,17 +589,28 @@ export function useMatchSession({
     const board = goBoard.boardHistoryRef.current[nextMoveIndex];
     if (!board) return;
 
+    // 2026/09/23
+    beginBackgroundAnalysis();
     (async () => {
-      const analysis = await kataGoTask.run({
-        board,
-        movesSoFar: moves,
-        matchType,
-        boardSize,
-        modelId: modelId,
-        currentPlayer,
-      });
+      try {
+        const analysis = await kataGoTask.run({
+          board,
+          movesSoFar: moves,
+          matchType,
+          boardSize,
+          modelId: modelId,
+          currentPlayer,
+        });
 
-      liveAnalysis.record(nextMoveIndex, analysis);
+        liveAnalysis.record(nextMoveIndex, analysis);
+        lastPositionAnalysisRef.current = {
+          moveCount: nextMoveIndex,
+          analysis,
+          modelId: analysis?.modelId,
+        };
+      } finally {
+        endBackgroundAnalysis();
+      }
     })();
   }, [clock.turnState]);
 
@@ -519,5 +641,7 @@ export function useMatchSession({
     finalDeadStones,
     analysis: liveAnalysisResult,
     ...matchResult,
+    giantKillingStreak: giantKillingStreakRef.current,
+    giantKillingStreakBonusApplied: giantKillingStreakBonusAppliedRef.current,
   };
 }

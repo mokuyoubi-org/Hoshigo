@@ -1,15 +1,15 @@
-// src/components/IconSelectModal.tsx
+// IconSelectModal.tsx
+
 import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
-import { useTranslation } from "@/src/active/i18n";
-
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useTranslation } from "@/src/active/i18n";
 import { winsToAcquiredIcons } from "@/src/stable/logics/winsToAcquiredIcons";
 import { MaterialIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -17,6 +17,7 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
+
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -34,8 +35,12 @@ export default function IconSelectModal({
   const { height: windowHeight } = useWindowDimensions();
   const iconSize: number = 96;
   const imageSize: number = iconSize * (5 / 6);
-  const { wins9, wins13 } = useProfile();
-  const acquiredIcons = winsToAcquiredIcons(wins9 ?? 0, wins13 ?? 0);
+  const { wins9, wins13, wins19 } = useProfile();
+  const acquiredIcons = winsToAcquiredIcons(
+    wins9 ?? 0,
+    wins13 ?? 0,
+    wins19 ?? 0,
+  );
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
@@ -65,50 +70,58 @@ export default function IconSelectModal({
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row flex-wrap justify-center gap-4">
-          {acquiredIcons?.map((iconIndex) => {
-            const icon = ICONS[iconIndex];
-            const isSelected = currentIconIndex === iconIndex;
-            const isLoadingThis = loadingIndex === iconIndex;
+          {Object.keys(ICONS)
+            .map((key) => Number(key))
+            .filter((iconIndex) => iconIndex < 100) // 100以上のボット用アイコンはお片付け（除外）する
+            .map((iconIndex) => {
+              const icon = ICONS[iconIndex];
+              const isAcquired = acquiredIcons?.includes(iconIndex) ?? false;
+              const isSelected = currentIconIndex === iconIndex;
+              const isLoadingThis = loadingIndex === iconIndex;
 
-            return (
-              <TouchableOpacity
-                key={iconIndex}
-                className={`bg-foreground rounded-3xl justify-center items-center relative border-2 ${
-                  isSelected
-                    ? "border-primary border-[3px]"
-                    : "border-background"
-                }`}
-                style={{ width: iconSize, height: iconSize }}
-                onPress={() => handleSelectIcon(iconIndex)}
-                disabled={loadingIndex !== null}
-                activeOpacity={0.7}
-              >
-                {isLoadingThis ? (
-                  <ActivityIndicator size="large" color={COLORS.primary} />
-                ) : (
-                  <>
-                    <Image
-                      source={icon}
-                      style={{
-                        height: imageSize,
-                        width: imageSize,
-                        resizeMode: "contain",
-                      }}
-                    />
-                    {isSelected && (
-                      <View className="absolute top-1 right-1 w-6 h-6 rounded-full bg-primary justify-center items-center">
-                        <MaterialIcons
-                          name="check"
-                          size={16}
-                          color={COLORS.foreground}
-                        />
-                      </View>
-                    )}
-                  </>
-                )}
-              </TouchableOpacity>
-            );
-          })}
+              return (
+                <TouchableOpacity
+                  key={iconIndex}
+                  className={`bg-foreground rounded-3xl justify-center items-center relative border-2 ${
+                    isSelected
+                      ? "border-primary border-[3px]"
+                      : "border-background"
+                  }`}
+                  style={{
+                    width: iconSize,
+                    height: iconSize,
+                    opacity: isAcquired ? 1 : 0.3,
+                  }}
+                  onPress={() => handleSelectIcon(iconIndex)}
+                  disabled={!isAcquired || loadingIndex !== null}
+                  activeOpacity={0.7}
+                >
+                  {isLoadingThis ? (
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                  ) : (
+                    <>
+                      <Image
+                        source={icon}
+                        style={{
+                          height: imageSize,
+                          width: imageSize,
+                        }}
+                        contentFit="contain"
+                      />
+                      {isSelected && (
+                        <View className="absolute top-1 right-1 w-6 h-6 rounded-full bg-primary justify-center items-center">
+                          <MaterialIcons
+                            name="check"
+                            size={16}
+                            color={COLORS.foreground}
+                          />
+                        </View>
+                      )}
+                    </>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
         </View>
       </ScrollView>
     </ModalShell>

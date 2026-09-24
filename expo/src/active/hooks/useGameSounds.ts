@@ -1,6 +1,6 @@
 // useGameSounds.ts
 
-import { getSoundUrl, useSoundPlayer } from "sound-kit";
+import { getSoundUrl, useSoundPlayer } from "assets-kit";
 
 export type SoundName = "gamestart" | "pip";
 

@@ -1,94 +1,8 @@
-// LoadingScreenForLayout.tsx
-// 中身はforkatagogateと同じ。依存関係を作らないため別々に用意
+// LoadingScreen.tsx
 
-import React, { useEffect, useRef } from "react";
-import {
-  Animated,
-  ColorValue,
-  Easing,
-  Platform,
-  Text,
-  View,
-} from "react-native";
-
-type ProgressBarProps = {
-  /** 0-100の実測%。測れないときは null で「不確定バー」になる */
-  percent: number | null;
-  width?: number;
-  height?: number;
-  trackColor: ColorValue;
-  fillColor: ColorValue;
-};
-
-function ProgressBar({
-  percent,
-  width = 180,
-  height = 6,
-  trackColor,
-  fillColor,
-}: ProgressBarProps) {
-  const isIndeterminate = percent === null;
-
-  // 不確定モード用：帯の中を左右にスライドし続けるアニメーション
-  const slideAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    // 🛡️ガード
-    if (!isIndeterminate) return;
-
-    slideAnim.setValue(0);
-    const loop = Animated.loop(
-      Animated.timing(slideAnim, {
-        toValue: 1,
-        duration: 1100,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: Platform.OS !== "web",
-      }),
-    );
-    loop.start();
-
-    return () => loop.stop();
-  }, [isIndeterminate, slideAnim]);
-
-  // インジケーター自体の幅（トラック幅の40%くらい）が左端〜右端を往復する
-  const indicatorWidth = width * 0.4;
-  const translateX = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-indicatorWidth, width],
-  });
-
-  return (
-    <View
-      style={{
-        width,
-        height,
-        borderRadius: height / 2,
-        backgroundColor: trackColor,
-        overflow: "hidden",
-      }}
-    >
-      {isIndeterminate ? (
-        <Animated.View
-          style={{
-            width: indicatorWidth,
-            height: "100%",
-            borderRadius: height / 2,
-            backgroundColor: fillColor,
-            transform: [{ translateX }],
-          }}
-        />
-      ) : (
-        <View
-          style={{
-            width: `${Math.max(0, Math.min(100, percent!))}%`,
-            height: "100%",
-            backgroundColor: fillColor,
-          }}
-        />
-      )}
-    </View>
-  );
-}
+import React from "react";
+import { ColorValue, Text, View } from "react-native";
+import { ProgressBar } from "./ProgressBar";
 
 type LoadingScreenProps = {
   label: string;
@@ -120,11 +34,13 @@ export function LoadingScreen({
         {label}
       </Text>
 
-      <ProgressBar
-        percent={percent}
-        trackColor={trackColor}
-        fillColor={fillColor}
-      />
+      <View style={{ width: 180 }}>
+        <ProgressBar
+          percent={percent}
+          trackColor={trackColor}
+          fillColor={fillColor}
+        />
+      </View>
 
       {/* %の有無に関わらず高さを固定で確保。DLの時だけ帯下に文字が出て
           UIが伸び縮みするジャンプを防ぐための「空箱」 */}

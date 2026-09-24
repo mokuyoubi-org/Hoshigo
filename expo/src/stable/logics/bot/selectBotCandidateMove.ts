@@ -45,6 +45,7 @@ const BASE_BUCKET_WIDTH = 2;
 
 // 盤サイズごとの間延び倍率(9路を基準の1とする。13路は2倍、19路は3倍)
 const BOARD_SIZE_SCALE: Record<BoardSize, number> = {
+  5: 1,
   9: 1,
   13: 2,
   19: 3,
@@ -104,6 +105,11 @@ export function selectBotCandidateMove(
 ): CandidateMove {
   const bestMove = moves[0];
 
+  // そもそも候補手が5ない場合は即、最善手を選ぶ
+  if (moves.length < 5) {
+    return bestMove;
+  }
+
   // moveCountは「これまでに打たれた手の数」、moveNumberは「これから
   // 打とうとしている手が何手目か」(1-indexed)。moveCount=1(2手目を
   // 打とうとしている)ならmoveNumber=2。
@@ -113,9 +119,6 @@ export function selectBotCandidateMove(
   const validMoves = moves.filter((m) =>
     isValidCandidate(m, bestMove, boardSize, modelId),
   );
-  // console.log(
-  //   `🔍 [selectBotCandidateMove] moveNumber=${moveNumber}(${boardSize}路): 入力moves=${JSON.stringify(moves)} / bestMove=${JSON.stringify(bestMove)} / validMoves=${JSON.stringify(validMoves)}`,
-  // );
 
   if (validMoves.length === 0) return bestMove;
 
@@ -134,6 +137,11 @@ export function selectBotCandidateMove(
     (m) => Math.abs(m.winRate - bestMove.winRate) <= WINRATE_CUTOFF,
   );
 
+  // 🐱【追加】絞り込みで0件になったら、bestMoveを返す
+  if (strongEnoughMoves.length === 0) {
+    return bestMove;
+  }
+
   const candidateMoves = strongEnoughMoves.slice(0, 5);
   const weights = WEIGHTS_BY_TOP[topWeight].slice(0, candidateMoves.length);
   const totalWeight = weights.reduce((sum, w) => sum + w, 0);
@@ -142,14 +150,11 @@ export function selectBotCandidateMove(
   let randomVal = Math.random() * totalWeight;
   for (let i = 0; i < candidateMoves.length; i++) {
     if (randomVal < weights[i]) {
-      console.log(
-        `🎲 [selectBotCandidateMove] moveNumber=${moveNumber}(${boardSize}路): ${i + 1}番目を選択(重み${weights[i]}/${totalWeight}, winRate差${Math.abs(candidateMoves[i].winRate - bestMove.winRate).toFixed(3)})`,
-      );
       return candidateMoves[i];
     }
     randomVal -= weights[i];
   }
 
-  // 🥶 浮動小数点誤差などで万一ループを抜けた場合の保険
-  return candidateMoves[candidateMoves.length - 1];
+  // 🐱【修正】万が一ループを抜けてもundefinedにならないようbestMoveにフォールバックする
+  return candidateMoves[candidateMoves.length - 1] ?? bestMove;
 }

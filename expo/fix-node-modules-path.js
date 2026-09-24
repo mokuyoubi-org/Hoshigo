@@ -102,7 +102,7 @@ function main() {
   }
 
   console.log(
-    `🔍 ${nodeModulesDirs.length} 件の node_modules ディレクトリを検出:`,
+    `${nodeModulesDirs.length} 件の node_modules ディレクトリを検出:`,
   );
   nodeModulesDirs.forEach((d) =>
     console.log(`  - ${path.relative(DIST_DIR, d)}`),

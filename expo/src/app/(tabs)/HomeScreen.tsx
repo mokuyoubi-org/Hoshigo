@@ -1,25 +1,38 @@
-import { MatchButton } from "@/src/active/components/buttons/MatchButton";
+import { MainButton } from "@/src/active/components/buttons/MainButton";
 import { Header } from "@/src/active/components/common/Header";
 import { MainTitle } from "@/src/active/components/common/MainTitile";
 import RankingsModal from "@/src/active/components/modals/RankingsModal";
 import { RuleModal } from "@/src/active/components/modals/RuleModal";
 import { COLORS } from "@/src/active/constants/colors";
+import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useMatching } from "@/src/active/contexts/providers/MatchingContext";
+import { useTranslation } from "@/src/active/i18n";
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { BOARD_SIZE_OPTIONS, BoardSize } from "go-core";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useKVStorage } from "storage-kit";
 import { IconButton, SegmentedControl } from "ui-atoms";
 
 export default function HomeScreen() {
   const { startMatching, isMatching } = useMatching();
-  const [boardSize, setBoardSize] = useState<BoardSize>(9);
-  const { show, hide } = useOverlay();
+  const {
+    value: boardSize,
+    setValue: setBoardSize,
+    isLoaded: isBoardSizeLoaded,
+  } = useKVStorage<BoardSize>(
+    "HomeScreen.boardSize", // ユニークなキーを用意する
+    9,
+  );
 
-  const onMainbutton = () => {
+  const { show, hide } = useOverlay();
+  const t = useTranslation();
+
+  // 関数の名前を「マッチング開始」だとわかりやすい名前に変更した
+  const handleStartMatching = () => {
     startMatching(boardSize);
   };
 
@@ -43,11 +56,15 @@ export default function HomeScreen() {
               className={isMatching ? "opacity-60" : "opacity-100"}
               style={{ pointerEvents: isMatching ? "none" : "auto" }}
             >
-              <SegmentedControl
-                value={boardSize}
-                options={BOARD_SIZE_OPTIONS}
-                onSelect={setBoardSize}
-              />
+              {isBoardSizeLoaded && (
+                <SegmentedControl
+                  value={boardSize}
+                  options={BOARD_SIZE_OPTIONS}
+                  onSelect={setBoardSize}
+                  activeSegmentWidth={72}
+                  inactiveSegmentWidth={48}
+                />
+              )}
             </View>
           }
         >
@@ -78,14 +95,23 @@ export default function HomeScreen() {
           {/* 真ん中の空白 (比率: 1) */}
           <View className="flex-1" />
 
-          {/* メインボタン */}
-          <MatchButton
-            onPress={onMainbutton}
-            boardSize={boardSize}
-            disabled={isMatching}
-          />
+          {/* メインボタンエリア（gap-4 でボタン同士の間にすき間を作った） */}
+          <View className="w-full items-center gap-2">
+            <MainButton
+              onPress={handleStartMatching}
+              boardSize={boardSize}
+              disabled={isMatching}
+              text={t("common.onlineMatch")}
+            />
+            <MainButton
+              onPress={() => {
+                router.push("/PracticeGameScreen");
+              }}
+              text={t("common.practice")}
+            />
+          </View>
 
-          {/* 下の空白 (比率: 2) */}
+          {/* 下の空白 (比率: 3) */}
           <View className="flex-[3]" />
         </View>
       </View>

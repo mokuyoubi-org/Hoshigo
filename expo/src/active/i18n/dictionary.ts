@@ -5,6 +5,9 @@ export const dictionary = {
       pass: "Pass",
       back: "Back",
       loading: "Loading",
+      download: "Download",
+      downloading: "Downloading",
+      preparing: "Preparing",
       cancel: "Cancel",
       canceling: "Canceling",
       searching: "Searching",
@@ -31,6 +34,26 @@ export const dictionary = {
       appVersion: "App Version",
       information: "Information",
       unknown: "Unknown",
+      black: "Black",
+      white: "White",
+      playAgain: "Play Again",
+      playBot: "Play Bot",
+      bot: "Bot",
+      match: "Match",
+      practice: "Practice",
+      onlineMatch: "Online Match",
+      nineBoard: "9×9",
+      thirteenBoard: "13×13",
+      nineteenBoard: "19×19",
+      version: "Version",
+      device: "Device",
+      sound: "Sound",
+      aiModels: "AI Models",
+      player: "Player",
+      user: "User",
+      pleaseWait: "Please wait a moment",
+      country: "Country",
+      international: "International",
     },
   },
   Settings: {
@@ -39,10 +62,25 @@ export const dictionary = {
       notSet: "Not set",
       matchSettings: "Match",
       allowBotMatch: "Match with bots",
-      enableDoubleTap: "Enable double tap(13×13)",
       privacyPolicy: "Privacy Policy",
       termsOfService: "Terms of Service",
       deleteAccount: "Delete account",
+      doubleTap: "Double Tap",
+    },
+  },
+  EmailChange: {
+    en: {
+      titleEmail: "Change Email",
+      titleOtp: "Enter Code",
+      subtitleEmail: "Enter your new email address.",
+      newEmail: "New Email",
+      sendCode: "Send Code",
+      subtitleOtp: "Enter the code sent to {{email}}.",
+      otpLabel: "Verification Code",
+      verify: "Verify",
+      errorSendFailed: "Failed to send the code. Please try again.",
+      errorVerifyFailed:
+        "Verification failed. Please check the code and try again.",
     },
   },
   AccountLinking: {
@@ -75,14 +113,15 @@ export const dictionary = {
   },
   Profile: {
     en: {
-      youAre: "YOUR RANK",
+      youAre: "You are",
       remaining: "About {{wins}} {{winText}}",
       guestAccount: "This is a guest account",
       guestNoticeDesc:
-        "Guest data is automatically deleted after 14 days of inactivity. Log in to keep your records.",
+        "Guest account is automatically deleted after 14 days of inactivity. Log in to keep your records.",
       iconUpdateFailed: "Failed to update icon.",
       usernameTaken: "This username is already taken.",
       usernameUpdateFailed: "Failed to update username.",
+      practice: "Practice",
     },
   },
   Rank: {
@@ -109,9 +148,8 @@ export const dictionary = {
   },
   RankInfoModal: {
     en: {
-      title: "About Ranks",
-      yourCurrentRating: "Your Current Rating",
-      remaining: "+{{rating}} pts to {{nextRank}}!",
+      title: "Your Rating",
+      remaining: "+ {{rating}} to {{nextRank}} !",
       allRank: "All Ranks",
       infoText: "Earn rating through matches and aim for higher ranks!",
     },
@@ -120,7 +158,7 @@ export const dictionary = {
     en: {
       remaining: "About {{wins}} {{winText}} to reach {{nextRank}}",
       home: "Home",
-      playAgain: "Play Again",
+
       newIcons: "You got new icons!",
     },
   },
@@ -146,19 +184,20 @@ export const dictionary = {
       yourPointsWin: "You win by {{points}} points",
       yourPointsLoss: "You lose by {{points}} points",
       // black-white
-      blackResignationWin: "●Win by resignation",
-      whiteResignationWin: "○Win by resignation",
-      blackTimeoutWin: "●Win by timeout",
-      whiteTimeoutWin: "○Win by timeout",
-      blackDisconnectWin: "●Win by disconnection",
-      whiteDisconnectWin: "○Win by disconnection",
-      blackPointsWin: "●Win by {{points}} points",
-      whitePointsWin: "○Win by {{points}} points",
+      blackResignationWin: "Black win by resignation",
+      whiteResignationWin: "White win by resignation",
+      blackTimeoutWin: "Black win by timeout",
+      whiteTimeoutWin: "White win by timeout",
+      blackDisconnectWin: "Black win by disconnection",
+      whiteDisconnectWin: "White win by disconnection",
+      blackPointsWin: "Black win by {{points}} points",
+      whitePointsWin: "White win by {{points}} points",
       // draw
       draw: "Draw",
       void: "Void",
     },
   },
+
   IconSelectModal: {
     en: {
       title: "Select Icon",
@@ -181,7 +220,6 @@ export const dictionary = {
       white: "White",
       vs: "VS",
       handicapLabel: "Handicap",
-      // matchTypes オブジェクトをやめて、キーを直接並べる
       matchType_0: "Even Game",
       matchType_1: "No Komi",
       matchType_2: "2-Stone",
@@ -192,13 +230,16 @@ export const dictionary = {
       matchType_7: "7-Stone",
       matchType_8: "8-Stone",
       matchType_9: "9-Stone",
+      matchType_13: "13-Stone",
+      matchType_16: "16-Stone",
+      matchType_25: "25-Stone",
     },
   },
   BotName: {
     en: {
       bot1: "Sena",
       bot2: "Luna",
-      bot3: "MrBunny",
+      bot3: "Mr.Bunny",
     },
   },
   DeleteModal: {
@@ -216,13 +257,13 @@ export const dictionary = {
       ruleDescription: "Follows standard Japanese Go rules.",
       boardTitle: "Board Size",
       boardDescription:
-        "Played on a 9x9 board (for beginners) or a 13x13 board (for intermediate players).",
+        "Played on a 9x9 board (for beginners) or a 13x13 board (for intermediate players) or a 19x19 board (for advanced players).",
       komiTitle: "Komi",
       komiDescription:
         "White receives 6.5 points as compensation for playing second.",
       timeLimitTitle: "Time Limit",
       timeLimitDescription:
-        "9x9: 3 minutes + 1 second per move. 13x13: 5 minutes + 3 seconds per move. Running out of time results in a loss.",
+        "9x9: 3 minutes + 1 second per move. 13x13: 5 minutes + 3 seconds per move. 19x19: 10 minutes + 5 seconds per move. Running out of time results in a loss.",
       objectiveTitle: "Objective",
       objectiveDescription: "The player with the most territory wins.",
     },
@@ -243,7 +284,7 @@ export const dictionary = {
         "A new version is available. Please reload the page to continue. If reloading doesn't help, please wait a few minutes and try again.",
       reloadButton: "Reload",
       restartMessage:
-        "An update has been downloaded. Please restart the app to continue.",
+        "An update has been downloaded. Please restart the app to continue.If restarting doesn't help, please wait a few minutes and try again.",
       restartButton: "Restart",
     },
   },
@@ -260,6 +301,39 @@ export const dictionary = {
         invalidFormat:
           "Only alphanumeric characters and underscores (_) are allowed.",
       },
+    },
+  },
+  Practice: {
+    en: {
+      setupTitle: "Practice Setup",
+      boardSize: "Board Size",
+      myColor: "My Color",
+      handicap: "Handicap",
+      bot: "Bot",
+      start: "Start",
+      botThinking: "Bot is thinking...",
+    },
+  },
+  AI: {
+    en: {
+      connecting: "Connecting to AI engine...",
+      downloading: "Downloading AI model...",
+      warming_up: "Starting AI engine...",
+      errorTitle: "Failed to prepare AI engine",
+      download_required_match:
+        "Downloading the AI is required to play a match at this rank.",
+      download_required_practice:
+        "Downloading the AI is required to use this bot.",
+    },
+  },
+
+  Analysis: {
+    en: {
+      ownership: "Ownership",
+      winRate: "Win Rate",
+      candidates: "Candidates",
+      scoreLead: "Score Lead",
+      moveEvaluation: "Move Evaluation",
     },
   },
 } as const;

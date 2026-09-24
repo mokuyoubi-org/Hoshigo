@@ -1,3 +1,5 @@
+// matchingRPC.ts
+
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { BoardSize } from "go-core";
 
@@ -31,10 +33,12 @@ export const formatPlayingParams = (data: any): PlayingParams => ({
 
 export const joinWaitlistRPC = async (
   boardSize: BoardSize,
+  hasB18: boolean,
   afterId?: number | null,
 ) => {
   return await supabase.rpc("join_waitlist", {
     p_board_size: boardSize,
+    p_has_b18: hasB18,
     p_after_id: afterId ?? null,
   });
 };

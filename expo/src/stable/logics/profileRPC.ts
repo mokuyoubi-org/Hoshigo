@@ -1,17 +1,29 @@
 import { supabase } from "@/src/stable/services/supabase/supabase";
 
- type ProfileData = {
+type ProfileData = {
   username: string;
-  rating9: number;
-  rating13: number;
   iconIndex: number;
+  // 9
   wins9: number;
   losses9: number;
   draws9: number;
+  rating9: number;
+  giantKillingStreak9: number;
+  // 13
   wins13: number;
   losses13: number;
   draws13: number;
+  rating13: number;
+  giantKillingStreak13: number;
+  // 19
+  wins19: number;
+  losses19: number;
+  draws19: number;
+  rating19: number;
+  giantKillingStreak19: number;
+  // other
   allowBotMatch: boolean;
+  country: string | null;
 };
 
 type SessionUserData = {
@@ -25,11 +37,13 @@ type FetchProfileResult = {
   profile: ProfileData | null;
   newerRecords9: any[];
   newerRecords13: any[];
+  newerRecords19: any[];
 };
 
 export async function fetchProfileRPC(
   afterId9?: number | null,
   afterId13?: number | null,
+  afterId19?: number | null,
 ): Promise<FetchProfileResult | null> {
   const { data: sessionData } = await supabase.auth.getSession();
   const session = sessionData?.session;
@@ -41,6 +55,7 @@ export async function fetchProfileRPC(
   const { data, error } = await supabase.rpc("get_my_profile", {
     p_after_id_9: afterId9 ?? null,
     p_after_id_13: afterId13 ?? null,
+    p_after_id_19: afterId19 ?? null,
   });
 
   if (error || !data) {
@@ -58,16 +73,28 @@ export async function fetchProfileRPC(
   const profile: ProfileData | null = rawProfile
     ? {
         username: rawProfile.username ?? "",
-        rating9: rawProfile.rating_9 ?? 0,
-        rating13: rawProfile.rating_13 ?? 0,
         iconIndex: rawProfile.icon_index ?? 0,
+        // 9
         wins9: rawProfile.wins_9 ?? 0,
         losses9: rawProfile.losses_9 ?? 0,
         draws9: rawProfile.draws_9 ?? 0,
+        rating9: rawProfile.rating_9 ?? 0,
+        giantKillingStreak9: rawProfile.giant_killing_streak_9 ?? 0,
+        // 13
         wins13: rawProfile.wins_13 ?? 0,
         losses13: rawProfile.losses_13 ?? 0,
         draws13: rawProfile.draws_13 ?? 0,
+        rating13: rawProfile.rating_13 ?? 0,
+        giantKillingStreak13: rawProfile.giant_killing_streak_13 ?? 0,
+        // 19
+        wins19: rawProfile.wins_19 ?? 0,
+        losses19: rawProfile.losses_19 ?? 0,
+        draws19: rawProfile.draws_19 ?? 0,
+        rating19: rawProfile.rating_19 ?? 0,
+        giantKillingStreak19: rawProfile.giant_killing_streak_19 ?? 0,
+        // other
         allowBotMatch: rawProfile.allow_bot_match ?? false,
+        country: rawProfile.country ?? null,
       }
     : null;
 
@@ -76,5 +103,6 @@ export async function fetchProfileRPC(
     profile,
     newerRecords9: data.newer_records_9 ?? [],
     newerRecords13: data.newer_records_13 ?? [],
+    newerRecords19: data.newer_records_19 ?? [],
   };
 }

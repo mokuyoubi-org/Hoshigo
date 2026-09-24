@@ -14,6 +14,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useKVStorage } from "storage-kit";
 import { ModalShell, SegmentedControl } from "ui-atoms";
 
 type RankingItem = Profile & {
@@ -29,7 +30,10 @@ type Props = {
 export default function RankingsModal({ visible, onClose }: Props) {
   const [allProfiles, setAllProfiles] = useState<RankingItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [boardSize, setBoardSize] = useState<BoardSize>(9);
+  const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
+    "RankingsModal.boardSize", // ユニークなキーを用意する
+    9,
+  );
 
   const { height: windowHeight } = useWindowDimensions();
 
@@ -40,7 +44,7 @@ export default function RankingsModal({ visible, onClose }: Props) {
     const fetchTopProfiles = async () => {
       setLoading(true);
 
-      // 🐱 1日1回だけ Supabase から取得し、2回目以降は sqliteKv のキャッシュを使う
+      // 🐱 1日1回だけ Supabase から取得し、2回目以降はキャッシュを使う
       const data = await fetchWithPeriodicCache<RankingItem[]>(
         "global_rankings",
         1440,
@@ -71,6 +75,8 @@ export default function RankingsModal({ visible, onClose }: Props) {
           value={boardSize}
           options={BOARD_SIZE_OPTIONS}
           onSelect={setBoardSize}
+          activeSegmentWidth={72}
+          inactiveSegmentWidth={48}
         />
       </View>
 

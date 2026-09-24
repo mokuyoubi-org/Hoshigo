@@ -1,9 +1,11 @@
+// rankLogics.ts
+
 import { RankInfo, RANKS } from "@/src/active/constants/ranks";
 import { TFunction } from "@/src/active/i18n/types";
 
 const RATING_PER_WIN = 10;
 
-const ratingToRankIndex = (rating: number): number => {
+export const ratingToRankIndex = (rating: number): number => {
   const safeRating = Math.max(0, rating);
   const rankIndex = RANKS.findLastIndex((rank) => rank.minRating <= safeRating);
   return rankIndex !== -1 ? rankIndex : 0;

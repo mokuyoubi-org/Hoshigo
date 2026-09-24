@@ -1,4 +1,4 @@
-// logics/gameScreenLogics.ts
+// gameScreenLogics.ts
 
 import {
   BLACK,

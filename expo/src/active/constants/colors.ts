@@ -9,10 +9,13 @@ export const COLORS = {
   primaryDark: "#8e9daa",
 
   // 2. オブジェクト
+  darkObjectLight: "#6f8594",
   darkObject: "#455763",
   darkObjectAccent: "#848f97",
   lightObject: "#fcfcfc",
   lightObjectAccent: "#9db3c0",
+
+  disabled: "#7e7e7e",
 
   // 3. オーバーレイ
   overlay: "#00000080",
@@ -34,9 +37,9 @@ export const COLORS = {
   coral: "#f19688",
   purple: "#c182d8",
 
-  goodMoveColor: "#3bce428f", // デフォルトは緑色
-  badMoveColor: "#ff7474a2", // デフォルトは赤色
-
-  humanMoveColor: "#e2a1a17b", // 🐱 人間の編集(赤)
-  botMoveColor: "#75b384d7", // 🐱 ボットの着手(緑)
+  // 7. 碁盤で使われる色
+  goodMoveColor: "#3bce428f",
+  badMoveColor: "#ff7474a2",
+  humanMoveColor: "#e2a1a17b",
+  botMoveColor: "#75b384d7",
 } as const;

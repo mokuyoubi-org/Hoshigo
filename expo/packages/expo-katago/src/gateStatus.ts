@@ -1,3 +1,5 @@
+// gateStatus.ts
+
 export type LoadStage = {
   // downloading / warming_up は analyzeBoard.ts の ModelLoadStage 由来
   phase: "downloading" | "warming_up";
@@ -25,7 +27,11 @@ function stagePercent(stage: LoadStage): number | null {
       ? Math.min(100, Math.round((stage.loaded! / stage.total!) * 100))
       : null;
   }
-  return Math.round((stage.step! / stage.totalSteps!) * 100);
+  // warming_up はモデルごとの内部ステップ(step/totalSteps)でしかなく、
+  // 複数モデル(b6→b10→b18)を跨いだ通しの進捗ではない。そのままだと
+  // モデルが切り替わるたびに100%→50%のように%が飛んで見えてしまうため、
+  // connecting と同じ「不確定(null)」として扱い、流れ続けるUIに統一する。
+  return null;
 }
 
 export function getGateStatus(

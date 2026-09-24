@@ -1,26 +1,34 @@
-import { OTA_VERSION } from "@/ota-version";
 import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
 import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
 import { COLORS } from "@/src/active/constants/colors";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useSettingsScreen } from "@/src/active/hooks/screens/useSettingsScreen";
-import { useDoubleTapSetting } from "@/src/active/hooks/useDoubleTapSetting";
 import { useTranslation } from "@/src/active/i18n";
 import { openURL } from "@/src/stable/logics/linking";
-import * as Application from "expo-application";
-import Constants from "expo-constants";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useKVStorage } from "storage-kit";
 import { ToggleSwitch } from "ui-atoms";
+import { SettingsRow } from "../active/components/common/SettingsRow";
+import { SettingsSection } from "../active/components/common/SettingsSection";
+import { AIModelModal } from "../active/components/modals/AIModelModal";
+import { CountryModal } from "../active/components/modals/CountryModal";
+import { DoubleTapModal } from "../active/components/modals/DoubleTapModal";
+import { EmailChangeModal } from "../active/components/modals/EmailChangeModal";
+import { LoginModal } from "../active/components/modals/LoginModal";
+import { VersionModal } from "../active/components/modals/VersionModal";
+import { useCountryUpdate } from "../active/hooks/useCountryUpdate";
+import { getCountryLabel } from "../stable/logics/country";
 
 export default function SettingsScreen() {
   const t = useTranslation();
   const { show, hide } = useOverlay();
-  const { username, email, allowBotMatch, isAnonymous } = useProfile();
+  const { username, email, allowBotMatch, isAnonymous, country } = useProfile();
   const {
     loading,
     isDisabled,
@@ -29,19 +37,23 @@ export default function SettingsScreen() {
     onLogout,
     handleConfirmDelete,
   } = useSettingsScreen();
+  const { updateCountry } = useCountryUpdate();
 
-    useEffect(() => {
-      // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
-      if (
-        typeof document !== "undefined" &&
-        document.activeElement instanceof HTMLElement
-      ) {
-        document.activeElement.blur();
-      }
-    }, []);
+  const {
+    value: isSoundEnabled,
+    setValue: setIsSoundEnabled,
+    isLoaded: isSoundEnabledLoaded,
+  } = useKVStorage<boolean>("global.sound", true);
 
-  // ダブルタップ設定用フックの呼び出し
-  const { enableDoubleTap13, toggleDoubleTap13 } = useDoubleTapSetting();
+  useEffect(() => {
+    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
+    if (
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+    ) {
+      document.activeElement.blur();
+    }
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -53,12 +65,20 @@ export default function SettingsScreen() {
         <View className="w-full max-w-[680px] mx-auto px-5 pb-10">
           <View className="mt-2 h-11 justify-center">
             <TouchableOpacity
-              onPress={() => router.push("/(tabs)/ProfileScreen")}
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace("/ProfileScreen");
+                }
+              }}
               activeOpacity={0.7}
             >
-              <Text className="text-base font-bold text-text tracking-wide">
-                ‹ {t("common.back")}
-              </Text>
+              <Ionicons
+                name="chevron-back-outline"
+                size={32}
+                color={COLORS.primaryDark}
+              />
             </TouchableOpacity>
           </View>
 
@@ -66,32 +86,46 @@ export default function SettingsScreen() {
             {t("common.settings")}
           </Text>
 
-          {/* メアド */}
-          <View className="mb-6">
-            <Text className="text-[11px] font-bold uppercase tracking-widest text-text mb-2.5 ml-1">
-              {t("Settings.accountInfo")}
-            </Text>
-            <View className="flex-row justify-between items-center bg-foreground rounded-xl border-2 border-backgroundDark px-[18px] py-4 min-h-[56px] w-full">
-              <Text className="text-base font-semibold text-text tracking-wide">
-                {t("common.email")}
-              </Text>
-              <Text className="text-base font-semibold text-textSub tracking-wide">
-                {email ? email : "Not set"}
-              </Text>
-            </View>
-          </View>
-
-          {/* 対局設定セクション */}
-          <View className="mb-6">
-            <Text className="text-[11px] font-bold uppercase tracking-widest text-text mb-2.5 ml-1">
-              {t("Settings.matchSettings")}
-            </Text>
-            <View className="bg-foreground rounded-xl border-2 border-backgroundDark w-full overflow-hidden">
-              {/* ボットマッチ許可 */}
-              <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px]">
-                <Text className="text-base font-semibold text-text tracking-wide">
-                  {t("Settings.allowBotMatch")}
+          <SettingsSection title={t("Settings.accountInfo")}>
+            <SettingsRow
+              label={t("common.email")}
+              onPress={() =>
+                show(
+                  email ? (
+                    <EmailChangeModal visible={true} onClose={hide} />
+                  ) : (
+                    <LoginModal visible={true} onClose={hide} />
+                  ),
+                )
+              }
+              rightElement={
+                <Text className="text-lg font-semibold text-textSub tracking-wide">
+                  {email ? email : "Not set"}
                 </Text>
+              }
+            />
+            {/* <SettingsRow
+              label={t("common.country")}
+              onPress={() =>
+                show(
+                  <CountryModal
+                    onSelectCountry={updateCountry}
+                    onClose={hide}
+                  />,
+                )
+              }
+              rightElement={
+                <Text className="text-lg font-semibold text-textSub tracking-wide">
+                  {country ? getCountryLabel(country) : t("Settings.notSet")}
+                </Text>
+              }
+            /> */}
+          </SettingsSection>
+
+          <SettingsSection title={t("Settings.matchSettings")}>
+            <SettingsRow
+              label={t("Settings.allowBotMatch")}
+              rightElement={
                 <ToggleSwitch
                   value={allowBotMatch ?? true}
                   onToggle={handleToggleBotMatch}
@@ -99,97 +133,52 @@ export default function SettingsScreen() {
                   backgroundColor={COLORS.primary}
                   toggleColor={COLORS.foreground}
                 />
-              </View>
+              }
+            />
+            <SettingsRow
+              label={t("Settings.doubleTap")}
+              onPress={() =>
+                show(<DoubleTapModal isMatching={isMatching} onClose={hide} />)
+              }
+            />
+          </SettingsSection>
 
-              {/* 区切り線 */}
-              <View className="h-[1px] bg-backgroundDark w-full" />
+          <SettingsSection title={t("common.device")}>
+            <SettingsRow
+              label={t("common.sound")}
+              rightElement={
+                isSoundEnabledLoaded ? (
+                  <ToggleSwitch
+                    value={isSoundEnabled}
+                    onToggle={(val) => setIsSoundEnabled(val)}
+                    backgroundColor={COLORS.primary}
+                    toggleColor={COLORS.foreground}
+                  />
+                ) : null
+              }
+            />
+            <SettingsRow
+              label={t("common.aiModels")}
+              onPress={() => show(<AIModelModal onClose={hide} />)}
+            />
+          </SettingsSection>
 
-              {/* ダブルタップ着手設定 */}
-              <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px]">
-                <Text className="text-base font-semibold text-text tracking-wide">
-                  {t("Settings.enableDoubleTap", {
-                    defaultValue: "ダブルタップで着手",
-                  })}
-                </Text>
-                <ToggleSwitch
-                  value={enableDoubleTap13}
-                  onToggle={toggleDoubleTap13}
-                  disabled={isMatching}
-                  backgroundColor={COLORS.primary}
-                  toggleColor={COLORS.foreground}
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* インフォメーションセクション */}
-          <View className="mb-6">
-            <Text className="text-[11px] font-bold uppercase tracking-widest text-text mb-2.5 ml-1">
-              {t("common.information")}
-            </Text>
-            <View className="bg-foreground rounded-xl border-2 border-backgroundDark w-full overflow-hidden">
-              {/* プライバシーポリシー */}
-              <TouchableOpacity
-                className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full"
-                activeOpacity={0.7}
-                onPress={() => openURL("https://mokuyoubi.org/privacy")}
-              >
-                <Text className="text-base font-semibold text-text tracking-wide">
-                  {t("Settings.privacyPolicy")}
-                </Text>
-                <Text className="text-2xl font-light text-text opacity-50">
-                  ›
-                </Text>
-              </TouchableOpacity>
-
-              {/* 区切り線 */}
-              <View className="h-[1px] bg-backgroundDark w-full" />
-
-              {/* 利用規約 */}
-              <TouchableOpacity
-                className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full"
-                activeOpacity={0.7}
-                onPress={() => openURL("https://mokuyoubi.org/terms")}
-              >
-                <Text className="text-base font-semibold text-text tracking-wide">
-                  {t("Settings.termsOfService")}
-                </Text>
-                <Text className="text-2xl font-light text-text opacity-50">
-                  ›
-                </Text>
-              </TouchableOpacity>
-
-              {/* 区切り線 */}
-              <View className="h-[1px] bg-backgroundDark w-full" />
-
-              {/* アプリ本体のバージョン */}
-              <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full">
-                <Text className="text-base font-semibold text-text tracking-wide">
-                  {t("common.appVersion")}
-                </Text>
-                <Text className="text-base font-semibold text-textSub tracking-wide">
-                  {Application.nativeApplicationVersion ??
-                    Constants.expoConfig?.version}
-                </Text>
-              </View>
-
-              {/* 区切り線 */}
-              <View className="h-[1px] bg-backgroundDark w-full" />
-
-              {/* OTAバージョン */}
-              <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full">
-                <Text className="text-base font-semibold text-text tracking-wide">
-                  {t("common.otaVersion")}
-                </Text>
-                <Text className="text-base font-semibold text-textSub tracking-wide">
-                  {OTA_VERSION}
-                </Text>
-              </View>
-            </View>
-          </View>
+          <SettingsSection title={t("common.information")}>
+            <SettingsRow
+              label={t("Settings.privacyPolicy")}
+              onPress={() => openURL("https://mokuyoubi.org/privacy")}
+            />
+            <SettingsRow
+              label={t("Settings.termsOfService")}
+              onPress={() => openURL("https://mokuyoubi.org/terms")}
+            />
+            <SettingsRow
+              label={t("common.version")}
+              onPress={() => show(<VersionModal onClose={hide} />)}
+            />
+          </SettingsSection>
 
           <View className="gap-3">
-            {/* ログアウトボタン */}
             {!isAnonymous && (
               <TouchableOpacity
                 className={`h-[52px] w-full rounded-xl justify-center items-center bg-foreground border-2 border-backgroundDark ${
@@ -211,13 +200,12 @@ export default function SettingsScreen() {
                   );
                 }}
               >
-                <Text className="text-base font-bold text-text tracking-wide">
+                <Text className="text-lg font-bold text-text tracking-wide">
                   {t("common.logout")}
                 </Text>
               </TouchableOpacity>
             )}
 
-            {/* アカウント削除ボタン */}
             <TouchableOpacity
               className={`h-[52px] w-full rounded-xl justify-center items-center bg-foreground border-2 border-coral ${
                 isDisabled ? "opacity-40" : ""
@@ -237,7 +225,7 @@ export default function SettingsScreen() {
                 );
               }}
             >
-              <Text className="text-base font-bold text-coral tracking-wide">
+              <Text className="text-lg font-bold text-coral tracking-wide">
                 {t("Settings.deleteAccount")}
               </Text>
             </TouchableOpacity>

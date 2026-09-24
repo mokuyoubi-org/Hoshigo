@@ -1,3 +1,4 @@
+import { ModelId } from "expo-katago";
 import {
   BLACK,
   Board,
@@ -9,24 +10,27 @@ import {
 } from "go-core";
 
 export const printCustomKataGoResult = (
+  resolvedModelId: ModelId,
   board: Board,
   moves: Grid[],
   currentPlayer: Color,
   result: any,
   boardSize: BoardSize,
 ): void => {
-  // 盤面のサイズ（9路盤なら9）を取得する
+  console.log(
+    `-------- ${resolvedModelId}の分析結果: --------`,
+  );
 
   // 1. moves（数字の配列）を gridToMoveObject で {x, y} の形に変換する
   const formattedInputMoves = moves.map((grid: number) => {
-    const moveObj = gridToMoveObject(grid, boardSize);
+    const moveObj = gridToMoveObject(grid, boardSize, currentPlayer);
     return { x: moveObj.x, y: moveObj.y };
   });
 
-  console.log("受け取った情報:");
+  // console.log("受け取った情報:");
   // printDebugBoard(board);
-  console.log("moves: ", JSON.stringify(formattedInputMoves));
-  console.log("currentPlayer: ", currentPlayer);
+  // console.log("moves: ", JSON.stringify(formattedInputMoves));
+  // console.log("currentPlayer: ", currentPlayer);
 
   console.log("出力情報:");
   // 小数を第2位で切り捨てるおまじない
@@ -47,13 +51,13 @@ export const printCustomKataGoResult = (
     .join(", \n");
 
   // 3. ownership の配列内の小数をまとめて切り捨てる（1行にまとめる！）
-  // const ownershipFormatted = JSON.stringify(result.ownership.map(trunc));
+  const ownershipFormatted = JSON.stringify(result.ownership.map(trunc));
 
   // 4. フォーマットに組み立てる
   const output =
     `{"moves": [\n` +
     `${movesFormatted}], \n` +
-    // `"ownership": ${ownershipFormatted}, \n` +
+    `"ownership": ${ownershipFormatted}, \n` +
     `"scoreLead": ${trunc(result.scoreLead)}, \n` +
     `"winRate": ${trunc(result.winRate)}}`;
 
@@ -62,15 +66,21 @@ export const printCustomKataGoResult = (
 
 export function printDebugBoard(board: Board) {
   let boardSize;
-  if (board.length === 81) {
+   if (board.length === 25) {
+    boardSize = 5;
+  } else if (board.length === 81) {
     boardSize = 9;
   } else if (board.length === 169) {
     boardSize = 13;
-  } else if (board.length === 381) {
+  } else if (board.length === 361) {
     boardSize = 19;
   } else {
     return;
   }
+
+  // 盤面全体をひとつの文字列にまとめるための配列
+  const lines: string[] = [];
+
   // 19×19の盤面を作る（19行分ループ）
   for (let row = 0; row < boardSize; row++) {
     let line = "";
@@ -88,7 +98,10 @@ export function printDebugBoard(board: Board) {
         line += "? ";
       }
     }
-    // 1行ずつログに出力する
-    console.log(line);
+    // 配列に1行分の文字列を入れる
+    lines.push(line);
   }
+
+  // 改行でつないで、1回だけログに出力する！
+  console.log(lines.join("\n"));
 }

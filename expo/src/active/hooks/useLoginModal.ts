@@ -12,16 +12,18 @@ import { useProfileSync } from "./useProfileSync";
 export type Step = "email" | "otp" | "selection";
 type Path = "link" | "signin" | null;
 
-export type ExistingPreview = {
+type ExistingPreview = {
   username: string;
   rating_9: number;
   rating_13: number;
+  rating_19: number;
 } | null;
 
 type GuestSnapshot = {
   username: string;
   rating9: number;
   rating13: number;
+  rating19: number;
 };
 
 export type Selection = "guest" | "existing" | null;
@@ -33,7 +35,7 @@ type Props = {
 
 export function useLoginModal({ onClose, turnstileRef }: Props) {
   const t = useTranslation();
-  const { username, rating9, rating13 } = useProfile();
+  const { username, rating9, rating13, rating19 } = useProfile();
   const { syncProfile } = useProfileSync();
 
   const [step, setStep] = useState<Step>("email");
@@ -48,6 +50,7 @@ export function useLoginModal({ onClose, turnstileRef }: Props) {
     username: username ?? "",
     rating9: rating9 ?? 0,
     rating13: rating13 ?? 0,
+    rating19: rating19 ?? 0,
   }));
   const [existingPreview, setExistingPreview] = useState<ExistingPreview>(null);
   const [selection, setSelection] = useState<Selection>(null);

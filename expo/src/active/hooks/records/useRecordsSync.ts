@@ -2,9 +2,13 @@
 
 import type { RecordType } from "@/src/active/types/record";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
-import { sqliteKv } from "@/src/stable/services/storage/sqlite";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useCallback } from "react";
+import { kvStore } from "storage-kit";
+
+// 🐱 「サーバの底」情報。未確認(kvStoreにキーが無い)なのか、
+//    確認済みで0件なのか、確認済みで最古IDがXなのかを型で区別する
+type OldestInfo = { confirmedEmpty: true } | { id: number };
 
 export function useRecordsSync() {
   // ---- ページ取得(表示用) ----
@@ -22,18 +26,33 @@ export function useRecordsSync() {
 
       // 1. ローカルから取得を試みる
       const localPage = await recordsRepo.getPage(boardSize, beforeId, limit);
+
+      // 1.5. ローカルだけで既に足りているなら、通信せず即返す
       if (localPage.length >= limit) {
-        console.log("ローカルだけで足りたよ");
+        console.log("ローカルで足りてるので通信スキップ");
         return localPage;
       }
 
       // 2. 「これ以上古い棋譜はない」と分かっているかチェックする！
       const oldestKey = `oldest_record_id_${boardSize}`;
-      const knownOldestIdStr = await sqliteKv.getItem(oldestKey);
+      const knownOldestIdStr = await kvStore.getItem(oldestKey);
       console.log("knownOldestIdStr: ", knownOldestIdStr);
 
       if (knownOldestIdStr !== null) {
-        const knownOldestId = JSON.parse(knownOldestIdStr) as number;
+        const parsed = JSON.parse(knownOldestIdStr) as OldestInfo | number;
+
+        // 🐱 移行前は素の数値がそのまま保存されていたので、
+        //    そのケースだけ { id: number } に読み替えてあげる
+        const known: OldestInfo =
+          typeof parsed === "number" ? { id: parsed } : parsed;
+
+        if ("confirmedEmpty" in known) {
+          // 🐱 確認済みで、そもそもこのボードサイズの棋譜が0件だと分かっている
+          console.log("このボードサイズは0件だと確認済み。通信スキップ");
+          return localPage;
+        }
+
+        const knownOldestId = known.id;
         const currentOldestInLocal =
           localPage.length > 0 ? localPage[localPage.length - 1].id : beforeId;
 
@@ -69,13 +88,28 @@ export function useRecordsSync() {
 
       // 4. サーバから取れた件数が要求より少ない＝「底に到達した」
       if (fetched.length < needCount) {
-        // 今回取れた分も含めて、一番古いIDを確定させて保存する
-        const finalOldestId =
-          fetched.length > 0 ? fetched[fetched.length - 1].id : fetchFromId;
-
-        if (finalOldestId !== null) {
-          await sqliteKv.setItem(oldestKey, JSON.stringify(finalOldestId));
+        if (fetched.length > 0) {
+          // 今回取れた分の中で一番古いIDを底として記録
+          const finalOldestId = fetched[fetched.length - 1].id;
+          await kvStore.setItem(
+            oldestKey,
+            JSON.stringify({ id: finalOldestId } satisfies OldestInfo),
+          );
           console.log("サーバの最古IDを記録したよ:", finalOldestId);
+        } else if (fetchFromId !== null) {
+          // 0件だったけど、fetchFromIdより古いものが無いという意味で記録
+          await kvStore.setItem(
+            oldestKey,
+            JSON.stringify({ id: fetchFromId } satisfies OldestInfo),
+          );
+          console.log("サーバの最古IDを記録したよ:", fetchFromId);
+        } else {
+          // 🐱 fetchFromIdもnull＝そもそもこのボードサイズの棋譜が1件も無い、と確定
+          await kvStore.setItem(
+            oldestKey,
+            JSON.stringify({ confirmedEmpty: true } satisfies OldestInfo),
+          );
+          console.log("このボードサイズは0件だと確認したよ");
         }
       }
 

@@ -65,9 +65,6 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
 
       {/* 📌【固定②】現在のくみ */}
       <View className="w-full rounded-[20px] p-[22px] items-center mb-4 bg-foreground border-[1.5px] border-background">
-        <Text className="text-xs font-bold mb-2.5 tracking-widest text-textSub">
-          {t("RankInfoModal.yourCurrentRating")}
-        </Text>
         <Text
           className="text-[34px] font-extrabold mb-1.5"
           style={{
@@ -89,7 +86,7 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
 
       {/* 🌀【割合高さスクロール】端末高さの 30%（0.3）をセットした */}
       <View className="w-full mb-3">
-        <Text className="text-xs font-bold tracking-wider mb-2.5 text-textSub">
+        <Text className="text-sm font-bold tracking-wider mb-2.5 text-textSub">
           {t("RankInfoModal.allRank")}
         </Text>
 
@@ -172,7 +169,7 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
                         className="flex-1 items-center justify-center"
                       >
                         <Text
-                          className="text-xs font-black tracking-wider"
+                          className="text-sm font-black tracking-wider"
                           style={{
                             color: bundleColor,
                           }}
@@ -214,7 +211,7 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
 
       {/* 📌【固定③】フッター説明カード */}
       <View className="p-[18px] rounded-3xl bg-foreground border-[1.5px] border-background w-full">
-        <Text className="text-[13px] font-semibold leading-5 text-textSub">
+        <Text className="text-[14px] font-semibold leading-5 text-textSub">
           {t("RankInfoModal.infoText")}
         </Text>
       </View>

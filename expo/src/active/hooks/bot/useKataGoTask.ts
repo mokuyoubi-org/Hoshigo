@@ -22,15 +22,29 @@ export type KataGoTaskParams = {
   boardSize: BoardSize;
   matchType: MatchType;
   modelId: ModelId; // 「本当はこれを使いたい」という希望。自動でこれ以下にフォールバックする
+  minModelId?: ModelId; // フォールバックを許容する下限モデル。省略時はb6まで許容(=最弱まで妥協可)
 };
 
-// 希望モデルごとの、フォールバック先の優先順位(自分自身を含む、精度が高い順)。
-// b18が欲しいなら b18→b10→b6、b10が欲しいなら b10→b6、b6が欲しいなら b6のみ。
-const FALLBACK_CHAIN: Record<ModelId, ModelId[]> = {
-  b18: ["b18", "b10", "b6"],
-  b10: ["b10", "b6"],
-  b6: ["b6"],
-};
+// モデルの優先順位(精度が高い順)。フォールバックチェーンはこの配列から動的に切り出す。
+const MODEL_PRIORITY: ModelId[] = ["b18", "b10", "b6"];
+
+// modelId(希望)からminModelId(下限)までの区間を切り出してフォールバックチェーンを作る。
+// 例: getFallbackChain("b18", "b10") → ["b18", "b10"](b6には絶対に落ちない)
+// 例: getFallbackChain("b18")        → ["b18", "b10", "b6"](従来通り、b6まで許容)
+function getFallbackChain(
+  modelId: ModelId,
+  minModelId: ModelId = "b6",
+): ModelId[] {
+  const startIdx = MODEL_PRIORITY.indexOf(modelId);
+  const endIdx = MODEL_PRIORITY.indexOf(minModelId);
+
+  if (startIdx === -1 || endIdx === -1 || startIdx > endIdx) {
+    // 不正な組み合わせ(下限が希望より高精度、等)は希望モデル単体にフォールバック
+    return [modelId];
+  }
+
+  return MODEL_PRIORITY.slice(startIdx, endIdx + 1);
+}
 
 // ⚠️👍このuseKataGoTaskの存在意義はこのフィールドにあると言って良い。
 const fields = {
@@ -47,9 +61,9 @@ export function useKataGoTask() {
 
   const run = async (
     params: KataGoTaskParams,
-  ): Promise<AnalyzeResult | null> => {
+  ): Promise<(AnalyzeResult & { modelId: ModelId }) | null> => {
     const resolvedModelId = kataGo.getBestAvailableModel(
-      FALLBACK_CHAIN[params.modelId],
+      getFallbackChain(params.modelId, params.minModelId),
     );
 
     const result = await kataGo.run({
@@ -58,10 +72,8 @@ export function useKataGoTask() {
       fields,
     });
 
-    console.log(
-      `----------------------- ${resolvedModelId}の分析結果: -----------------------`,
-    );
     printCustomKataGoResult(
+      resolvedModelId,
       params.board,
       params.movesSoFar,
       params.currentPlayer,
@@ -69,11 +81,39 @@ export function useKataGoTask() {
       params.boardSize,
     );
 
-    return result;
+    return result ? { ...result, modelId: resolvedModelId } : null;
+  };
+
+  // 🌟フォールバックを一切許さない版。要求したmodelIdをそのまま使う。
+  //   そのモデルがまだDL/ウォームアップ未完了でも、より弱いモデルに
+  //   妥協することはない——kataGo.run→analyzeBoard内のloadModelが
+  //   キャッシュに無ければその場でDL・ウォームアップを待ってから
+  //   解析するので、単に時間がかかるだけで結果は必ず要求モデル基準になる。
+  //   終局の地計算のように「精度が絶対、待ち時間は許容できる」用途専用。
+  //   requestIdを渡すと、まだキューに積まれてる間だけcancelQueuedAnalysis
+  //   で取り消せるようになる(連打で不要になった編集モードの解析の後始末用)。
+  const runExact = async (
+    params: KataGoTaskParams,
+    requestId?: string,
+  ): Promise<(AnalyzeResult & { modelId: ModelId }) | null> => {
+    const result = await kataGo.run({ ...params, fields }, requestId);
+
+    printCustomKataGoResult(
+      params.modelId,
+      params.board,
+      params.movesSoFar,
+      params.currentPlayer,
+      result,
+      params.boardSize,
+    );
+
+    return result ? { ...result, modelId: params.modelId } : null;
   };
 
   return {
     run,
+    runExact,
     engineReady: kataGo.engineReady,
+    cancelQueuedAnalysis: kataGo.cancelQueuedAnalysis,
   };
 }

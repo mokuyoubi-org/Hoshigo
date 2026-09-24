@@ -24,6 +24,7 @@ import {
   PixelRatio,
   useWindowDimensions,
 } from "react-native";
+import { useKVStorage } from "storage-kit";
 
 export type ProcessedRecord = {
   finalBoard: Board;
@@ -62,8 +63,15 @@ export function useRecordsScreen() {
   const SNAP_INTERVAL = CARD_HEIGHT + 18;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [boardSize, setBoardSize] = useState<BoardSize>(9);
+  const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
+    "RecordScreen.boardSize",
+    9,
+  );
   const boardSizeRef = useRef<BoardSize>(9);
+  // 🐱 useKVStorageから非同期でロードされた値をrefにも反映する
+  useEffect(() => {
+    boardSizeRef.current = boardSize;
+  }, [boardSize]);
 
   // 🐱 盤サイズ→表示用データ の辞書。BOARD_SIZE_OPTIONSがいくつ増えても自動対応
   const [caches, setCaches] = useState<Partial<Record<BoardSize, BoardCache>>>(

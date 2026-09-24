@@ -41,7 +41,7 @@ export function DeleteModal({ username, onConfirm, onCancel }: Props) {
   };
 
   return (
-    <ModalShell size="lg">
+    <ModalShell size="lg" backgroundColor={COLORS.foreground}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full"

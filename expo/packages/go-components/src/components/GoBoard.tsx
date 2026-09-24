@@ -43,7 +43,7 @@ type Props = {
   onPutStone: (grid: Grid, boardSize: BoardSize) => void;
   // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
   disabled: boolean;
-  enableDoubleTap: boolean;
+  doubleTap: boolean;
   isGameEnded: boolean;
   // その他情報: 5
   editMarkers: Map<Grid, "human" | "bot">;
@@ -64,6 +64,8 @@ type Props = {
   botMoveColor: ColorValue;
   goodMoveColor: ColorValue;
   badMoveColor: ColorValue;
+  sound: boolean;
+  practiceMatchStatus: string;
 };
 
 export function GoBoard({
@@ -82,7 +84,7 @@ export function GoBoard({
   moveEvaluationPoint = null,
   moveEvaluation,
   forceShowTerritory = false,
-  enableDoubleTap = false,
+  doubleTap = false,
   playerColor = BLACK,
   boardColor,
   lineColor,
@@ -95,6 +97,8 @@ export function GoBoard({
   goodMoveColor,
   badMoveColor,
   matchType,
+  sound,
+  practiceMatchStatus,
 }: Props) {
   const [pendingGrid, setPendingGrid] = useState<Grid | null>(null);
 
@@ -148,10 +152,12 @@ export function GoBoard({
     const appliedMove = moveHistory[currentIndex - 1];
 
     // パスのときはパスの音、石を置いたときは石の音を鳴らす
-    if (appliedMove === PASS_GRID) {
-      playSound("pass", 0.2);
-    } else {
-      playSound("stone");
+    if (sound) {
+      if (appliedMove === PASS_GRID) {
+        playSound("pass", 0.1);
+      } else {
+        playSound("stone");
+      }
     }
   }, [currentIndex, moveHistory, playSound]);
 
@@ -165,14 +171,14 @@ export function GoBoard({
         return;
       }
 
-      if (!enableDoubleTap || pendingGrid === grid) {
+      if (!doubleTap || pendingGrid === grid) {
         onPutStone(grid, boardSize);
         setPendingGrid(null);
       } else {
         setPendingGrid(grid);
       }
     },
-    [disabled, enableDoubleTap, pendingGrid, onPutStone, boardSize],
+    [disabled, doubleTap, pendingGrid, onPutStone, boardSize],
   );
 
   const handlePressBackground = useCallback(() => {
@@ -247,7 +253,7 @@ export function GoBoard({
                 moveEvaluation={
                   grid === moveEvaluationPoint ? moveEvaluation : undefined
                 }
-                enableDoubleTap={enableDoubleTap}
+                doubleTap={doubleTap}
                 playerColor={playerColor}
                 disabled={disabled}
                 onPressGrid={handlePressGrid}
@@ -265,6 +271,7 @@ export function GoBoard({
                 goodMoveColor={goodMoveColor}
                 badMoveColor={badMoveColor}
                 matchType={matchType}
+                practiceMatchStatus={practiceMatchStatus}
               />
             );
           })}

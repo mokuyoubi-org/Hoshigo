@@ -1,9 +1,7 @@
 // recordBuilder.ts
 
-import { TFunction } from "@/src/active/i18n/types";
 import { RecordType } from "@/src/active/types/record";
-import { BLACK, BoardSize, Color, MatchType, RecordAnalysis } from "go-core";
-import { getRankInfo } from "./rankLogics";
+import { BoardSize, MatchType, RecordAnalysis } from "go-core";
 
 type BuildRecordArgs = {
   matchId: number;
@@ -12,23 +10,19 @@ type BuildRecordArgs = {
   moves: number[];
   deadStones: number[];
   result: string | null;
-  myColor: Color;
-  myUid: string;
-  myUsername: string;
-  myIconIndex: number;
-  myRating: number; // 更新後の値
-  myRankIndexAfter: number;
-  oppUid: string;
-  oppUsername: string;
-  oppIconIndex: number;
-  oppRating: number; // 更新前の値。相手のレーティングの上がり下がりはどうでもいい
-  t: TFunction;
+  blackUid: string;
+  blackUsername: string;
+  blackIconIndex: number;
+  blackRankIndex: number;
+  blackRating: number;
+  whiteUid: string;
+  whiteUsername: string;
+  whiteIconIndex: number;
+  whiteRankIndex: number;
+  whiteRating: number;
   analysis: RecordAnalysis | null;
 };
 
-// 🐱 対局終了直後にGameScreen側が持っている材料一式から、
-//    RecordType(recordsテーブル1行相当)を組み立てる純粋関数。
-//    dependency directionルール: 引数は全部呼び出し側から渡してもらう、self-fetchはしない。
 export function buildRecordFromMatch({
   matchId,
   boardSize,
@@ -36,35 +30,31 @@ export function buildRecordFromMatch({
   moves,
   deadStones,
   result,
-  myColor,
-  myUid,
-  myUsername,
-  myIconIndex,
-  myRating,
-  myRankIndexAfter,
-  oppUid,
-  oppUsername,
-  oppIconIndex,
-  oppRating,
-  t,
+  blackUid,
+  blackUsername,
+  blackIconIndex,
+  blackRankIndex,
+  blackRating,
+  whiteUid,
+  whiteUsername,
+  whiteIconIndex,
+  whiteRating,
+  whiteRankIndex,
   analysis,
 }: BuildRecordArgs): RecordType {
-  const isMeBlack = myColor === BLACK;
-  const oppRankIndex = getRankInfo(oppRating, t).index;
-
   return {
     id: matchId,
-    black_uid: isMeBlack ? myUid : oppUid,
-    white_uid: isMeBlack ? oppUid : myUid,
+    black_uid: blackUid,
+    white_uid: whiteUid,
     created_at: new Date().toISOString(),
-    black_username: isMeBlack ? myUsername : oppUsername,
-    white_username: isMeBlack ? oppUsername : myUsername,
-    black_icon_index: isMeBlack ? myIconIndex : oppIconIndex,
-    white_icon_index: isMeBlack ? oppIconIndex : myIconIndex,
-    black_rank_index: isMeBlack ? myRankIndexAfter : oppRankIndex,
-    white_rank_index: isMeBlack ? oppRankIndex : myRankIndexAfter,
-    black_rating: isMeBlack ? myRating : oppRating,
-    white_rating: isMeBlack ? oppRating : myRating,
+    black_username: blackUsername,
+    white_username: whiteUsername,
+    black_icon_index: blackIconIndex,
+    white_icon_index: whiteIconIndex,
+    black_rank_index: blackRankIndex,
+    white_rank_index: whiteRankIndex,
+    black_rating: blackRating,
+    white_rating: whiteRating,
     board_size: boardSize,
     result,
     moves,

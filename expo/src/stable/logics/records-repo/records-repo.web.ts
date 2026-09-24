@@ -1,5 +1,8 @@
+// records-repo.web.ts
+
 import type { RecordType } from "@/src/active/types/record";
 import { RecordAnalysis } from "go-core";
+import { notifyRecordsChange } from "./records-repo-events";
 
 export type RecordsRepo = {
   insertMany: (records: RecordType[]) => Promise<void>;
@@ -43,13 +46,15 @@ export const recordsRepo: RecordsRepo = {
     // 🛡️ガード
     if (typeof indexedDB === "undefined" || records.length === 0) return;
     const db = await openDb();
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       for (const r of records) store.put(r);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
+    // 🔔 一覧が変わったので通知
+    notifyRecordsChange();
   },
 
   // 🐱 ここから追加！
@@ -130,7 +135,7 @@ export const recordsRepo: RecordsRepo = {
     // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       const getReq = store.get(id);
@@ -146,23 +151,27 @@ export const recordsRepo: RecordsRepo = {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
+    // 🔔 このレコードのanalysisが変わったので通知
+    notifyRecordsChange();
   },
 
   clearAll: async () => {
     // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const req = indexedDB.deleteDatabase(DB_NAME);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
+    // 🔔 全消去したので通知
+    notifyRecordsChange();
   },
 
   updateUsername: async (uid, newUsername) => {
     // 🛡️ガード
     if (typeof indexedDB === "undefined") return;
     const db = await openDb();
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       const req = store.openCursor();
@@ -193,5 +202,7 @@ export const recordsRepo: RecordsRepo = {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
+    // 🔔 ユーザー名が変わったので通知
+    notifyRecordsChange();
   },
 };
