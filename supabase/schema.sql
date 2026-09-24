@@ -42,14 +42,13 @@ declare
   v_is_white_bot boolean;
   v_black_rating smallint;
   v_white_rating smallint;
-  v_black_giantkill smallint := 0;
-  v_white_giantkill smallint := 0;
+  v_black_giant_killing_streak smallint := 0;
+  v_white_giant_killing_streak smallint := 0;
   v_black_new_rating smallint;
   v_white_new_rating smallint;
   v_black_wins smallint := 0;
   v_white_wins smallint := 0;
 
-  -- 勝敗・引き分けインクリメント用
   v_black_win_inc smallint := 0;
   v_black_loss_inc smallint := 0;
   v_black_draw_inc smallint := 0;
@@ -57,127 +56,118 @@ declare
   v_white_loss_inc smallint := 0;
   v_white_draw_inc smallint := 0;
 
-  -- 反対側盤サイズの保持
-  v_black_rating_other smallint := 0;
-  v_white_rating_other smallint := 0;
-
-  v_other_board_size smallint;
+  v_is_bot_match boolean;
   v_calc_res record;
 begin
-  v_other_board_size := case when new.board_size = 9 then 13 else 9 end;
-
-  -- ─── 1. プロフィール＆戦績情報の取得 ─────────────────────────────
-  -- 黒（⚫️）
-  select is_bot
-  into v_is_black_bot
+  select is_bot into v_is_black_bot
   from private.profiles
   where uid = new.black_uid;
 
-  select coalesce(wins, 0), coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giantkill, 0)
-  into v_black_wins, v_black_games, v_black_rating, v_black_giantkill
+  select coalesce(wins, 0), coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giant_killing_streak, 0)
+  into v_black_wins, v_black_games, v_black_rating, v_black_giant_killing_streak
   from private.user_stats
   where uid = new.black_uid and board_size = new.board_size;
 
-  select coalesce(rating, 0)
-  into v_black_rating_other
-  from private.user_stats
-  where uid = new.black_uid and board_size = v_other_board_size;
-
-  -- 白（⚪️）
-  select is_bot
-  into v_is_white_bot
+  select is_bot into v_is_white_bot
   from private.profiles
   where uid = new.white_uid;
 
-  select coalesce(wins, 0), coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giantkill, 0)
-  into v_white_wins, v_white_games, v_white_rating, v_white_giantkill
+  select coalesce(wins, 0), coalesce(wins + losses + draws, 0), coalesce(rating, 0), coalesce(giant_killing_streak, 0)
+  into v_white_wins, v_white_games, v_white_rating, v_white_giant_killing_streak
   from private.user_stats
   where uid = new.white_uid and board_size = new.board_size;
 
-  select coalesce(rating, 0)
-  into v_white_rating_other
-  from private.user_stats
-  where uid = new.white_uid and board_size = v_other_board_size;
+  v_is_bot_match := (v_is_black_bot or v_is_white_bot);
 
   if new.result like 'B+%' then
     v_black_win_inc := 1;
     v_white_loss_inc := 1;
 
     v_calc_res := private.calculate_match_delta(
-      v_black_rating, v_white_rating, v_black_giantkill, v_black_games, 
-      (v_is_black_bot or v_is_white_bot) 
+      p_winner          => 'black',
+      p_black_rating    => v_black_rating,
+      p_white_rating    => v_white_rating,
+      p_black_giant_killing_streak => v_black_giant_killing_streak,
+      p_white_giant_killing_streak => v_white_giant_killing_streak,
+      p_black_games     => v_black_games,
+      p_white_games     => v_white_games,
+      p_is_bot_match    => v_is_bot_match
     );
     v_black_delta      := v_calc_res.o_winner_delta;
     v_white_delta      := v_calc_res.o_loser_delta;
-    v_black_giantkill  := v_calc_res.o_winner_giantkill;
-    v_white_giantkill  := v_calc_res.o_loser_giantkill;
+    v_black_giant_killing_streak  := v_calc_res.o_winner_giant_killing_streak;
+    v_white_giant_killing_streak  := v_calc_res.o_loser_giant_killing_streak;
 
   elsif new.result like 'W+%' then
     v_white_win_inc := 1;
     v_black_loss_inc := 1;
 
     v_calc_res := private.calculate_match_delta(
-      v_white_rating, v_black_rating, v_white_giantkill, v_white_games, 
-      (v_is_black_bot or v_is_white_bot) 
+      p_winner          => 'white',
+      p_black_rating    => v_black_rating,
+      p_white_rating    => v_white_rating,
+      p_black_giant_killing_streak => v_black_giant_killing_streak,
+      p_white_giant_killing_streak => v_white_giant_killing_streak,
+      p_black_games     => v_black_games,
+      p_white_games     => v_white_games,
+      p_is_bot_match    => v_is_bot_match
     );
     v_white_delta      := v_calc_res.o_winner_delta;
     v_black_delta      := v_calc_res.o_loser_delta;
-    v_white_giantkill  := v_calc_res.o_winner_giantkill;
-    v_black_giantkill  := v_calc_res.o_loser_giantkill;
+    v_white_giant_killing_streak  := v_calc_res.o_winner_giant_killing_streak;
+    v_black_giant_killing_streak  := v_calc_res.o_loser_giant_killing_streak;
 
   elsif new.result = 'DRAW' then
     v_black_draw_inc := 1;
     v_white_draw_inc := 1;
 
     v_calc_res := private.calculate_draw_delta(
-      v_black_rating, 
-      v_white_rating, 
-      (v_is_black_bot or v_is_white_bot)
+      p_is_bot_match => v_is_bot_match,
+      p_black_rating => v_black_rating,
+      p_white_rating => v_white_rating
     );
     v_black_delta := v_calc_res.o_black_delta;
     v_white_delta := v_calc_res.o_white_delta;
   end if;
 
-  -- 新レート計算
-  v_black_new_rating := greatest(0, v_black_rating + v_black_delta);
-  v_white_new_rating := greatest(0, v_white_rating + v_white_delta);
-
-  -- ─── 4. テーブル更新 ───────────────────────────────────
-  -- 黒（⚫️）
   if not v_is_black_bot then
     update private.user_stats set
-      wins      = wins + v_black_win_inc,
-      losses    = losses + v_black_loss_inc,
-      draws     = draws + v_black_draw_inc,
-      rating    = v_black_new_rating,
-      giantkill = v_black_giantkill
-    where uid = new.black_uid and board_size = new.board_size;
+      wins           = wins + v_black_win_inc,
+      losses         = losses + v_black_loss_inc,
+      draws          = draws + v_black_draw_inc,
+      rating         = greatest(0, rating + v_black_delta),
+      highest_rating = greatest(highest_rating, greatest(0, rating + v_black_delta)),
+      giant_killing_streak      = v_black_giant_killing_streak
+    where uid = new.black_uid and board_size = new.board_size
+    returning rating into v_black_new_rating;
   else
     update private.user_stats set
       wins   = wins + v_black_win_inc,
       losses = losses + v_black_loss_inc,
       draws  = draws + v_black_draw_inc
     where uid = new.black_uid and board_size = new.board_size;
+    v_black_new_rating := v_black_rating;
   end if;
 
-  -- 白（⚪️）
   if not v_is_white_bot then
     update private.user_stats set
-      wins      = wins + v_white_win_inc,
-      losses    = losses + v_white_loss_inc,
-      draws     = draws + v_white_draw_inc,
-      rating    = v_white_new_rating,
-      giantkill = v_white_giantkill
-    where uid = new.white_uid and board_size = new.board_size;
+      wins           = wins + v_white_win_inc,
+      losses         = losses + v_white_loss_inc,
+      draws          = draws + v_white_draw_inc,
+      rating         = greatest(0, rating + v_white_delta),
+      highest_rating = greatest(highest_rating, greatest(0, rating + v_white_delta)),
+      giant_killing_streak      = v_white_giant_killing_streak
+    where uid = new.white_uid and board_size = new.board_size
+    returning rating into v_white_new_rating;
   else
     update private.user_stats set
       wins   = wins + v_white_win_inc,
       losses = losses + v_white_loss_inc,
       draws  = draws + v_white_draw_inc
     where uid = new.white_uid and board_size = new.board_size;
+    v_white_new_rating := v_white_rating;
   end if;
 
-  -- ─── 5. レコード挿入・リアルタイム通知・削除 ─────────────────
   insert into private.records (
     id, black_uid, white_uid, moves, result,
     black_rating, white_rating, match_type, board_size, dead_stones, created_at
@@ -186,15 +176,15 @@ begin
     v_black_rating, v_white_rating, new.match_type, new.board_size, new.dead_stones, now()
   ) on conflict (id) do nothing;
 
-perform realtime.send(
+  perform realtime.send(
     jsonb_build_object(
       'result', new.result,
       'black', jsonb_build_object(
-        'new_rating', case when v_is_black_bot then v_black_rating else v_black_new_rating end,
+        'new_rating', v_black_new_rating,
         'wins', v_black_wins + v_black_win_inc
       ),
       'white', jsonb_build_object(
-        'new_rating', case when v_is_white_bot then v_white_rating else v_white_new_rating end,
+        'new_rating', v_white_new_rating,
         'wins', v_white_wins + v_white_win_inc
       )
     ),
@@ -273,6 +263,77 @@ $$;
 ALTER FUNCTION "private"."assert_player"("p_match_id" integer, "p_allowed_statuses" "text"[], OUT "my_color" "text", OUT "match" "private"."matches") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "private"."bot_config"() RETURNS TABLE("board_size" smallint, "rank_idx" smallint, "bot_name" "text", "match_type" smallint)
+    LANGUAGE "sql" IMMUTABLE
+    SET "search_path" TO ''
+    AS $$
+  select * from (values
+    -- 9路盤
+    (9::smallint,  0::smallint,'bot1',5::smallint),(9,  0,'bot2',5),(9,  0,'bot3',5),
+    (9,  1,'bot1',4),(9,  1,'bot2',5),(9,  1,'bot3',5),
+    (9,  2,'bot1',4),(9,  2,'bot2',4),(9,  2,'bot3',5),
+    (9,  3,'bot1',4),(9,  3,'bot2',4),(9,  3,'bot3',4),
+    (9,  4,'bot1',3),(9,  4,'bot2',4),(9,  4,'bot3',4),
+    (9,  5,'bot1',3),(9,  5,'bot2',3),(9,  5,'bot3',4),
+    (9,  6,'bot1',3),(9,  6,'bot2',3),(9,  6,'bot3',3),
+    (9,  7,'bot1',2),(9,  7,'bot2',3),(9,  7,'bot3',3),
+    (9,  8,'bot1',2),(9,  8,'bot2',2),(9,  8,'bot3',3),
+    (9,  9,'bot1',2),(9,  9,'bot2',2),(9,  9,'bot3',2),
+    (9, 10,'bot1',1),(9, 10,'bot2',2),(9, 10,'bot3',2),
+    (9, 11,'bot1',1),(9, 11,'bot2',1),(9, 11,'bot3',2),
+    (9, 12,'bot1',1),(9, 12,'bot2',1),(9, 12,'bot3',1),
+    (9, 13,'bot1',0),(9, 13,'bot2',1),(9, 13,'bot3',1),
+    (9, 14,'bot1',0),(9, 14,'bot2',0),(9, 14,'bot3',1),
+    (9, 15,'bot1',0),(9, 15,'bot2',0),(9, 15,'bot3',0),
+                      (9, 16,'bot2',0),(9, 16,'bot3',0),
+                                       (9, 17,'bot3',0),
+
+    -- 13路盤
+    (13, 0,'bot1',9),(13, 0,'bot2',9),(13, 0,'bot3',9),
+    (13, 1,'bot1',8),(13, 1,'bot2',9),(13, 1,'bot3',9),
+    (13, 2,'bot1',8),(13, 2,'bot2',8),(13, 2,'bot3',9),
+    (13, 3,'bot1',7),(13, 3,'bot2',8),(13, 3,'bot3',8),
+    (13, 4,'bot1',7),(13, 4,'bot2',7),(13, 4,'bot3',8),
+    (13, 5,'bot1',6),(13, 5,'bot2',7),(13, 5,'bot3',7),
+    (13, 6,'bot1',6),(13, 6,'bot2',6),(13, 6,'bot3',7),
+    (13, 7,'bot1',5),(13, 7,'bot2',6),(13, 7,'bot3',6),
+    (13, 8,'bot1',5),(13, 8,'bot2',5),(13, 8,'bot3',6),
+    (13, 9,'bot1',4),(13, 9,'bot2',5),(13, 9,'bot3',5),
+    (13,10,'bot1',4),(13,10,'bot2',4),(13,10,'bot3',5),
+    (13,11,'bot1',3),(13,11,'bot2',4),(13,11,'bot3',4),
+    (13,12,'bot1',3),(13,12,'bot2',3),(13,12,'bot3',4),
+    (13,13,'bot1',2),(13,13,'bot2',3),(13,13,'bot3',3),
+    (13,14,'bot1',1),(13,14,'bot2',2),(13,14,'bot3',3),
+    (13,15,'bot1',0),(13,15,'bot2',1),(13,15,'bot3',2),
+                      (13,16,'bot2',0),(13,16,'bot3',1),
+                                       (13,17,'bot3',0),
+
+    -- 19路盤
+    (19, 0,'bot1',25),(19, 0,'bot2',25),(19, 0,'bot3',25),
+    (19, 1,'bot1',16),(19, 1,'bot2',25),(19, 1,'bot3',25),
+    (19, 2,'bot1',13),(19, 2,'bot2',16),(19, 2,'bot3',25),
+    (19, 3,'bot1', 9),(19, 3,'bot2',16),(19, 3,'bot3',16),
+    (19, 4,'bot1', 8),(19, 4,'bot2',13),(19, 4,'bot3',16),
+    (19, 5,'bot1', 7),(19, 5,'bot2', 9),(19, 5,'bot3',13),
+    (19, 6,'bot1', 6),(19, 6,'bot2', 8),(19, 6,'bot3',13),
+    (19, 7,'bot1', 5),(19, 7,'bot2', 7),(19, 7,'bot3', 9),
+    (19, 8,'bot1', 4),(19, 8,'bot2', 6),(19, 8,'bot3', 9),
+    (19, 9,'bot1', 3),(19, 9,'bot2', 5),(19, 9,'bot3', 8),
+    (19,10,'bot1', 2),(19,10,'bot2', 4),(19,10,'bot3', 7),
+    (19,11,'bot1', 1),(19,11,'bot2', 3),(19,11,'bot3', 6),
+    (19,12,'bot1', 0),(19,12,'bot2', 2),(19,12,'bot3', 5),
+                       (19,13,'bot2', 1),(19,13,'bot3', 4),
+                       (19,14,'bot2', 0),(19,14,'bot3', 3),
+                                         (19,15,'bot3', 2),
+                                         (19,16,'bot3', 1),
+                                         (19,17,'bot3', 0)
+  ) as t(board_size, rank_idx, bot_name, match_type);
+$$;
+
+
+ALTER FUNCTION "private"."bot_config"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "private"."build_match_json"("p_match" "private"."matches", "p_player_uid" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" STABLE
     SET "search_path" TO ''
@@ -327,21 +388,18 @@ $$;
 ALTER FUNCTION "private"."build_match_json"("p_match" "private"."matches", "p_player_uid" "uuid") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_white_rating" smallint, "p_is_bot_match" boolean, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) RETURNS "record"
+CREATE OR REPLACE FUNCTION "private"."calculate_draw_delta"("p_is_bot_match" boolean, "p_black_rating" smallint, "p_white_rating" smallint, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) RETURNS "record"
     LANGUAGE "plpgsql" IMMUTABLE
     SET "search_path" TO ''
     AS $$
 declare
   v_diff smallint;
 begin
-  -- Bot戦（どちらかがBot）の場合は変動なし（0pt）
   if p_is_bot_match then
     o_black_delta := 0;
     o_white_delta := 0;
   else
-    -- 人間同士の場合: レート差100ごとに±1pt調整
-    v_diff := p_white_rating - p_black_rating;
-
+    v_diff := coalesce(p_white_rating, 0) - coalesce(p_black_rating, 0);
     o_black_delta := (v_diff + case when v_diff >= 0 then 50 else -50 end) / 100;
     o_white_delta := -o_black_delta;
   end if;
@@ -349,63 +407,69 @@ end;
 $$;
 
 
-ALTER FUNCTION "private"."calculate_draw_delta"("p_black_rating" smallint, "p_white_rating" smallint, "p_is_bot_match" boolean, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) OWNER TO "postgres";
+ALTER FUNCTION "private"."calculate_draw_delta"("p_is_bot_match" boolean, "p_black_rating" smallint, "p_white_rating" smallint, OUT "o_black_delta" smallint, OUT "o_white_delta" smallint) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) RETURNS "record"
+CREATE OR REPLACE FUNCTION "private"."calculate_match_delta"("p_winner" "text", "p_black_rating" smallint, "p_white_rating" smallint, "p_black_giant_killing_streak" smallint, "p_white_giant_killing_streak" smallint, "p_black_games" smallint, "p_white_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giant_killing_streak" smallint, OUT "o_loser_giant_killing_streak" smallint) RETURNS "record"
     LANGUAGE "plpgsql" IMMUTABLE
     SET "search_path" TO ''
     AS $$
 declare
-  v_diff smallint;         -- レーティング差（敗者 - 勝者）
-  v_base_delta smallint;   -- 基本変動量
+  v_winner_rating smallint;
+  v_loser_rating smallint;
+  v_winner_giant_killing_streak smallint;
+  v_winner_games smallint;
+  v_diff smallint;
+  v_win_delta smallint;
+  v_giant_killing_streak_cap constant smallint := 1000;
 begin
-  -- 1. レーティング差の計算（正の数なら勝者が格上を倒した「ジャイアントキリング」）
-  v_diff := p_loser_rating - p_winner_rating;
+  if p_winner = 'black' then
+    v_winner_rating    := coalesce(p_black_rating, 0);
+    v_loser_rating     := coalesce(p_white_rating, 0);
+    v_winner_giant_killing_streak := coalesce(p_black_giant_killing_streak, 0);
+    v_winner_games     := coalesce(p_black_games, 0);
+  else
+    v_winner_rating    := coalesce(p_white_rating, 0);
+    v_loser_rating     := coalesce(p_black_rating, 0);
+    v_winner_giant_killing_streak := coalesce(p_white_giant_killing_streak, 0);
+    v_winner_games     := coalesce(p_white_games, 0);
+  end if;
 
-  -- 2. 基本変動量の計算（0〜20の範囲に収める）
-  -- 同レート(v_diff=0)なら10、格上勝利で最大20、格下勝利で最小0
-  v_base_delta := greatest(0, least(20,
-    10 + (v_diff + case when v_diff >= 0 then 50 else -50 end) / 100
-  ));
+  v_diff := v_loser_rating - v_winner_rating;
 
-  -- 3. Bot戦の判定・補正
   if p_is_bot_match then
-    v_base_delta := 10 ;
-  end if;
-
-  -- 🎉勝った方への処理 --
-
-  -- 4. 勝者の格上連勝数を更新（格上勝利なら+1、格下勝利なら維持）
-  o_winner_giantkill := p_winner_giantkill + case when v_diff > 0 then 1 else 0 end;
-
-  -- 5. 勝者のレーティング変動量を決定
-  -- 格上勝利なら連勝数倍のボーナスを適用、格下勝利なら基本変動量のまま
-  if v_diff > 0 then
-    o_winner_delta := v_base_delta * o_winner_giantkill;
+    o_winner_delta     := 5;
+    o_loser_delta      := -5;
+    o_winner_giant_killing_streak := v_winner_giant_killing_streak;
+    o_loser_giant_killing_streak  := 0;
   else
-    o_winner_delta := v_base_delta;
-  end if;
+    v_win_delta := greatest(0, least(20,
+      10 + (v_diff + case when v_diff >= 0 then 50 else -50 end) / 100
+    ));
 
-  -- 😢負けた方への処理 --
+    o_winner_giant_killing_streak := least(
+      v_giant_killing_streak_cap,
+      v_winner_giant_killing_streak + case when v_diff > 0 then 1 else 0 end
+    );
 
-  -- 6. 敗者の格上連勝数をリセット
-  o_loser_giantkill := 0;
+    if v_diff > 0 then
+      o_winner_delta := v_win_delta * o_winner_giant_killing_streak;
+    else
+      o_winner_delta := v_win_delta;
+    end if;
 
-  -- 7. 敗者のレーティング変動量を決定
-  -- 勝者のレートが敗者より低く、勝者の対局数が30以下で、ボット戦ではないなら、
-  -- それは対局数が少ないだけの偽の格下に負けたということなので、敗者のレートは下げない
-  -- それ以外は基本変動量分マイナス
-  if v_diff > 0 and p_winner_games <= 30 and not p_is_bot_match then
-    o_loser_delta := 0;
-  else
-    o_loser_delta := -v_base_delta;
+    o_loser_giant_killing_streak := 0;
+    if v_diff > 0 and v_winner_games <= 30 then
+      o_loser_delta := 0;
+    else
+      o_loser_delta := -v_win_delta;
+    end if;
   end if;
 end;
 $$;
 
 
-ALTER FUNCTION "private"."calculate_match_delta"("p_winner_rating" smallint, "p_loser_rating" smallint, "p_winner_giantkill" smallint, "p_winner_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giantkill" smallint, OUT "o_loser_giantkill" smallint) OWNER TO "postgres";
+ALTER FUNCTION "private"."calculate_match_delta"("p_winner" "text", "p_black_rating" smallint, "p_white_rating" smallint, "p_black_giant_killing_streak" smallint, "p_white_giant_killing_streak" smallint, "p_black_games" smallint, "p_white_games" smallint, "p_is_bot_match" boolean, OUT "o_winner_delta" smallint, OUT "o_loser_delta" smallint, OUT "o_winner_giant_killing_streak" smallint, OUT "o_loser_giant_killing_streak" smallint) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."check_maintenance"() RETURNS "void"
@@ -561,141 +625,43 @@ $$;
 ALTER FUNCTION "private"."fetch_newer_records"("p_player_uid" "uuid", "p_board_size" smallint, "p_after_id" integer, "p_limit" smallint) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "private"."get_bot_match_info"("p_rating" smallint, "p_board_size" smallint, OUT "o_bot_uid" "uuid", OUT "o_match_type" smallint) RETURNS "record"
-    LANGUAGE "plpgsql" STABLE
+CREATE OR REPLACE FUNCTION "private"."get_bot_match_info"("p_rating" smallint, "p_board_size" smallint, "p_has_b18" boolean DEFAULT true, OUT "o_bot_uid" "uuid", OUT "o_match_type" smallint) RETURNS "record"
+    LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
 declare
   v_rank smallint;
-  v_bot_username text;
-  v_rand double precision;
+  v_bot_name text;
+  v_match_type smallint;
 begin
-  -- ポイントからランク(0: 10k 〜 17: 8D)を計算する
   v_rank := private.rating_to_rank_index(p_rating);
 
-  -- ----------------------------------------------------
-  -- 1. ランクの揺らぎ（確率計算）
-  -- ----------------------------------------------------
-  v_rand := random();
+  select bot_name, match_type
+  into v_bot_name, v_match_type
+  from private.bot_config()
+  where board_size = p_board_size
+    and rank_idx = v_rank
+    and (p_has_b18 or bot_name <> 'bot3')
+  order by random()
+  limit 1;
 
-  if p_board_size = 9 then
-    -- 9路盤：全ランク（10k〜8D）でランク上昇確率を適用
-    if v_rank <= 15 then
-      if v_rand < 0.50 then v_rank := v_rank;
-      elsif v_rand < 0.80 then v_rank := v_rank + 1;
-      else v_rank := v_rank + 2;
-      end if;
-    elsif v_rank = 16 then
-      if v_rand >= 0.50 then v_rank := v_rank + 1; end if;
-    end if;
-
-  elsif p_board_size = 13 or p_board_size = 19 then
-    -- 13路・19路盤：4k(ランク6)以上のみ、9路と同じランク上昇確率を適用
-    if v_rank >= 6 then
-      if v_rank <= 15 then
-        if v_rand < 0.50 then v_rank := v_rank;
-        elsif v_rand < 0.80 then v_rank := v_rank + 1;
-        else v_rank := v_rank + 2;
-        end if;
-      elsif v_rank = 16 then
-        if v_rand >= 0.50 then v_rank := v_rank + 1; end if;
-      end if;
-    end if;
+  if v_bot_name is null then
+    o_bot_uid := null;
+    o_match_type := null;
+    return;
   end if;
 
-  -- ----------------------------------------------------
-  -- 2. 盤サイズと確定後のランクに応じた bot・match_type の決定
-  -- ----------------------------------------------------
-  if p_board_size = 9 then
-    case v_rank
-      when 0 then v_bot_username := 'bot1'; o_match_type := 5; -- 10k
-      when 1 then v_bot_username := 'bot2'; o_match_type := 5; -- 9k
-      when 2 then v_bot_username := 'bot3'; o_match_type := 5; -- 8k
-      when 3 then v_bot_username := 'bot1'; o_match_type := 4; -- 7k
-      when 4 then v_bot_username := 'bot2'; o_match_type := 4; -- 6k
-      when 5 then v_bot_username := 'bot3'; o_match_type := 4; -- 5k
-      when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
-      when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
-      when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
-      when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
-      when 10 then v_bot_username := 'bot2'; o_match_type := 2; -- 1D
-      when 11 then v_bot_username := 'bot3'; o_match_type := 2; -- 2D
-      when 12 then v_bot_username := 'bot1'; o_match_type := 1; -- 3D
-      when 13 then v_bot_username := 'bot2'; o_match_type := 1; -- 4D
-      when 14 then v_bot_username := 'bot3'; o_match_type := 1; -- 5D
-      when 15 then v_bot_username := 'bot1'; o_match_type := 0; -- 6D
-      when 16 then v_bot_username := 'bot2'; o_match_type := 0; -- 7D
-      when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
-      else null;
-    end case;
+  o_match_type := v_match_type;
 
-  elsif p_board_size = 13 then
-    if v_rank <= 5 then
-      -- 10k〜5k: 50% bot1 / 30% bot2 / 20% bot3
-      if v_rand < 0.50 then v_bot_username := 'bot1';
-      elsif v_rand < 0.80 then v_bot_username := 'bot2';
-      else v_bot_username := 'bot3';
-      end if;
-      o_match_type := 9 - v_rank;
-    else
-      -- 4k〜8D: 本来の13路の条件表
-      case v_rank
-        when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
-        when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
-        when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
-        when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
-        when 10 then v_bot_username := 'bot2'; o_match_type := 2; -- 1D
-        when 11 then v_bot_username := 'bot3'; o_match_type := 2; -- 2D
-        when 12 then v_bot_username := 'bot1'; o_match_type := 1; -- 3D
-        when 13 then v_bot_username := 'bot1'; o_match_type := 0; -- 4D
-        when 14 then v_bot_username := 'bot2'; o_match_type := 1; -- 5D
-        when 15 then v_bot_username := 'bot2'; o_match_type := 0; -- 6D
-        when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
-        when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
-        else null;
-      end case;
-    end if;
-
-  elsif p_board_size = 19 then
-    if v_rank <= 5 then
-      -- 10k〜5k: 50% bot1 / 30% bot2 / 20% bot3
-      if v_rand < 0.50 then v_bot_username := 'bot1';
-      elsif v_rand < 0.80 then v_bot_username := 'bot2';
-      else v_bot_username := 'bot3';
-      end if;
-      o_match_type := 9 - v_rank;
-    else
-      -- 4k〜8D: 本来の19路の条件表
-      case v_rank
-        when 6 then v_bot_username := 'bot1'; o_match_type := 3; -- 4k
-        when 7 then v_bot_username := 'bot2'; o_match_type := 3; -- 3k
-        when 8 then v_bot_username := 'bot3'; o_match_type := 3; -- 2k
-        when 9 then v_bot_username := 'bot1'; o_match_type := 2; -- 1k
-        when 10 then v_bot_username := 'bot1'; o_match_type := 1; -- 1D
-        when 11 then v_bot_username := 'bot1'; o_match_type := 0; -- 2D
-        when 12 then v_bot_username := 'bot2'; o_match_type := 2; -- 3D
-        when 13 then v_bot_username := 'bot2'; o_match_type := 1; -- 4D
-        when 14 then v_bot_username := 'bot2'; o_match_type := 0; -- 5D
-        when 15 then v_bot_username := 'bot3'; o_match_type := 2; -- 6D
-        when 16 then v_bot_username := 'bot3'; o_match_type := 1; -- 7D
-        when 17 then v_bot_username := 'bot3'; o_match_type := 0; -- 8D
-        else null;
-      end case;
-    end if;
-  end if;
-
-  -- ボット名からUIDを取得する
-  if v_bot_username is not null then
-    select pf.uid into o_bot_uid
-    from private.profiles pf
-    where pf.username = v_bot_username
-    limit 1;
-  end if;
+  select uid into o_bot_uid
+  from private.profiles
+  where username = v_bot_name
+  limit 1;
 end;
 $$;
 
 
-ALTER FUNCTION "private"."get_bot_match_info"("p_rating" smallint, "p_board_size" smallint, OUT "o_bot_uid" "uuid", OUT "o_match_type" smallint) OWNER TO "postgres";
+ALTER FUNCTION "private"."get_bot_match_info"("p_rating" smallint, "p_board_size" smallint, "p_has_b18" boolean, OUT "o_bot_uid" "uuid", OUT "o_match_type" smallint) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."handle_new_profile"() RETURNS "trigger"
@@ -707,12 +673,12 @@ begin
   insert into private.user_settings (uid)
   values (new.uid);
 
-  -- ② user_stats を自動作成（9路盤と13路盤の初期データをあらかじめ作っておく）
+  -- ② user_stats を自動作成（各盤面サイズの初期データをあらかじめ作っておく）
   insert into private.user_stats (uid, board_size)
   values 
     (new.uid, 9),
-    (new.uid, 13);
-
+    (new.uid, 13),
+    (new.uid, 19);
   return new;
 end;
 $$;
@@ -767,8 +733,8 @@ declare
   v_white_payload jsonb;
 begin
   -- 盤サイズに応じて持ち時間を補正
-  new.black_seconds := case new.board_size when 13 then 305 else 185 end;
-  new.white_seconds := case new.board_size when 13 then 305 else 185 end;
+  new.black_seconds := case new.board_size when 19 then 605 when 13 then 305 else 185 end;
+  new.white_seconds := case new.board_size when 19 then 605 when 13 then 305 else 185 end;
 
   -- profiles 取得（各1回のみ）
   select * into v_black
@@ -1025,8 +991,18 @@ begin
   -- loop ~ end loopの中で、上で並べた一つ一つの要素に対して処理していく
   loop
 
-    -- 順番待ちの列に「本当にまだいるか」チェック
-    if not exists (select 1 from private.waitlist wl where wl.player_uid = v_waiter.player_uid) then
+    -- 🔒 ここでこのプレイヤーの行をロックする。
+    -- cancel_waitlist側のDELETEも同じ行に対する暗黙のロックなので、
+    -- これで「チェックしてから使う」の間の隙間（TOCTOUレース）が消える。
+    -- ロックはこの関数呼び出し(1トランザクション)が終わるまで保持される。
+    perform 1
+    from private.waitlist wl
+    where wl.player_uid = v_waiter.player_uid
+    for update;
+
+    if not found then
+      -- ロックを取ろうとした時点で既にいなかった
+      -- （cancel_waitlistなど他の処理に先を越された）
       continue;
     end if;
 
@@ -1048,10 +1024,15 @@ begin
 
     -- 🤖🤖🤖 ボット戦分岐 🤖🤖🤖
     if v_waiter.try_count >= 4 and v_allow_bot_match then
-      -- 対戦ボットとmatch_typeを取得する
+      -- 対戦ボットとmatch_typeを取得する（waitlistから取得したhas_b18を渡す）
       select o_bot_uid, o_match_type
       into v_bot_uid, v_match_type
-      from private.get_bot_match_info(v_waiter_rating, p_board_size);
+      from private.get_bot_match_info(v_waiter_rating, p_board_size, v_waiter.has_b18);
+
+      -- 🌟 ボットが見つからなかった（null）場合は、ボット戦を行わずにスキップする
+      if v_bot_uid is null then
+        continue;
+      end if;
 
       -- 🌟 match_typeが1〜9なら常に人間が黒、0なら50%の確率でランダムに判定する
       if v_match_type >= 1 then
@@ -1085,6 +1066,9 @@ begin
     v_rating_diff := least(v_waiter.try_count::int * 300, 1000)::smallint; -- 1000は最大ポイント差。
 
     -- ★ user_stats と JOIN して相手のポイントを直接比較する
+    -- 🔒 相手候補の行も for update of wl でロックする。
+    -- こうしておくと、この相手が別の理由（自分でキャンセルするなど）で
+    -- 消えかけていた場合、その瞬間はここで確実に検知できる。
     select wl.* into v_opponent
     from private.waitlist wl
     join private.user_stats us on us.uid = wl.player_uid and us.board_size = p_board_size
@@ -1092,7 +1076,8 @@ begin
       and wl.board_size = p_board_size
       and abs(us.rating - v_waiter_rating) <= v_rating_diff
     order by abs(us.rating - v_waiter_rating) asc
-    limit 1;
+    limit 1
+    for update of wl;
 
     if found then
       declare
@@ -1221,26 +1206,36 @@ CREATE OR REPLACE FUNCTION "public"."cancel_waitlist"() RETURNS "jsonb"
 declare
   v_match      private.matches%rowtype;
   v_player_uid uuid := auth.uid();
+  v_deleted_uid uuid;
 begin
   PERFORM private.check_version();
   perform private.check_maintenance();
-  
-  -- 対局中かチェック
+
+  -- 🎯 まず削除を試みる。これが実質的なロックとして働き、
+  -- マッチング処理側の削除と同じ行を取り合う形になるので、
+  -- 「チェックしてから削除」の間の隙間が無くなる。
+  delete from private.waitlist wl
+  where wl.player_uid = v_player_uid
+  returning wl.player_uid into v_deleted_uid;
+
+  -- 削除できた = マッチング処理より先にキャンセルが確定した
+  if v_deleted_uid is not null then
+    return null;
+  end if;
+
+  -- 削除できなかった = 既にwaitlistにいない
+  -- → マッチング処理に先を越された可能性が高いので、対局情報を確認する
   select * into v_match
   from private.matches m
   where (m.black_uid = v_player_uid or m.white_uid = v_player_uid)
     and m.status = 'playing'
   limit 1;
 
-  -- 既に対局が始まっていれば、その対局情報を返す
   if found then
     return private.build_match_json(v_match, v_player_uid);
   end if;
 
-  -- どこにもいなければキャンセル処理（waitlistから削除）
-  delete from private.waitlist wl
-  where wl.player_uid = v_player_uid;
-
+  -- waitlistにもmatchesにもいない場合（何もしていなかった等） → null
   return null;
 end;
 $$;
@@ -1321,7 +1316,7 @@ $$;
 ALTER FUNCTION "public"."delete_user_account"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."get_my_profile"("p_after_id_9" integer DEFAULT NULL::integer, "p_after_id_13" integer DEFAULT NULL::integer) RETURNS json
+CREATE OR REPLACE FUNCTION "public"."get_my_profile"("p_after_id_9" integer DEFAULT NULL::integer, "p_after_id_13" integer DEFAULT NULL::integer, "p_after_id_19" integer DEFAULT NULL::integer) RETURNS json
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'private'
     AS $$
@@ -1334,19 +1329,29 @@ DECLARE
 
   -- 設定・戦績用
   v_allow_bot_match BOOLEAN := true;
-  v_rating_9 SMALLINT := 0;
+
   v_wins_9 SMALLINT := 0;
   v_losses_9 SMALLINT := 0;
   v_draws_9 SMALLINT := 0;
+  v_rating_9 SMALLINT := 0;
+  v_giant_killing_streak_9 SMALLINT := 0;
 
-  v_rating_13 SMALLINT := 0;
   v_wins_13 SMALLINT := 0;
   v_losses_13 SMALLINT := 0;
   v_draws_13 SMALLINT := 0;
+  v_rating_13 SMALLINT := 0;
+  v_giant_killing_streak_13 SMALLINT := 0;
+
+  v_wins_19 SMALLINT := 0;
+  v_losses_19 SMALLINT := 0;
+  v_draws_19 SMALLINT := 0;
+  v_rating_19 SMALLINT := 0;
+  v_giant_killing_streak_19 SMALLINT := 0;
 
   -- 差分棋譜用
   v_records_9_json JSONB := '[]'::jsonb;
   v_records_13_json JSONB := '[]'::jsonb;
+  v_records_19_json JSONB := '[]'::jsonb;
 BEGIN
   -- 0. ガード
   PERFORM private.check_version();
@@ -1357,13 +1362,15 @@ BEGIN
     RETURN json_build_object(
       'profile', NULL,
       'newer_records_9', '[]'::jsonb,
-      'newer_records_13', '[]'::jsonb
+      'newer_records_13', '[]'::jsonb,
+      'newer_records_19', '[]'::jsonb
     );
   END IF;
 
   -- 差分棋譜を取得（ヘルパー関数を呼び出す）
   v_records_9_json := private.fetch_newer_records(v_uid, 9::smallint, p_after_id_9);
   v_records_13_json := private.fetch_newer_records(v_uid, 13::smallint, p_after_id_13);
+  v_records_19_json := private.fetch_newer_records(v_uid, 19::smallint, p_after_id_19);
 
   -- 3. プロフィールを取得＆最終ログイン更新
   UPDATE private.profiles
@@ -1408,41 +1415,59 @@ BEGIN
     FROM private.user_settings
    WHERE uid = v_uid;
 
-  -- 6. user_stats (9路盤・13路盤)
+  -- 6. user_stats
   SELECT COALESCE(rating, 0), COALESCE(wins, 0), COALESCE(losses, 0), COALESCE(draws, 0)
-    INTO v_rating_9, v_wins_9, v_losses_9, v_draws_9
+    INTO v_rating_9, v_wins_9, v_losses_9, v_draws_9, v_giant_killing_streak_9
     FROM private.user_stats
    WHERE uid = v_uid AND board_size = 9;
 
   SELECT COALESCE(rating, 0), COALESCE(wins, 0), COALESCE(losses, 0), COALESCE(draws, 0)
-    INTO v_rating_13, v_wins_13, v_losses_13, v_draws_13
+    INTO v_rating_13, v_wins_13, v_losses_13, v_draws_13, v_giant_killing_streak_13
     FROM private.user_stats
    WHERE uid = v_uid AND board_size = 13;
+
+  SELECT COALESCE(rating, 0), COALESCE(wins, 0), COALESCE(losses, 0), COALESCE(draws, 0)
+    INTO v_rating_19, v_wins_19, v_losses_19, v_draws_19, v_giant_killing_streak_19
+    FROM private.user_stats
+   WHERE uid = v_uid AND board_size = 19;
 
   -- 7. まとめて返却
   RETURN json_build_object(
     'profile', json_build_object(
       'uid',             v_row.uid,
       'username',        v_row.username,
-      'rating_9',        COALESCE(v_rating_9, 0),
-      'rating_13',       COALESCE(v_rating_13, 0),
       'icon_index',      v_row.icon_index,
+      'country',         v_row.country,
+      -- 9
       'wins_9',          COALESCE(v_wins_9, 0),
       'losses_9',        COALESCE(v_losses_9, 0),
       'draws_9',         COALESCE(v_draws_9, 0),
+      'rating_9',        COALESCE(v_rating_9, 0),
+      'giant_killing_streak_9',        COALESCE(v_giant_killing_streak_9, 0),
+      -- 13
       'wins_13',         COALESCE(v_wins_13, 0),
       'losses_13',        COALESCE(v_losses_13, 0),
       'draws_13',        COALESCE(v_draws_13, 0),
+      'rating_13',       COALESCE(v_rating_13, 0),
+      'giant_killing_streak_13',        COALESCE(v_giant_killing_streak_13, 0),
+      -- 19
+      'wins_19',         COALESCE(v_wins_19, 0),
+      'losses_19',        COALESCE(v_losses_19, 0),
+      'draws_19',        COALESCE(v_draws_19, 0),
+      'rating_19',       COALESCE(v_rating_19, 0),
+      'giant_killing_streak_19',        COALESCE(v_giant_killing_streak_19, 0),
+      -- other
       'allow_bot_match', COALESCE(v_allow_bot_match, true)
     ),
     'newer_records_9',  v_records_9_json,
-    'newer_records_13', v_records_13_json
+    'newer_records_13', v_records_13_json,
+    'newer_records_19', v_records_19_json
   );
 END;
 $$;
 
 
-ALTER FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) OWNER TO "postgres";
+ALTER FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer, "p_after_id_19" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_own_profile_preview"() RETURNS json
@@ -1454,6 +1479,7 @@ DECLARE
   v_uid uuid := auth.uid();
   v_rating_9 smallint := 0;
   v_rating_13 smallint := 0;
+  v_rating_19 smallint := 0;
 BEGIN
   PERFORM private.check_version();
   -- 🐱 メンテチェック
@@ -1471,7 +1497,7 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  -- ★ 新しい user_stats テーブルから 9路盤と 13路盤のポイントを取得する
+  -- ★ 新しい user_stats テーブルから書く盤面サイズのratingを取得する
   SELECT COALESCE(rating, 0) INTO v_rating_9
   FROM private.user_stats
   WHERE uid = v_uid AND board_size = 9;
@@ -1480,10 +1506,15 @@ BEGIN
   FROM private.user_stats
   WHERE uid = v_uid AND board_size = 13;
 
+  SELECT COALESCE(rating, 0) INTO v_rating_19
+  FROM private.user_stats
+  WHERE uid = v_uid AND board_size = 19;
+
   RETURN json_build_object(
     'username', v_row.username,
     'rating_9', COALESCE(v_rating_9, 0),
-    'rating_13', COALESCE(v_rating_13, 0)
+    'rating_13', COALESCE(v_rating_13, 0),
+    'rating_19', COALESCE(v_rating_19, 0)
   );
 END;
 $$;
@@ -1517,7 +1548,7 @@ BEGIN
     FROM private.user_stats us
     JOIN private.profiles p ON p.uid = us.uid
     WHERE p.is_bot = false
-      AND us.board_size IN (9, 13)
+      AND us.board_size IN (9, 13, 19)
   )
   SELECT 
     r.username,
@@ -1577,7 +1608,7 @@ $$;
 ALTER FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" smallint, "p_board_size" smallint, "p_before_id" integer) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_after_id" integer DEFAULT NULL::integer) RETURNS "jsonb"
+CREATE OR REPLACE FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer DEFAULT NULL::integer) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
     AS $$
@@ -1605,8 +1636,8 @@ begin
   else
     -- 待機列に追加（既に待機中なら何もしない）
     begin
-      insert into private.waitlist (player_uid, board_size)
-      values (v_player_uid, p_board_size);
+      insert into private.waitlist (player_uid, board_size, has_b18)
+      values (v_player_uid, p_board_size, p_has_b18);
     exception
       when unique_violation then null;
     end;
@@ -1626,7 +1657,7 @@ end;
 $$;
 
 
-ALTER FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_after_id" integer) OWNER TO "postgres";
+ALTER FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."overwrite_profile_from_guest"("p_guest_uid" "uuid") RETURNS "void"
@@ -1672,7 +1703,7 @@ BEGIN
 
   -- 🌟ゲストのuser_statsテーブルを避難。ここだけテーブルなのは、これだけはデータが複数行にまたがるから。
   CREATE TEMP TABLE temp_guest_stats ON COMMIT DROP AS
-  SELECT board_size, rating, giantkill, wins, losses, draws
+  SELECT board_size, rating, giant_killing_streak, wins, losses, draws
   FROM private.user_stats
   WHERE uid = p_guest_uid;
 
@@ -1710,11 +1741,11 @@ BEGIN
     WHERE uid = calling_uid;
   END IF;
 
-  -- ✏️ private.user_stats の上書き（9路盤・13路盤など退避したデータから上書き）
+  -- ✏️ private.user_stats の上書き
   UPDATE private.user_stats us
   SET
     rating = t.rating,
-    giantkill = t.giantkill,
+    giant_killing_streak = t.giant_killing_streak,
     wins = t.wins,
     losses = t.losses,
     draws = t.draws
@@ -1752,38 +1783,6 @@ $$;
 
 
 ALTER FUNCTION "public"."resign"("p_match_id" integer) OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "public"."rls_auto_enable"() RETURNS "event_trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'pg_catalog'
-    AS $$
-DECLARE
-  cmd record;
-BEGIN
-  FOR cmd IN
-    SELECT *
-    FROM pg_event_trigger_ddl_commands()
-    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
-      AND object_type IN ('table','partitioned table')
-  LOOP
-     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
-      BEGIN
-        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
-        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
-      END;
-     ELSE
-        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
-     END IF;
-  END LOOP;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."rls_auto_enable"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."submit_match_result"("p_match_id" integer, "p_result" "text", "p_dead_stones" smallint[] DEFAULT '{}'::smallint[]) RETURNS "void"
@@ -1859,6 +1858,25 @@ $$;
 
 
 ALTER FUNCTION "public"."update_allow_bot_match"("new_allow_bot_match" boolean) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_country"("new_country" "text") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+BEGIN
+  PERFORM private.check_version();
+  -- 🐱 メンテチェック
+  PERFORM private.check_maintenance();
+
+  UPDATE private.profiles
+  SET country = new_country
+  WHERE profiles.uid = auth.uid();
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_country"("new_country" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."update_icon_index"("new_icon_index" integer) RETURNS "void"
@@ -1946,8 +1964,8 @@ begin
     raise exception 'Not authenticated';
   end if;
 
-  -- 2. バリデーション（3〜20文字の半角英数字・アンダースコア）
-  if new_username !~ '^[A-Za-z0-9_]{3,12}$' then
+  -- 2. バリデーション（1〜8文字の半角英数字・アンダースコア）
+  if new_username !~ '^[A-Za-z0-9_]{1,8}$' then
     raise exception 'Invalid username format';
   end if;
 
@@ -2052,7 +2070,8 @@ CREATE TABLE IF NOT EXISTS "private"."profiles" (
     "created_at" "date" DEFAULT "now"(),
     "icon_index" smallint DEFAULT '0'::smallint,
     "lastseen" "date" DEFAULT CURRENT_DATE,
-    "is_bot" boolean DEFAULT false
+    "is_bot" boolean DEFAULT false,
+    "country" "text"
 );
 
 
@@ -2072,11 +2091,12 @@ CREATE TABLE IF NOT EXISTS "private"."user_stats" (
     "uid" "uuid" NOT NULL,
     "board_size" smallint NOT NULL,
     "rating" smallint DEFAULT '0'::smallint,
-    "giantkill" smallint DEFAULT '0'::smallint,
     "wins" smallint DEFAULT '0'::smallint,
     "losses" smallint DEFAULT '0'::smallint,
     "draws" smallint DEFAULT '0'::smallint,
-    "highest_rating" smallint DEFAULT '0'::smallint
+    "highest_rating" smallint DEFAULT '0'::smallint,
+    "giant_killing_streak" smallint DEFAULT '0'::smallint,
+    "win_streak" smallint DEFAULT '0'::smallint
 );
 
 
@@ -2086,7 +2106,8 @@ ALTER TABLE "private"."user_stats" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "private"."waitlist" (
     "player_uid" "uuid" NOT NULL,
     "try_count" smallint DEFAULT '1'::smallint,
-    "board_size" smallint
+    "board_size" smallint,
+    "has_b18" boolean
 );
 
 
@@ -2333,10 +2354,10 @@ GRANT ALL ON FUNCTION "public"."delete_user_account"() TO "service_role";
 
 
 
-REVOKE ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) TO "anon";
-GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer) TO "service_role";
+REVOKE ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer, "p_after_id_19" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer, "p_after_id_19" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer, "p_after_id_19" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_my_profile"("p_after_id_9" integer, "p_after_id_13" integer, "p_after_id_19" integer) TO "service_role";
 
 
 
@@ -2361,10 +2382,9 @@ GRANT ALL ON FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" sma
 
 
 
-REVOKE ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_after_id" integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_after_id" integer) TO "anon";
-GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_after_id" integer) TO "authenticated";
-GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_after_id" integer) TO "service_role";
+GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) TO "service_role";
 
 
 
@@ -2382,12 +2402,6 @@ GRANT ALL ON FUNCTION "public"."resign"("p_match_id" integer) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "anon";
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "service_role";
-
-
-
 REVOKE ALL ON FUNCTION "public"."submit_match_result"("p_match_id" integer, "p_result" "text", "p_dead_stones" smallint[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."submit_match_result"("p_match_id" integer, "p_result" "text", "p_dead_stones" smallint[]) TO "anon";
 GRANT ALL ON FUNCTION "public"."submit_match_result"("p_match_id" integer, "p_result" "text", "p_dead_stones" smallint[]) TO "authenticated";
@@ -2399,6 +2413,13 @@ REVOKE ALL ON FUNCTION "public"."update_allow_bot_match"("new_allow_bot_match" b
 GRANT ALL ON FUNCTION "public"."update_allow_bot_match"("new_allow_bot_match" boolean) TO "anon";
 GRANT ALL ON FUNCTION "public"."update_allow_bot_match"("new_allow_bot_match" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_allow_bot_match"("new_allow_bot_match" boolean) TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."update_country"("new_country" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."update_country"("new_country" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."update_country"("new_country" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_country"("new_country" "text") TO "service_role";
 
 
 
