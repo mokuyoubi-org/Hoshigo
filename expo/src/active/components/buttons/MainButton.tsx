@@ -2,7 +2,9 @@
 
 import { BoardSize } from "go-core";
 import React, { useState } from "react";
-import { Animated, Platform, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Platform, TouchableOpacity, View } from "react-native";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 type Props = {
   onPress: () => void;
@@ -11,7 +13,6 @@ type Props = {
   text: string;
 };
 
-// アニメーションに関する定数設定
 const SCALE_PRESSED = 0.96;
 const FRICTION_PRESS_IN = 8;
 const FRICTION_PRESS_OUT = 5;
@@ -22,10 +23,11 @@ export function MainButton({
   disabled = false,
   text,
 }: Props) {
+  const colors = useColors();
+
   const [pressScale] = useState(() => new Animated.Value(1));
 
   const handlePressIn = () => {
-    // 🛡️ガード
     if (disabled) return;
     Animated.spring(pressScale, {
       toValue: SCALE_PRESSED,
@@ -35,7 +37,6 @@ export function MainButton({
   };
 
   const handlePressOut = () => {
-    // 🛡️ガード
     if (disabled) return;
     Animated.spring(pressScale, {
       toValue: 1,
@@ -53,33 +54,27 @@ export function MainButton({
       disabled={disabled}
     >
       <Animated.View style={{ transform: [{ scale: pressScale }] }}>
-        {/* 全体のコンテナ（影のスペースを確保） */}
         <View
-          className={`w-[280px] h-[82px] relative ${disabled ? "opacity-50" : ""}`}
-          needsOffscreenAlphaCompositing={disabled}
+          className={`w-80 h-20 rounded-2xl bg-foreground border-2 border-primary justify-center ${
+            disabled ? "opacity-50" : ""
+          }`}
+          style={{
+            // ⚠️boxshadowを使うことが大事
+            boxShadow: `4px 6px 0px ${colors.primary}`,
+          }}
         >
+          <View className="flex-row items-center justify-center gap-x-4">
+            <AppText className="text-2xl text-text tracking-widest uppercase">
+              {text}
+            </AppText>
 
-          {/* ① フラットな影（うすいグレーでやわらかい影にする） */}
-          <View className="absolute bottom-0 left-1 w-full h-[76px] rounded-2xl bg-primary" />
-
-          {/* ② ボタン本体（明るい白系の色にして、枠線も薄くする） */}
-          <View className="absolute top-0 left-0 w-full h-[76px] rounded-2xl bg-foreground border-2 border-backgroundDark justify-center overflow-hidden">
-            {/* justify-between から justify-center + gap-x-4 に変更 */}
-            <View className="flex-row items-center justify-center gap-x-4">
-              {/* 薄いボタンでも文字が読めるように濃いめの文字色にする */}
-              <Text className="text-[20px] font-black text-text tracking-widest uppercase">
-                {text}
-              </Text>
-
-              {/* 盤面サイズバッジ */}
-              {boardSize && (
-                <View className="w-12 h-12 rounded-full bg-primary items-center justify-center">
-                  <Text className="text-foreground text-[24px] font-black">
-                    {boardSize}
-                  </Text>
-                </View>
-              )}
-            </View>
+            {boardSize && (
+              <View className="w-12 h-12 rounded-full bg-primary items-center justify-center">
+                <AppText className="text-foreground text-xl">
+                  {boardSize}
+                </AppText>
+              </View>
+            )}
           </View>
         </View>
       </Animated.View>

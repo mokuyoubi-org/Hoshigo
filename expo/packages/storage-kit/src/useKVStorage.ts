@@ -52,20 +52,32 @@ export function useKVStorage<T>(key: string, defaultValue: T) {
   const [value, setValueState] = useState<T>(defaultValue);
   const [isLoaded, setIsLoaded] = useState(false);
   const defaultRef = useRef(defaultValue);
+  // 📌 「いま最新の値」をReactの外で覚えておくメモ帳。
+  //    更新関数の中で prev をもらう代わりに、ここから読むことで副作用を外に出せる
+  const valueRef = useRef<T>(defaultValue);
+
+  // ✏️ メモ帳とstateを、いつも一緒に更新するための共通処理
+  const commit = useCallback((next: T) => {
+    valueRef.current = next;
+    setValueState(next);
+  }, []);
 
   // 🛡️生rawから安全にTへ変換する共通処理(初回loadでも通知受信時でも使う)
-  const applyRaw = useCallback((raw: string | null) => {
-    if (raw !== null) {
-      try {
-        setValueState(JSON.parse(raw) as T);
-      } catch {
-        // 🛡️壊れた/形式違いのデータが入っていた場合はデフォルトにフォールバック
-        setValueState(defaultRef.current);
+  const applyRaw = useCallback(
+    (raw: string | null) => {
+      if (raw !== null) {
+        try {
+          commit(JSON.parse(raw) as T);
+        } catch {
+          // 🛡️壊れた/形式違いのデータが入っていた場合はデフォルトにフォールバック
+          commit(defaultRef.current);
+        }
+      } else {
+        commit(defaultRef.current);
       }
-    } else {
-      setValueState(defaultRef.current);
-    }
-  }, []);
+    },
+    [commit],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -91,25 +103,33 @@ export function useKVStorage<T>(key: string, defaultValue: T) {
 
   const setValue = useCallback(
     (next: T | ((prev: T) => T)) => {
-      setValueState((prev) => {
-        const resolved =
-          typeof next === "function" ? (next as (prev: T) => T)(prev) : next;
-        const raw = JSON.stringify(resolved);
-        kvStore.setItem(key, raw);
-        // 🔔自分以外の購読者にも変更を伝播
-        notify(key, raw);
-        return resolved;
+      // 🧮 更新関数の「外」で新しい値を計算する(メモ帳の最新値を使う)
+      const resolved =
+        typeof next === "function"
+          ? (next as (prev: T) => T)(valueRef.current)
+          : next;
+      const raw = JSON.stringify(resolved);
+
+      // 📝 まず自分の値を更新
+      commit(resolved);
+      // 💾 保存(失敗してもアプリが落ちないように握っておく)
+      kvStore.setItem(key, raw).catch((e) => {
+        console.warn(`useKVStorage: failed to save "${key}"`, e);
       });
+      // 🔔自分以外の購読者にも変更を伝播(もう更新関数の外なので安全!)
+      notify(key, raw);
     },
-    [key],
+    [key, commit],
   );
 
   const removeValue = useCallback(() => {
-    kvStore.removeItem(key);
+    kvStore.removeItem(key).catch((e) => {
+      console.warn(`useKVStorage: failed to remove "${key}"`, e);
+    });
     // 🔔削除もnullとして通知(applyRawがdefaultValueにフォールバックしてくれる)
     notify(key, null);
-    setValueState(defaultRef.current);
-  }, [key]);
+    commit(defaultRef.current);
+  }, [key, commit]);
 
   return { value, setValue, isLoaded, removeValue };
 }

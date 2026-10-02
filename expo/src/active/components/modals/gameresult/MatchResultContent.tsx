@@ -1,29 +1,31 @@
+// MatchResultContent.tsx
+
 import {
   FontAwesome,
   MaterialCommunityIcons,
   Octicons,
 } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { router } from "expo-router";
 import { BoardSize } from "go-core";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
 
-import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
 import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useIconUpdate } from "@/src/active/hooks/useIconUpdate";
-import { useLang, useTranslation } from "@/src/active/i18n";
+import { useColors } from "@/src/active/hooks/useTheme";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { winsToNewlyAcquiredIconIndex } from "@/src/stable/logics/winsToAcquiredIcons";
+import { AppImage } from "../../AppImage";
+import { AppText } from "../../common/AppText";
 
 type Props = {
   onClose: () => void;
@@ -33,9 +35,10 @@ type Props = {
   rankIndexAfter: number;
   boardSize: BoardSize;
   giantKillingStreak: number;
+  giantKillingBonus: boolean;
 };
 
-export function GameResultContent({
+export function MatchResultContent({
   onClose,
   ratingBefore,
   ratingAfter,
@@ -43,11 +46,12 @@ export function GameResultContent({
   rankIndexAfter,
   boardSize,
   giantKillingStreak,
+  giantKillingBonus,
 }: Props) {
+  const colors = useColors();
   const { hide } = useOverlay();
   const { startMatching, isMatching } = useMatching();
   const t = useTranslation();
-  const { lang } = useLang();
 
   const { wins19, wins13, wins9, iconIndex: currentIconIndex } = useProfile();
   const { updateIconIndex } = useIconUpdate();
@@ -93,18 +97,18 @@ export function GameResultContent({
   );
 
   const rankColor =
-    COLORS[afterInfo.color as keyof typeof COLORS] || COLORS.text;
+    colors[afterInfo.color as keyof typeof colors] || colors.text;
   const [isRankNew, setIsRankNew] = useState(false);
 
-  // giant killing コンボ判定(2回以上 & 差分が割り切れる場合のみ段階アニメーション)
+  // giant killing コンボ判定(ボーナス発生 & 2回以上 & 差分が割り切れる場合のみ段階アニメーション)
   const ratingDiff = ratingAfter - ratingBefore;
   const isCombo =
+    giantKillingBonus &&
     giantKillingStreak >= 2 &&
     ratingDiff !== 0 &&
     ratingDiff % giantKillingStreak === 0;
 
   const [bonusMultiplier, setBonusMultiplier] = useState<number | null>(null);
-  const bonusScale = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (hasAnimated.current) return;
@@ -202,42 +206,40 @@ export function GameResultContent({
   }, []);
 
   const displayRankName = isRankNew ? afterInfo.name : beforeInfo.name;
-  const winsNeeded = afterInfo.next?.winsNeeded ?? 0;
-  const winText = lang === "en" ? (winsNeeded === 1 ? "win" : "wins") : "";
 
   return (
-    <>
+    <View className="w-[100%]">
       {/* ランク名表示 */}
-      <Text
-        className={`text-[40px] font-[800] tracking-[1px] text-center ${
-          newlyAcquiredIcon !== undefined ? "mb-0" : "mb-[20px]"
+      <AppText
+        className={`text-4xl text-center ${
+          newlyAcquiredIcon !== undefined ? "mb-0" : "mb-4"
         }`}
         style={{ color: rankColor }}
       >
         {displayRankName}
-      </Text>
+      </AppText>
 
       {/* giant killing bonus コンボ表示 */}
       {bonusMultiplier !== null && (
-        <Text
-          className="text-[20px] font-[900] text-center mb-[8px]"
+        <AppText
+          className="text-lg text-center mb-4"
           style={{ color: rankColor }}
         >
-          Giant Killing Bonus × {bonusMultiplier}
-        </Text>
+          {`${t("ResultModal.giantKillingStreakBonus")} × ${bonusMultiplier}`}
+        </AppText>
       )}
 
       {/* 新規獲得アイコン表示 */}
       {newlyAcquiredIcon !== undefined && (
-        <View className="my-[16px] w-full items-center justify-center">
-          <Text
-            className="text-[14px] font-bold mb-[8px] text-center"
-            style={{ color: COLORS.text }}
+        <View className="my-6 w-full items-center justify-center">
+          <AppText
+            className="text-base mb-2 text-center"
+            style={{ color: colors.text }}
           >
             {t("ResultModal.newIcons")}
-          </Text>
+          </AppText>
 
-          <View className="flex-row flex-wrap justify-center items-center gap-[12px]">
+          <View className="flex-row flex-wrap justify-center items-center gap-4">
             {(() => {
               const isSelected = currentIconIndex === newlyAcquiredIcon;
               const isLoadingThis = loadingIndex === newlyAcquiredIcon;
@@ -247,24 +249,24 @@ export function GameResultContent({
                   activeOpacity={0.7}
                   disabled={loadingIndex !== null}
                   onPress={() => handleSelectIcon(newlyAcquiredIcon)}
-                  className={`items-center justify-center p-[8px] rounded-[12px] border-2 ${
-                    isSelected ? "border-primary" : "border-primaryLight"
+                  className={`items-center justify-center p-2 rounded-3xl border-2 ${
+                    isSelected ? "border-primary" : "border-backgroundDark"
                   }`}
                   style={{
-                    backgroundColor: COLORS.foreground,
+                    backgroundColor: colors.foreground,
                     width: 80,
                     height: 80,
                   }}
                 >
                   {isLoadingThis ? (
-                    <ActivityIndicator size="small" color={COLORS.primary} />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
-                    <Image
+                    <AppImage
                       source={ICONS[newlyAcquiredIcon]}
                       style={{
                         width: 64,
                         height: 64,
-                        opacity: loadingIndex !== null ? 0.5 : 1,
+                        opacity: loadingIndex !== null ? 0.5 : 1, // このopacityは許可
                       }}
                       contentFit="contain"
                     />
@@ -278,8 +280,8 @@ export function GameResultContent({
 
       {/* ランク進行度プログレスバー */}
       <View
-        className="w-full h-[24px] rounded-[24px] overflow-hidden relative"
-        style={{ backgroundColor: COLORS.background }}
+        className="w-full h-8 rounded-3xl overflow-hidden relative"
+        style={{ backgroundColor: colors.background }}
       >
         <Animated.View
           style={{
@@ -291,22 +293,8 @@ export function GameResultContent({
         />
       </View>
 
-      {/* 次のランクまでの必要勝利数 */}
-      {afterInfo.next && (
-        <Text
-          className="mt-[8px] font-[600] text-center"
-          style={{ color: COLORS.text }}
-        >
-          {t("ResultModal.remaining", {
-            nextRank: afterInfo.next.name,
-            wins: winsNeeded,
-            winText: winText,
-          })}
-        </Text>
-      )}
-
       {/* アクションボタン群 */}
-      <View className="flex-row mt-[24px] items-center justify-center w-full gap-[32px]">
+      <View className="flex-row mt-8 items-center justify-center w-full gap-8">
         {/* ホームに戻る */}
         <TouchableOpacity
           className="items-center justify-center"
@@ -317,41 +305,41 @@ export function GameResultContent({
             }, 0);
           }}
         >
-          <Octicons name="home" size={24} color={COLORS.textSub} />
-          <Text
-            className="text-[12px] mt-[4px] text-center"
-            style={{ color: COLORS.textSub }}
+          <Octicons name="home" size={24} color={colors.textSub} />
+          <AppText
+            className="text-sm mt-1 text-center"
+            style={{ color: colors.textSub }}
           >
-            {t("ResultModal.home")}
-          </Text>
+            {t("common.home")}
+          </AppText>
         </TouchableOpacity>
 
         {/* 再戦（マッチング開始） */}
         <TouchableOpacity
-          className={`items-center justify-center ${
-            isMatching ? "opacity-40" : "opacity-100"
-          }`}
+          className="items-center justify-center"
           disabled={isMatching}
           onPress={() => {
-            hide();
             startMatching(boardSize);
           }}
         >
-          <FontAwesome name="repeat" size={22} color={COLORS.textSub} />
-          <Text
-            className="text-[12px] mt-[4px] text-center"
-            style={{ color: COLORS.textSub }}
+          <FontAwesome
+            name="repeat"
+            size={22}
+            color={!isMatching ? colors.textSub : colors.backgroundDark}
+          />
+          <AppText
+            className="text-sm mt-1 text-center"
+            style={{
+              color: !isMatching ? colors.textSub : colors.backgroundDark,
+            }}
           >
             {t("common.playAgain")}
-          </Text>
+          </AppText>
         </TouchableOpacity>
 
         {/* 練習モードへ */}
         <TouchableOpacity
-          className={`items-center justify-center ${
-            isMatching ? "opacity-40" : "opacity-100"
-          }`}
-          disabled={isMatching}
+          className="items-center justify-center"
           onPress={() => {
             hide();
             router.push("/PracticeGameScreen");
@@ -359,17 +347,19 @@ export function GameResultContent({
         >
           <MaterialCommunityIcons
             name="robot"
-            size={22}
-            color={COLORS.textSub}
+            size={24}
+            color={colors.textSub}
           />
-          <Text
-            className="text-[12px] mt-[4px] text-center"
-            style={{ color: COLORS.textSub }}
+          <AppText
+            className="text-sm mt-1 text-center"
+            style={{
+              color: colors.textSub,
+            }}
           >
             {t("common.bot")}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       </View>
-    </>
+    </View>
   );
 }

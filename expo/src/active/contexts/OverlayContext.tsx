@@ -45,5 +45,6 @@ export const useOverlay = () => {
 // 内側に置く必要がある。
 export const OverlayOutlet = () => {
   const { content } = useOverlay();
+  // ここは<View>にしてはいけない
   return <>{content}</>;
 };

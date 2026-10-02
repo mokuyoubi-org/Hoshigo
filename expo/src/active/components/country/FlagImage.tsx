@@ -1,15 +1,15 @@
-import { Image } from "expo-image";
+import { getFlagUrl } from "@/src/stable/logics/country";
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { COLORS } from "../../constants/colors";
-import { getFlagUrl } from "@/src/stable/logics/country";
+import { useColors } from "../../hooks/useTheme";
+import { AppImage } from "../AppImage";
 
 type Props = {
   countryCode: string;
   width?: number;
   height?: number;
   borderRadius?: number;
-  /** falseにすると膜なしの生の国旗になるにゃ。基本つけっぱでOK */
+  /** falseにすると膜なしの生の国旗になる。基本つけっぱでOK */
   withOverlay?: boolean;
 };
 
@@ -20,6 +20,7 @@ export function FlagImage({
   borderRadius = 2,
   withOverlay = true,
 }: Props) {
+  const colors = useColors();
   return (
     <View
       style={{
@@ -30,7 +31,7 @@ export function FlagImage({
         position: "relative",
       }}
     >
-      <Image
+      <AppImage
         source={{ uri: getFlagUrl(countryCode) }}
         style={{ width: "100%", height: "100%" }}
       />
@@ -38,7 +39,7 @@ export function FlagImage({
         <View
           style={{
             ...StyleSheet.absoluteFill,
-            backgroundColor: COLORS.primary + "40",
+            backgroundColor: colors.primary,
           }}
         />
       )}

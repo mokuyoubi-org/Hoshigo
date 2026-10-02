@@ -1,12 +1,13 @@
 // GameResultModal.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
+import { useColors } from "@/src/active/hooks/useTheme";
 import { BoardSize } from "go-core";
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { ModalShell } from "ui-atoms";
 import { FromType } from "../../../types/from";
-import { GameResultContent } from "./GameResultContent";
+import { AppText } from "../../common/AppText";
+import { MatchResultContent } from "./MatchResultContent";
 import { PracticeResultContent } from "./PracticeResultContent";
 
 type Props = {
@@ -20,10 +21,11 @@ type Props = {
   boardSize: BoardSize;
   from: FromType;
   giantKillingStreak: number;
-  giantKillingStreakBonusApplied: boolean;
+  giantKillingBonus: boolean;
 };
 
 export function GameResultModal(props: Props) {
+  const colors = useColors();
   const { visible, resultComment, onClose, from } = props;
 
   if (!visible) return null;
@@ -32,22 +34,23 @@ export function GameResultModal(props: Props) {
     <ModalShell
       onClose={onClose}
       size="lg"
-      backgroundColor="#ffffff"
-      style={{ padding: 20, alignItems: "center", justifyContent: "center" }}
+      backgroundColor={colors.foreground}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
     >
       <View className="w-full items-center justify-center">
         {resultComment && (
-          <Text
-            className="my-[12px] text-[20px] font-bold text-center"
-            style={{ color: COLORS.text }}
+          <AppText
+            className="my-4 text-2xl text-center"
+            style={{ color: colors.text }}
           >
             {resultComment}
-          </Text>
+          </AppText>
         )}
 
         {/* from によって表示する中身を完全に分ける */}
         {from === "GameScreen" ? (
-          <GameResultContent {...props} />
+          <MatchResultContent {...props} />
         ) : (
           <PracticeResultContent
             onClose={onClose}

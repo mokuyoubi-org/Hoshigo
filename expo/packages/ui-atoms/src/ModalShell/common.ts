@@ -1,3 +1,5 @@
+import { StyleProp, ViewStyle, ColorValue } from "react-native";
+
 // shell/modalSizing.ts
 export type ModalSize = "sm" | "md" | "lg";
 
@@ -17,6 +19,7 @@ const SIZE_MAX_WIDTH: Record<ModalSize, number> = {
 
 const MIN_WIDTH = 240;
 const HEIGHT_RATIO = 0.85;
+export const DEFAULT_CONTENT_PADDING = 20; // デフォルトのパディングサイズ。
 
 export function computeModalBox(
   windowWidth: number,
@@ -30,3 +33,16 @@ export function computeModalBox(
   const maxHeight = windowHeight * HEIGHT_RATIO;
   return { width, maxHeight };
 }
+
+
+export type ModalShellProps = {
+  children: React.ReactNode;
+  onClose?: () => void;
+  style?: StyleProp<ViewStyle>;
+  dismissKeyboardOnPress?: boolean;
+  backgroundColor: ColorValue;
+  borderColor: ColorValue;
+  overlayColor: ColorValue;
+  size?: ModalSize;
+  contentPadding?: number;
+};

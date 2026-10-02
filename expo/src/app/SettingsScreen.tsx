@@ -1,32 +1,33 @@
 import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
 import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
-import { COLORS } from "@/src/active/constants/colors";
+
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useSettingsScreen } from "@/src/active/hooks/screens/useSettingsScreen";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { openURL } from "@/src/stable/logics/linking";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useKVStorage } from "storage-kit";
 import { ToggleSwitch } from "ui-atoms";
+import { AppText } from "../active/components/common/AppText";
 import { SettingsRow } from "../active/components/common/SettingsRow";
 import { SettingsSection } from "../active/components/common/SettingsSection";
-import { AIModelModal } from "../active/components/modals/AIModelModal";
-import { CountryModal } from "../active/components/modals/CountryModal";
 import { DoubleTapModal } from "../active/components/modals/DoubleTapModal";
 import { EmailChangeModal } from "../active/components/modals/EmailChangeModal";
+import { LanguageModal } from "../active/components/modals/LanguageModal";
 import { LoginModal } from "../active/components/modals/LoginModal";
+import { ThemeModal } from "../active/components/modals/ThemeModal";
 import { VersionModal } from "../active/components/modals/VersionModal";
-import { useCountryUpdate } from "../active/hooks/useCountryUpdate";
-import { getCountryLabel } from "../stable/logics/country";
+import { useColors, useThemeMode } from "../active/hooks/useTheme";
 
 export default function SettingsScreen() {
   const t = useTranslation();
+  const colors = useColors();
+  const { mode } = useThemeMode();
   const { show, hide } = useOverlay();
   const { username, email, allowBotMatch, isAnonymous, country } = useProfile();
   const {
@@ -36,14 +37,11 @@ export default function SettingsScreen() {
     handleToggleBotMatch,
     onLogout,
     handleConfirmDelete,
+    lang,
+    isSoundEnabled,
+    setIsSoundEnabled,
+    isSoundEnabledLoaded,
   } = useSettingsScreen();
-  const { updateCountry } = useCountryUpdate();
-
-  const {
-    value: isSoundEnabled,
-    setValue: setIsSoundEnabled,
-    isLoaded: isSoundEnabledLoaded,
-  } = useKVStorage<boolean>("global.sound", true);
 
   useEffect(() => {
     // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
@@ -62,7 +60,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}
       >
-        <View className="w-full max-w-[680px] mx-auto px-5 pb-10">
+        <View className="w-full max-w-160 mx-auto px-5 pb-10">
           <View className="mt-2 h-11 justify-center">
             <TouchableOpacity
               onPress={() => {
@@ -74,17 +72,13 @@ export default function SettingsScreen() {
               }}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name="chevron-back-outline"
-                size={32}
-                color={COLORS.primaryDark}
-              />
+              <Feather name="chevron-left" size={36} color={colors.textSub} />
             </TouchableOpacity>
           </View>
 
-          <Text className="text-3xl font-extrabold text-text tracking-wider mb-5">
+          <AppText className="text-3xl text-text tracking-wider mb-5">
             {t("common.settings")}
-          </Text>
+          </AppText>
 
           <SettingsSection title={t("Settings.accountInfo")}>
             <SettingsRow
@@ -99,9 +93,9 @@ export default function SettingsScreen() {
                 )
               }
               rightElement={
-                <Text className="text-lg font-semibold text-textSub tracking-wide">
-                  {email ? email : "Not set"}
-                </Text>
+                <AppText className="text-lg text-textSub tracking-wide">
+                  {email ? email : t("Settings.notSet")}
+                </AppText>
               }
             />
             {/* <SettingsRow
@@ -115,13 +109,14 @@ export default function SettingsScreen() {
                 )
               }
               rightElement={
-                <Text className="text-lg font-semibold text-textSub tracking-wide">
+                <AppText className="text-lg text-textSub tracking-wide">
                   {country ? getCountryLabel(country) : t("Settings.notSet")}
-                </Text>
+                </AppText>
               }
             /> */}
           </SettingsSection>
 
+          {/* 対局セクション */}
           <SettingsSection title={t("Settings.matchSettings")}>
             <SettingsRow
               label={t("Settings.allowBotMatch")}
@@ -130,8 +125,9 @@ export default function SettingsScreen() {
                   value={allowBotMatch ?? true}
                   onToggle={handleToggleBotMatch}
                   disabled={isMatching}
-                  backgroundColor={COLORS.primary}
-                  toggleColor={COLORS.foreground}
+                  backgroundOnColor={colors.primary}
+                  backgroundOffColor={colors.backgroundDark}
+                  toggleColor={colors.foreground}
                 />
               }
             />
@@ -143,6 +139,7 @@ export default function SettingsScreen() {
             />
           </SettingsSection>
 
+          {/* デバイスセクション */}
           <SettingsSection title={t("common.device")}>
             <SettingsRow
               label={t("common.sound")}
@@ -151,18 +148,38 @@ export default function SettingsScreen() {
                   <ToggleSwitch
                     value={isSoundEnabled}
                     onToggle={(val) => setIsSoundEnabled(val)}
-                    backgroundColor={COLORS.primary}
-                    toggleColor={COLORS.foreground}
+                    backgroundOnColor={colors.primary}
+                    backgroundOffColor={colors.backgroundDark}
+                    toggleColor={colors.foreground}
                   />
                 ) : null
               }
             />
+
             <SettingsRow
-              label={t("common.aiModels")}
-              onPress={() => show(<AIModelModal onClose={hide} />)}
+              label={t("common.language")}
+              onPress={() => {
+                show(<LanguageModal onClose={hide} />);
+              }}
+              rightElement={
+                <AppText className="text-lg text-textSub tracking-wide">
+                  {t(`language.${lang}`)}
+                </AppText>
+              }
             />
+
+            {/* <SettingsRow
+              label={t("theme.theme")}
+              onPress={() => show(<ThemeModal onClose={hide} />)}
+              rightElement={
+                <AppText className="text-lg text-textSub tracking-wide">
+                  {t(`theme.${mode}`)}
+                </AppText>
+              }
+            /> */}
           </SettingsSection>
 
+          {/* 情報セクション */}
           <SettingsSection title={t("common.information")}>
             <SettingsRow
               label={t("Settings.privacyPolicy")}
@@ -181,16 +198,14 @@ export default function SettingsScreen() {
           <View className="gap-3">
             {!isAnonymous && (
               <TouchableOpacity
-                className={`h-[52px] w-full rounded-xl justify-center items-center bg-foreground border-2 border-backgroundDark ${
-                  isDisabled ? "opacity-40" : ""
-                }`}
+                className={`h-14 w-full rounded-xl justify-center items-center bg-foreground ${
+                  isDisabled ? "border-backgroundDark" : "border-primaryDark"
+                } border-2`}
                 disabled={loading}
                 activeOpacity={0.8}
                 onPress={() => {
                   show(
                     <LogoutModal
-                      title={t("LogoutModal.title")}
-                      confirmText={t("common.logout")}
                       onConfirm={async () => {
                         await onLogout();
                         hide();
@@ -200,15 +215,19 @@ export default function SettingsScreen() {
                   );
                 }}
               >
-                <Text className="text-lg font-bold text-text tracking-wide">
+                <AppText
+                  className={`text-lg ${
+                    isDisabled ? "text-backgroundDark" : "text-primaryDark"
+                  } tracking-wide`}
+                >
                   {t("common.logout")}
-                </Text>
+                </AppText>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
-              className={`h-[52px] w-full rounded-xl justify-center items-center bg-foreground border-2 border-coral ${
-                isDisabled ? "opacity-40" : ""
+              className={`h-14 w-full rounded-xl justify-center items-center bg-foreground border-2 ${
+                isDisabled ? "border-failureLight" : "border-failure"
               }`}
               disabled={loading}
               activeOpacity={0.8}
@@ -225,9 +244,13 @@ export default function SettingsScreen() {
                 );
               }}
             >
-              <Text className="text-lg font-bold text-coral tracking-wide">
+              <AppText
+                className={`text-lg ${
+                  isDisabled ? "text-failureLight" : "text-failure"
+                } tracking-wide`}
+              >
                 {t("Settings.deleteAccount")}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         </View>

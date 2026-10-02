@@ -3,24 +3,28 @@
 import { RecordCard } from "@/src/active/components/cards/RecordCard";
 import { SkeletonCard } from "@/src/active/components/cards/SkeletonCard";
 import { useRecordsScreen } from "@/src/active/hooks/records/useRecordsScreen";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { RecordOrSkeleton } from "@/src/active/types/record";
 import { isSkeletonCard } from "@/src/stable/logics/recordCardLogics";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { BLACK, BOARD_SIZE_OPTIONS, BoardSize, WHITE } from "go-core";
+import { BLACK, WHITE } from "go-core";
 import React, { useEffect } from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useKVStorage } from "storage-kit";
 import { SegmentedControl } from "ui-atoms";
-import { COLORS } from "../active/constants/colors";
+import { AppText } from "../active/components/common/AppText";
+import { useAppFont } from "../active/hooks/useAppFont";
+import { useColors } from "../active/hooks/useTheme";
+import { boardSizeOptions } from "../stable/logics/boardSizeToText";
 import { resultToSubjectiveComment } from "../stable/logics/textFormatter";
 
 export default function RecordsScreen() {
+  const fontFamily = useAppFont();
   // state
   const t = useTranslation();
+  const colors = useColors();
   const {
     uid,
     records,
@@ -34,11 +38,8 @@ export default function RecordsScreen() {
     handleToggle,
     loadMore,
     handleScroll,
+    isBoardSizeLoaded,
   } = useRecordsScreen();
-  const { isLoaded: isBoardSizeLoaded } = useKVStorage<BoardSize>(
-    "RecordScreen.boardSize",
-    9,
-  );
 
   // 関数
   const renderItem = ({ item }: { item: RecordOrSkeleton }) => {
@@ -119,11 +120,10 @@ export default function RecordsScreen() {
         };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background items-center">
       <StatusBar style="dark" />
-
       {/* コンテナ */}
-      <View className="flex-1 w-full max-w-[680px] mx-auto">
+      <View className="flex-1 w-full max-w-160">
         {/* ヘッダ部分 */}
         <View className="flex-row justify-between items-center px-5 py-3">
           {/* 戻るボタン */}
@@ -137,20 +137,19 @@ export default function RecordsScreen() {
             }}
             activeOpacity={0.7}
           >
-            <Ionicons
-              name="chevron-back-outline"
-              size={32}
-              color={COLORS.primaryDark}
-            />
+            <Feather name="chevron-left" size={36} color={colors.textSub} />
           </TouchableOpacity>
           {/* 盤面サイズ選択 */}
           {isBoardSizeLoaded && (
             <SegmentedControl
+              trackBackgroundColor={colors.backgroundDark}
+              activeSegmentBackgroundColor={colors.foreground}
+              activeTextColor={colors.text}
+              inactiveTextColor={colors.textSub}
               value={boardSize}
-              options={BOARD_SIZE_OPTIONS}
+              options={boardSizeOptions(t)}
               onSelect={handleToggle}
-              activeSegmentWidth={72}
-              inactiveSegmentWidth={48}
+              fontFamily={fontFamily}
             />
           )}
         </View>
@@ -189,9 +188,9 @@ export default function RecordsScreen() {
             ListEmptyComponent={
               // データが空（0件）のときに表示するコンポーネント
               <View className="items-center gap-4">
-                <Text className="text-[15px] font-semibold text-textSub tracking-wider">
+                <AppText className="text-base text-textSub tracking-wider">
                   {t("MyRecords.empty")}
-                </Text>
+                </AppText>
               </View>
             }
           />

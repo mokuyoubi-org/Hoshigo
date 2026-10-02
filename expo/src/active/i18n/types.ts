@@ -1,8 +1,8 @@
 // types.ts
 
 import type { TranslationKeyOf } from "i18n-kit";
-import { useTranslation } from ".";
 import { dictionary } from "./dictionary";
+import { useTranslation } from "./LangProvider";
 
 // 🟩"common.ok" | "common.ng" | "home.hello" | ... のように自動生成される。
 export type TranslationKey = TranslationKeyOf<typeof dictionary>;

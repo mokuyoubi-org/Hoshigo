@@ -1,11 +1,14 @@
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { getSortedCountries } from "@/src/stable/logics/country";
 import React, { useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { ModalShell } from "ui-atoms";
 import { CountryListItem } from "../../components/country/CountryListItem";
-import { COLORS } from "../../constants/colors";
+
 import { useProfile } from "../../contexts/ProfileContexts";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
+import { Divider } from "../common/Divider";
 
 type Props = {
   // 非同期処理にも対応できるように async / Promise を受けても大丈夫にしておく
@@ -18,6 +21,7 @@ const ITEM_HEIGHT = 49; // ⚠️2026/09/24これが超大事!!!!!!!!!!!!!!!50�
 export function CountryModal({ onSelectCountry, onClose }: Props) {
   const { country } = useProfile();
   const t = useTranslation();
+  const colors = useColors();
   const countries = getSortedCountries();
   const flatListRef = useRef<FlatList>(null);
 
@@ -42,13 +46,15 @@ export function CountryModal({ onSelectCountry, onClose }: Props) {
     <ModalShell
       onClose={onClose}
       size="md"
-      style={{ alignItems: "center", gap: 16 }}
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
     >
-      <Text className="text-xl font-bold color-text text-center pb-4">
+      <AppText className="text-xl color-text text-center pb-4">
         {t("common.country")}
-      </Text>
+      </AppText>
 
-      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden max-h-[350px]">
+      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden">
         <FlatList
           ref={flatListRef}
           data={countries}
@@ -70,9 +76,7 @@ export function CountryModal({ onSelectCountry, onClose }: Props) {
               });
             });
           }}
-          ItemSeparatorComponent={() => (
-            <View className="h-[1px] bg-backgroundDark w-full" />
-          )}
+          ItemSeparatorComponent={() => <Divider />}
           renderItem={({ item }) => {
             const isLoading = loadingCode === item.code;
 
@@ -88,7 +92,7 @@ export function CountryModal({ onSelectCountry, onClose }: Props) {
                 {/* 選択中の項目にくるくるを表示する */}
                 {isLoading && (
                   <View className="pr-4">
-                    <ActivityIndicator size="small" color={COLORS.primary} />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   </View>
                 )}
               </View>

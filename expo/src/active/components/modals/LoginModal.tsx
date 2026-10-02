@@ -1,20 +1,21 @@
 // LoginModal.tsx
-import { COLORS } from "@/src/active/constants/colors";
+
 import { useLoginModal } from "@/src/active/hooks/useLoginModal";
-import { useLang } from "@/src/active/i18n";
+import { useLang } from "@/src/active/i18n/LangProvider";
 import React, { useRef } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { ModalShell } from "ui-atoms";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
+import { AppTextInput } from "../common/AppTextInput";
 
 type Props = {
   visible: boolean;
@@ -24,7 +25,7 @@ type Props = {
 export function LoginModal({ visible, onClose }: Props) {
   const turnstileRef = useRef<TurnstileHandle>(null);
   const { lang } = useLang();
-
+  const colors = useColors();
   const {
     t,
     step,
@@ -56,14 +57,19 @@ export function LoginModal({ visible, onClose }: Props) {
   if (!visible) return null;
 
   return (
-    <ModalShell size="lg">
+    <ModalShell
+      size="lg"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
       <TurnstileWidget
         ref={turnstileRef}
         sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
-        bgColor={COLORS.background}
-        textColor={COLORS.text}
-        spinnerColor={COLORS.primary}
-        spinnerTrackColor={COLORS.backgroundDark}
+        bgColor={colors.background}
+        textColor={colors.text}
+        spinnerColor={colors.primary}
+        spinnerTrackColor={colors.backgroundDark}
         lang={lang}
       />
       <KeyboardAvoidingView
@@ -71,9 +77,9 @@ export function LoginModal({ visible, onClose }: Props) {
         className="w-full"
       >
         <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-2xl font-extrabold tracking-wider flex-1 text-text">
+          <AppText className="text-2xl tracking-wider flex-1 text-text">
             {getTitle()}
-          </Text>
+          </AppText>
         </View>
 
         <ScrollView
@@ -81,22 +87,19 @@ export function LoginModal({ visible, onClose }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           {step === "email" && (
-            <>
+            <View>
               <View className="mb-6">
-                <Text className="text-lg font-normal tracking-wide text-textSub">
+                <AppText className="text-lg tracking-wide text-textSub">
                   {t("AccountLinking.subtitleEmail")}
-                </Text>
+                </AppText>
               </View>
 
               <View className="mb-4">
-                <Text className="text-lg font-semibold mb-1.5 tracking-wide text-text">
-                  {t("common.email")}
-                </Text>
-                <View className="rounded-xl border bg-foreground border-primary">
-                  <TextInput
-                    className="h-[50px] px-4 text-lg text-text"
+                <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+                  <AppTextInput
+                    className="h-12 px-4 text-lg text-text"
                     placeholder={"example@email.com"}
-                    placeholderTextColor={COLORS.textSub}
+                    placeholderTextColor={colors.textOpacity} // 絵文字対策
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -108,60 +111,62 @@ export function LoginModal({ visible, onClose }: Props) {
               </View>
 
               {error ? (
-                <Text className="text-lg text-center mb-3 text-coral">
+                <AppText className="text-lg text-center mb-3 text-failure">
                   {error}
-                </Text>
+                </AppText>
               ) : null}
 
-              <View className="gap-[10px] mt-2">
+              <View className="gap-2 mt-2">
                 <TouchableOpacity
-                  className={`h-[52px] rounded-xl justify-center items-center bg-darkObject ${
-                    !canSendEmail || loading ? "opacity-50" : "opacity-100"
+                  className={`h-12 rounded-xl justify-center items-center ${
+                    !canSendEmail || loading
+                      ? "bg-primaryDark"
+                      : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
                   onPress={onSendOtp}
                   disabled={loading || !canSendEmail}
                 >
                   {loading ? (
-                    <ActivityIndicator color={COLORS.foreground} />
+                    <ActivityIndicator color={colors.foreground} />
                   ) : (
-                    <Text className="text-lg font-bold tracking-wide text-foreground">
+                    <AppText className="text-lg tracking-wide text-foreground">
                       {t("AccountLinking.sendCode")}
-                    </Text>
+                    </AppText>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-[52px] rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-lg font-bold tracking-wide text-textSub">
+                  <AppText className="text-lg tracking-wide text-textSub">
                     {t("common.cancel")}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               </View>
-            </>
+            </View>
           )}
 
           {step === "otp" && (
-            <>
+            <View>
               <View className="mb-6">
-                <Text className="text-lg font-normal tracking-wide text-textSub">
+                <AppText className="text-lg tracking-wide text-textSub">
                   {t("AccountLinking.subtitleOtp", { email })}
-                </Text>
+                </AppText>
               </View>
 
               <View className="mb-4">
-                <Text className="text-lg font-semibold mb-1.5 tracking-wide text-text">
+                <AppText className="text-lg mb-1.5 tracking-wide text-text">
                   {t("AccountLinking.otpLabel")}
-                </Text>
-                <View className="rounded-xl border bg-foreground border-primary">
-                  <TextInput
-                    className="h-[50px] px-4 text-2xl tracking-[8px] text-center font-bold text-text"
+                </AppText>
+                <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+                  <AppTextInput
+                    className="px-4 text-2xl text-center text-text"
                     placeholder={"12345678"}
-                    placeholderTextColor={COLORS.textSub}
+                    placeholderTextColor={colors.textOpacity} // 絵文字対策
                     value={otp}
                     onChangeText={handleOtpChange}
                     keyboardType="number-pad"
@@ -172,41 +177,43 @@ export function LoginModal({ visible, onClose }: Props) {
               </View>
 
               {error ? (
-                <Text className="text-lg text-center mb-3 text-coral">
+                <AppText className="text-lg text-center mb-3 text-failure">
                   {error}
-                </Text>
+                </AppText>
               ) : null}
 
-              <View className="gap-[10px] mt-2">
+              <View className="gap-2 mt-2">
                 <TouchableOpacity
-                  className={`h-[52px] rounded-xl justify-center items-center bg-darkObject ${
-                    !canVerifyOtp || loading ? "opacity-50" : "opacity-100"
+                  className={`rounded-xl justify-center items-center ${
+                    !canVerifyOtp || loading
+                      ? "bg-primaryDark"
+                      : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
                   onPress={onVerifyOtp}
                   disabled={loading || !canVerifyOtp}
                 >
                   {loading ? (
-                    <ActivityIndicator color={COLORS.foreground} />
+                    <ActivityIndicator color={colors.foreground} />
                   ) : (
-                    <Text
+                    <AppText
                       numberOfLines={1}
-                      className="text-lg font-bold tracking-wide text-foreground"
+                      className="text-lg tracking-wide text-foreground"
                     >
                       {t("AccountLinking.verify")}
-                    </Text>
+                    </AppText>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-[52px] rounded-xl justify-center items-center bg-backgroundDark"
+                  className="rounded-xl justify-center items-center bg-backgroundDark"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-lg font-bold tracking-wide text-textSub">
+                  <AppText className="text-lg tracking-wide text-textSub">
                     {t("common.cancel")}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               </View>
 
@@ -215,22 +222,22 @@ export function LoginModal({ visible, onClose }: Props) {
                 onPress={onSendOtp}
                 disabled={loading}
               >
-                <Text className="text-lg font-semibold text-green">
+                <AppText className="text-lg text-green">
                   {t("AccountLinking.resend")}
-                </Text>
+                </AppText>
               </TouchableOpacity>
-            </>
+            </View>
           )}
 
           {step === "selection" && (
-            <>
-              <Text className="text-lg mb-5 leading-5 tracking-wide text-textSub">
+            <View>
+              <AppText className="text-lg mb-5 leading-5 tracking-wide text-textSub">
                 {t("AccountLinking.selectionMessage")}
-              </Text>
+              </AppText>
 
               {!existingPreview || !guestSnapshot ? (
                 <View className="py-6 items-center">
-                  <ActivityIndicator color={COLORS.primary} />
+                  <ActivityIndicator color={colors.primary} />
                 </View>
               ) : (
                 <View className="flex-row gap-3 mb-6">
@@ -244,17 +251,17 @@ export function LoginModal({ visible, onClose }: Props) {
                     onPress={() => setSelection("guest")}
                     disabled={loading}
                   >
-                    <Text className="text-lg font-bold mb-1 tracking-wide text-textSub">
+                    <AppText className="text-lg mb-1 tracking-wide text-textSub">
                       {t("AccountLinking.thisDevice")}
-                    </Text>
-                    <Text className="text-lg font-extrabold text-text">
+                    </AppText>
+                    <AppText className="text-lg text-text">
                       {guestSnapshot.username}
-                    </Text>
-                    <Text className="text-lg mt-1 text-textSub">
+                    </AppText>
+                    <AppText className="text-lg mt-1 text-textSub">
                       9x9: {guestSnapshot.rating9}pts 13x13:
                       {guestSnapshot.rating13}pts 19x19:
                       {guestSnapshot.rating19}pts
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -267,32 +274,32 @@ export function LoginModal({ visible, onClose }: Props) {
                     onPress={() => setSelection("existing")}
                     disabled={loading}
                   >
-                    <Text className="text-lg font-bold mb-1 tracking-wide text-primary">
+                    <AppText className="text-lg mb-1 tracking-wide text-primary">
                       {t("AccountLinking.savedAccount")}
-                    </Text>
-                    <Text className="text-lg font-extrabold text-text">
+                    </AppText>
+                    <AppText className="text-lg text-text">
                       {existingPreview.username}
-                    </Text>
-                    <Text className="text-lg mt-1 text-textSub">
+                    </AppText>
+                    <AppText className="text-lg mt-1 text-textSub">
                       9x9: {existingPreview.rating_9}pts 13x13:
                       {existingPreview.rating_13}pts 19x19:
                       {existingPreview.rating_19}pts
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                 </View>
               )}
 
               {error ? (
-                <Text className="text-lg text-center mb-3 text-coral">
+                <AppText className="text-lg text-center mb-3 text-failure">
                   {error}
-                </Text>
+                </AppText>
               ) : null}
 
-              <View className="gap-[10px] mt-2">
+              <View className="gap-2 mt-2">
                 <TouchableOpacity
-                  className={`h-[48px] rounded-xl justify-center items-center ${
+                  className={`h-12 rounded-xl justify-center items-center ${
                     canConfirmSelection && !loading
-                      ? "bg-darkObject"
+                      ? "bg-blackStone"
                       : "bg-backgroundDark"
                   }`}
                   activeOpacity={0.8}
@@ -300,26 +307,26 @@ export function LoginModal({ visible, onClose }: Props) {
                   disabled={loading || !canConfirmSelection}
                 >
                   {loading ? (
-                    <ActivityIndicator color={COLORS.foreground} />
+                    <ActivityIndicator color={colors.foreground} />
                   ) : (
-                    <Text className="text-[15px] font-extrabold tracking-wide text-foreground">
+                    <AppText className="text-base tracking-wide text-foreground">
                       {t("AccountLinking.confirmSelection")}
-                    </Text>
+                    </AppText>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-[48px] rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-lg font-bold tracking-wide text-textSub">
+                  <AppText className="text-lg tracking-wide text-textSub">
                     {t("common.cancel")}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               </View>
-            </>
+            </View>
           )}
         </ScrollView>
       </KeyboardAvoidingView>

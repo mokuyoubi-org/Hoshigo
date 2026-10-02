@@ -1,16 +1,19 @@
 import { MainButton } from "@/src/active/components/buttons/MainButton";
-import { Header } from "@/src/active/components/common/Header";
-import { MainTitle } from "@/src/active/components/common/MainTitile";
+import { MainTitle } from "@/src/active/components/common/MainTitle/MainTitle";
+import { Header } from "@/src/active/components/headers/Header";
 import RankingsModal from "@/src/active/components/modals/RankingsModal";
 import { RuleModal } from "@/src/active/components/modals/RuleModal";
-import { COLORS } from "@/src/active/constants/colors";
+
 import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useTranslation } from "@/src/active/i18n";
+import { useAppFont } from "@/src/active/hooks/useAppFont";
+import { useColors } from "@/src/active/hooks/useTheme";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
+import { boardSizeOptions } from "@/src/stable/logics/boardSizeToText";
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { BOARD_SIZE_OPTIONS, BoardSize } from "go-core";
+import { BoardSize } from "go-core";
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,6 +21,7 @@ import { useKVStorage } from "storage-kit";
 import { IconButton, SegmentedControl } from "ui-atoms";
 
 export default function HomeScreen() {
+  const fontFamily = useAppFont();
   const { startMatching, isMatching } = useMatching();
   const {
     value: boardSize,
@@ -30,7 +34,7 @@ export default function HomeScreen() {
 
   const { show, hide } = useOverlay();
   const t = useTranslation();
-
+  const colors = useColors();
   // 関数の名前を「マッチング開始」だとわかりやすい名前に変更した
   const handleStartMatching = () => {
     startMatching(boardSize);
@@ -49,20 +53,20 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
-      <View className="flex-1 w-full max-w-[680px] mx-auto px-5 pt-3">
+      <View className="flex-1 w-full max-w-160 mx-auto px-5 pt-3">
         <Header
           left={
-            <View
-              className={isMatching ? "opacity-60" : "opacity-100"}
-              style={{ pointerEvents: isMatching ? "none" : "auto" }}
-            >
+            <View style={{ pointerEvents: isMatching ? "none" : "auto" }}>
               {isBoardSizeLoaded && (
                 <SegmentedControl
+                  trackBackgroundColor={colors.backgroundDark}
+                  activeSegmentBackgroundColor={colors.foreground}
+                  activeTextColor={colors.text}
+                  inactiveTextColor={colors.textSub}
                   value={boardSize}
-                  options={BOARD_SIZE_OPTIONS}
+                  options={boardSizeOptions(t)}
                   onSelect={setBoardSize}
-                  activeSegmentWidth={72}
-                  inactiveSegmentWidth={48}
+                  fontFamily={fontFamily}
                 />
               )}
             </View>
@@ -71,7 +75,9 @@ export default function HomeScreen() {
           {/* 👑 ボタン */}
           <IconButton
             icon={<AntDesign name="crown" />}
-            color={COLORS.primary}
+            iconColor={colors.primary}
+            backgroundColor={colors.foreground}
+            borderColor={colors.backgroundDark}
             onPress={() =>
               show(<RankingsModal visible={true} onClose={hide} />)
             }
@@ -79,7 +85,9 @@ export default function HomeScreen() {
           {/* ❓ ボタン */}
           <IconButton
             icon={<FontAwesome6 name="question" />}
-            color={COLORS.primary}
+            iconColor={colors.primary}
+            backgroundColor={colors.foreground}
+            borderColor={colors.backgroundDark}
             onPress={() => show(<RuleModal visible={true} onClose={hide} />)}
           />
         </Header>
@@ -96,7 +104,7 @@ export default function HomeScreen() {
           <View className="flex-1" />
 
           {/* メインボタンエリア（gap-4 でボタン同士の間にすき間を作った） */}
-          <View className="w-full items-center gap-2">
+          <View className="w-full items-center gap-4">
             <MainButton
               onPress={handleStartMatching}
               boardSize={boardSize}

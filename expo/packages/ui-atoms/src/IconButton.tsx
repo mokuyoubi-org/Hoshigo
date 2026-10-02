@@ -12,22 +12,21 @@ import {
 
 type Props = TouchableOpacityProps & {
   icon: React.ReactElement<{ size?: number; color?: string }>;
-  color: string;
-  inverted?: boolean; // 色を反転するかどうかのオプション
+  iconColor: string;
+  borderColor: string;
+  backgroundColor: string;
 };
 
 export const IconButton = ({
   icon,
-  color,
-  inverted = false, // デフォルトは反転しない（false）
+  iconColor,
+  borderColor,
+  backgroundColor,
   activeOpacity = 0.7,
   style,
   ...props
 }: Props) => {
   // invertedがtrueなら背景にcolorを使い、アイコンは白にする
-  const backgroundColor = inverted ? color : "#ffffff";
-  const borderColor = inverted ? color : "#e1e8ed";
-  const iconColor = inverted ? "#ffffff" : color;
 
   return (
     <TouchableOpacity
@@ -43,7 +42,7 @@ export const IconButton = ({
       {...props}
     >
       {React.cloneElement(icon, {
-        size: 24,
+        size: 28,
         color: iconColor,
       })}
     </TouchableOpacity>
@@ -52,9 +51,9 @@ export const IconButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    width: 48,
-    height: 48,
-    borderRadius: 48,
+    width: 54,
+    height: 54,
+    borderRadius: 54,
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",

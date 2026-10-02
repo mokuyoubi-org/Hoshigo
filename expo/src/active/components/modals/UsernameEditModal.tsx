@@ -1,20 +1,25 @@
 // UsernameEditModal.tsx
-import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/i18n";
-import { dictionary } from "@/src/active/i18n/dictionary";
-import { validateUsername } from "@/src/stable/logics/validationLogics";
+
+import {
+  normalizeUsername,
+  UsernameValidationError,
+  validateUsername,
+} from "@/src/stable/logics/validationLogics";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
+import { useColors } from "../../hooks/useTheme";
+import { useTranslation } from "../../i18n/LangProvider";
+import { TranslationKey } from "../../i18n/types";
+import { AppText } from "../common/AppText";
+import { AppTextInput } from "../common/AppTextInput";
 
 type Props = {
   visible: boolean;
@@ -23,7 +28,6 @@ type Props = {
   onSubmit: (
     newUsername: string,
   ) => Promise<string | null | void> | string | null | void;
-  lang?: "en";
 };
 
 export default function UsernameEditModal({
@@ -31,20 +35,27 @@ export default function UsernameEditModal({
   currentUsername,
   onClose,
   onSubmit,
-  lang = "en",
 }: Props) {
-  const tTranslation = useTranslation();
+  const t = useTranslation();
+  const colors = useColors();
   const [inputUsername, setInputUsername] = useState(currentUsername);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const t = dictionary.UsernameEditModal[lang];
+  const errorKeyMap: Record<
+    NonNullable<UsernameValidationError>,
+    TranslationKey
+  > = {
+    required: "UsernameEditModal.errorRequired",
+    length: "UsernameEditModal.errorLength",
+    invalidFormat: "UsernameEditModal.errorInvalidFormat",
+  };
 
   const validate = (text: string) => {
     const errorType = validateUsername(text);
     if (!errorType) return "";
 
-    return t.errors[errorType];
+    return t(errorKeyMap[errorType]);
   };
 
   const handleChangeText = (text: string) => {
@@ -53,14 +64,16 @@ export default function UsernameEditModal({
   };
 
   const handleSubmit = async () => {
-    const error = validate(inputUsername);
+    // 送信・チェック前に掃除(NFC正規化 + 見えない絵文字パーツの除去)
+    const normalized = normalizeUsername(inputUsername);
+    const error = validate(normalized);
     if (error) {
       setErrorMessage(error);
       return;
     }
     try {
       setLoading(true);
-      const serverError = await onSubmit(inputUsername);
+      const serverError = await onSubmit(normalized);
       if (serverError) {
         setErrorMessage(serverError);
       } else {
@@ -80,15 +93,20 @@ export default function UsernameEditModal({
   if (!visible) return null;
 
   return (
-    <ModalShell size="lg">
+    <ModalShell
+      size="lg"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full"
       >
         <View className="flex-row justify-between items-center mb-6">
-          <Text className="text-2xl font-extrabold tracking-wider text-text">
-            {t.title}
-          </Text>
+          <AppText className="text-2xl tracking-wider text-text">
+            {t("UsernameEditModal.title")}
+          </AppText>
         </View>
 
         <ScrollView
@@ -97,17 +115,17 @@ export default function UsernameEditModal({
         >
           <View className="w-full">
             <View className="mb-4">
-              <Text className="text-sm font-semibold mb-1.5 tracking-wide text-text">
-                {t.placeholder}
-              </Text>
-              <View className="rounded-xl border bg-foreground border-primary">
-                <TextInput
-                  className="h-[50px] px-4 text-base text-text"
-                  placeholder={t.placeholder}
-                  placeholderTextColor={COLORS.textSub}
+              <AppText className="text-sm mb-2 tracking-wide text-text">
+                {t("UsernameEditModal.placeholder")}
+              </AppText>
+              <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+                <AppTextInput
+                  className="h-12 px-4 text-base text-text"
+                  placeholder={t("UsernameEditModal.placeholder")}
+                  placeholderTextColor={colors.textOpacity} // 絵文字対策
                   value={inputUsername}
                   onChangeText={handleChangeText}
-                  maxLength={8}
+                  maxLength={20}
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!loading}
@@ -118,39 +136,39 @@ export default function UsernameEditModal({
 
             {errorMessage ? (
               <View className="mb-3">
-                <Text className="text-sm text-center text-coral">
+                <AppText className="text-sm text-center text-failure">
                   {errorMessage}
-                </Text>
+                </AppText>
               </View>
             ) : null}
 
-            <View className="gap-[10px] mt-2">
+            <View className="gap-2 mt-2">
               <TouchableOpacity
-                className={`h-[52px] rounded-xl justify-center items-center ${
-                  isSaveDisabled ? "bg-primaryLight" : "bg-darkObject"
+                className={`h-12 rounded-xl justify-center items-center ${
+                  isSaveDisabled ? "bg-primaryDark" : "bg-blackStone"
                 }`}
                 activeOpacity={0.8}
                 onPress={handleSubmit}
                 disabled={isSaveDisabled}
               >
                 {loading ? (
-                  <ActivityIndicator color={COLORS.foreground} />
+                  <ActivityIndicator color={colors.foreground} />
                 ) : (
-                  <Text className="text-base font-bold tracking-wide text-foreground">
-                    {t.save}
-                  </Text>
+                  <AppText className="text-base tracking-wide text-foreground">
+                    {t("UsernameEditModal.save")}
+                  </AppText>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="h-[52px] rounded-xl justify-center items-center bg-backgroundDark"
+                className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
                 onPress={onClose}
                 disabled={loading}
                 activeOpacity={0.8}
               >
-                <Text className="text-base font-bold tracking-wide text-textSub">
-                  {tTranslation("common.cancel")}
-                </Text>
+                <AppText className="text-base tracking-wide text-textSub">
+                  {t("common.cancel")}
+                </AppText>
               </TouchableOpacity>
             </View>
           </View>

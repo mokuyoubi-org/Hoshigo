@@ -1,19 +1,20 @@
 // GameStartModal.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
 import { useSounds } from "@/src/active/hooks/useGameSounds";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
+import { isBot } from "@/src/stable/logics/bot/botLogics";
 import { botNameFormatter } from "@/src/stable/logics/bot/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BLACK, Color, MatchType, WHITE } from "go-core";
 import React, { useEffect } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useKVStorage } from "storage-kit";
 import { ModalShell } from "ui-atoms";
 import { useProfile } from "../../contexts/ProfileContexts";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 import { AvatarWithPass } from "../common/AvatarWithPass";
-import { isBot } from "@/src/stable/logics/bot/botLogics";
 
 type PlayerInfo = {
   username: string;
@@ -35,6 +36,7 @@ export const GameStartModal = ({
   matchType,
   onClose,
 }: Props) => {
+  const colors = useColors();
   const { username } = useProfile();
   const { value: isSoundEnabled } = useKVStorage<boolean>(
     "global.sound",
@@ -80,20 +82,22 @@ export const GameStartModal = ({
 
   return (
     <ModalShell
-      backgroundColor="#f0f5f9"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
       size="sm"
       onClose={onClose}
-      style={{ alignItems: "center" }}
     >
-      <Text className="text-2xl font-extrabold text-primary tracking-widest mb-4 text-center">
-        {t("MatchType.title")}
-      </Text>
+      <AppText className="text-2xl text-primary tracking-widest mb-4 text-center">
+        {t("common.gameStart")}!
+      </AppText>
 
       <View className="flex-row items-center justify-between w-full my-2 px-2">
         {/* 左側のプレイヤー */}
         <View className="items-center flex-1">
           <View className="relative mb-2">
             <AvatarWithPass
+              // agehamaは不要
               rankIndex={leftPlayer.rankIndex}
               iconIndex={leftPlayer.icon}
               size={56}
@@ -103,17 +107,17 @@ export const GameStartModal = ({
             />
           </View>
           <View className="flex-row items-center justify-center">
-            <Text
-              className="text-base font-bold text-text text-center"
+            <AppText
+              className="text-base text-text text-center"
               numberOfLines={1}
             >
               {botNameFormatter(leftPlayer.name, t)}
-            </Text>
+            </AppText>
             {isBot(leftPlayer.name) && (
               <MaterialCommunityIcons
                 name="robot"
-                size={14}
-                color={COLORS.textSub}
+                size={16}
+                color={colors.textSub}
                 style={{
                   marginLeft: 4,
                   marginRight: 0,
@@ -124,15 +128,14 @@ export const GameStartModal = ({
         </View>
 
         <View className="items-center mx-2">
-          <Text className="text-xl font-black text-primary italic">
-            {t("MatchType.vs")}
-          </Text>
+          <AppText className="text-xl text-primary italic">VS</AppText>
         </View>
 
         {/* 右側のプレイヤー */}
         <View className="items-center flex-1">
           <View className="relative mb-2">
             <AvatarWithPass
+              // agehamaは不要
               rankIndex={rightPlayer.rankIndex}
               iconIndex={rightPlayer.icon}
               size={56}
@@ -143,17 +146,17 @@ export const GameStartModal = ({
           </View>
 
           <View className="flex-row items-center justify-center">
-            <Text
-              className="text-base font-bold text-text text-center"
+            <AppText
+              className="text-base text-text text-center"
               numberOfLines={1}
             >
               {botNameFormatter(rightPlayer.name, t)}
-            </Text>
+            </AppText>
             {isBot(rightPlayer.name) && (
               <MaterialCommunityIcons
                 name="robot"
-                size={14}
-                color={COLORS.textSub}
+                size={16}
+                color={colors.textSub}
                 style={{
                   marginLeft: 4,
                   marginRight: 0,
@@ -165,10 +168,10 @@ export const GameStartModal = ({
       </View>
 
       <View className="bg-foreground mt-4 px-4 py-2 rounded-xl w-full items-center border-2 border-backgroundDark">
-        <Text className="text-sm text-textSub font-semibold mb-0.5">
-          {t("MatchType.handicapLabel")}
-        </Text>
-        <Text className="text-base font-bold text-text">{matchTypeText}</Text>
+        <AppText className="text-sm text-textSub mb-0.5">
+          {t("MatchType.handicap")}
+        </AppText>
+        <AppText className="text-base text-text">{matchTypeText}</AppText>
       </View>
     </ModalShell>
   );

@@ -1,6 +1,7 @@
 // SegmentedControl.tsx
 import React from "react";
 import {
+  ColorValue,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,15 +13,19 @@ type Props<T extends string | number> = {
   value: T;
   options: readonly { value: T; label: string }[];
   onSelect: (value: T) => void;
-  // 選択されている部分の横幅
-  activeSegmentWidth?: number;
-  // 選択されていない部分の横幅
-  inactiveSegmentWidth?: number;
+  trackBackgroundColor: ColorValue;
+  activeSegmentBackgroundColor: ColorValue;
+  activeTextColor: ColorValue;
+  inactiveTextColor: ColorValue;
+  activeSegmentWidth?: number; // 選択されている部分の横幅
+  inactiveSegmentWidth?: number; // 選択されていない部分の横幅
   trackStyle?: ViewStyle;
   segmentStyle?: ViewStyle;
+  fontFamily: string; // 文字のフォント(省略時はシステムのフォント)
 };
 
 // 数字だけを抜き出す関数
+// 使っているので消さない！2026/09/30
 const extractNumber = (text: string): string => {
   return text.match(/\d+/)?.[0] ?? text;
 };
@@ -29,10 +34,15 @@ export const SegmentedControl = <T extends string | number>({
   value,
   options,
   onSelect,
-  activeSegmentWidth,
-  inactiveSegmentWidth,
+  trackBackgroundColor,
+  activeSegmentBackgroundColor,
+  activeTextColor,
+  inactiveTextColor,
+  activeSegmentWidth = 72,
+  inactiveSegmentWidth = 50,
   trackStyle,
   segmentStyle,
+  fontFamily,
 }: Props<T>) => {
   // 全体の横幅を自動計算する
   // (どちらの幅も数値で渡されているときだけ計算するよ)
@@ -41,10 +51,13 @@ export const SegmentedControl = <T extends string | number>({
       ? activeSegmentWidth + inactiveSegmentWidth * (options.length - 1) + 8 // 8はTrackの左右padding(4 + 4)のぶん
       : undefined;
 
+  const fontStyle = fontFamily ? { fontFamily } : null;
+
   return (
     <View
       style={[
         styles.track,
+        { backgroundColor: trackBackgroundColor },
         calculatedWidth !== undefined && { width: calculatedWidth },
         trackStyle,
       ]}
@@ -69,7 +82,7 @@ export const SegmentedControl = <T extends string | number>({
               styles.segment,
               currentWidth !== undefined && { width: currentWidth },
               segmentStyle,
-              isActive && styles.segmentActive,
+              isActive && { backgroundColor: activeSegmentBackgroundColor },
             ]}
             onPress={() => onSelect(option.value)}
             activeOpacity={0.8}
@@ -77,7 +90,8 @@ export const SegmentedControl = <T extends string | number>({
             <Text
               style={[
                 styles.label,
-                isActive ? styles.labelActive : styles.labelInactive,
+                { color: isActive ? activeTextColor : inactiveTextColor },
+                fontStyle,
               ]}
             >
               {displayLabel}
@@ -92,10 +106,9 @@ export const SegmentedControl = <T extends string | number>({
 const styles = StyleSheet.create({
   track: {
     flexDirection: "row",
-    backgroundColor: "#e1e8ed",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 4,
-    height: 48,
+    height: 54,
     zIndex: 10,
   },
   segment: {
@@ -103,20 +116,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
-  },
-  segmentActive: {
-    backgroundColor: "#ffffff",
+    borderRadius: 18,
   },
   label: {
-    fontSize: 14,
-  },
-  labelActive: {
-    color: "#4e5256",
-    fontWeight: "bold",
-  },
-  labelInactive: {
-    color: "#95999e",
-    fontWeight: "500",
+    fontSize: 16,
   },
 });

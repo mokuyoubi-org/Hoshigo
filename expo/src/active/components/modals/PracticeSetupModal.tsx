@@ -1,19 +1,21 @@
 // PracticeSetupModal.tsx 最終形
 // overlaycontextの枠は使っていない。
 
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { botNameFormatter } from "@/src/stable/logics/bot/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { BLACK, BoardSize, Color, MatchType, WHITE } from "go-core";
 import React, { useEffect } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { COLORS } from "../../constants/colors";
+
 import { useOverlay } from "../../contexts/OverlayContext";
 import { PlayerType } from "../../hooks/practice/usePracticeSession";
 import { usePracticeSetup } from "../../hooks/practice/usePracticeSetup";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 import { Avatar } from "../common/Avatar";
 import { AIDownloadModal } from "./AIDownloadModal";
 
@@ -49,6 +51,7 @@ export function PracticeSetupModal({
   myUid,
 }: Props) {
   const t = useTranslation();
+  const colors = useColors();
   const { show } = useOverlay();
 
   const {
@@ -98,7 +101,7 @@ export function PracticeSetupModal({
 
   // プレイヤーの表示名を整形するヘルパー
   const getPlayerDisplayName = (player: PlayerType) => {
-    if (player.username === "you") return "You";
+    if (player.username === "you") return t("common.you");
     return botNameFormatter(player.username, t);
   };
 
@@ -154,14 +157,14 @@ export function PracticeSetupModal({
           <Feather
             name="chevron-left"
             size={16}
-            color={isAtMin ? COLORS.foreground : COLORS.text}
+            color={isAtMin ? "transparent" : colors.textSub}
           />
         </TouchableOpacity>
 
         {/* 中央：プレイヤー情報（左右と重ならないように flex-1 に変更した） */}
         <TouchableOpacity
           className={`flex-1 h-full flex-col justify-center items-center ${
-            isOptionDisabled ? "opacity-40" : ""
+            isOptionDisabled ? "opacity-40" : "" // 2026/09/28: やむを得ない。一旦このまま
           }`}
           onPress={() => {
             if (isOptionDisabled && currentOpt) {
@@ -176,9 +179,9 @@ export function PracticeSetupModal({
             size={36}
             playerColor={color}
           />
-          <Text className="text-text font-semibold text-base" numberOfLines={1}>
+          <AppText className="text-text text-base" numberOfLines={1}>
             {getPlayerDisplayName(assignedPlayer)}
-          </Text>
+          </AppText>
         </TouchableOpacity>
 
         {/* 右矢印（固定幅で確保） */}
@@ -191,7 +194,7 @@ export function PracticeSetupModal({
           <Feather
             name="chevron-right"
             size={16}
-            color={isAtMax ? COLORS.foreground : COLORS.text}
+            color={isAtMax ? "transparent" : colors.textSub}
           />
         </TouchableOpacity>
       </View>
@@ -201,8 +204,9 @@ export function PracticeSetupModal({
   return (
     <ModalShell
       size="lg"
-      backgroundColor={COLORS.foreground}
-      style={{ padding: 24 }}
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
     >
       {/* 戻るボタン */}
       <View className="flex-row items-center mb-4">
@@ -216,18 +220,14 @@ export function PracticeSetupModal({
           }}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="chevron-back-outline"
-            size={18}
-            color={COLORS.primaryDark}
-          />
+          <Feather name="chevron-left" size={24} color={colors.textSub} />
         </TouchableOpacity>
       </View>
 
       {/* 盤サイズ */}
-      <Text className="text-sm font-semibold text-textSub mb-2">
+      <AppText className="text-sm text-textSub mb-2">
         {t("Practice.boardSize")}
-      </Text>
+      </AppText>
       {isLoaded && (
         <View className="flex-row gap-2 mb-4">
           {([5, 9, 13, 19] as BoardSize[]).map((size) => (
@@ -238,16 +238,16 @@ export function PracticeSetupModal({
               }`}
               onPress={() => selectBoardSize(size)}
             >
-              <Text className="text-text font-semibold">{size}</Text>
+              <AppText className="text-text">{size}</AppText>
             </TouchableOpacity>
           ))}
         </View>
       )}
 
       {/* ハンデ (handicap) */}
-      <Text className="text-sm font-semibold text-textSub mb-2">
-        {t("Practice.handicap")}
-      </Text>
+      <AppText className="text-sm text-textSub mb-2">
+        {t("MatchType.handicap")}
+      </AppText>
       {isLoaded && (
         <View className="bg-foreground flex-row h-14 rounded-xl border border-backgroundDark bg-background overflow-hidden mb-4">
           <TouchableOpacity
@@ -259,17 +259,14 @@ export function PracticeSetupModal({
             <Feather
               name="chevron-left"
               size={16}
-              color={isHandicapAtMin ? COLORS.foreground : COLORS.text}
+              color={isHandicapAtMin ? "transparent" : colors.textSub}
             />
           </TouchableOpacity>
 
           <View className="absolute inset-0 justify-center items-center pointer-events-none px-8">
-            <Text
-              className="text-text font-semibold text-base"
-              numberOfLines={1}
-            >
+            <AppText className="text-text text-base" numberOfLines={1}>
               {t(`MatchType.matchType_${handicapOptions[handicapIndex]}`)}
-            </Text>
+            </AppText>
           </View>
 
           <TouchableOpacity
@@ -281,16 +278,16 @@ export function PracticeSetupModal({
             <Feather
               name="chevron-right"
               size={16}
-              color={isHandicapAtMax ? COLORS.foreground : COLORS.text}
+              color={isHandicapAtMax ? "transparent" : colors.textSub}
             />
           </TouchableOpacity>
         </View>
       )}
 
       {/* プレイヤー設定セクション */}
-      <Text className="text-sm font-semibold text-textSub mb-2">
+      <AppText className="text-sm text-textSub mb-2">
         {t("common.player")}
-      </Text>
+      </AppText>
 
       {isLoaded && (
         <View className="flex-row gap-2 mb-6 w-full">
@@ -304,16 +301,16 @@ export function PracticeSetupModal({
 
       {/* 対局開始ボタン */}
       <TouchableOpacity
-        className={`h-12 rounded-2xl bg-primary justify-center items-center ${
-          isStartDisabled ? "opacity-50" : ""
+        className={`h-12 rounded-2xl justify-center items-center ${
+          isStartDisabled ? "bg-backgroundDark" : "bg-blackStone"
         }`}
         onPress={onStart}
         disabled={isStartDisabled}
         activeOpacity={0.7}
       >
-        <Text className="text-base font-semibold text-foreground">
-          {t("Practice.start")}
-        </Text>
+        <AppText className="text-base text-foreground">
+          {t("common.gameStart")}
+        </AppText>
       </TouchableOpacity>
     </ModalShell>
   );

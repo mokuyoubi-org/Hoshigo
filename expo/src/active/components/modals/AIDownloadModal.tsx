@@ -7,13 +7,15 @@
 //   warming_up     → 準備中(不確定バー)
 // ウォームアップが完了(ready)したら自動で閉じる。
 
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { useKataGoEngine } from "expo-katago";
 import React, { useEffect } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
-import { ModalShell, ProgressBar } from "ui-atoms";
-import { COLORS } from "../../constants/colors";
+import { TouchableOpacity, View } from "react-native";
+import { DotAnimation, ModalShell, ProgressBar } from "ui-atoms";
+
 import { useOverlay } from "../../contexts/OverlayContext";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 type Props = {
   // どこから呼ばれたか。not_downloaded時の文言の出し分けにだけ使う。
@@ -39,57 +41,6 @@ export const AIDownloadModal = ({ from }: Props) => {
     return null;
   }
 
-  const renderProgress = (message: string, percent: number | null) => (
-    <ModalShell
-      onClose={hide}
-      size="md"
-    >
-
-         <View className="w-full items-center gap-4">
-      <Text className="text-[18px] font-bold text-text text-center">
-        {message}
-      </Text>
-
-   
-        <View className="w-[220px]">
-          <ProgressBar
-            percent={percent}
-            trackColor={COLORS.backgroundDark}
-            fillColor={COLORS.primary}
-          />
-        </View>
-
-        <Text className="text-sm text-textSub text-center">
-          {t("common.pleaseWait")}
-        </Text>
-
-
-      <TouchableOpacity
-        className="w-full h-[48px] rounded-[12px] justify-center items-center bg-backgroundDark mt-2"
-        onPress={hide}
-        activeOpacity={0.8}
-      >
-        <Text className="text-textSub text-[16px] font-bold">
-          {t("common.close")}
-        </Text>
-      </TouchableOpacity>
-
-            </View>
-    </ModalShell>
-  );
-
-  if (status.phase === "downloading") {
-    const percent =
-      status.total > 0
-        ? Math.floor((status.loaded / status.total) * 100)
-        : null;
-    return renderProgress(t("AI.downloading"), percent);
-  }
-
-  if (status.phase === "warming_up") {
-    return renderProgress(t("AI.warming_up"), null);
-  }
-
   // ここに来るのは not_downloaded のみ。
   const handleConfirm = () => {
     // 呼びっぱなしでよい(完了を待つ必要はない)。このモーダル自身が
@@ -98,40 +49,89 @@ export const AIDownloadModal = ({ from }: Props) => {
     downloadB18();
   };
 
-  const message =
-    from === "matching"
-      ? t("AI.download_required_match")
-      : t("AI.download_required_practice");
-
+  // 進捗表示（downloading / warming_up）の判定と値の準備
+  const isProgress =
+    status.phase === "downloading" || status.phase === "warming_up";
+  const percent =
+    status.phase === "downloading" && status.total > 0
+      ? Math.floor((status.loaded / status.total) * 100)
+      : null;
+  const colors = useColors();
   return (
-    <ModalShell onClose={hide} size="lg">
-      <View className="w-full flex-row justify-between items-center mb-3">
-        <Text className="text-[18px] font-bold flex-1 text-text text-center">
-          {message}
-        </Text>
-      </View>
+    <ModalShell
+      onClose={hide}
+      size={"md"}
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
+      {isProgress ? (
+        <View className="w-full items-center gap-4">
+          <AppText className="text-sm text-text text-center">
+            <DotAnimation
+              text={t(
+                status.phase === "downloading"
+                  ? "AI.downloading"
+                  : "AI.warming_up",
+              )}
+            />
+          </AppText>
 
-      <View className="w-full gap-[10px] mt-2">
-        <TouchableOpacity
-          className="w-full h-[48px] rounded-[12px] justify-center items-center bg-primaryDark"
-          onPress={handleConfirm}
-          activeOpacity={0.8}
-        >
-          <Text className="text-foreground text-[16px] font-bold">
-            {t("common.yes")}
-          </Text>
-        </TouchableOpacity>
+          <View className="w-56">
+            <ProgressBar
+              percent={percent}
+              trackColor={colors.backgroundDark}
+              fillColor={colors.primary}
+            />
+          </View>
 
-        <TouchableOpacity
-          className="w-full h-[48px] rounded-[12px] justify-center items-center bg-backgroundDark"
-          onPress={hide}
-          activeOpacity={0.8}
-        >
-          <Text className="text-textSub text-[16px] font-bold">
-            {t("common.no")}
-          </Text>
-        </TouchableOpacity>
-      </View>
+          <AppText className="text-sm text-textSub text-center">
+            {t("common.pleaseWait")}
+          </AppText>
+
+          <TouchableOpacity
+            className="w-full h-12 rounded-xl justify-center items-center bg-backgroundDark mt-2"
+            onPress={hide}
+            activeOpacity={0.8}
+          >
+            <AppText className="text-textSub text-sm">
+              {t("common.close")}
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View>
+          <View className="w-full flex-row justify-between items-center mb-3">
+            <AppText className="text-lg flex-1 text-text text-center">
+              {from === "matching"
+                ? t("AI.download_required_match")
+                : t("AI.download_required_practice")}
+            </AppText>
+          </View>
+
+          <View className="w-full gap-2 mt-2">
+            <TouchableOpacity
+              className="w-full h-12 rounded-xl justify-center items-center bg-blackStone"
+              onPress={handleConfirm}
+              activeOpacity={0.8}
+            >
+              <AppText className="text-foreground text-xl">
+                {t("common.yes")}
+              </AppText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="w-full h-12 rounded-xl justify-center items-center bg-backgroundDark"
+              onPress={hide}
+              activeOpacity={0.8}
+            >
+              <AppText className="text-textSub text-xl">
+                {t("common.no")}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </ModalShell>
   );
 };

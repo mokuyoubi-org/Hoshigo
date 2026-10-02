@@ -5,7 +5,7 @@
 // 表示・再生のラグを減らす。
 
 import { getSoundUrl, preloadSounds } from "assets-kit";
-import { Image } from "react-native";
+import { Image } from "expo-image";
 import { ICONS } from "./icons";
 
 export const preloadAssets = async (): Promise<void> => {

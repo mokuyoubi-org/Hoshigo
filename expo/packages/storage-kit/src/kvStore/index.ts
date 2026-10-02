@@ -1,2 +1,2 @@
 // kvStore/index.ts
-export { kvStore } from "./kvStore";
+export { kvStore } from "./kvStore"; // ⚠️ここが.nativeにならないように注意！

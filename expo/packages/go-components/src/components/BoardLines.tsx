@@ -17,7 +17,7 @@ export const BoardLines = memo(function BoardLines({
   lineColor,
 }: Props) {
   return (
-    <>
+    <View>
       {Array.from({ length: boardSize }).map((_, i) => (
         <React.Fragment key={`line-${i}`}>
           <View
@@ -44,7 +44,7 @@ export const BoardLines = memo(function BoardLines({
           />
         </React.Fragment>
       ))}
-    </>
+    </View>
   );
 });
 

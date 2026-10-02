@@ -3,10 +3,11 @@ import {
   Profile,
   RankingCard,
 } from "@/src/active/components/cards/RankingCard";
-import { COLORS } from "@/src/active/constants/colors";
+
+import { boardSizeOptions } from "@/src/stable/logics/boardSizeToText";
 import { fetchWithPeriodicCache } from "@/src/stable/logics/syncUtils"; // 🐱 追加！
 import { supabase } from "@/src/stable/services/supabase/supabase";
-import { BOARD_SIZE_OPTIONS, BoardSize } from "go-core";
+import { BoardSize } from "go-core";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,6 +17,9 @@ import {
 } from "react-native";
 import { useKVStorage } from "storage-kit";
 import { ModalShell, SegmentedControl } from "ui-atoms";
+import { useAppFont } from "../../hooks/useAppFont";
+import { useColors } from "../../hooks/useTheme";
+import { useTranslation } from "../../i18n/LangProvider";
 
 type RankingItem = Profile & {
   board_size: number;
@@ -28,6 +32,9 @@ type Props = {
 };
 
 export default function RankingsModal({ visible, onClose }: Props) {
+  const fontFamily = useAppFont();
+  const t = useTranslation();
+  const colors = useColors();
   const [allProfiles, setAllProfiles] = useState<RankingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
@@ -69,14 +76,24 @@ export default function RankingsModal({ visible, onClose }: Props) {
   );
 
   return (
-    <ModalShell onClose={onClose} size="lg">
-      <View className="w-full pb-3 border-b border-backgroundDark/30 mb-3 items-start">
+    <ModalShell
+      onClose={onClose}
+      size="lg"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+      contentPadding={16}
+    >
+      <View className="w-full pb-4 items-start">
         <SegmentedControl
+          trackBackgroundColor={colors.backgroundDark}
+          activeSegmentBackgroundColor={colors.foreground}
+          activeTextColor={colors.text}
+          inactiveTextColor={colors.textSub}
           value={boardSize}
-          options={BOARD_SIZE_OPTIONS}
+          options={boardSizeOptions(t)}
           onSelect={setBoardSize}
-          activeSegmentWidth={72}
-          inactiveSegmentWidth={48}
+          fontFamily={fontFamily}
         />
       </View>
 
@@ -85,7 +102,7 @@ export default function RankingsModal({ visible, onClose }: Props) {
           className="w-full justify-center items-center"
           style={{ height: windowHeight * 0.25 }}
         >
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList

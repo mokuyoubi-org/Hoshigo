@@ -16,7 +16,7 @@ import {
 import { useBotCalculation } from "@/src/active/hooks/bot/useBotCalculation";
 import { useBotMove } from "@/src/active/hooks/bot/useBotMove";
 import { useLiveAnalysis } from "@/src/active/hooks/match/useLiveAnalysis";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { isBot } from "@/src/stable/logics/bot/botLogics";
 import { getPassState } from "@/src/stable/logics/gameScreenLogics";
 import {

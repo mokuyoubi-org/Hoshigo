@@ -1,5 +1,7 @@
+// Pass.tsx
+
 import React from "react";
-import { ColorValue, StyleSheet, Text, View } from "react-native";
+import { ColorValue, StyleSheet, View, Text } from "react-native";
 
 type Props = {
   visible?: boolean;
@@ -8,6 +10,7 @@ type Props = {
   borderColor: ColorValue; // 枠線・しっぽの枠線の色
   textColor: ColorValue; // 文字色
   passText: string;
+  fontFamily: string; // 文字のフォント(省略時はシステムのフォント)
 };
 
 const TAIL_SIZE = 5;
@@ -19,7 +22,12 @@ export function Pass({
   borderColor,
   textColor,
   passText,
+  fontFamily,
 }: Props) {
+  const fontStyle = fontFamily
+    ? { fontFamily,  }
+    : null;
+
   return (
     <View style={[styles.container, !visible && styles.hidden]}>
       {/* 吹き出し本体 */}
@@ -27,7 +35,7 @@ export function Pass({
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
-          style={[styles.text, { color: textColor }]}
+          style={[styles.text, { color: textColor }, fontStyle]}
         >
           {passText}
         </Text>
@@ -68,7 +76,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 11,
-    fontWeight: "600",
     letterSpacing: 0.4,
   },
   // しっぽの共通スタイル（枠線）

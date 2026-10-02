@@ -1,9 +1,10 @@
+export { DotAnimation } from "./DotAnimation";
 export { FloatingToast, useTransientVisibility } from "./FloatingToast";
 export { IconButton } from "./IconButton";
-export { TextButton } from "./TextButton";
 export { LoadingScreen } from "./LoadingScreen";
 export { ModalShell } from "./ModalShell";
+export { ProgressBar } from "./ProgressBar";
 export { SegmentedControl } from "./SegmentedControl";
 export { SegmentedIconControl } from "./SegmentedIconControl";
+export { TextButton } from "./TextButton";
 export { ToggleSwitch } from "./ToggleSwitch";
-export { ProgressBar } from "./ProgressBar";

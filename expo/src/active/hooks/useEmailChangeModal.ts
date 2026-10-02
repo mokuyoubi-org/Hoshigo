@@ -1,6 +1,5 @@
-// ✅active
 // useEmailChangeModal.ts
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { isValidEmail } from "@/src/stable/logics/validationLogics";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useEffect, useState } from "react";
@@ -84,7 +83,7 @@ export function useEmailChangeModal({ onClose }: Props) {
   };
 
   const handleOtpChange = (text: string) => {
-    setOtp(text.replace(/[^0-9]/g, "").slice(0, 8));
+    setOtp(text.replace(/[^0-9]/g, "").slice(0, 8)); // この8はotpの8なので注意
   };
 
   return {

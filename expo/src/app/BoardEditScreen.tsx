@@ -1,10 +1,9 @@
 // app/BoardEditScreen.tsx
-import { TerritoryCalculateButton } from "@/src/active/components/buttons/TerritoryCalculatorButton";
 import {
+  BoardEditScreenHeader,
   HeaderPlayerInfo,
-  RecordCardHeader,
-} from "@/src/active/components/common/RecordCardHeader";
-import { COLORS } from "@/src/active/constants/colors";
+} from "@/src/active/components/headers/BoardEditScreenHeader";
+
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useBotAnalysis } from "@/src/active/hooks/bot/useBotAnalysis";
 import { useBoardEditActions } from "@/src/active/hooks/edit/useBoardEditActions";
@@ -14,7 +13,6 @@ import { RecordType } from "@/src/active/types/record";
 import {
   Feather,
   FontAwesome6,
-  Ionicons,
   MaterialCommunityIcons,
   MaterialIcons,
   Octicons,
@@ -36,9 +34,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, SegmentedIconControl } from "ui-atoms";
+import { TerritoryResultBadge } from "../active/components/buttons/TerritoryResultBadge";
 import { AnalyzeDisplaySettingsModal } from "../active/components/modals/AnalyzeDisplaySettingsModal";
 import { GameResultModal } from "../active/components/modals/gameresult/GameResultModal";
 import { useOverlay } from "../active/contexts/OverlayContext";
+import { useColors } from "../active/hooks/useTheme";
 import { FromType } from "../active/types/from";
 import { recordsRepo } from "../stable/logics/records-repo";
 import { subscribeToRecordsChange } from "../stable/logics/records-repo/records-repo-events";
@@ -69,7 +69,7 @@ export default function BoardEditScreen() {
     ratingAfter,
     practiceMatchStatus,
     giantKillingStreak,
-    giantKillingStreakBonusApplied,
+    giantKillingBonus,
   } = useLocalSearchParams<{
     matchId?: string;
     recordParam?: string;
@@ -81,8 +81,10 @@ export default function BoardEditScreen() {
     ratingAfter?: string;
     practiceMatchStatus?: string;
     giantKillingStreak?: string;
-    giantKillingStreakBonusApplied?: string;
+    giantKillingBonus?: string;
   }>();
+
+  const colors = useColors();
 
   const [record, setRecord] = useState<RecordType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -152,8 +154,8 @@ export default function BoardEditScreen() {
   if (isLoading || !record) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
-        {/* <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text className="text-text mt-2">{t("common.loading")}...</Text> */}
+        {/* <ActivityIndicator size="large" color={colors.primary} />
+        <AppText className="text-text mt-2">{t("common.loading")}...</AppText> */}
       </SafeAreaView>
     );
   }
@@ -169,7 +171,7 @@ export default function BoardEditScreen() {
       ratingAfter={Number(ratingAfter)}
       practiceMatchStatus={practiceMatchStatus ?? ""}
       giantKillingStreak={Number(giantKillingStreak)}
-      giantKillingStreakBonusApplied={Boolean(giantKillingStreakBonusApplied)}
+      giantKillingBonus={Boolean(giantKillingBonus)}
     />
   );
 }
@@ -184,7 +186,7 @@ function BoardEditScreenContent({
   ratingAfter,
   practiceMatchStatus,
   giantKillingStreak,
-  giantKillingStreakBonusApplied,
+  giantKillingBonus,
 }: {
   record: RecordType;
   from: FromType;
@@ -195,8 +197,9 @@ function BoardEditScreenContent({
   ratingAfter: number;
   practiceMatchStatus: string;
   giantKillingStreak: number;
-  giantKillingStreakBonusApplied: boolean;
+  giantKillingBonus: boolean;
 }) {
+  const colors = useColors();
   const { show, hide } = useOverlay();
   const { width, height } = useWindowDimensions();
   const heightRatio = height / width;
@@ -223,16 +226,15 @@ function BoardEditScreenContent({
   // 🐱 編集モード・盤面履歴・分析キャッシュはすべてここに集約されている
   const board = useEditableGoBoard(liveRecord);
 
-  // 🐱 ボット思考・地計算ボタンの処理と、地計算の一時表示状態
+  // 🐱 ボット思考ボタンの処理と、地計算の結果・盤面への地表示
   const {
+    territoryResult,
     manualTerritory,
+    handleShowTerritory,
     handleBotSuggest,
-    handleCalculateTerritory,
     isBotSuggesting,
-    isCalculatingTerritory,
     isAnyProcessing,
   } = useBoardEditActions(board, board.boardSize, record.match_type);
-
   // 🐱 リプレイモードでの好手・悪手判定と代替候補手
   const { lastMoveEvaluation, lastMoveGrid, candidatePoints } =
     useReplayMoveEvaluation(
@@ -367,10 +369,10 @@ function BoardEditScreenContent({
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
 
-      <View className="flex-1 w-full max-w-[680px] mx-auto">
+      <View className="flex-1 w-full max-w-160 mx-auto">
         {/* ヘッダー */}
         <View className="flex-row justify-between items-center px-5 py-3">
-          {/* 🐱 左側：戻るボタン ＆ 再対局ボタン */}
+          {/* 🐱 左側：戻るボタン or 再対局ボタン */}
           <View className="flex-row items-center gap-4">
             {/* 戻るボタン */}
             {from === "RecordScreen" && (
@@ -386,11 +388,7 @@ function BoardEditScreenContent({
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons
-                  name="chevron-back-outline"
-                  size={32}
-                  color={COLORS.primaryDark}
-                />
+                <Feather name="chevron-left" size={36} color={colors.textSub} />
               </TouchableOpacity>
             )}
 
@@ -410,33 +408,19 @@ function BoardEditScreenContent({
                       rankIndexAfter={rankIndexAfter}
                       from={from}
                       giantKillingStreak={giantKillingStreak}
-                      giantKillingStreakBonusApplied={
-                        giantKillingStreakBonusApplied
-                      }
+                      giantKillingBonus={giantKillingBonus}
                     />,
                   );
                 }}
                 activeOpacity={0.7}
               >
-                <Feather name="menu" size={32} color={COLORS.primaryDark} />
+                <Feather name="menu" size={32} color={colors.primaryDark} />
               </TouchableOpacity>
             )}
           </View>
 
           {/* 🐱 右側：機能アイコン群（分析・編集・モード切り替え） */}
-          <View className="flex-row items-center gap-4">
-            {/* 目ボタン👁️ */}
-
-            {board.analysisComponentsLoaded && (
-              <IconButton
-                icon={<FontAwesome6 name={"gear"} />}
-                color={COLORS.primary}
-                onPress={() => {
-                  show(<AnalyzeDisplaySettingsModal onClose={hide} />);
-                }}
-              />
-            )}
-
+          <View className="flex-row items-center gap-2">
             {/* 分析📈ボタン */}
             {!board.isEditMode &&
               !isFullyAnalyzed &&
@@ -444,12 +428,14 @@ function BoardEditScreenContent({
                 <IconButton
                   icon={
                     botAnalysis.isAnalyzing ? (
-                      <ActivityIndicator size="small" color={COLORS.primary} />
+                      <ActivityIndicator size="small" color={colors.primary} />
                     ) : (
                       <Octicons name="graph" />
                     )
                   }
-                  color={COLORS.primary}
+                  iconColor={colors.primary}
+                  backgroundColor={colors.foreground}
+                  borderColor={colors.backgroundDark}
                   onPress={botAnalysis.toggleAnalysis}
                 />
               )}
@@ -459,12 +445,14 @@ function BoardEditScreenContent({
               <IconButton
                 icon={
                   isBotSuggesting ? (
-                    <ActivityIndicator size="small" color={COLORS.primary} />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <MaterialCommunityIcons name="robot" />
                   )
                 }
-                color={COLORS.botMoveColor}
+                iconColor={colors.botMoveColor}
+                backgroundColor={colors.foreground}
+                borderColor={colors.backgroundDark}
                 onPress={handleBotSuggest}
                 disabled={isAnyProcessing}
                 style={{
@@ -473,27 +461,25 @@ function BoardEditScreenContent({
               />
             )}
 
-            {/* 地計算🧮ボタン */}
-            {board.isEditMode && (
-              <View
-                style={{
-                  opacity: isAnyProcessing && !isCalculatingTerritory ? 0.4 : 1,
-                }}
-              >
-                <TerritoryCalculateButton
-                  isCalculating={isCalculatingTerritory}
-                  resultText={manualTerritory?.result}
-                  color={COLORS.primary}
-                  onPress={() => {
-                    handleCalculateTerritory();
-                  }}
-                  disabled={isAnyProcessing}
-                />
-              </View>
+            {/* 地計算🧮の結果バッジ。計算中はくるくる、結果なしなら何も出ない。
+                背景 primary = 未確定 / primaryDark = 確定。タップで盤面に地を表示 */}
+            {board.showTerritoryResultBadge && (
+              <TerritoryResultBadge
+                isCalculating={
+                  !territoryResult &&
+                  (board.isAnalyzing || botAnalysis.isAnalyzing)
+                }
+                result={territoryResult}
+                onPress={handleShowTerritory}
+              />
             )}
 
             {/* 🔄 モード切り替えスイッチ */}
             <SegmentedIconControl
+              trackBackgroundColor={colors.backgroundDark}
+              activeSegmentBackgroundColor={colors.foreground}
+              activeIconColor={colors.text}
+              inactiveIconColor={colors.textSub}
               value={board.isEditMode}
               onSelect={() => {
                 if (botAnalysis.isAnalyzing) botAnalysis.requestStop();
@@ -503,15 +489,28 @@ function BoardEditScreenContent({
                 {
                   value: false,
                   icon: <FontAwesome6 name="book-open" />,
-                  color: COLORS.primary,
+                  color: colors.primary,
                 },
                 {
                   value: true,
                   icon: <MaterialIcons name="edit" />,
-                  color: COLORS.humanMoveColor,
+                  color: colors.humanMoveColor,
                 },
               ]}
             />
+
+            {/* 設定ボタン⚙️ */}
+            {board.analysisComponentsLoaded && (
+              <IconButton
+                icon={<FontAwesome6 name={"gear"} />}
+                iconColor={colors.primary}
+                backgroundColor={colors.foreground}
+                borderColor={colors.backgroundDark}
+                onPress={() => {
+                  show(<AnalyzeDisplaySettingsModal onClose={hide} />);
+                }}
+              />
+            )}
           </View>
         </View>
 
@@ -521,16 +520,14 @@ function BoardEditScreenContent({
           {/* ─── 余白 a ─── */}
           <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_A }} />
 
-          <RecordCardHeader
+          <BoardEditScreenHeader
             record={recordForHeader}
             leftPlayer={leftPlayer}
             rightPlayer={rightPlayer}
             playerWin={playerWin}
-            simpleComment={false}
             matchType={record.match_type}
             currentIndex={board.currentIndex}
             showWinRateBar={board.showWinRateBar}
-            practiceMatchStatus={practiceMatchStatus}
           />
 
           {/* ─── 余白 B ─── */}
@@ -560,7 +557,10 @@ function BoardEditScreenContent({
                   }
                   currentIndex={board.currentIndex}
                   territoryBoard={
-                    isAtConfirmedFinalPosition
+                    isAtConfirmedFinalPosition &&
+                    !board.processed.territoryBoard.every(
+                      (row) => row.every((cell) => cell === 0), // territoryboardがあると言いながら、中身が全部0ならそれはノーカウント
+                    )
                       ? board.processed.territoryBoard
                       : (manualTerritory?.territoryBoard ??
                         (board.showOwnershipTerritoryBoard
@@ -611,16 +611,14 @@ function BoardEditScreenContent({
                   // 物理サイズ: 1
                   boardWidth={boardWidth}
                   // 色: 10
-                  boardColor={COLORS.primary}
-                  lineColor={COLORS.background}
-                  blackStoneColor={COLORS.darkObject}
-                  blackStoneAccentColor={COLORS.darkObjectAccent}
-                  whiteStoneColor={COLORS.lightObject}
-                  whiteStoneAccentColor={COLORS.lightObjectAccent}
-                  humanMoveColor={COLORS.humanMoveColor}
-                  botMoveColor={COLORS.botMoveColor}
-                  goodMoveColor={COLORS.goodMoveColor}
-                  badMoveColor={COLORS.badMoveColor}
+                  boardColor={colors.primary}
+                  lineColor={colors.background}
+                  blackStoneColor={colors.blackStone}
+                  whiteStoneColor={colors.whiteStone}
+                  humanMoveColor={colors.humanMoveColor}
+                  botMoveColor={colors.botMoveColor}
+                  goodMoveColor={colors.success}
+                  badMoveColor={colors.failure}
                   // 音
                   sound={board.isSoundEnabled}
                   //
@@ -649,14 +647,11 @@ function BoardEditScreenContent({
             currentIndex={board.currentIndex}
             totalMoves={board.processed.moves.length}
             onCurrentIndexChange={board.setCurrentIndex}
-            primary={COLORS.primary}
-            primaryLight={COLORS.primaryLight}
-            background={COLORS.background}
-            backgroundDark={COLORS.backgroundDark}
-            foreground={COLORS.foreground}
-            primaryDark={COLORS.primaryDark}
-            darkObject={COLORS.darkObject}
-            darkObjectAccent={COLORS.darkObjectAccent}
+            primary={colors.primary}
+            background={colors.background}
+            backgroundDark={colors.backgroundDark}
+            foreground={colors.foreground}
+            primaryDark={colors.primaryDark}
           />
 
           {/* ─── 余白 D ─── */}

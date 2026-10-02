@@ -1,17 +1,18 @@
 // DeleteModal.tsx
-import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/i18n";
+
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
+import { AppTextInput } from "../common/AppTextInput";
 
 type Props = {
   username: string;
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export function DeleteModal({ username, onConfirm, onCancel }: Props) {
+  const colors = useColors();
   const t = useTranslation();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,30 +43,35 @@ export function DeleteModal({ username, onConfirm, onCancel }: Props) {
   };
 
   return (
-    <ModalShell size="lg" backgroundColor={COLORS.foreground}>
+    <ModalShell
+      size="lg"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full"
       >
         <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-[18px] font-bold tracking-wide flex-1 text-coral">
+          <AppText className="text-xl tracking-wide flex-1 text-failure">
             {t("DeleteModal.title")}
-          </Text>
+          </AppText>
         </View>
 
-        <Text className="text-sm mb-4 leading-5 tracking-wide text-textSub">
+        <AppText className="text-sm mb-4 leading-5 tracking-wide text-textSub">
           {t("DeleteModal.message")}
-        </Text>
+        </AppText>
 
-        <Text className="text-sm font-semibold mb-1.5 tracking-wide text-text">
+        <AppText className="text-sm mb-1.5 tracking-wide text-text">
           {t("DeleteModal.confirmLabel", { username })}
-        </Text>
+        </AppText>
 
-        <View className="rounded-xl border mb-5 bg-foreground border-primaryDark">
-          <TextInput
-            className="h-[46px] px-4 text-base text-text"
+        <View className="rounded-xl border border-2 mb-5 bg-foreground border-primaryDark">
+          <AppTextInput
+            className="h-12 px-4 text-base text-text" // text-baseはテキストの大きさ。fontの種類や太さとは別の話なので消さない
             placeholder={username}
-            placeholderTextColor={COLORS.textSub}
+            placeholderTextColor={colors.textOpacity} // 絵文字対策
             value={input}
             onChangeText={setInput}
             autoCapitalize="none"
@@ -73,33 +80,33 @@ export function DeleteModal({ username, onConfirm, onCancel }: Props) {
           />
         </View>
 
-        <View className="gap-[10px]">
+        <View className="gap-2">
           <TouchableOpacity
-            className={`h-[48px] rounded-[12px] justify-center items-center bg-coral ${
-              canConfirm ? "opacity-100" : "opacity-40"
+            className={`h-12 rounded-xl justify-center items-center ${
+              canConfirm ? "bg-failure" : "bg-failureLight"
             }`}
             activeOpacity={0.8}
             onPress={handleConfirm}
             disabled={!canConfirm}
           >
             {loading ? (
-              <ActivityIndicator color={COLORS.foreground} />
+              <ActivityIndicator color={colors.foreground} />
             ) : (
-              <Text className="text-foreground text-[16px] font-bold">
+              <AppText className="text-foreground text-base">
                 {t("DeleteModal.confirm")}
-              </Text>
+              </AppText>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="h-[48px] rounded-[12px] justify-center items-center bg-backgroundDark"
+            className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
             onPress={handleClose}
             disabled={loading}
             activeOpacity={0.8}
           >
-            <Text className="text-textSub text-[16px] font-bold">
+            <AppText className="text-textSub text-base">
               {t("common.cancel")}
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

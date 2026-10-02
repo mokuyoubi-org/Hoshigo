@@ -2,6 +2,7 @@
 // 対局のUIの責任者がGameScreen
 // 対局のロジックの責任者がuseMatchSession
 
+import { useKVStorage } from "@/packages/storage-kit/src";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useBotMove } from "@/src/active/hooks//bot/useBotMove";
 import { useKataGoTask } from "@/src/active/hooks//bot/useKataGoTask";
@@ -9,7 +10,7 @@ import { useBotCalculation } from "@/src/active/hooks/bot/useBotCalculation";
 import { useGameChannel } from "@/src/active/hooks/match/useGameChannel";
 import { useLiveAnalysis } from "@/src/active/hooks/match/useLiveAnalysis";
 import { useMatchClock } from "@/src/active/hooks/match/useMatchClock";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import {
   computeMatchResultUpdate,
@@ -60,8 +61,34 @@ export function useMatchSession({
 }: Args) {
   // 🌟 サーバのturnカラムはtext('black'/'white')、アプリ内のColorは数値。
   //    realtimeのpayloadを受け取るたびにここで変換する。
-const stringToColor = (turn: "black" | "white"): Color =>
-  turn === "black" ? BLACK : WHITE;
+  const stringToColor = (turn: "black" | "white"): Color =>
+    turn === "black" ? BLACK : WHITE;
+
+  const { value: doubleTap9 } = useKVStorage<boolean>(
+    "global.doubleTap9",
+    false,
+  );
+  const { value: doubleTap13 } = useKVStorage<boolean>(
+    "global.doubleTap13",
+    true,
+  );
+  const { value: doubleTap19 } = useKVStorage<boolean>(
+    "global.doubleTap19",
+    true,
+  );
+  const { value: isSoundEnabled } = useKVStorage<boolean>(
+    "global.sound",
+    false,
+  );
+
+  const doubleTap =
+    boardSize === 9
+      ? doubleTap9
+      : boardSize === 13
+        ? doubleTap13
+        : boardSize === 19
+          ? doubleTap19
+          : false;
   // =========================================================================================
   // 🌟 ===================================== state =====================================
   // =========================================================================================
@@ -94,7 +121,7 @@ const stringToColor = (turn: "black" | "white"): Color =>
       rankIndexBefore: getRankInfo(initialRating, t).index,
       ratingAfter: 0,
       rankIndexAfter: 0,
-      giantKillingStreakBonusApplied: false,
+      giantKillingBonus: false,
     };
   });
   const isResyncingRef = useRef(false);
@@ -102,7 +129,7 @@ const stringToColor = (turn: "black" | "white"): Color =>
   const isBotThinkingRef = useRef(false);
   const isAnalyzingRef = useRef(false);
   const giantKillingStreakRef = useRef<number>(0);
-  const giantKillingStreakBonusAppliedRef = useRef<boolean>(false);
+  const giantKillingBonusRef = useRef<boolean>(false);
 
   // 🌟「直近、どの手数の局面をどのanalysisで評価したか」のキャッシュ。
   //   ターン交代ごとの自動分析effectから来たものでも、ボットの着手判断
@@ -128,7 +155,7 @@ const stringToColor = (turn: "black" | "white"): Color =>
         ? "b10"
         : oppUsername === "bot3"
           ? "b18"
-          : "b6";
+          : "b10";
 
   // 🌟投げっぱなしの背景分析(自分の手番になった時の先読み解析)が
   // 何件「まだ完了していないか」を数える。投了時はkataGoTaskの
@@ -458,18 +485,10 @@ const stringToColor = (turn: "black" | "white"): Color =>
       updateProfile({ wins19: myData.wins }); // dataじゃなくてmyDataね！！！
     }
     giantKillingStreakRef.current = myData.giant_killing_streak;
-    giantKillingStreakBonusAppliedRef.current =
-      myData.giant_killing_streak_bonus_applied ?? false;
+    giantKillingBonusRef.current = myData.giant_killing_bonus ?? false;
 
     if (myData) {
-      const updated = computeMatchResultUpdate(
-        boardSize,
-        myData,
-        rating9 ?? 0,
-        rating13 ?? 0,
-        rating19 ?? 0,
-        t,
-      );
+      const updated = computeMatchResultUpdate(boardSize, myData, t);
       if (updated) {
         const { profilePatch, ...displayResult } = updated;
         setMatchResult(displayResult);
@@ -642,6 +661,8 @@ const stringToColor = (turn: "black" | "white"): Color =>
     analysis: liveAnalysisResult,
     ...matchResult,
     giantKillingStreak: giantKillingStreakRef.current,
-    giantKillingStreakBonusApplied: giantKillingStreakBonusAppliedRef.current,
+    giantKillingBonus: giantKillingBonusRef.current,
+    doubleTap,
+    isSoundEnabled,
   };
 }

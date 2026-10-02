@@ -5,12 +5,13 @@ import { ColorValue, Text, View } from "react-native";
 import { ProgressBar } from "./ProgressBar";
 
 type LoadingScreenProps = {
-  label: string;
+  label: React.ReactNode; // ⚠️2026/10/01: stringではないのはDotAnimationを受け入れるため
   percent: number | null; // null = 不確定バー
   backgroundColor: ColorValue;
   textColor: ColorValue;
   trackColor: ColorValue;
   fillColor: ColorValue;
+  fontFamily: string; // 文字のフォント(省略時はシステムのフォント)
 };
 
 export function LoadingScreen({
@@ -20,7 +21,10 @@ export function LoadingScreen({
   trackColor,
   fillColor,
   textColor,
+  fontFamily,
 }: LoadingScreenProps) {
+  const fontStyle = fontFamily ? { fontFamily } : null;
+
   return (
     <View
       style={{
@@ -30,7 +34,12 @@ export function LoadingScreen({
         backgroundColor,
       }}
     >
-      <Text style={{ marginBottom: 15, fontSize: 14, color: textColor }}>
+      <Text
+        style={[
+          { marginBottom: 15, fontSize: 14, color: textColor },
+          fontStyle,
+        ]}
+      >
         {label}
       </Text>
 
@@ -46,7 +55,9 @@ export function LoadingScreen({
           UIが伸び縮みするジャンプを防ぐための「空箱」 */}
       <View style={{ height: 18, justifyContent: "center", marginTop: 6 }}>
         {percent !== null && (
-          <Text style={{ fontSize: 12, color: textColor }}>{percent}%</Text>
+          <Text style={[{ fontSize: 12, color: textColor }, fontStyle]}>
+            {percent}%
+          </Text>
         )}
       </View>
     </View>

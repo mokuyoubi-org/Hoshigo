@@ -1,7 +1,8 @@
-import { COLORS } from "@/src/active/constants/colors";
-import { Octicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "./AppText";
 
 type SettingsRowProps = {
   label: string;
@@ -9,19 +10,26 @@ type SettingsRowProps = {
   rightElement?: React.ReactNode;
 };
 
-export function SettingsRow({ label, onPress, rightElement }: SettingsRowProps) {
-  const right =
-    rightElement !== undefined ? (
-      rightElement
-    ) : onPress ? (
-      <Octicons name="chevron-right" size={20} color={COLORS.primary} />
-    ) : null;
+export function SettingsRow({
+  label,
+  onPress,
+  rightElement,
+}: SettingsRowProps) {
+  const colors = useColors();
+  // onPressがあるときは、rightElementがあってもなくても右矢印を表示するにゃ！
+  const right = (
+    <View className="flex-row items-center gap-2">
+      {rightElement}
+      {onPress && (
+        <Feather name="chevron-right" size={22} color={colors.textSub} />
+      )}
+    </View>
+  );
 
   const content = (
+    // ここは<View>にしてはいけない
     <>
-      <Text className="text-lg font-semibold text-text tracking-wide">
-        {label}
-      </Text>
+      <AppText className="text-lg text-text tracking-wide">{label}</AppText>
       {right}
     </>
   );
@@ -29,7 +37,7 @@ export function SettingsRow({ label, onPress, rightElement }: SettingsRowProps) 
   if (onPress) {
     return (
       <TouchableOpacity
-        className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full"
+        className="flex-row justify-between items-center px-4 py-4 min-h-14 w-full"
         activeOpacity={0.7}
         onPress={onPress}
       >
@@ -39,7 +47,7 @@ export function SettingsRow({ label, onPress, rightElement }: SettingsRowProps) 
   }
 
   return (
-    <View className="flex-row justify-between items-center px-[18px] py-4 min-h-[56px] w-full">
+    <View className="flex-row justify-between items-center px-4 py-4 min-h-14 w-full">
       {content}
     </View>
   );

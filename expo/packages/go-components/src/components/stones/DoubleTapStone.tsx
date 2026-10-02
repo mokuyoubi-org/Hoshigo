@@ -1,8 +1,8 @@
-// PreviewStone.tsx
+// DoubleTapStone.tsx
 
+import { BLACK, Color } from "go-core";
 import React, { memo } from "react";
 import { ColorValue, StyleSheet, View } from "react-native";
-import { BLACK, Color } from "go-core";
 
 type Props = {
   stoneSize: number;
@@ -12,7 +12,7 @@ type Props = {
 };
 
 // 🐱 React.memo で囲って無駄な再描画を防ぐ
-export const PreviewStone = memo(function PreviewStone({
+export const DoubleTapStone = memo(function DoubleTapStone({
   stoneSize,
   playerColor,
   blackStoneColor,
@@ -36,7 +36,6 @@ export const PreviewStone = memo(function PreviewStone({
             borderColor: borderColor,
             borderWidth: borderWidth,
             backgroundColor: "transparent",
-            opacity: 0.8,
           },
         ]}
       />

@@ -1,7 +1,8 @@
 // @/src/app/(tabs)/_layout.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/i18n";
+import { useAppFont } from "@/src/active/hooks/useAppFont";
+import { useColors } from "@/src/active/hooks/useTheme";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { NavigationBar } from "expo-navigation-bar";
 import { Tabs } from "expo-router";
@@ -35,6 +36,9 @@ const TabIcon = ({
 
 export default function TabsLayout() {
   const t = useTranslation();
+  const colors = useColors();
+  // 🔤 いまの言語に合うフォント(タブの文字に使う)
+  const fontFamily = useAppFont();
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -44,14 +48,14 @@ export default function TabsLayout() {
 
   return (
     // 外枠のViewで全体の背景色を指定する！
-    <View style={{ flex: 1, backgroundColor: COLORS.foreground }}>
+    <View style={{ flex: 1, backgroundColor: colors.foreground }}>
       {Platform.OS === "android" && <NavigationBar hidden />}
 
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: COLORS.primaryDark,
-          tabBarInactiveTintColor: COLORS.primary,
+          tabBarActiveTintColor: colors.primaryDark,
+          tabBarInactiveTintColor: colors.primary,
           // 💡 Webでは標準ボタン（undefined）にしてリロードを防止
           // ネイティブ（Android等）では Pressable を使ってリップルを非表示にする
           // 冗長なようだが、これは絶対に必要なので簡略化などは厳禁
@@ -63,19 +67,19 @@ export default function TabsLayout() {
                   return <Pressable {...restProps} android_ripple={null} />;
                 },
           tabBarStyle: {
-            backgroundColor: COLORS.foreground,
+            backgroundColor: colors.foreground,
             borderTopWidth: 0,
             borderTopColor: "transparent",
             height: Platform.OS === "ios" ? 88 : 80,
             paddingBottom: Platform.OS === "ios" ? 24 : 10,
             paddingTop: 10,
-            maxWidth: 680,
+            maxWidth: 640,
             width: "100%",
             alignSelf: "center",
           },
           tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: "600",
+            fontFamily,
+            fontSize: 14,
             letterSpacing: 1.2,
             marginTop: 3,
           },

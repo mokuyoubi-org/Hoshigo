@@ -1,10 +1,13 @@
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useKVStorage } from "storage-kit";
 import { IconButton, ModalShell } from "ui-atoms";
-import { COLORS } from "../../constants/colors";
+
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
+import { Divider } from "../common/Divider";
 
 type Props = {
   onClose: () => void;
@@ -12,7 +15,7 @@ type Props = {
 
 export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
   const t = useTranslation();
-
+  const colors = useColors();
   const {
     value: showOwnershipTerritoryBoard,
     setValue: setShowOwnershipTerritoryBoard,
@@ -45,23 +48,29 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
     setValue: setShowMoveEvaluationPoint,
     isLoaded: isShowMoveEvaluationPointLoaded,
   } = useKVStorage<boolean>("BoardEditScreen.showMoveEvaluationPoint", true);
-
+  const {
+    value: showTerritoryResultBadge,
+    setValue: setShowTerritoryResultBadge,
+    isLoaded: isShowTerritoryResultBadgeLoaded,
+  } = useKVStorage<boolean>("BoardEditScreen.showTerritoryResultBadge", true);
   return (
     <ModalShell
       onClose={onClose}
       size="md"
-      style={{ alignItems: "center", gap: 16 }}
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
     >
-      <Text className="text-xl font-bold color-text text-center pb-4">
+      <AppText className="text-xl color-text text-center pb-4">
         {t("common.settings")}
-      </Text>
+      </AppText>
 
       <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden">
         {/* 1. Ownership */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("Analysis.ownership")}
-          </Text>
+          </AppText>
           {isShowOwnershipTerritoryBoardLoaded && (
             <IconButton
               icon={
@@ -69,89 +78,110 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
                   name={showOwnershipTerritoryBoard ? "eye" : "eye-off"}
                 />
               }
-              color={COLORS.primary}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundDark}
               onPress={() => {
                 setShowOwnershipTerritoryBoard(!showOwnershipTerritoryBoard);
               }}
             />
           )}
         </View>
-
-        <View className="h-[1px] bg-backgroundDark w-full" />
-
+        <Divider />
         {/* 2. Win Rate Bar */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("Analysis.winRate")}
-          </Text>
+          </AppText>
           {isShowWinRateBarLoaded && (
             <IconButton
               icon={<Feather name={showWinRateBar ? "eye" : "eye-off"} />}
-              color={COLORS.primary}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundDark}
               onPress={() => {
                 setShowWinRateBar(!showWinRateBar);
               }}
             />
           )}
         </View>
-
-        <View className="h-[1px] bg-backgroundDark w-full" />
-
+        <Divider />
         {/* 3. Candidates */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("Analysis.candidates")}
-          </Text>
+          </AppText>
           {isShowCandidatesPointsLoaded && (
             <IconButton
               icon={<Feather name={showCandidatesPoints ? "eye" : "eye-off"} />}
-              color={COLORS.primary}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundDark}
               onPress={() => {
                 setShowCandidatesPoints(!showCandidatesPoints);
               }}
             />
           )}
         </View>
-
-        <View className="h-[1px] bg-backgroundDark w-full" />
-
+        <Divider />
         {/* 4. Score Lead Graph */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("Analysis.scoreLead")}
-          </Text>
+          </AppText>
           {isShowScoreLeadGraphLoaded && (
             <IconButton
               icon={<Feather name={showScoreLeadGraph ? "eye" : "eye-off"} />}
-              color={COLORS.primary}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundDark}
               onPress={() => {
                 setShowScoreLeadGraph(!showScoreLeadGraph);
               }}
             />
           )}
         </View>
-
-        <View className="h-[1px] bg-backgroundDark w-full" />
-
+        <Divider />
         {/* 5. Move Evaluation */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("Analysis.moveEvaluation")}
-          </Text>
+          </AppText>
           {isShowMoveEvaluationPointLoaded && (
             <IconButton
               icon={
                 <Feather name={showMoveEvaluationPoint ? "eye" : "eye-off"} />
               }
-              color={COLORS.primary}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundDark}
               onPress={() => {
                 setShowMoveEvaluationPoint(!showMoveEvaluationPoint);
               }}
             />
           )}
         </View>
-
-        <View className="h-[1px] bg-backgroundDark w-full" />
+        <Divider />
+        {/* 6. showTerritoryResultBadge */}
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
+            {t("Analysis.territoryResult")}
+          </AppText>
+          {isShowTerritoryResultBadgeLoaded && (
+            <IconButton
+              icon={
+                <Feather name={showTerritoryResultBadge ? "eye" : "eye-off"} />
+              }
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundDark}
+              onPress={() => {
+                setShowTerritoryResultBadge(!showTerritoryResultBadge);
+              }}
+            />
+          )}
+        </View>
+        <Divider />
       </View>
     </ModalShell>
   );

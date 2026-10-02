@@ -47,25 +47,26 @@ export function useEditableGoBoard(record: RecordType) {
     false, // これだけはfalse。初心者くらいにしか要らないと思う
   );
 
-  const {
-    value: showWinRateBar,
-    isLoaded: isShowWinRateBarLoaded,
-  } = useKVStorage<boolean>("BoardEditScreen.showWinRateBar", true);
+  const { value: showWinRateBar, isLoaded: isShowWinRateBarLoaded } =
+    useKVStorage<boolean>("BoardEditScreen.showWinRateBar", true);
 
   const {
     value: showCandidatesPoints,
     isLoaded: isShowCandidatesPointsLoaded,
   } = useKVStorage<boolean>("BoardEditScreen.showCandidatesPoints", true);
 
-  const {
-    value: showScoreLeadGraph,
-    isLoaded: isShowScoreLeadGraphLoaded,
-  } = useKVStorage<boolean>("BoardEditScreen.showScoreLeadGraph", true);
+  const { value: showScoreLeadGraph, isLoaded: isShowScoreLeadGraphLoaded } =
+    useKVStorage<boolean>("BoardEditScreen.showScoreLeadGraph", true);
 
   const {
     value: showMoveEvaluationPoint,
     isLoaded: isShowMoveEvaluationPointLoaded,
   } = useKVStorage<boolean>("BoardEditScreen.showMoveEvaluationPoint", true);
+
+  const {
+    value: showTerritoryResultBadge,
+    isLoaded: isShowTerritoryResultBadgeLoaded,
+  } = useKVStorage<boolean>("BoardEditScreen.showTerritoryResultBadge", true);
 
   const moves = useEditableMoves(record);
   const analysis = useAnalysisCache(
@@ -115,7 +116,8 @@ export function useEditableGoBoard(record: RecordType) {
     isShowWinRateBarLoaded &&
     isShowCandidatesPointsLoaded &&
     isShowScoreLeadGraphLoaded &&
-    isShowMoveEvaluationPointLoaded;
+    isShowMoveEvaluationPointLoaded &&
+    isShowTerritoryResultBadgeLoaded;
 
   return {
     boardSize: moves.boardSize,
@@ -142,6 +144,7 @@ export function useEditableGoBoard(record: RecordType) {
     showCandidatesPoints,
     showScoreLeadGraph,
     showMoveEvaluationPoint,
+    showTerritoryResultBadge,
     analysisComponentsLoaded,
   };
 }

@@ -18,20 +18,17 @@ dotenv.config({
 const config: ExpoConfig = {
   name: "Hoshigo",
   slug: "Hoshigo",
-  version: "1.0.3", // アプリのバージョン。
+  // 2026/10/02: 1.0.4 ▶︎ 1.0,5
+  version: "1.0.5", // アプリのバージョン。必ずruntimeVersionと揃える。なお、webでは-cでstartし直す必要あり
   orientation: "portrait",
-  icon: "./assets/icons/icon.png",
+  icon: "./assets/icons/icon.png", // 使われない
   scheme: "hoshigo",
   userInterfaceStyle: "automatic",
 
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.mokuyoubi.hoshigo",
-    icon: {
-      dark: "./assets/icons/ios-dark.png",
-      light: "./assets/icons/ios-light.png",
-      tinted: "./assets/icons/ios-tinted.png",
-    },
+    icon: "./assets/icons/Hoshigo.icon",  // iosのアイコンとして使う
     associatedDomains: ["applinks:hoshigo.app"],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -47,9 +44,9 @@ const config: ExpoConfig = {
 
   android: {
     adaptiveIcon: {
-      backgroundColor: "#E6F4FE",
-      foregroundImage: "./assets/icons/adaptive-icon.png",
-      monochromeImage: "./assets/icons/adaptive-icon.png",
+      backgroundColor: "#FFE5C9",
+      foregroundImage: "./assets/icons/icon-transparent.png", // androidのアイコンとして使う
+      monochromeImage: "./assets/icons/icon-transparent.png", // androidのアイコンとして使う
     },
 
     predictiveBackGestureEnabled: false,
@@ -66,7 +63,7 @@ const config: ExpoConfig = {
 
   web: {
     output: "static",
-    favicon: "./assets/icons/favicon.png",
+    favicon: "./assets/icons/favicon.png", // webのアイコンとして使う
     bundler: "metro",
   },
 
@@ -75,14 +72,10 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "./assets/icons/splash-icon-light.png",
+        image: "./assets/icons/icon-transparent.png", // ios/android共通で、スプラッシュスクリーンに使う
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#ffffff",
-        dark: {
-          backgroundColor: "#000000",
-          image: "./assets/icons/splash-icon-dark.png",
-        },
+        backgroundColor: "#000000",
       },
     ],
     "expo-secure-store",
@@ -123,7 +116,8 @@ const config: ExpoConfig = {
       projectId: "0c034fcf-9b3f-4ae4-be56-052d71e47d52",
     },
   },
-  runtimeVersion: "1.0.3", // 誰に対してotaを配信するか。
+  // 2026/10/02: 1.0.4 ▶︎ 1.0,5
+  runtimeVersion: "1.0.5", // 誰に対してotaを配信するか。必ずversionと揃える。なお、webでは-cでstartし直す必要あり
 };
 
 export default config;

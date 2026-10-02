@@ -2,8 +2,9 @@
 
 import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
 import { PracticeSetupModal } from "@/src/active/components/modals/PracticeSetupModal";
-import { COLORS } from "@/src/active/constants/colors";
-import { Ionicons } from "@expo/vector-icons";
+
+import { useTranslation } from "@/src/active/i18n/LangProvider";
+import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GoBoard } from "go-components";
@@ -15,13 +16,9 @@ import {
   PASS_GRID,
 } from "go-core";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "../active/components/common/AppText";
 import { GameResultModal } from "../active/components/modals/gameresult/GameResultModal";
 import { GameStartModal } from "../active/components/modals/GameStartModal";
 import LoadingModal from "../active/components/modals/LoadingModal";
@@ -31,7 +28,7 @@ import {
   usePracticeSession,
 } from "../active/hooks/practice/usePracticeSession";
 import { usePracticeSettings } from "../active/hooks/practice/usePracticeSettings";
-import { useTranslation } from "../active/i18n";
+import { useColors } from "../active/hooks/useTheme";
 import { ratingToRankIndex } from "../stable/logics/rankLogics";
 import { buildRecordFromMatch } from "../stable/logics/recordBuilder";
 
@@ -46,6 +43,7 @@ const LAYOUT_CONFIG = {
 };
 
 export default function PracticeGameScreen() {
+  const colors = useColors();
   const { width, height } = useWindowDimensions();
   const boardWidth = Math.min(width * 0.94, height * 0.6);
   const [hasStarted, setHasStarted] = useState(false);
@@ -89,7 +87,7 @@ export default function PracticeGameScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background items-center">
       <StatusBar style="dark" />
-      <View className="flex-1 justify-center items-center w-full max-w-[680px] mx-auto">
+      <View className="flex-1 justify-center items-center w-full max-w-160 mx-auto">
         <GoBoard
           // 対局開始前プレビュー用。ただのプレビューなので値は適当
           boardSize={boardSize}
@@ -111,16 +109,14 @@ export default function PracticeGameScreen() {
           moveEvaluationPoint={0} // 適当
           moveEvaluation={undefined} // 適当
           boardWidth={boardWidth}
-          boardColor={COLORS.primary}
-          lineColor={COLORS.background}
-          blackStoneColor={COLORS.darkObject}
-          blackStoneAccentColor={COLORS.darkObjectAccent}
-          whiteStoneColor={COLORS.lightObject}
-          whiteStoneAccentColor={COLORS.lightObjectAccent}
-          humanMoveColor={COLORS.humanMoveColor}
-          botMoveColor={COLORS.botMoveColor}
-          goodMoveColor={COLORS.goodMoveColor}
-          badMoveColor={COLORS.badMoveColor}
+          boardColor={colors.primary}
+          lineColor={colors.background}
+          blackStoneColor={colors.blackStone}
+          whiteStoneColor={colors.whiteStone}
+          humanMoveColor={colors.humanMoveColor}
+          botMoveColor={colors.botMoveColor}
+          goodMoveColor={colors.success}
+          badMoveColor={colors.failure}
           sound={false} // 適当
           practiceMatchStatus={""} // 適当
         />
@@ -164,6 +160,7 @@ function PracticeGameScreenContent({
   doubleTap: boolean;
 }) {
   const t = useTranslation();
+  const colors = useColors();
   const { show, hide } = useOverlay();
   const { width, height } = useWindowDimensions();
   const boardWidth = Math.min(width * 0.94, height * 0.6);
@@ -268,7 +265,7 @@ function PracticeGameScreenContent({
         rankIndexAfter={0}
         from={"PracticeGameScreen"}
         giantKillingStreak={0}
-        giantKillingStreakBonusApplied={false}
+        giantKillingBonus={false}
       />,
     );
   }, [isGameEnded]);
@@ -277,7 +274,7 @@ function PracticeGameScreenContent({
     <SafeAreaView className="flex-1 bg-background items-center">
       <StatusBar style="dark" />
 
-      <View className="flex-1 w-full max-w-[680px] mx-auto px-5">
+      <View className="flex-1 w-full max-w-160 mx-auto px-5">
         {/* ─── ヘッダー ─── */}
         <View className="mt-2 h-11 justify-center">
           <TouchableOpacity
@@ -290,11 +287,7 @@ function PracticeGameScreenContent({
             }}
             activeOpacity={0.7}
           >
-            <Ionicons
-              name="chevron-back-outline"
-              size={32}
-              color={COLORS.primaryDark}
-            />
+            <Feather name="chevron-left" size={36} color={colors.textSub} />
           </TouchableOpacity>
         </View>
 
@@ -336,16 +329,14 @@ function PracticeGameScreenContent({
             moveEvaluationPoint={0}
             moveEvaluation={undefined}
             boardWidth={boardWidth}
-            boardColor={COLORS.primary}
-            lineColor={COLORS.background}
-            blackStoneColor={COLORS.darkObject}
-            blackStoneAccentColor={COLORS.darkObjectAccent}
-            whiteStoneColor={COLORS.lightObject}
-            whiteStoneAccentColor={COLORS.lightObjectAccent}
-            humanMoveColor={COLORS.humanMoveColor}
-            botMoveColor={COLORS.botMoveColor}
-            goodMoveColor={COLORS.goodMoveColor}
-            badMoveColor={COLORS.badMoveColor}
+            boardColor={colors.primary}
+            lineColor={colors.background}
+            blackStoneColor={colors.blackStone}
+            whiteStoneColor={colors.whiteStone}
+            humanMoveColor={colors.humanMoveColor}
+            botMoveColor={colors.botMoveColor}
+            goodMoveColor={colors.success}
+            badMoveColor={colors.failure}
             sound={isSoundEnabled}
             practiceMatchStatus={practiceMatchStatus}
           />
@@ -373,28 +364,40 @@ function PracticeGameScreenContent({
             style={{ width: boardWidth }}
           >
             <TouchableOpacity
-              className={`flex-1 h-14 border-2 border-primaryDark rounded-2xl justify-center items-center bg-foreground ${
-                isBotThinking ? "opacity-50" : "opacity-100"
+              className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
+                isBotThinking ? "border-backgroundDark" : "border-primaryDark"
               }`}
               onPress={() => handlePutStone(PASS_GRID)}
               disabled={isBotThinking}
               activeOpacity={0.7}
             >
-              <Text className="text-lg font-semibold text-primaryDark">
+              <AppText
+                className="text-lg"
+                style={{
+                  color: isBotThinking
+                    ? colors.backgroundDark
+                    : colors.primaryDark,
+                }}
+              >
                 {t("common.pass")}
-              </Text>
+              </AppText>
             </TouchableOpacity>
             <TouchableOpacity
-              className={`flex-1 h-14 border-2 border-coral rounded-2xl justify-center items-center bg-foreground ${
-                isBotThinking ? "opacity-50" : "opacity-100"
+              className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
+                isBotThinking ? "border-failureLight" : "border-failure"
               }`}
               onPress={handleResign}
               disabled={isBotThinking}
               activeOpacity={0.7}
             >
-              <Text className="text-lg font-semibold text-coral">
+              <AppText
+                className="text-lg"
+                style={{
+                  color: isBotThinking ? colors.failureLight : colors.failure,
+                }}
+              >
                 {t("common.resign")}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         )}

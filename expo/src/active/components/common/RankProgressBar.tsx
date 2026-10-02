@@ -1,8 +1,8 @@
 // RankProgressBar.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleProp, View, ViewStyle } from "react-native";
+import { useColors } from "../../hooks/useTheme";
 
 export type AnimationType = "none" | "simple" | "transition";
 
@@ -46,6 +46,7 @@ export function RankProgressBar({
   onStepChange,
   onAnimationEnd,
 }: RankProgressBarProps) {
+   const colors = useColors();
   const [progressAnim] = useState(() => new Animated.Value(0));
 
   const onStepChangeRef = useRef(onStepChange);
@@ -152,7 +153,7 @@ export function RankProgressBar({
       style={[
         {
           height,
-          backgroundColor: COLORS.background,
+          backgroundColor: colors.background,
         },
         style,
       ]}

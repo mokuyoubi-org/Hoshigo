@@ -1,15 +1,18 @@
 // UpdateModal.tsx
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import * as Updates from "expo-updates";
 import React from "react";
-import { Linking, Platform, Pressable, Text } from "react-native";
+import { Linking, Platform, Pressable } from "react-native";
 import { ModalShell } from "ui-atoms";
+
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 export type UpdateModalKind = "reload" | "store" | "restart";
 
 export function UpdateModal({ kind }: { kind: UpdateModalKind }) {
   const t = useTranslation();
-
+  const colors = useColors();
   const handlePress = async () => {
     if (kind === "reload") {
       // web: リロードするだけで最新のJS/HTMLが再取得される
@@ -48,17 +51,22 @@ export function UpdateModal({ kind }: { kind: UpdateModalKind }) {
         : "UpdateModal.updateButton";
 
   return (
-    <ModalShell size="md" style={{ alignItems: "center", gap: 12 }}>
-      <Text className="text-[16px] color-text text-center leading-[22px]">
+    <ModalShell
+      size="md"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
+      <AppText className="text-base color-text text-center">
         {t(messageKey)}
-      </Text>
+      </AppText>
       <Pressable
         onPress={handlePress}
-        className="bg-foreground rounded-[12px] mt-2 px-6 py-3 border-2 border-backgroundDark"
+        className="bg-foreground rounded-xl mt-4 px-6 py-3 border-2 border-backgroundDark"
       >
-        <Text className="text-[14px] color-text text-center leading-[20px]">
+        <AppText className="text-base color-text text-center">
           {t(buttonKey)}
-        </Text>
+        </AppText>
       </Pressable>
     </ModalShell>
   );

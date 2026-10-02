@@ -1,24 +1,20 @@
 // LogoutModal.tsx
-import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/i18n";
+
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React, { useState } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 type Props = {
-  title: string;
-  confirmText: string;
   onConfirm: () => Promise<void> | void;
   onCancel: () => void;
 };
 
-export const LogoutModal = ({
-  title,
-  confirmText,
-  onConfirm,
-  onCancel,
-}: Props) => {
+export const LogoutModal = ({ onConfirm, onCancel }: Props) => {
   const t = useTranslation();
+  const colors = useColors();
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
@@ -31,42 +27,52 @@ export const LogoutModal = ({
   };
 
   return (
-    <ModalShell onClose={onCancel} size="lg">
+    <ModalShell
+      onClose={onCancel}
+      size="lg"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
       <View className="w-full flex-row justify-between items-center mb-3">
-        <Text className="text-[18px] font-bold flex-1 text-text text-center">
-          {title}
-        </Text>
+        <AppText className="text-lg flex-1 text-text text-center">
+          {t("LogoutModal.title")}
+        </AppText>
       </View>
 
-      <View className="w-full gap-[10px] mt-2">
+      <View className="w-full gap-2 mt-2">
         <TouchableOpacity
-          className={`w-full h-[48px] rounded-[12px] justify-center items-center bg-primaryDark ${
-            loading ? "opacity-40" : ""
+          className={`w-full h-12 rounded-xl justify-center items-center ${
+            loading ? "bg-primaryDark" : "bg-blackStone"
           }`}
           onPress={handleConfirm}
           disabled={loading}
           activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color={COLORS.foreground} />
+            <ActivityIndicator color={colors.foreground} />
           ) : (
-            <Text className="text-foreground text-[16px] font-bold">
-              {confirmText}
-            </Text>
+            <AppText className="text-foreground text-base">
+              {t("common.logout")}
+            </AppText>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`w-full h-[48px] rounded-[12px] justify-center items-center bg-backgroundDark ${
-            loading ? "opacity-40" : ""
+          className={`w-full h-12 rounded-xl justify-center items-center ${
+            loading ? "bg-background" : "bg-backgroundDark"
           }`}
           onPress={onCancel}
           disabled={loading}
           activeOpacity={0.8}
         >
-          <Text className="text-textSub text-[16px] font-bold">
+          <AppText
+            className={`${
+              loading ? "bg-backgroundDark" : "text-textSub"
+            } text-base`}
+          >
             {t("common.cancel")}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       </View>
     </ModalShell>

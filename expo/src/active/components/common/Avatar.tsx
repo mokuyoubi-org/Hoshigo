@@ -1,25 +1,36 @@
 // Avatar.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
+import { Agehama } from "@/packages/go-components/src";
 import { ICONS } from "@/src/active/constants/icons";
 import { RANKS } from "@/src/active/constants/ranks";
 import { AntDesign } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { BLACK, Color, WHITE } from "go-core";
 import React from "react";
 import { View } from "react-native";
+import { useAppFont } from "../../hooks/useAppFont";
+import { useColors } from "../../hooks/useTheme";
+import { AppImage } from "../AppImage";
 
 type Props = {
   rankIndex: number;
   iconIndex: number;
   size: number;
   playerColor?: Color;
+  /** あげはま（取った石の数）。渡すと石の中に表示される */
+  agehama?: number;
 };
 
-export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
+export const Avatar = ({
+  rankIndex,
+  iconIndex,
+  size,
+  playerColor,
+  agehama,
+}: Props) => {
+  const colors = useColors();
+  const fontFamily = useAppFont();
   // RANKS[rankIndex] が無かったら、whiteを使う
-  const rankColor =
-    COLORS[RANKS[rankIndex]?.color as keyof typeof COLORS] ?? COLORS.white;
+  const rankColor = colors[RANKS[rankIndex]?.color as keyof typeof colors];
 
   const starCount = rankIndex >= 0 && rankIndex <= 17 ? (rankIndex % 3) + 1 : 0;
 
@@ -29,8 +40,8 @@ export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
   const starInnerSize = size * 0.3;
   const starOffset = starOuterSize / 2;
 
-  // 石のサイズと位置を size に合わせる（例: アバターの30%の大きさ）
-  const stoneSize = size * 0.45;
+  // 数字を入れるので石を少し大きめにする（元は 0.45）
+  const stoneSize = size * 0.5;
   const stoneRadius = stoneSize / 2;
 
   // 9時方向（左）を中心に、上・中・下へ広がる角度
@@ -39,16 +50,16 @@ export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
   return (
     <View>
       <View
-        className="border-[4px] justify-center items-center relative"
+        className="border-4 justify-center items-center relative"
         style={{
           width: size,
           height: size,
           borderRadius: radius,
-          borderColor: rankColor,
-          backgroundColor: COLORS.foreground,
+          borderColor: iconIndex !== 6 ? rankColor : colors.foreground, // うさぎか否か
+          backgroundColor: iconIndex === 6 ? rankColor : colors.foreground, // うさぎか否か
         }}
       >
-        <Image
+        <AppImage
           source={ICONS[iconIndex]}
           style={{ width: size - 4, height: size - 4 }}
           contentFit="contain"
@@ -56,17 +67,26 @@ export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
 
         {playerColor && (
           <View
-            className={`absolute -bottom-[2px] -right-[2px] ${
-              playerColor === WHITE ? "border-[1px] border-primary" : ""
+            className={`absolute -bottom-1 -right-1 justify-center items-center ${
+              playerColor === WHITE ? "border-2 border-primary" : ""
             }`}
             style={{
               width: stoneSize,
               height: stoneSize,
               borderRadius: stoneRadius,
               backgroundColor:
-                playerColor === BLACK ? COLORS.darkObject : COLORS.lightObject,
+                playerColor === BLACK ? colors.blackStone : colors.whiteStone,
             }}
-          />
+          >
+            {agehama !== undefined && agehama !== 0 && (
+              <Agehama
+                count={agehama}
+                color={colors.primary}
+                size={stoneSize}
+                fontFamily={fontFamily}
+              />
+            )}
+          </View>
         )}
 
         {Array.from({ length: starCount }).map((_, i) => {
@@ -91,7 +111,7 @@ export const Avatar = ({ rankIndex, iconIndex, size, playerColor }: Props) => {
                 <AntDesign
                   name="star"
                   size={starOuterSize}
-                  color={COLORS.foreground}
+                  color={colors.foreground}
                 />
                 <AntDesign
                   name="star"

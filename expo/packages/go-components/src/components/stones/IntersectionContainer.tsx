@@ -10,9 +10,9 @@ import {
   PASS_GRID,
 } from "go-core";
 import React, { memo } from "react";
-import { ColorValue, Pressable, StyleSheet } from "react-native";
+import { ColorValue, Pressable, StyleSheet, View } from "react-native";
+import { DoubleTapStone } from "./DoubleTapStone";
 import { Marker } from "./Marker";
-import { PreviewStone } from "./PreviewStone";
 import { Stone } from "./Stone";
 
 type Props = {
@@ -37,9 +37,7 @@ type Props = {
   currentTurn: Color;
   lastMove: Grid;
   blackStoneColor: ColorValue;
-  blackStoneAccentColor: ColorValue;
   whiteStoneColor: ColorValue;
-  whiteStoneAccentColor: ColorValue;
   humanMoveColor: ColorValue;
   botMoveColor: ColorValue;
   goodMoveColor: ColorValue;
@@ -69,9 +67,7 @@ export const IntersectionContainer = memo(function DecoratedStone({
   currentTurn,
   lastMove,
   blackStoneColor,
-  blackStoneAccentColor,
   whiteStoneColor,
-  whiteStoneAccentColor,
   humanMoveColor,
   botMoveColor,
   goodMoveColor,
@@ -145,7 +141,7 @@ export const IntersectionContainer = memo(function DecoratedStone({
 
       {/* ダブルタップ用のプレビュー石 */}
       {!goString && isPending && doubleTap && (
-        <PreviewStone
+        <DoubleTapStone
           stoneSize={stoneSize}
           playerColor={playerColor}
           blackStoneColor={blackStoneColor}
@@ -159,8 +155,8 @@ export const IntersectionContainer = memo(function DecoratedStone({
           size={stoneSize * 0.6}
           color={
             goString?.color === BLACK
-              ? blackStoneAccentColor
-              : whiteStoneAccentColor
+              ? (whiteStoneColor as string + "88")
+              : (blackStoneColor as string + "88")
           }
           shape="circle"
           opacity={!(isDead && showTerritory) ? 1 : 0.32}
@@ -214,7 +210,7 @@ export const IntersectionContainer = memo(function DecoratedStone({
 
       {/* 候補手 */}
       {isCandidateMoveVisible && (
-        <>
+        <View style={styles.candidateContainer}>
           {/* 薄い石 */}
           <Stone
             color={matchType <= 1 ? getOppositeColor(currentTurn) : currentTurn} // ⚠️大事
@@ -223,15 +219,15 @@ export const IntersectionContainer = memo(function DecoratedStone({
             blackStoneColor={blackStoneColor}
             whiteStoneColor={whiteStoneColor}
           />
-          {/* 薄い良手（○）マーク */}
+          {/* 薄い良手（○）マーク。候補手に出すのは当然良手のみなので❌はない */}
           <Marker
             size={stoneSize * 0.7}
             color={goodMoveColor}
             shape="good"
-            opacity={0.6}
+            opacity={0.3}
             zIndex={15}
           />
-        </>
+        </View>
       )}
 
       {/* 実際に打たれた石に対する良手（○）・悪手（❌）の評価マーク */}
@@ -240,7 +236,7 @@ export const IntersectionContainer = memo(function DecoratedStone({
           size={stoneSize * 0.7}
           shape={moveEvaluation}
           color={moveEvaluation === "good" ? goodMoveColor : badMoveColor}
-          opacity={!(isDead && showTerritory) ? 1 : 0.4}
+          opacity={!(isDead && showTerritory) ? 0.6 : 0.3}
           zIndex={15}
         />
       )}
@@ -251,6 +247,10 @@ export const IntersectionContainer = memo(function DecoratedStone({
 const styles = StyleSheet.create({
   gridPressable: {
     position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  candidateContainer: {
     justifyContent: "center",
     alignItems: "center",
   },

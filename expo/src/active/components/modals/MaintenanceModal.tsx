@@ -1,22 +1,31 @@
 // MaintenanceModal.tsx
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { ModalShell } from "ui-atoms";
+
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 export function MaintenanceModal({ message }: { message: string | null }) {
   const t = useTranslation();
+  const colors = useColors();
   const hasMessage = message && message.trim() !== "";
   return (
-    <ModalShell size="md" style={{ alignItems: "center", gap: 12 }}>
-      <Text className="text-[16px] color-text text-center leading-[22px]">
+    <ModalShell
+      size="md"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
+      <AppText className="text-base color-text text-center">
         {t("MaintenanceModal.defaultMessage")}
-      </Text>
+      </AppText>
       {hasMessage && (
-        <View className="bg-foreground rounded-[12px] mt-2 p-4 w-full border-2 border-backgroundDark">
-          <Text className="text-[14px] color-text text-center leading-[20px]">
+        <View className="bg-foreground rounded-xl mt-4 p-4 w-full border-2 border-backgroundDark">
+          <AppText className="text-base color-text text-center">
             {message}
-          </Text>
+          </AppText>
         </View>
       )}
     </ModalShell>

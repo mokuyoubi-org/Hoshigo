@@ -20,11 +20,6 @@ export const EMPTY = 0;
 export const BLACK = 1;
 export const WHITE = 2;
 export const KOMI = 6.5;
-export const BOARD_SIZE_OPTIONS = [
-  { value: 9, label: "9×9" },
-  { value: 13, label: "13×13" },
-  { value: 19, label: "19×19" },
-] as const;
 
 // 置き石(2〜9子局)が無いかどうかの判定
 export const isNoOkiishi = (matchType: MatchType): boolean =>

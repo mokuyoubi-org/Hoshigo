@@ -1,5 +1,7 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { AppText } from "./AppText";
+import { Divider } from "./Divider";
 
 type SettingsSectionProps = {
   title: string;
@@ -11,16 +13,14 @@ export function SettingsSection({ title, children }: SettingsSectionProps) {
 
   return (
     <View className="mb-6">
-      <Text className="text-sm font-bold uppercase tracking-widest text-textSub mb-2.5 ml-1">
+      <AppText className="text-sm uppercase tracking-widest text-textSub mb-2.5 ml-1">
         {title}
-      </Text>
+      </AppText>
       <View className="bg-foreground rounded-xl border-2 border-backgroundDark w-full overflow-hidden">
         {items.map((child, index) => (
           <React.Fragment key={index}>
             {child}
-            {index < items.length - 1 && (
-              <View className="h-[1px] bg-backgroundDark w-full" />
-            )}
+            {index < items.length - 1 && <Divider />}
           </React.Fragment>
         ))}
       </View>

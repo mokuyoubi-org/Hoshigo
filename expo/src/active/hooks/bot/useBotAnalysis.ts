@@ -1,7 +1,7 @@
 // useBotAnalysis.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
-// 1局分のRecordTypeを受け取り、手ごとのKataGo解析(b6)を進める・止める・
+// 1局分のRecordTypeを受け取り、手ごとのKataGo解析(b10)を進める・止める・
 // DBに永続化する、をまとめて面倒みるAnalyzeScreen専属のorchestratorフック。
 // (呼び出し箇所がAnalyzeScreen1箇所だけなので、Context直結のuseKataGoTaskを
 //  ここで直接呼ぶのは、まとめ役/道具のルールに沿って問題ない)

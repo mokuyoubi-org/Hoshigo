@@ -9,7 +9,7 @@
  *
  * 必須:
  *   currentPlayer  'black' | 'white'  次の手番
- *   modelId        ModelId            使用するモデル("b6" | "b10" | "b18")
+ *   modelId        ModelId            使用するモデル("b10" | "b18")
  *
  *   board: number[][]
  *   0=空点, 1=黒石, 2=白石 の二次元配列。

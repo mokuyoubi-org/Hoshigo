@@ -57,9 +57,7 @@ type Props = {
   boardColor: ColorValue;
   lineColor: ColorValue;
   blackStoneColor: ColorValue;
-  blackStoneAccentColor: ColorValue;
   whiteStoneColor: ColorValue;
-  whiteStoneAccentColor: ColorValue;
   humanMoveColor: ColorValue;
   botMoveColor: ColorValue;
   goodMoveColor: ColorValue;
@@ -89,9 +87,7 @@ export function GoBoard({
   boardColor,
   lineColor,
   blackStoneColor,
-  blackStoneAccentColor,
   whiteStoneColor,
-  whiteStoneAccentColor,
   humanMoveColor,
   botMoveColor,
   goodMoveColor,
@@ -263,9 +259,7 @@ export function GoBoard({
                   // ⚠️ここがなんでlength-2なのかはよくわからんが、ともかくそうしたらうまくいった。
                 }
                 blackStoneColor={blackStoneColor}
-                blackStoneAccentColor={blackStoneAccentColor}
                 whiteStoneColor={whiteStoneColor}
-                whiteStoneAccentColor={whiteStoneAccentColor}
                 humanMoveColor={humanMoveColor}
                 botMoveColor={botMoveColor}
                 goodMoveColor={goodMoveColor}

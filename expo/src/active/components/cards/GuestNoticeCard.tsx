@@ -1,25 +1,26 @@
 /**
  * GuestNoticeCard.tsx
- * プロフィール画面の、未ログインの際に表示される、「30日で削除されますよ」のやつ。
+ * プロフィール画面の、未ログインの際に表示される、「14日で削除されますよ」のやつ。
+ * タップされたら onPress を呼ぶだけ。何が起きるか（モーダルを開く等）は親が決める。
  */
 
 import React from "react";
-import { Text, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
+import { AppText } from "../common/AppText";
 
-type Props  = {
-  title: string;
+type Props = {
   description: string;
-}
+  onPress: () => void;
+};
 
-export function GuestNoticeCard({ title, description }: Props) {
+export function GuestNoticeCard({ description, onPress }: Props) {
   return (
-    <View className="bg-foreground rounded-3xl border-2 border-backgroundDark p-5 gap-3">
-      <View className="flex-row items-center gap-2">
-        <Text className="text-lg font-bold text-text flex-1">{title}</Text>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <View className="bg-foreground rounded-3xl border-2 border-backgroundDark p-5">
+        <AppText className="text-sm text-textSub leading-5">
+          {description}
+        </AppText>
       </View>
-      <Text className="text-sm text-textSub leading-5">
-        {description}
-      </Text>
-    </View>
+    </TouchableOpacity>
   );
 }

@@ -28,7 +28,7 @@ function stagePercent(stage: LoadStage): number | null {
       : null;
   }
   // warming_up はモデルごとの内部ステップ(step/totalSteps)でしかなく、
-  // 複数モデル(b6→b10→b18)を跨いだ通しの進捗ではない。そのままだと
+  // 複数モデル(b10→b18)を跨いだ通しの進捗ではない。そのままだと
   // モデルが切り替わるたびに100%→50%のように%が飛んで見えてしまうため、
   // connecting と同じ「不確定(null)」として扱い、流れ続けるUIに統一する。
   return null;

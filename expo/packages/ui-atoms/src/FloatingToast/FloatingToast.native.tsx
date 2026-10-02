@@ -1,3 +1,5 @@
+// FloatingToast.native.tsx
+
 import React from "react";
 import {
   ActivityIndicator,
@@ -23,8 +25,13 @@ export function FloatingToast({
   textSubColor,
   accentColor,
   foregroundColor,
+  fontFamily,
 }: FloatingToastProps) {
   if (!visible) return null;
+
+  const fontStyle = fontFamily
+    ? { fontFamily, }
+    : null;
 
   return (
     <Animated.View
@@ -61,12 +68,14 @@ export function FloatingToast({
         )}
 
         <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "600",
-            color: textColor,
-            marginRight: 14,
-          }}
+          style={[
+            {
+              fontSize: 14,
+              color: textColor,
+              marginRight: 14,
+            },
+            fontStyle,
+          ]}
         >
           {label}
         </Text>
@@ -88,7 +97,10 @@ export function FloatingToast({
             <ActivityIndicator size="small" color={accentColor} />
           ) : (
             <Text
-              style={{ fontSize: 16, fontWeight: "bold", color: textSubColor }}
+              style={[
+                { fontSize: 16,  color: textSubColor },
+                fontStyle,
+              ]}
             >
               {actionLabel}
             </Text>

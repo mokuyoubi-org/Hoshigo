@@ -1,14 +1,12 @@
 // ModalShell.web.tsx
 import React, { useSyncExternalStore } from "react";
 import ReactDOM from "react-dom";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 import {
-  StyleProp,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-  ViewStyle,
-} from "react-native";
-import { computeModalBox, ModalSize } from "./modalSizing";
+  computeModalBox,
+  DEFAULT_CONTENT_PADDING,
+  ModalShellProps,
+} from "./common";
 
 const emptySubscribe = () => () => {};
 function useIsHydrated() {
@@ -19,21 +17,15 @@ function useIsHydrated() {
   );
 }
 
-type ModalShellProps = {
-  children: React.ReactNode;
-  onClose?: () => void;
-  style?: StyleProp<ViewStyle>;
-  dismissKeyboardOnPress?: boolean;
-  backgroundColor?: string;
-  size?: ModalSize;
-};
-
 export function ModalShell({
   children,
   onClose,
   size = "md",
   style,
-  backgroundColor = "#f0f5f9", // background
+  backgroundColor,
+  borderColor,
+  overlayColor,
+  contentPadding = DEFAULT_CONTENT_PADDING,
 }: ModalShellProps) {
   const isHydrated = useIsHydrated();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -50,7 +42,7 @@ export function ModalShell({
   );
 
   return ReactDOM.createPortal(
-    <View style={styles.overlay}>
+    <View style={[styles.overlay, { backgroundColor: overlayColor }]}>
       {/* 暗い背景部分 */}
       <div style={styles.backgroundPress as any} onClick={onClose} />
 
@@ -58,7 +50,11 @@ export function ModalShell({
       <View
         style={[
           styles.card,
-          { backgroundColor },
+          {
+            backgroundColor,
+            padding: contentPadding,
+            borderColor: borderColor,
+          },
           {
             animation: "modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
             width: cardWidth,
@@ -97,7 +93,6 @@ const styles = StyleSheet.create({
     display: "flex" as any,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#00000080", // overlay
     padding: 16,
   },
   backgroundPress: {
@@ -112,7 +107,5 @@ const styles = StyleSheet.create({
     zIndex: 50,
     borderRadius: 20,
     borderWidth: 4,
-    borderColor: "#e1e8ed", // backgroundDark
-    padding: 16,
   },
 });

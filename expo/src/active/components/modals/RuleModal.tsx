@@ -1,14 +1,16 @@
 // RuleModal.tsx
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React from "react";
 import {
   ScrollView,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
+
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 type Props = {
   visible: boolean;
@@ -27,10 +29,15 @@ function RuleItem({
       activeOpacity={1}
       className="flex-row mb-5 items-start w-full"
     >
-      <View className="w-2.5 h-2.5 rounded-full mt-1.5 mr-3.5 bg-text" />
+      <View
+        // mt-2.5は必要
+        className="w-2 h-2 rounded-full mt-2.5 mr-2 bg-text"
+      />
       <View className="flex-1">
-        <Text className="text-base font-bold mb-1.5 text-text">{title}</Text>
-        <Text className="text-[15px] leading-6 text-text">{description}</Text>
+        <AppText className="text-lg text-text">{title}</AppText>
+        <AppText className="text-base leading-6 text-text">
+          {description}
+        </AppText>
       </View>
     </TouchableOpacity>
   );
@@ -40,40 +47,45 @@ export function RuleModal({ visible, onClose }: Props) {
   const { height: windowHeight } = useWindowDimensions();
 
   const t = useTranslation();
-
+  const colors = useColors();
   if (!visible) return null;
 
   return (
-    <ModalShell onClose={onClose} size="lg">
+    <ModalShell
+      onClose={onClose}
+      size="lg"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
       <View className="w-full pb-3">
-        <Text className="text-xl font-bold text-text tracking-wide">
-          {t("InfoModal.title")}
-        </Text>
+        <AppText className="text-xl text-text tracking-wide">
+          {t("RuleModal.title")}
+        </AppText>
       </View>
 
       <ScrollView
-        style={{ height: windowHeight * 0.5 }}
+        style={{
+          height: windowHeight * 0.5,
+          borderColor: colors.backgroundDark,
+          borderWidth: 2,
+          borderRadius: 16,
+          padding: 16,
+          backgroundColor: colors.foreground,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <RuleItem
-          title={t("InfoModal.ruleTitle")}
-          description={t("InfoModal.ruleDescription")}
+          title={t("RuleModal.ruleDescription")}
+          description={t("RuleModal.objectiveDescription")}
         />
         <RuleItem
-          title={t("InfoModal.boardTitle")}
-          description={t("InfoModal.boardDescription")}
+          title={t("RuleModal.komiTitle")}
+          description={t("RuleModal.komiDescription")}
         />
         <RuleItem
-          title={t("InfoModal.komiTitle")}
-          description={t("InfoModal.komiDescription")}
-        />
-        <RuleItem
-          title={t("InfoModal.timeLimitTitle")}
-          description={t("InfoModal.timeLimitDescription")}
-        />
-        <RuleItem
-          title={t("InfoModal.objectiveTitle")}
-          description={t("InfoModal.objectiveDescription")}
+          title={t("RuleModal.timeLimitTitle")}
+          description={t("RuleModal.timeLimitDescription")}
         />
       </ScrollView>
     </ModalShell>

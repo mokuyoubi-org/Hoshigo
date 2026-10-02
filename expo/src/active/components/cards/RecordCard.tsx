@@ -1,5 +1,5 @@
 // RecordCard.tsx
-import { COLORS } from "@/src/active/constants/colors";
+
 import { RecordOrSkeleton } from "@/src/active/types/record";
 import { isSkeletonCard } from "@/src/stable/logics/recordCardLogics";
 import { GoBoard } from "go-components";
@@ -16,7 +16,11 @@ import React, { useState } from "react";
 import { LayoutChangeEvent, TouchableOpacity, View } from "react-native";
 import { useProfile } from "../../contexts/ProfileContexts";
 // ★ HeaderPlayerInfo を import に追加した
-import { HeaderPlayerInfo, RecordCardHeader } from "../common/RecordCardHeader";
+import { useColors } from "../../hooks/useTheme";
+import {
+  HeaderPlayerInfo,
+  RecordCardHeader,
+} from "../headers/RecordCardHeader";
 import { SkeletonCard } from "./SkeletonCard";
 
 export type Props = {
@@ -47,6 +51,7 @@ export const RecordCard = ({
   onPress,
   agehama,
 }: Props) => {
+  const colors = useColors();
   const [cardWidth, setCardWidth] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
 
@@ -70,10 +75,10 @@ export const RecordCard = ({
 
   const borderColor =
     playerWin === true
-      ? COLORS.green
+      ? colors.success
       : playerWin === false
-        ? COLORS.coral
-        : COLORS.backgroundDark;
+        ? colors.failure
+        : colors.backgroundDark;
 
   const { iconIndex, username } = useProfile();
 
@@ -105,7 +110,7 @@ export const RecordCard = ({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.9}
+      activeOpacity={0.7}
       onPress={onPress}
       onLayout={handleCardLayout}
       className="justify-between items-center rounded-3xl overflow-hidden bg-foreground border-4 w-full"
@@ -156,16 +161,14 @@ export const RecordCard = ({
             // 物理サイズ: 1
             boardWidth={boardWidth}
             // 色: 10
-            boardColor={COLORS.primary}
-            lineColor={COLORS.background}
-            blackStoneColor={COLORS.darkObject}
-            blackStoneAccentColor={COLORS.darkObjectAccent}
-            whiteStoneColor={COLORS.lightObject}
-            whiteStoneAccentColor={COLORS.lightObjectAccent}
-            humanMoveColor={COLORS.humanMoveColor}
-            botMoveColor={COLORS.botMoveColor}
-            goodMoveColor={COLORS.goodMoveColor}
-            badMoveColor={COLORS.badMoveColor}
+            boardColor={colors.primary}
+            lineColor={colors.background}
+            blackStoneColor={colors.blackStone}
+            whiteStoneColor={colors.whiteStone}
+            humanMoveColor={colors.humanMoveColor}
+            botMoveColor={colors.botMoveColor}
+            goodMoveColor={colors.success}
+            badMoveColor={colors.failure}
             // 音
             sound={false}
             practiceMatchStatus={""} // 適当

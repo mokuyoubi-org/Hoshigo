@@ -8,11 +8,11 @@ import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
 import { GameResultModal } from "@/src/active/components/modals/gameresult/GameResultModal";
 import { GameStartModal } from "@/src/active/components/modals/GameStartModal";
 import LoadingModal from "@/src/active/components/modals/LoadingModal";
-import { COLORS } from "@/src/active/constants/colors";
+
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import {
   GameScreenParams,
   getPassState,
@@ -27,15 +27,12 @@ import { StatusBar } from "expo-status-bar";
 import { GoBoard } from "go-components";
 import { BLACK, Grid, PASS_GRID } from "go-core";
 import React, { useEffect } from "react";
-import {
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useKVStorage } from "storage-kit";
 import { IconButton } from "ui-atoms";
+import { AppText } from "../active/components/common/AppText";
+import { DoubleTapModal } from "../active/components/modals/DoubleTapModal";
+import { useColors } from "../active/hooks/useTheme";
 import { clearPeriodicCache } from "../stable/logics/syncUtils";
 
 // ─── レイアウト定数 ───
@@ -57,23 +54,9 @@ export default function GameScreen() {
   // ---------- stateなど ----------
   // その他
   const t = useTranslation();
+  const colors = useColors();
   const { show, hide } = useOverlay();
-  const { value: doubleTap9 } = useKVStorage<boolean>(
-    "global.doubleTap9",
-    false,
-  );
-  const { value: doubleTap13 } = useKVStorage<boolean>(
-    "global.doubleTap13",
-    true,
-  );
-  const { value: doubleTap19 } = useKVStorage<boolean>(
-    "global.doubleTap19",
-    true,
-  );
-  const { value: isSoundEnabled } = useKVStorage<boolean>(
-    "global.sound",
-    false,
-  );
+
   // 碁盤サイズ
   const { height, width } = useWindowDimensions();
   const boardWidth = Math.min(
@@ -135,7 +118,9 @@ export default function GameScreen() {
     finalDeadStones,
     analysis,
     giantKillingStreak,
-    giantKillingStreakBonusApplied,
+    giantKillingBonus,
+    doubleTap,
+    isSoundEnabled,
   } = useMatchSession({
     matchId,
     myColor,
@@ -221,7 +206,7 @@ export default function GameScreen() {
         rankIndexAfter={rankIndexAfter}
         from={"GameScreen"}
         giantKillingStreak={giantKillingStreak}
-        giantKillingStreakBonusApplied={giantKillingStreakBonusApplied}
+        giantKillingBonus={giantKillingBonus}
       />,
     );
   };
@@ -298,8 +283,9 @@ export default function GameScreen() {
             ratingBefore: ratingBefore,
             ratingAfter: ratingAfter,
             giantKillingStreak: giantKillingStreak,
-            giantKillingStreakBonusApplied: String( // なんか、booleanは明示的にキャストしなきゃいけないみたいだ。
-              giantKillingStreakBonusApplied,
+            giantKillingBonus: String(
+              // なんか、booleanは明示的にキャストしなきゃいけないみたいだ。
+              giantKillingBonus,
             ),
           },
         });
@@ -321,14 +307,26 @@ export default function GameScreen() {
     <SafeAreaView className="flex-1 bg-background items-center">
       <StatusBar style="dark" />
 
-      <View className="flex-1 px-6 py-5 items-center w-full max-w-[680px] mx-auto">
+      <View className="flex-1 px-6 py-5 items-center w-full max-w-160 mx-auto">
         {/* ─── ヘッダー ─── */}
         <View className="w-full mb-2 flex-row justify-between">
           {/* ─── infoボタン ─── */}
           <IconButton
             icon={<FontAwesome6 name="info" />}
-            color={COLORS.primary}
+            iconColor={colors.primary}
+            backgroundColor={colors.foreground}
+            borderColor={colors.backgroundDark}
             onPress={showGameStartModal}
+          />
+
+          <IconButton
+            icon={<FontAwesome6 name={"gear"} />}
+            iconColor={colors.primary}
+            backgroundColor={colors.foreground}
+            borderColor={colors.backgroundDark}
+            onPress={() => {
+              show(<DoubleTapModal onClose={hide} />);
+            }}
           />
         </View>
 
@@ -376,13 +374,7 @@ export default function GameScreen() {
             // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
             disabled={!isMyTurn || isGameEnded}
             isGameEnded={isGameEnded}
-            doubleTap={
-              boardSize === 9
-                ? doubleTap9
-                : boardSize === 13
-                  ? doubleTap13
-                  : doubleTap19
-            }
+            doubleTap={doubleTap}
             // その他情報: 5
             forceShowTerritory={false} // ダミーだけどちゃんとfalse
             editMarkers={new Map<Grid, "human" | "bot">()} // ダミー
@@ -392,16 +384,14 @@ export default function GameScreen() {
             // 物理サイズ: 1
             boardWidth={boardWidth}
             // 色: 10
-            boardColor={COLORS.primary}
-            lineColor={COLORS.background}
-            blackStoneColor={COLORS.darkObject}
-            blackStoneAccentColor={COLORS.darkObjectAccent}
-            whiteStoneColor={COLORS.lightObject}
-            whiteStoneAccentColor={COLORS.lightObjectAccent}
-            humanMoveColor={COLORS.humanMoveColor}
-            botMoveColor={COLORS.botMoveColor}
-            goodMoveColor={COLORS.goodMoveColor}
-            badMoveColor={COLORS.badMoveColor}
+            boardColor={colors.primary}
+            lineColor={colors.background}
+            blackStoneColor={colors.blackStone}
+            whiteStoneColor={colors.whiteStone}
+            humanMoveColor={colors.humanMoveColor}
+            botMoveColor={colors.botMoveColor}
+            goodMoveColor={colors.success}
+            badMoveColor={colors.failure}
             // 音
             sound={isSoundEnabled}
             practiceMatchStatus={""} // 適当
@@ -434,31 +424,37 @@ export default function GameScreen() {
         {!isGameEnded && (
           <View className="flex-row gap-2" style={{ width: boardWidth }}>
             <TouchableOpacity
-              className={`flex-1 h-14 border-2 border-primaryDark rounded-2xl justify-center items-center bg-foreground ${
-                !isMyTurn ? "opacity-50" : "opacity-100"
+              className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
+                !isMyTurn ? "border-backgroundDark" : "border-primaryDark"
               }`}
-              onPress={() => {
-                handlePutStone(PASS_GRID);
-              }}
+              onPress={() => handlePutStone(PASS_GRID)}
               disabled={!isMyTurn}
               activeOpacity={0.7}
             >
-              <Text className="text-lg font-semibold text-primaryDark">
+              <AppText
+                className={`text-lg ${
+                  !isMyTurn ? "text-backgroundDark" : "text-primaryDark"
+                }`}
+              >
                 {t("common.pass")}
-              </Text>
+              </AppText>
             </TouchableOpacity>
 
             <TouchableOpacity
-              className={`flex-1 h-14 border-2 border-coral rounded-2xl justify-center items-center bg-foreground ${
-                !isMyTurn ? "opacity-50" : "opacity-100"
+              className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
+                !isMyTurn ? "border-failureLight" : "border-failure"
               }`}
               onPress={handleResign}
               disabled={!isMyTurn}
               activeOpacity={0.7}
             >
-              <Text className="text-lg font-semibold text-coral">
+              <AppText
+                className={`text-lg ${
+                  !isMyTurn ? "text-failureLight" : "text-failure"
+                }`}
+              >
                 {t("common.resign")}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         )}

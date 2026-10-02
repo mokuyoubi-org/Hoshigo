@@ -63,10 +63,11 @@ export function useRecordsScreen() {
   const SNAP_INTERVAL = CARD_HEIGHT + 18;
 
   const [isLoading, setIsLoading] = useState(true);
-  const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
-    "RecordScreen.boardSize",
-    9,
-  );
+  const {
+    value: boardSize,
+    setValue: setBoardSize,
+    isLoaded: isBoardSizeLoaded,
+  } = useKVStorage<BoardSize>("RecordScreen.boardSize", 9);
   const boardSizeRef = useRef<BoardSize>(9);
   // 🐱 useKVStorageから非同期でロードされた値をrefにも反映する
   useEffect(() => {
@@ -289,5 +290,6 @@ export function useRecordsScreen() {
     handleToggle,
     loadMore,
     handleScroll,
+    isBoardSizeLoaded,
   };
 }

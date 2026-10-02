@@ -1,4 +1,4 @@
-import { Octicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { RecordAnalysis } from "go-core";
 import React, { useCallback, useState } from "react";
@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
+import Svg, { Circle, ClipPath, Line, Path, Rect } from "react-native-svg";
 
 type Props = {
   showScoreLeadGraph?: boolean;
@@ -17,17 +17,14 @@ type Props = {
   currentIndex: number;
   totalMoves: number;
   onCurrentIndexChange: React.Dispatch<React.SetStateAction<number>>;
-  primaryLight: ColorValue;
   primary: ColorValue;
   primaryDark: ColorValue;
   foreground: ColorValue;
   background: ColorValue;
   backgroundDark: ColorValue;
-  darkObjectAccent: ColorValue;
-  darkObject: ColorValue;
 };
 
-const CHART_HEIGHT = 60;
+const CHART_HEIGHT = 64;
 const PADDING_Y = 8;
 const MIN_RANGE = 5;
 
@@ -66,13 +63,10 @@ export function ScoreLeadReplayControls({
   totalMoves,
   onCurrentIndexChange,
   primary,
-  primaryLight,
   background,
   backgroundDark,
   foreground,
-  darkObjectAccent,
   primaryDark,
-  darkObject,
 }: Props) {
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -155,17 +149,13 @@ export function ScoreLeadReplayControls({
         <TouchableOpacity
           style={[
             styles.button,
-            { backgroundColor: isAtStart ? backgroundDark : primary },
+            { backgroundColor: isAtStart ? backgroundDark : primaryDark },
           ]}
           onPress={onPrevious}
           disabled={isAtStart}
           activeOpacity={0.7}
         >
-          <Octicons
-            name="chevron-left"
-            size={24}
-            color={isAtStart ? primary : darkObject}
-          />
+          <Feather name="chevron-left" size={24} color={foreground} />
         </TouchableOpacity>
 
         {/* 中央エリア（グラフ＋バー＋つまみを重ね合わせ） */}
@@ -176,20 +166,65 @@ export function ScoreLeadReplayControls({
               {showScoreLeadGraph && hasAnalysis && (
                 <View style={StyleSheet.absoluteFill}>
                   <Svg width={containerWidth} height={CHART_HEIGHT}>
+                    {/* ✂️ 左側（つまみより左）だけを切り取るハサミ */}
+
+                    {/* ✂️️ 右側（つまみより右）だけを切り取るハサミ */}
+                    <ClipPath id="right-clip">
+                      <Rect
+                        x={currentPointX}
+                        y={0}
+                        width={containerWidth - currentPointX}
+                        height={CHART_HEIGHT}
+                      />
+                    </ClipPath>
+                    <ClipPath id="left-clip">
+                      <Rect
+                        x={0}
+                        y={0}
+                        width={currentPointX}
+                        height={CHART_HEIGHT}
+                      />
+                    </ClipPath>
+
                     {/* 下側の面 */}
                     {bottomPathD.length > 0 && (
-                      <Path d={bottomPathD} fill={primaryLight} />
+                      <Path d={bottomPathD} fill={backgroundDark} />
                     )}
 
-                    {/* グラフの線 */}
+                    {/* 中央の基準線（横線） */}
+                    <Line
+                      x1={0 + 8}
+                      y1={CHART_HEIGHT / 2}
+                      x2={containerWidth - 8}
+                      y2={CHART_HEIGHT / 2}
+                      stroke={(primaryDark as string) + "44"} // 線の色（お好みで変えてにゃ）
+                      strokeWidth={4} // 線の太さ
+                      strokeDasharray="1, 12" // 破線（点線）
+                      strokeLinecap="round"
+                    />
+
                     {linePathD.length > 0 && (
                       <Path
                         d={linePathD}
                         fill="none"
-                        stroke={darkObjectAccent}
-                        strokeWidth={1.5}
+                        stroke={primaryDark}
+                        strokeWidth={4}
                         strokeLinecap="round"
                         strokeLinejoin="round"
+                        clipPath="url(#left-clip)"
+                      />
+                    )}
+
+                    {linePathD.length > 0 && (
+                      <Path
+                        d={linePathD}
+                        fill="none"
+                        stroke={primaryDark}
+                        strokeWidth={4}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        clipPath="url(#right-clip)"
+                        opacity={0.3}
                       />
                     )}
 
@@ -198,15 +233,15 @@ export function ScoreLeadReplayControls({
                       cx={currentPointX}
                       cy={currentPointY}
                       r={4}
-                      fill={foreground} // foreground
-                      stroke={primaryDark} //primaryDark
-                      strokeWidth={1.5}
+                      fill={foreground}
+                      stroke={primaryDark}
+                      strokeWidth={4}
                     />
                   </Svg>
                 </View>
               )}
 
-              {/* 🐱 常に表示されるスライダーバー（棒＋つまみ） */}
+              {/* 🐱 スライダーバー（棒＋つまみ） */}
               <Slider
                 style={styles.slider}
                 disabled={isSliderDisabled}
@@ -215,10 +250,21 @@ export function ScoreLeadReplayControls({
                 step={1}
                 value={currentIndex}
                 onValueChange={onSliderChange}
-                // グラフがあろうがなかろうが、常に同じ棒（バー）を表示する
-                minimumTrackTintColor={`${String(darkObject)}90`} // darkObject
-                maximumTrackTintColor={`${String(primaryDark)}90`} // primaryDark
-                thumbTintColor={`${String(darkObject)}E0`} // darkObject
+                minimumTrackTintColor={
+                  !(showScoreLeadGraph && hasAnalysis)
+                    ? (primaryDark as string)
+                    : "transparent"
+                }
+                maximumTrackTintColor={
+                  !(showScoreLeadGraph && hasAnalysis)
+                    ? (backgroundDark as string)
+                    : "transparent"
+                }
+                thumbTintColor={
+                  !(showScoreLeadGraph && hasAnalysis)
+                    ? (primaryDark as string)
+                    : (primaryDark as string)
+                }
               />
             </View>
           )}
@@ -228,17 +274,13 @@ export function ScoreLeadReplayControls({
         <TouchableOpacity
           style={[
             styles.button,
-            { backgroundColor: isAtEnd ? backgroundDark : primary },
+            { backgroundColor: isAtEnd ? backgroundDark : primaryDark },
           ]}
           onPress={onNext}
           disabled={isAtEnd}
           activeOpacity={0.7}
         >
-          <Octicons
-            name="chevron-right"
-            size={24}
-            color={isAtEnd ? primary : darkObject}
-          />
+          <Feather name="chevron-right" size={24} color={foreground} />
         </TouchableOpacity>
       </View>
     </View>
@@ -267,7 +309,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: "bold",
   },
   centerArea: {
     flex: 1,
@@ -278,7 +319,6 @@ const styles = StyleSheet.create({
     height: CHART_HEIGHT,
     width: "100%",
     justifyContent: "center",
-    borderRadius: 16,
     overflow: "hidden",
   },
   slider: {

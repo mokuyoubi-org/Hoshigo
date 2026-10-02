@@ -20,11 +20,9 @@ export const winsToAcquiredIcons = (
 
   // ヘビーユーザ
   if (wins9 >= 1000) acquiredIcons.push(6);
-  if (wins9 >= 2000) acquiredIcons.push(7);
-  if (wins13 >= 1000) acquiredIcons.push(8);
-  if (wins13 >= 2000) acquiredIcons.push(9);
-  if (wins19 >= 1000) acquiredIcons.push(10);
-  if (wins19 >= 2000) acquiredIcons.push(11);
+  if (wins13 >= 1000) acquiredIcons.push(7);
+  if (wins19 >= 1000) acquiredIcons.push(8);
+
 
   return acquiredIcons;
 };
@@ -44,9 +42,6 @@ export const winsToNewlyAcquiredIconIndex = (
   else if (winsTotal === 700) return 5;
   // ヘビーユーザ
   else if (wins9 === 1000) return 6;
-  else if (wins9 === 2000) return 7;
-  else if (wins13 === 1000) return 8;
-  else if (wins13 === 2000) return 9;
-  else if (wins19 === 1000) return 10;
-  else if (wins19 === 2000) return 11;
+  else if (wins13 === 1000) return 7;
+  else if (wins19 === 1000) return 8;
 };

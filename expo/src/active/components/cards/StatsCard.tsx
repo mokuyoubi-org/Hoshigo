@@ -1,6 +1,7 @@
-import { COLORS } from "@/src/active/constants/colors";
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 type StatsCardProps = {
   wins?: number;
@@ -17,6 +18,7 @@ export const StatsCard = ({
   wins = 12,
   currentRank = "3k",
 }: StatsCardProps) => {
+  const colors = useColors();
   // 現在のランクの位置（インデックス）を取得
   const currentRankIndex = RANK_STEPS.findIndex((r) => r === currentRank);
   const activeIndex = currentRankIndex !== -1 ? currentRankIndex : 3;
@@ -25,59 +27,50 @@ export const StatsCard = ({
     <View
       className="rounded-3xl border-2 p-4 gap-4"
       style={{
-        backgroundColor: COLORS.foreground,
-        borderColor: COLORS.backgroundDark,
+        backgroundColor: colors.foreground,
+        borderColor: colors.backgroundDark,
       }}
     >
       {/* ヘッダー */}
       <View className="flex-row justify-between items-end">
         <View>
-          <Text
-            className="text-[11px] font-bold"
-            style={{ color: COLORS.textSub }}
-          >
+          <AppText className="text-sm" style={{ color: colors.textSub }}>
             到達ランク
-          </Text>
-          <Text className="text-2xl font-black" style={{ color: COLORS.text }}>
+          </AppText>
+          <AppText className="text-2xl" style={{ color: colors.text }}>
             {currentRank}
-            <Text className="text-sm font-bold">（{wins}勝）</Text>
-          </Text>
+            <AppText className="text-sm">（{wins}勝）</AppText>
+          </AppText>
         </View>
 
         <View
           className="px-3 py-1.5 rounded-xl border"
           style={{
-            backgroundColor: COLORS.background,
-            borderColor: COLORS.backgroundDark,
+            backgroundColor: colors.background,
+            borderColor: colors.backgroundDark,
           }}
         >
-          <Text
-            className="text-[10px] font-bold"
-            style={{ color: COLORS.textSub }}
-          >
+          <AppText className="text-sm" style={{ color: colors.textSub }}>
             踏破した領域
-          </Text>
-          <Text className="text-sm font-black" style={{ color: COLORS.green }}>
+          </AppText>
+          <AppText className="text-sm" style={{ color: colors.green }}>
             10k 〜 {currentRank}
-          </Text>
+          </AppText>
         </View>
       </View>
 
       {/* 濃淡（グラデーション）ヒストグラム */}
       <View
         className="gap-3 p-3 rounded-2xl"
-        style={{ backgroundColor: COLORS.background }}
+        style={{ backgroundColor: colors.background }}
       >
         <View className="flex-row justify-between items-center">
-          <Text className="text-sm font-bold" style={{ color: COLORS.text }}>
+          <AppText className="text-sm" style={{ color: colors.text }}>
             ランク踏破度（濃淡ログ）
-          </Text>
-          <Text
-            className="text-[10px] font-bold"
-            style={{ color: COLORS.green }}
-          >
+          </AppText>
+          <AppText className="text-sm" style={{ color: colors.green }}>
             パワー上昇中
-          </Text>
+          </AppText>
         </View>
 
         {/* グラフのバー表示エリア */}
@@ -101,8 +94,8 @@ export const StatsCard = ({
                     // 右にいくほど高くして「積んだ感」を出す
                     height: `${30 + index * 10}%`,
                     backgroundColor: isConquered
-                      ? COLORS.green // 踏破領域は緑
-                      : COLORS.backgroundDark, // 未到達はグレー
+                      ? colors.green // 踏破領域は緑
+                      : colors.backgroundDark, // 未到達はグレー
                     opacity: opacityLevel, // ここで濃淡（アルファ値）をコントロール！
                   }}
                 />
@@ -116,16 +109,15 @@ export const StatsCard = ({
           {RANK_STEPS.map((rankLabel, index) => {
             const isConquered = index <= activeIndex;
             return (
-              <Text
+              <AppText
                 key={index}
-                className="text-[9px] text-center flex-1 font-semibold"
+                className="text-sm text-center flex-1"
                 style={{
-                  color: isConquered ? COLORS.green : COLORS.textSub,
-                  fontWeight: index === activeIndex ? "900" : "600",
+                  color: isConquered ? colors.green : colors.textSub,
                 }}
               >
                 {rankLabel}
-              </Text>
+              </AppText>
             );
           })}
         </View>

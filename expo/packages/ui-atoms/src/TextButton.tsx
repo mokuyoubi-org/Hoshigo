@@ -13,21 +13,25 @@ import {
 
 type Props = TouchableOpacityProps & {
   text: string;
-  color: string;
+  textColor: string;
   backgroundColor: string;
   borderColor: string;
+  fontFamily: string; // 文字のフォント(省略時はシステムのフォント)
 };
 
 export const TextButton = ({
   text,
-  color,
+  textColor,
   backgroundColor,
   borderColor,
+  fontFamily,
   disabled,
   activeOpacity = 0.7,
   style,
   ...props
 }: Props) => {
+  const fontStyle = fontFamily ? { fontFamily } : null;
+
   return (
     <TouchableOpacity
       disabled={disabled}
@@ -35,31 +39,34 @@ export const TextButton = ({
         styles.button,
         backgroundColor ? { backgroundColor } : null,
         borderColor ? { borderColor } : null,
-        disabled && styles.disabled,
         style,
       ]}
       activeOpacity={activeOpacity}
-       {...props}     
+      {...props}
     >
-      <Text style={[styles.text, { color }]}>{text}</Text>
+      <Text
+        style={[
+          styles.text,
+          { color: !disabled ? textColor : borderColor },
+          fontStyle,
+        ]}
+      >
+        {text}
+      </Text>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    height: 48, // h-[42px]
+    height: 54, // h-12
     paddingHorizontal: 14, // px-3.5
-    borderRadius: 9999, // rounded-full
+    borderRadius: 54, // rounded-full
     borderWidth: 2, // border-2
     justifyContent: "center",
     alignItems: "center",
   },
-  disabled: {
-    opacity: 0.4, // opacity-40
-  },
   text: {
-    fontSize: 14, // text-sm
-    fontWeight: "bold", // font-bold
+    fontSize: 16, // text-sm
   },
 });

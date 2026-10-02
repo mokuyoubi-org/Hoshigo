@@ -4,10 +4,9 @@
 // ✅2026/09/14 バージョンチェック仕込み系を追加。メンテと同じ形。
 // AuthGate.tsx
 import { OTA_VERSION } from "@/ota-version";
-import { COLORS } from "@/src/active/constants/colors";
+
 import { useApp } from "@/src/active/contexts/AppContexts";
 import { useProfileSync } from "@/src/active/hooks/useProfileSync";
-import { useLang } from "@/src/active/i18n";
 import { clearAllLocalData } from "@/src/stable/logics/cleanUp";
 import {
   setMaintenanceHandler,
@@ -20,6 +19,8 @@ import { useRouter, useSegments } from "expo-router";
 import * as Updates from "expo-updates";
 import React, { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
+import { useColors } from "../../hooks/useTheme";
+import { useLang } from "../../i18n/LangProvider";
 import { useProfile } from "../ProfileContexts";
 
 export function AuthGate({ children }: { children: ReactNode }) {
@@ -35,6 +36,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const { syncProfile } = useProfileSync();
   const turnstileRef = useRef<TurnstileHandle>(null);
   const { lang } = useLang();
+  const colors = useColors();
 
   const clearUserState = () => {
     updateProfile({
@@ -212,14 +214,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, []); // 初回マウント時のみ実行
 
   return (
+    // ここは<View>にしてはいけない
     <>
       <TurnstileWidget
         ref={turnstileRef}
         sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
-        bgColor={COLORS.background}
-        textColor={COLORS.text}
-        spinnerColor={COLORS.primary}
-        spinnerTrackColor={COLORS.backgroundDark}
+        bgColor={colors.background}
+        textColor={colors.text}
+        spinnerColor={colors.primary}
+        spinnerTrackColor={colors.backgroundDark}
         lang={lang}
       />
       {children}

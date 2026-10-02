@@ -1,20 +1,15 @@
 // ToggleSwitch.tsx
 
 import React, { useEffect, useState } from "react";
-import {
-  Animated,
-  ColorValue,
-  Platform,
-  Pressable,
-  StyleSheet,
-} from "react-native";
+import { Animated, ColorValue, Pressable, StyleSheet } from "react-native";
 
-type ToggleSwitchProps = {
+type Props = {
   value: boolean;
   onToggle: (value: boolean) => void;
-  disabled?: boolean;
-  backgroundColor: ColorValue;
+  backgroundOnColor: ColorValue;
+  backgroundOffColor: ColorValue;
   toggleColor: ColorValue;
+  disabled?: boolean;
 };
 
 // 🟨その他パラメータ。
@@ -28,33 +23,34 @@ const KNOB_TRANSLATE_X = 22;
 export const ToggleSwitch = ({
   value,
   onToggle,
+  backgroundOnColor, // primary
+  backgroundOffColor, // backgroundDark
+  toggleColor, // foreground
   disabled,
-  backgroundColor,
-  toggleColor,
-}: ToggleSwitchProps) => {
-  // 🌟 useState の初期化関数を使うことで、ref を使わずにインスタンスを1度だけ保持する！
-  const [opacityAnim] = useState(
-    () => new Animated.Value(disabled ? 0.2 : value ? 1 : 0.3),
-  );
-  const [knobAnim] = useState(
-    () => new Animated.Value(value ? KNOB_TRANSLATE_X : 0),
-  );
+}: Props) => {
+  // 🌟 0(OFF)〜1(ON)の進捗値を1本だけ持つ。色もつまみの位置もここから作る！
+  const [progress] = useState(() => new Animated.Value(value ? 1 : 0));
 
   useEffect(() => {
-    Animated.timing(opacityAnim, {
-      toValue: disabled ? 0.2 : value ? 1 : 0.3,
+    Animated.timing(progress, {
+      toValue: value ? 1 : 0,
       duration: ANIM_DURATION,
-      useNativeDriver: Platform.OS !== "web",
+      // 色の補間はネイティブドライバー非対応なので false 固定
+      useNativeDriver: false,
     }).start();
-  }, [disabled, value, opacityAnim]);
+  }, [value, progress]);
 
-  useEffect(() => {
-    Animated.timing(knobAnim, {
-      toValue: value ? KNOB_TRANSLATE_X : 0,
-      duration: ANIM_DURATION,
-      useNativeDriver: Platform.OS !== "web",
-    }).start();
-  }, [value, knobAnim]);
+  // 🎨 進捗値 → 色 / 位置 に変換
+  // interpolate の outputRange は string[] が必要なので、ColorValue を string として扱う
+  const backgroundColor = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [backgroundOffColor as string, backgroundOnColor as string],
+  });
+
+  const translateX = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, KNOB_TRANSLATE_X],
+  });
 
   return (
     <Pressable
@@ -68,8 +64,7 @@ export const ToggleSwitch = ({
         style={[
           styles.track,
           {
-            opacity: opacityAnim,
-            backgroundColor: backgroundColor, // primary
+            backgroundColor, // primary
           },
         ]}
       >
@@ -77,7 +72,7 @@ export const ToggleSwitch = ({
           style={[
             styles.knob,
             {
-              transform: [{ translateX: knobAnim }],
+              transform: [{ translateX }],
               backgroundColor: toggleColor, // foreground
             },
           ]}

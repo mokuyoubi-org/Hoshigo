@@ -8,21 +8,31 @@ import { KataGoGate } from "expo-katago";
 import { Stack } from "expo-router";
 import React, { useEffect } from "react";
 import "../../global.css";
-import "../active/i18n/polyfills";
+// import "../active/i18n/polyfills";
 import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModal";
 import { UpdateModal } from "@/src/active/components/modals/UpdateModal";
-import { COLORS } from "@/src/active/constants/colors";
+import { FONTS } from "@/src/active/constants/fonts";
 import { preloadAssets } from "@/src/active/constants/preload";
 import { MatchingProvider } from "@/src/active/contexts/MatchingContext";
 import {
   OverlayOutlet,
   OverlayProvider,
 } from "@/src/active/contexts/OverlayContext";
+import { useLang, useTranslation } from "@/src/active/i18n/LangProvider";
 import { configureAudioMode } from "assets-kit";
+import { useFonts } from "expo-font";
+import { useColorScheme } from "nativewind";
 import { Platform, View } from "react-native";
 import { LoadingScreen } from "ui-atoms";
+import { THEME_VARS } from "../active/constants/themeVars";
+import { useAppFont } from "../active/hooks/useAppFont";
+import { useApplyTheme, useColors } from "../active/hooks/useTheme";
 
 function RoutedContent() {
+  const fontFamily = useAppFont();
+  const colors = useColors();
+
+  const t = useTranslation();
   const { isInitializing, maintenance, maintenanceMessage, updateReason } =
     useApp();
 
@@ -51,18 +61,20 @@ function RoutedContent() {
 
   return (
     // ここでStackを使うことによって、router.back()が機能する。つまりStackがないということは履歴がないということ
+    // ここは<View>にしてはいけない
     <>
       {/* 今表示中のオーバーレイ(モーダル)をここで実際に描画する。
           MatchingProviderの内側にあるので、GameResultModal等はuseMatching()を使える */}
       <OverlayOutlet />
+
+      {/* ToastはModalより手前に出したいので、Outletより後ろに置く(nativeは兄弟の描画順も効く) */}
+      <SearchingButton />
 
       <Stack screenOptions={{ headerShown: false }}>
         {/* (tabs) グループ自体を1つの画面として登録 */}
         <Stack.Screen name="(tabs)" />
         {/* RecordsScreen / AnalyzeScreen が app/ 直下にあるならここにも明示してOK（省略しても自動登録される） */}
       </Stack>
-
-      <SearchingButton />
 
       {/* ローディング */}
       {isInitializing && (
@@ -79,12 +91,13 @@ function RoutedContent() {
           {/* AuthGate.tsx の initialize() が待ち先。セッション確認〜匿名ログイン
         〜プロフィール同期までを一括してこの1状態で表現している(子段階なし) */}
           <LoadingScreen
-            label="Checking authentication..."
+            label={`${t("auth.checkingAuthentication")}...`}
             percent={null}
-            backgroundColor={COLORS.background}
-            textColor={COLORS.textSub}
-            trackColor={COLORS.backgroundDark}
-            fillColor={COLORS.primary}
+            backgroundColor={colors.background}
+            textColor={colors.textSub}
+            trackColor={colors.backgroundDark}
+            fillColor={colors.primary}
+            fontFamily={fontFamily}
           />
         </View>
       )}
@@ -124,24 +137,60 @@ function RoutedContent() {
   );
 }
 
-export default function Layout() {
+function AppContent() {
+  const fontFamily = useAppFont();
+  const colors = useColors();
+
+  const { lang } = useLang();
   return (
-    <RootProvider>
-      <AuthGate>
-        <OverlayProvider>
-          <KataGoGate
-            backgroundColor={COLORS.background}
-            textColor={COLORS.textSub}
-            fillColor={COLORS.primary}
-            trackColor={COLORS.backgroundDark}
-            errorColor={COLORS.coral}
-          >
-            <MatchingProvider>
-              <RoutedContent />
-            </MatchingProvider>
-          </KataGoGate>
-        </OverlayProvider>
-      </AuthGate>
-    </RootProvider>
+    <AuthGate>
+      <OverlayProvider>
+        <KataGoGate
+          backgroundColor={colors.background}
+          textColor={colors.textSub}
+          fillColor={colors.primary}
+          trackColor={colors.backgroundDark}
+          errorColor={colors.failure}
+          lang={lang}
+          fontFamily={fontFamily}
+        >
+          <MatchingProvider>
+            <RoutedContent />
+          </MatchingProvider>
+        </KataGoGate>
+      </OverlayProvider>
+    </AuthGate>
+  );
+}
+
+export default function Layout() {
+  // 🔤 アプリ全体のフォントは、起動時にここで1回だけ読み込む
+  const [fontsLoaded, fontError] = useFonts(FONTS); // ⚠️大事！！！
+
+  // 🌙 保存されたテーマ設定をNativeWindに反映する(1回だけここで)
+  const themeReady = useApplyTheme();
+  const { colorScheme } = useColorScheme();
+
+  // 読み込みに失敗しても、真っ白のまま止まらないようにログだけ出して先へ進む
+  useEffect(() => {
+    if (fontError) {
+      console.warn("Failed to load fonts:", fontError);
+    }
+  }, [fontError]);
+
+  // Hookはすべてこの行より上に置くこと(下に置くとクラッシュします)
+  if ((!fontsLoaded && !fontError) || !themeReady) {
+    return null;
+  }
+
+  return (
+    <View
+      style={THEME_VARS[colorScheme ?? "light"]}
+      className="flex-1 bg-background"
+    >
+      <RootProvider>
+        <AppContent />
+      </RootProvider>
+    </View>
   );
 }

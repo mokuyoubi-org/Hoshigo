@@ -1,7 +1,7 @@
-// ✅active
 // useProfileScreen.ts
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
+import { isBotName } from "@/src/stable/logics/bot/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { recordsRepo } from "@/src/stable/logics/records-repo";
 import { clearPeriodicCache } from "@/src/stable/logics/syncUtils";
@@ -58,6 +58,11 @@ export function useProfileScreen() {
   const handleUpdateUsername = async (
     newUsername: string,
   ): Promise<string | null> => {
+    // ボットの名前は「すでに使われている」扱いにする(サーバに送る前に弾く)
+    if (isBotName(newUsername)) {
+      return t("Profile.usernameTaken");
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase.rpc("update_username", {
@@ -90,7 +95,6 @@ export function useProfileScreen() {
       setLoading(false);
     }
   };
-
   return {
     t,
     profileData: {

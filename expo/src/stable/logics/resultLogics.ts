@@ -5,10 +5,12 @@ import { BoardSize } from "go-core";
 import { getRankInfo } from "./rankLogics";
 
 // UserPointResultの定義もこちらに引っ越し(stableがactiveの型に依存しないように)
-export type UserPointResult = {
+export type MyData = {
+  old_rating: number;
   new_rating: number;
+  wins: number;
   giant_killing_streak?: number;
-  giant_killing_streak_bonus_applied?: boolean;
+  giant_killing_bonus?: boolean;
 };
 
 export type MatchResultUpdate = {
@@ -16,7 +18,7 @@ export type MatchResultUpdate = {
   rankIndexBefore: number;
   ratingAfter: number;
   rankIndexAfter: number;
-  giantKillingStreakBonusApplied: boolean;
+  giantKillingBonus: boolean;
 
   profilePatch: {
     rating9?: number;
@@ -30,23 +32,15 @@ export type MatchResultUpdate = {
 
 export function computeMatchResultUpdate(
   boardSize: BoardSize,
-  pointResult: UserPointResult, // supabaseから届いた、
-  currentRating9: number,
-  currentRating13: number,
-  currentRating19: number,
+  myData: MyData, // supabaseから届いた
   t: TFunction,
 ): MatchResultUpdate | null {
-  const maybeRating = pointResult.new_rating;
+  const maybeRating = myData.new_rating;
   console.log("maybeRating: ", maybeRating);
   if (isNaN(maybeRating)) return null;
 
   // 🥶 beforeは「まだupdateProfileを呼ぶ前」の値を、この時点で確定させる
-  const oldRating =
-    boardSize === 9
-      ? currentRating9
-      : boardSize === 13
-        ? currentRating13
-        : currentRating19;
+  const oldRating = myData.old_rating;
   const oldRankIndex = getRankInfo(oldRating, t).index;
 
   return {
@@ -54,22 +48,24 @@ export function computeMatchResultUpdate(
     rankIndexBefore: oldRankIndex,
     ratingAfter: maybeRating,
     rankIndexAfter: getRankInfo(maybeRating, t).index,
-    giantKillingStreakBonusApplied:
-      pointResult.giant_killing_streak_bonus_applied ?? false,
+    giantKillingBonus: myData.giant_killing_bonus ?? false,
     profilePatch: {
       ...(boardSize === 9
         ? {
             rating9: maybeRating,
-            giantKillingStreak9: pointResult.giant_killing_streak,
+            giantKillingStreak9: myData.giant_killing_streak,
+            wins9: myData.wins,
           }
         : boardSize === 13
           ? {
               rating13: maybeRating,
-              giantKillingStreak13: pointResult.giant_killing_streak,
+              giantKillingStreak13: myData.giant_killing_streak,
+              wins13: myData.wins,
             }
           : {
               rating19: maybeRating,
-              giantKillingStreak19: pointResult.giant_killing_streak,
+              giantKillingStreak19: myData.giant_killing_streak,
+              wins19: myData.wins,
             }),
     },
   };

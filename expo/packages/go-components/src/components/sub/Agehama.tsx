@@ -1,42 +1,42 @@
+// Agehama.tsx
+
 import React from "react";
-import { ColorValue, StyleSheet, Text, View } from "react-native";
+import { ColorValue, StyleSheet, Text } from "react-native";
 
 type Props = {
   count: number;
-  stoneSize?: number; // 将来的に使う場合のために残す
-  backgroundColor: ColorValue; // 背景色（呼び出し側から指定）
-  disabledColor: ColorValue; // 背景色（呼び出し側から指定）
-  textColor: ColorValue; // 文字色（呼び出し側から指定）
+  /** 文字色（黒石なら白、白石なら黒を渡す） */
+  color: ColorValue;
+  /** 数字を書くスペースの大きさ（石のサイズを渡す） */
+  size: number;
+  fontFamily?: string;
 };
 
-export function Agehama({
-  count,
-  backgroundColor,
-  disabledColor,
-  textColor,
-}: Props) {
-  // countが0より大きい（1以上）なら通常の背景色、0ならDisabledの背景色を使う
-  const isEnabled = count > 0;
-  const currentBackgroundColor = isEnabled ? backgroundColor : disabledColor;
+export function Agehama({ count, color, size, fontFamily }: Props) {
+  const digits = String(count).length;
+
+  // 1桁: 大きめ / 桁が増えるほど小さく。
+  // 数字全体の横幅が size の約5割に収まるように計算している
+  const fontSize = size * Math.min(0.55, 0.9 / digits);
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: currentBackgroundColor }]}
+    <Text
+      numberOfLines={1}
+      style={[
+        styles.text,
+        { fontSize, color },
+        fontFamily ? { fontFamily } : null,
+      ]}
     >
-      <Text style={[styles.text, { color: textColor }]}>+{count}</Text>
-    </View>
+      {count}
+    </Text>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 8,
-  },
   text: {
-    fontSize: 11,
-    fontWeight: "500",
-    letterSpacing: 0.3,
+    fontWeight: "600",
+    includeFontPadding: false,
+    textAlign: "center",
   },
 });

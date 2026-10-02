@@ -1,10 +1,13 @@
 // DoubleTapModal.tsx
-import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/i18n";
+
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useKVStorage } from "storage-kit";
 import { ModalShell, ToggleSwitch } from "ui-atoms";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
+import { Divider } from "../common/Divider";
 
 type Props = {
   isMatching?: boolean;
@@ -12,6 +15,7 @@ type Props = {
 };
 
 export function DoubleTapModal({ isMatching, onClose }: Props) {
+  const colors = useColors();
   const t = useTranslation();
 
   const {
@@ -34,61 +38,67 @@ export function DoubleTapModal({ isMatching, onClose }: Props) {
     <ModalShell
       onClose={onClose}
       size="md"
-      style={{ alignItems: "center", gap: 16 }}
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+      contentPadding={16}
     >
-      <Text className="text-xl font-bold color-text text-center pb-4">
+      <AppText className="text-xl text-text text-center pb-4">
         {t("Settings.doubleTap")}
-      </Text>
+      </AppText>
 
       <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden">
         {/* 9路 */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("common.nineBoard")}
-          </Text>
+          </AppText>
           {isDoubleTap9Loaded && (
             <ToggleSwitch
               value={doubleTap9}
               onToggle={setDoubleTap9}
               disabled={isMatching}
-              backgroundColor={COLORS.primary}
-              toggleColor={COLORS.foreground}
+              backgroundOnColor={colors.primary}
+              backgroundOffColor={colors.backgroundDark}
+              toggleColor={colors.foreground}
             />
           )}
         </View>
 
-        <View className="h-[1px] bg-backgroundDark w-full" />
+        <Divider />
 
         {/* 13路 */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("common.thirteenBoard")}
-          </Text>
+          </AppText>
           {isDoubleTap13Loaded && (
             <ToggleSwitch
               value={doubleTap13}
               onToggle={setDoubleTap13}
               disabled={isMatching}
-              backgroundColor={COLORS.primary}
-              toggleColor={COLORS.foreground}
+              backgroundOnColor={colors.primary}
+              backgroundOffColor={colors.backgroundDark}
+              toggleColor={colors.foreground}
             />
           )}
         </View>
 
-        <View className="h-[1px] bg-backgroundDark w-full" />
+        <Divider />
 
         {/* 19路 */}
-        <View className="flex-row justify-between items-center px-4 py-3 min-h-[48px]">
-          <Text className="text-lg font-semibold text-text">
+        <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
+          <AppText className="text-lg text-text">
             {t("common.nineteenBoard")}
-          </Text>
+          </AppText>
           {isDoubleTap19Loaded && (
             <ToggleSwitch
               value={doubleTap19}
               onToggle={setDoubleTap19}
               disabled={isMatching}
-              backgroundColor={COLORS.primary}
-              toggleColor={COLORS.foreground}
+              backgroundOnColor={colors.primary}
+              backgroundOffColor={colors.backgroundDark}
+              toggleColor={colors.foreground}
             />
           )}
         </View>

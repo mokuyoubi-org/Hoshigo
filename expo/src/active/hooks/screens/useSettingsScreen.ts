@@ -1,16 +1,25 @@
-// ✅active
 // useSettingsScreen.ts
 
 import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
+import { useLang } from "@/src/active/i18n/LangProvider";
 import { supabase } from "@/src/stable/services/supabase/supabase";
 import { useState } from "react";
+import { useKVStorage } from "storage-kit";
 
 export function useSettingsScreen() {
   const { isMatching } = useMatching();
   const { email, allowBotMatch, isAnonymous, updateProfile } = useProfile();
 
+  const { lang } = useLang();
+
   const [loading, setLoading] = useState(false);
+
+  const {
+    value: isSoundEnabled,
+    setValue: setIsSoundEnabled,
+    isLoaded: isSoundEnabledLoaded,
+  } = useKVStorage<boolean>("global.sound", true);
 
   const isDisabled = loading || isMatching;
 
@@ -66,5 +75,9 @@ export function useSettingsScreen() {
     handleToggleBotMatch,
     onLogout,
     handleConfirmDelete,
+    lang,
+    isSoundEnabled,
+    setIsSoundEnabled,
+    isSoundEnabledLoaded,
   };
 }

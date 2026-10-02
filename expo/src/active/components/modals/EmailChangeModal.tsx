@@ -1,6 +1,6 @@
 // EmailChangeModal.tsx
 // 2026/09/24⚠️大事: supabaseで、Authentication▶︎Sign In/Providers▶︎Auth Providers▶︎Email(Enabled)▶︎Secure email changeをオフにすること。
-import { COLORS } from "@/src/active/constants/colors";
+
 import { useEmailChangeModal } from "@/src/active/hooks/useEmailChangeModal";
 import React from "react";
 import {
@@ -8,12 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
+import { AppTextInput } from "../common/AppTextInput";
 
 type Props = {
   visible: boolean;
@@ -21,6 +22,7 @@ type Props = {
 };
 
 export function EmailChangeModal({ visible, onClose }: Props) {
+  const colors = useColors();
   const {
     t,
     step,
@@ -45,15 +47,20 @@ export function EmailChangeModal({ visible, onClose }: Props) {
   if (!visible) return null;
 
   return (
-    <ModalShell size="lg">
+    <ModalShell
+      size="lg"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full"
       >
         <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-2xl font-extrabold tracking-wider flex-1 text-text">
+          <AppText className="text-2xl tracking-wider flex-1 text-text">
             {getTitle()}
-          </Text>
+          </AppText>
         </View>
 
         <ScrollView
@@ -61,22 +68,22 @@ export function EmailChangeModal({ visible, onClose }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           {step === "email" && (
-            <>
+            <View>
               <View className="mb-6">
-                <Text className="text-lg font-normal tracking-wide text-textSub">
+                <AppText className="text-lg tracking-wide text-textSub">
                   {t("EmailChange.subtitleEmail")}
-                </Text>
+                </AppText>
               </View>
 
               <View className="mb-4">
-                <Text className="text-lg font-semibold mb-1.5 tracking-wide text-text">
+                <AppText className="text-lg mb-1.5 tracking-wide text-text">
                   {t("EmailChange.newEmail")}
-                </Text>
-                <View className="rounded-xl border bg-foreground border-primary">
-                  <TextInput
-                    className="h-[50px] px-4 text-lg text-text"
+                </AppText>
+                <View className="rounded-xl border border-2 bg-foreground border-primaryDark">
+                  <AppTextInput
+                    className="h-12 px-4 text-lg text-text"
                     placeholder={"example@email.com"}
-                    placeholderTextColor={COLORS.textSub}
+                    placeholderTextColor={colors.textOpacity} // 絵文字対策
                     value={newEmail}
                     onChangeText={setNewEmail}
                     keyboardType="email-address"
@@ -88,60 +95,62 @@ export function EmailChangeModal({ visible, onClose }: Props) {
               </View>
 
               {error ? (
-                <Text className="text-lg text-center mb-3 text-coral">
+                <AppText className="text-lg text-center mb-3 text-failure">
                   {error}
-                </Text>
+                </AppText>
               ) : null}
 
-              <View className="gap-[10px] mt-2">
+              <View className="gap-2 mt-2">
                 <TouchableOpacity
-                  className={`h-[52px] rounded-xl justify-center items-center bg-darkObject ${
-                    !canSendEmail || loading ? "opacity-50" : "opacity-100"
+                  className={`h-12 rounded-xl justify-center items-center ${
+                    !canSendEmail || loading
+                      ? "bg-primaryDark"
+                      : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
                   onPress={onSendOtp}
                   disabled={loading || !canSendEmail}
                 >
                   {loading ? (
-                    <ActivityIndicator color={COLORS.foreground} />
+                    <ActivityIndicator color={colors.foreground} />
                   ) : (
-                    <Text className="text-lg font-bold tracking-wide text-foreground">
+                    <AppText className="text-lg tracking-wide text-foreground">
                       {t("EmailChange.sendCode")}
-                    </Text>
+                    </AppText>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-[52px] rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-lg font-bold tracking-wide text-textSub">
+                  <AppText className="text-lg tracking-wide text-textSub">
                     {t("common.cancel")}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               </View>
-            </>
+            </View>
           )}
 
           {step === "otp" && (
-            <>
+            <View>
               <View className="mb-6">
-                <Text className="text-lg font-normal tracking-wide text-textSub">
+                <AppText className="text-lg tracking-wide text-textSub">
                   {t("EmailChange.subtitleOtp", { email: newEmail })}
-                </Text>
+                </AppText>
               </View>
 
               <View className="mb-4">
-                <Text className="text-lg font-semibold mb-1.5 tracking-wide text-text">
+                <AppText className="text-lg mb-1.5 tracking-wide text-text">
                   {t("EmailChange.otpLabel")}
-                </Text>
-                <View className="rounded-xl border bg-foreground border-primary">
-                  <TextInput
-                    className="h-[50px] px-4 text-2xl tracking-[8px] text-center font-bold text-text"
+                </AppText>
+                <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+                  <AppTextInput
+                    className="h-12 px-4 text-2xl text-center text-text"
                     placeholder={"12345678"}
-                    placeholderTextColor={COLORS.textSub}
+                    placeholderTextColor={colors.textOpacity} // 絵文字対策
                     value={otp}
                     onChangeText={handleOtpChange}
                     keyboardType="number-pad"
@@ -152,41 +161,43 @@ export function EmailChangeModal({ visible, onClose }: Props) {
               </View>
 
               {error ? (
-                <Text className="text-lg text-center mb-3 text-coral">
+                <AppText className="text-lg text-center mb-3 text-failure">
                   {error}
-                </Text>
+                </AppText>
               ) : null}
 
-              <View className="gap-[10px] mt-2">
+              <View className="gap-2 mt-2">
                 <TouchableOpacity
-                  className={`h-[52px] rounded-xl justify-center items-center bg-darkObject ${
-                    !canVerifyOtp || loading ? "opacity-50" : "opacity-100"
+                  className={`h-12 rounded-xl justify-center items-center ${
+                    !canVerifyOtp || loading
+                      ? "bg-primaryDark"
+                      : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
                   onPress={onVerifyOtp}
                   disabled={loading || !canVerifyOtp}
                 >
                   {loading ? (
-                    <ActivityIndicator color={COLORS.foreground} />
+                    <ActivityIndicator color={colors.foreground} />
                   ) : (
-                    <Text
+                    <AppText
                       numberOfLines={1}
-                      className="text-lg font-bold tracking-wide text-foreground"
+                      className="text-lg tracking-wide text-foreground"
                     >
                       {t("EmailChange.verify")}
-                    </Text>
+                    </AppText>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-[52px] rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
                 >
-                  <Text className="text-lg font-bold tracking-wide text-textSub">
+                  <AppText className="text-lg tracking-wide text-textSub">
                     {t("common.cancel")}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               </View>
 
@@ -195,11 +206,11 @@ export function EmailChangeModal({ visible, onClose }: Props) {
                 onPress={onSendOtp}
                 disabled={loading}
               >
-                <Text className="text-lg font-semibold text-green">
+                <AppText className="text-lg text-green">
                   {t("AccountLinking.resend")}
-                </Text>
+                </AppText>
               </TouchableOpacity>
-            </>
+            </View>
           )}
         </ScrollView>
       </KeyboardAvoidingView>

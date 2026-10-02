@@ -12,7 +12,7 @@ export type FloatingToastColors = {
 export type FloatingToastProps = {
   /** 表示するか。falseになった後も退場アニメが終わるまでは内部的にレンダリングされ続ける */
   visible: boolean;
-  label: string;
+  label: React.ReactNode; // ⚠️2026/10/01: stringではないのはDotAnimationを受け入れるため
   /** trueの間：先頭スピナーを隠し、アクションボタンをスピナー表示にして無効化する */
   busy?: boolean;
   onAction?: () => void;
@@ -26,4 +26,5 @@ export type FloatingToastProps = {
   textColor: ColorValue;
   textSubColor: ColorValue;
   foregroundColor: ColorValue;
+  fontFamily: string;
 };

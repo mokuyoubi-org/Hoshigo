@@ -1,7 +1,11 @@
-import { LangProvider } from "@/src/active/i18n";
+// RootProvider.tsx
+
+
+import { LangSync } from "@/src/active/i18n/LangSync";
 import React, { ReactNode } from "react";
 import { AppProvider } from "../AppContexts";
 import { ProfileProvider } from "../ProfileContexts";
+import { LangProvider } from "../../i18n/LangProvider";
 
 // ------------------------------------------------------------------ //
 // RootProvider
@@ -11,6 +15,7 @@ import { ProfileProvider } from "../ProfileContexts";
 export function RootProvider({ children }: { children: ReactNode }) {
   return (
     <LangProvider>
+      <LangSync />
       <AppProvider>
         <ProfileProvider>{children}</ProfileProvider>
       </AppProvider>

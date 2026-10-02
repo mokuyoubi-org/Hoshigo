@@ -1,16 +1,16 @@
 // PlayerCard.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { isBot } from "@/src/stable/logics/bot/botLogics";
 import { botNameFormatter } from "@/src/stable/logics/bot/botNameLogics";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { secondsToMinutes } from "@/src/stable/logics/timeFormatter";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
-import { Agehama } from "go-components";
 import { Color } from "go-core";
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 import { AvatarWithPass } from "../common/AvatarWithPass";
 
 type Props = {
@@ -36,6 +36,7 @@ export function PlayerCard({
   seconds,
   isMyTurn = true,
 }: Props) {
+  const colors = useColors();
   const t = useTranslation();
   const rank = getRankInfo(rating, t);
 
@@ -54,6 +55,7 @@ export function PlayerCard({
           color={color}
           isLeft={isLeft}
           showPass={showPass}
+          agehama={agehamaCount}
         />
       </View>
 
@@ -69,17 +71,14 @@ export function PlayerCard({
             isLeft ? "flex-row" : "flex-row-reverse"
           }`}
         >
-          <Text
-            className="shrink text-xl font-semibold text-text"
-            numberOfLines={1}
-          >
+          <AppText className="shrink text-xl text-text" numberOfLines={1}>
             {botNameFormatter(username, t)}
-          </Text>
+          </AppText>
           {isBot(username) && (
             <MaterialCommunityIcons
               name="robot"
-              size={14}
-              color={COLORS.textSub}
+              size={16}
+              color={colors.textSub}
               style={{
                 marginLeft: 4,
                 marginRight: 0,
@@ -88,8 +87,8 @@ export function PlayerCard({
           )}
         </View>
 
-        <View className="shrink-0 px-2 py-0.5 bg-backgroundDark/50 rounded-full">
-          <Text className="text-sm font-medium text-textSub">{rank.name}</Text>
+        <View className="shrink-0 px-2 py-0.5 bg-backgroundDark rounded-full">
+          <AppText className="text-sm text-textSub">{rank.name}</AppText>
         </View>
       </View>
 
@@ -99,20 +98,14 @@ export function PlayerCard({
           isLeft ? "flex-row" : "flex-row-reverse"
         }`}
       >
-        <Agehama
-          count={agehamaCount}
-          backgroundColor={COLORS.backgroundDark}
-          disabledColor={COLORS.background}
-          textColor={COLORS.textSub}
-        />
         {seconds !== undefined && (
-          <Text
-            className={`min-w-[44px] text-lg font-semibold text-text ${
-              isMyTurn ? "opacity-100" : "opacity-50"
+          <AppText
+            className={`min-w-12 text-lg ${
+              isMyTurn ? "text-text" : "text-textSub"
             } ${isLeft ? "text-right" : "text-left"}`}
           >
             {secondsToMinutes(seconds)}
-          </Text>
+          </AppText>
         )}
       </View>
     </View>

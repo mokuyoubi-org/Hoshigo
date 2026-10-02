@@ -1,19 +1,14 @@
 // RankingCard.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
-import { Animated, Platform, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Platform, TouchableOpacity, View } from "react-native";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 import { Avatar } from "../common/Avatar";
-
-const RANK_COLORS: Record<number, { color: string }> = {
-  1: { color: COLORS.gold },
-  2: { color: COLORS.silver },
-  3: { color: COLORS.bronze },
-};
 
 // 🌟 rank_index (0~17) を表示用ラベルに変換する表
 const RANK_LABELS: string[] = [
@@ -53,6 +48,12 @@ export const RankingCard = ({
   item: Profile;
   index: number;
 }) => {
+  const colors = useColors();
+  const RANK_COLORS: Record<number, { color: string }> = {
+    1: { color: colors.gold },
+    2: { color: colors.silver },
+    3: { color: colors.bronze },
+  };
   const t = useTranslation();
   const rank = index + 1;
   const rankMeta = RANK_COLORS[rank];
@@ -78,26 +79,26 @@ export const RankingCard = ({
   }, [fadeIn, index]);
 
   return (
-    <Animated.View style={{ opacity: fadeIn }}>
+    <Animated.View style={{ opacity: fadeIn /* このopacityは許可 */ }}>
       <TouchableOpacity
         activeOpacity={1}
-        className={`bg-foreground rounded-[16px] overflow-hidden ${
+        className={`bg-foreground rounded-xl overflow-hidden ${
           isMe
-            ? "border-[3px] border-primary" // 自分：太い枠線
-            : "border-[2px] border-backgroundDark" // みんな：普通の枠線
+            ? "border-4 border-primary" // 自分：太い枠線
+            : "border-2 border-backgroundDark" // みんな：普通の枠線
         }`}
       >
-        <View className="flex-row items-center px-2 py-[14px]">
+        <View className="flex-row items-center px-2 py-4">
           {/* 順位 */}
           {isTop3 ? (
-            <View className="w-[42px] h-[42px] justify-center items-center mr-[2px]">
+            <View className="w-12 h-12 justify-center items-center">
               <AntDesign name="crown" size={24} color={rankMeta.color} />
             </View>
           ) : (
-            <View className="w-[42px] h-[42px] justify-center items-center mr-[2px]">
-              <Text className="text-[16px] font-bold color-textSub tracking-[0.5px] opacity-60">
+            <View className="w-12 h-12 justify-center items-center">
+              <AppText className="text-base color-textSub">
                 {rank}
-              </Text>
+              </AppText>
             </View>
           )}
 
@@ -112,30 +113,28 @@ export const RankingCard = ({
 
           {/* 名前 + 認証バッジ */}
           <View className="flex-1 flex-row items-center gap-1">
-            <Text
-              className={`text-[15px] font-bold color-text tracking-[0.3px] ${
-                isTop3 ? "color-text font-extrabold" : ""
+            <AppText
+              className={`text-base color-text ${
+                isTop3 ? "color-text" : ""
               }`}
               numberOfLines={1}
             >
               {item.username}
-            </Text>
+            </AppText>
 
             {/* 🐱 認証済みユーザーなら公式バッジを表示する */}
             {item.is_authenticated && (
               <MaterialCommunityIcons
                 name="check-decagram"
                 size={16}
-                color={COLORS.primary}
+                color={colors.primary}
               />
             )}
           </View>
 
           {/* 🌟 右側に表示するランク*/}
-          <View className="ml-2 mr-2 px-2.5 py-1 bg-backgroundDark/50 rounded-full">
-            <Text className="text-[14px] font-bold color-textSub">
-              {rankLabel}
-            </Text>
+          <View className="ml-2 mr-2 px-2.5 py-1 bg-background rounded-full">
+            <AppText className="text-sm color-textSub">{rankLabel}</AppText>
           </View>
         </View>
       </TouchableOpacity>

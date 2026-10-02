@@ -1,32 +1,41 @@
 // KataGoGate.tsx
 
+import type { LangOf } from "i18n-kit";
 import React, { ReactNode } from "react";
 import { ColorValue, Text, View } from "react-native";
-import { LoadingScreen } from "ui-atoms";
+import { DotAnimation, LoadingScreen } from "ui-atoms";
 import { KataGoEngineProvider, useKataGoEngine } from "./KataGoEngineContext";
 import { getGateStatus } from "./gateStatus";
-import { LangProvider, useTranslation } from "./i18n";
+import { translate } from "./i18n";
+import { kataGoDictionary } from "./i18n/dictionary";
 
-export type KataGoGateProps = {
+type Lang = LangOf<typeof kataGoDictionary>;
+
+type Props = {
   children: ReactNode;
+  lang: Lang;
   backgroundColor: ColorValue;
   errorColor: ColorValue;
   textColor: ColorValue;
   trackColor: ColorValue;
   fillColor: ColorValue;
+  fontFamily: string; // 文字のフォント(省略時はシステムのフォント)
 };
 
 function KataGoGateView({
   children,
+  lang,
   backgroundColor,
   errorColor,
   textColor,
   trackColor,
   fillColor,
-}: KataGoGateProps) {
+  fontFamily,
+}: Props) {
   const { engineReady, setupError, loadProgress } = useKataGoEngine();
-  const t = useTranslation();
   const status = getGateStatus(engineReady, setupError, loadProgress);
+
+  const fontStyle = fontFamily ? { fontFamily } : null;
 
   if (status.status === "error") {
     return (
@@ -40,16 +49,20 @@ function KataGoGateView({
         }}
       >
         <Text
-          style={{
-            fontSize: 16,
-            color: errorColor,
-            marginBottom: 10,
-            fontWeight: "bold",
-          }}
+          style={[
+            {
+              fontSize: 16,
+              color: errorColor,
+              marginBottom: 10,
+            },
+            fontStyle,
+          ]}
         >
-          {t("gate.errorTitle")}
+          {translate("gate.errorTitle", lang)}
         </Text>
-        <Text style={{ fontSize: 12, color: textColor }}>{status.message}</Text>
+        <Text style={[{ fontSize: 12, color: textColor }, fontStyle]}>
+          {status.message}
+        </Text>
       </View>
     );
   }
@@ -57,26 +70,24 @@ function KataGoGateView({
   if (status.status === "loading") {
     return (
       <LoadingScreen
-        label={t(`gate.${status.phase}`)}
+        label={<DotAnimation text={translate(`gate.${status.phase}`, lang)} />}
         percent={status.percent}
         backgroundColor={backgroundColor}
         textColor={textColor}
         trackColor={trackColor}
         fillColor={fillColor}
+        fontFamily={fontFamily}
       />
     );
   }
-
+  // ここは<View>にしてはいけない
   return <>{children}</>;
 }
 
-// 2. スプレッド構文で丸ごと展開して渡す
-export function KataGoGate(props: KataGoGateProps) {
+export function KataGoGate(props: Props) {
   return (
-    <LangProvider>
-      <KataGoEngineProvider>
-        <KataGoGateView {...props} />
-      </KataGoEngineProvider>
-    </LangProvider>
+    <KataGoEngineProvider>
+      <KataGoGateView {...props} />
+    </KataGoEngineProvider>
   );
 }

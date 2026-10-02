@@ -2,12 +2,14 @@
 // プロフィール画面のランク表示カードコンポーネント
 
 import { RankProgressBar } from "@/src/active/components/common/RankProgressBar";
-import { COLORS } from "@/src/active/constants/colors";
+
 import { RankInfo } from "@/src/active/constants/ranks";
-import { useLang, useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
+import { useColors } from "../../hooks/useTheme";
+import { AppText } from "../common/AppText";
 
 type Props = {
   rankInfo: RankInfo;
@@ -16,14 +18,10 @@ type Props = {
 
 export function RankCard({ rankInfo, onOpenInfo }: Props) {
   const t = useTranslation();
-  const { lang } = useLang();
-
-  // COLORS 定数から色を取得（見つからない場合はフォールバック）
+  const colors = useColors();
+  // colors 定数から色を取得（見つからない場合はフォールバック）
   const textColor =
-    COLORS[rankInfo.color as keyof typeof COLORS] || COLORS.text;
-
-  const winsNeeded = rankInfo.next?.winsNeeded ?? 0;
-  const winText = lang === "en" ? (winsNeeded === 1 ? "win" : "wins") : "";
+    colors[rankInfo.color as keyof typeof colors] || colors.text;
 
   return (
     <TouchableOpacity
@@ -33,42 +31,26 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
     >
       {/* YOUR RANK & インフォアイコン */}
       <View className="flex-row items-center gap-1.5">
-        <Text className="text-sm text-text tracking-[2px] font-bold uppercase">
+        <AppText className="text-sm text-text uppercase">
           {t("Profile.youAre")}
-        </Text>
-        <MaterialIcons name="info-outline" size={18} color={COLORS.primary} />
+        </AppText>
+        <MaterialIcons name="info-outline" size={18} color={colors.primary} />
       </View>
 
       {/* ランク名（翻訳済みの name が届いてる） */}
-      <Text
-        className="text-5xl font-extrabold tracking-wide my-2.5"
+      <AppText
+        className="text-4xl tracking-wide my-2.5"
         style={{ color: textColor }}
       >
         {rankInfo.name}
-      </Text>
+      </AppText>
 
       {/* ゲージ＆昇級情報 */}
-      <View className="w-full">
-        <View className="flex-row justify-between items-center">
-          <Text className="text-sm text-text font-semibold opacity-70">
-            {rankInfo.next ? `${rankInfo.next.name} ▶︎` : "MAX RANK"}
-          </Text>
-          <Text className="text-sm font-bold" style={{ color: textColor }}>
-            {rankInfo.next
-              ? t("Profile.remaining", {
-                  wins: winsNeeded,
-                  winText: winText,
-                })
-              : "COMPLETE!"}
-          </Text>
-        </View>
-
-        <RankProgressBar
-          progressPercent={rankInfo.percent}
-          color={textColor}
-          animationType="simple"
-        />
-      </View>
+      <RankProgressBar
+        progressPercent={rankInfo.percent}
+        color={textColor}
+        animationType="simple"
+      />
     </TouchableOpacity>
   );
 }

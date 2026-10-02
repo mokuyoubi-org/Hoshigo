@@ -1,22 +1,22 @@
 // IconSelectModal.tsx
 
-import { COLORS } from "@/src/active/constants/colors";
 import { ICONS } from "@/src/active/constants/icons";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useTranslation } from "@/src/active/i18n";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { winsToAcquiredIcons } from "@/src/stable/logics/winsToAcquiredIcons";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
+import { useColors } from "../../hooks/useTheme";
+import { AppImage } from "../AppImage";
+import { AppText } from "../common/AppText";
 
 type Props = {
   visible: boolean;
@@ -31,6 +31,7 @@ export default function IconSelectModal({
   onSelectIcon,
   currentIconIndex,
 }: Props) {
+  const colors = useColors();
   const t = useTranslation();
   const { height: windowHeight } = useWindowDimensions();
   const iconSize: number = 96;
@@ -57,11 +58,17 @@ export default function IconSelectModal({
   if (!visible) return null;
 
   return (
-    <ModalShell onClose={loadingIndex !== null ? undefined : onClose} size="md">
+    <ModalShell
+      onClose={loadingIndex !== null ? undefined : onClose}
+      size="md"
+      backgroundColor={colors.background}
+      overlayColor={colors.overlay}
+      borderColor={colors.backgroundDark}
+    >
       <View className="flex-row justify-between items-center mb-6">
-        <Text className="text-xl font-bold text-text">
+        <AppText className="text-xl text-text">
           {t("IconSelectModal.title")}
-        </Text>
+        </AppText>
       </View>
 
       {/* タイトルの下にScrollViewがあるので、flex-1ではなく明示的な高さを与える */}
@@ -84,23 +91,26 @@ export default function IconSelectModal({
                   key={iconIndex}
                   className={`bg-foreground rounded-3xl justify-center items-center relative border-2 ${
                     isSelected
-                      ? "border-primary border-[3px]"
-                      : "border-background"
+                      ? "border-primary border-4"
+                      : "border-backgroundDark border-2"
                   }`}
                   style={{
                     width: iconSize,
                     height: iconSize,
-                    opacity: isAcquired ? 1 : 0.3,
+                    opacity: isAcquired ? 1 : 0.3, // このopacityは許可
                   }}
-                  onPress={() => handleSelectIcon(iconIndex)}
-                  disabled={!isAcquired || loadingIndex !== null}
+                  onPress={() => {
+                    if (!isSelected && isAcquired && loadingIndex === null) {
+                      handleSelectIcon(iconIndex);
+                    }
+                  }}
                   activeOpacity={0.7}
                 >
                   {isLoadingThis ? (
-                    <ActivityIndicator size="large" color={COLORS.primary} />
+                    <ActivityIndicator size="large" color={colors.primary} />
                   ) : (
-                    <>
-                      <Image
+                    <View>
+                      <AppImage
                         source={icon}
                         style={{
                           height: imageSize,
@@ -113,11 +123,11 @@ export default function IconSelectModal({
                           <MaterialIcons
                             name="check"
                             size={16}
-                            color={COLORS.foreground}
+                            color={colors.foreground}
                           />
                         </View>
                       )}
-                    </>
+                    </View>
                   )}
                 </TouchableOpacity>
               );

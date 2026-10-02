@@ -5,23 +5,16 @@ import {
   Keyboard,
   Platform,
   Pressable,
-  StyleProp,
   StyleSheet,
   useAnimatedValue,
   useWindowDimensions,
   View,
-  ViewStyle,
 } from "react-native";
-import { computeModalBox, ModalSize } from "./modalSizing";
-
-type ModalShellProps = {
-  children: React.ReactNode;
-  onClose?: () => void;
-  style?: StyleProp<ViewStyle>;
-  dismissKeyboardOnPress?: boolean;
-  backgroundColor?: string;
-  size?: ModalSize;
-};
+import {
+  computeModalBox,
+  DEFAULT_CONTENT_PADDING,
+  ModalShellProps,
+} from "./common";
 
 export function ModalShell({
   children,
@@ -29,7 +22,10 @@ export function ModalShell({
   size = "md",
   style,
   dismissKeyboardOnPress = true,
-  backgroundColor = "#f0f5f9", // background
+  backgroundColor,
+  borderColor,
+  overlayColor,
+  contentPadding = DEFAULT_CONTENT_PADDING,
 }: ModalShellProps) {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
@@ -65,7 +61,12 @@ export function ModalShell({
   );
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+    <Animated.View
+      style={[
+        styles.overlay,
+        { opacity: fadeAnim, backgroundColor: overlayColor },
+      ]}
+    >
       {/* 暗い背景部分 */}
       <Pressable
         style={styles.backgroundPress}
@@ -77,7 +78,7 @@ export function ModalShell({
       <Animated.View
         style={[
           styles.card,
-          { backgroundColor },
+          { backgroundColor, padding: contentPadding , borderColor},
           { transform: [{ scale: scaleAnim }] },
           { width: cardWidth, maxHeight: cardMaxHeight },
           style,
@@ -105,7 +106,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#00000080", // overlay
     justifyContent: "center",
     alignItems: "center",
     zIndex: 50,
@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 4,
     borderColor: "#e1e8ed", // backgroundDark
-    padding: 16,
   },
   fullWidth: {
     width: "100%",
