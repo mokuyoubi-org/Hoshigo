@@ -142,7 +142,7 @@ export default function RecordsScreen() {
           {/* 盤面サイズ選択 */}
           {isBoardSizeLoaded && (
             <SegmentedControl
-              trackBackgroundColor={colors.backgroundDark}
+              trackBackgroundColor={colors.backgroundStrong}
               activeSegmentBackgroundColor={colors.foreground}
               activeTextColor={colors.text}
               inactiveTextColor={colors.textSub}

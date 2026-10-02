@@ -16,6 +16,7 @@ import {
 } from "react-native";
 
 import { ICONS } from "@/src/active/constants/icons";
+import { RankInfo, RANKS } from "@/src/active/constants/ranks";
 import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
@@ -24,8 +25,9 @@ import { useColors } from "@/src/active/hooks/useTheme";
 import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { winsToNewlyAcquiredIconIndex } from "@/src/stable/logics/winsToAcquiredIcons";
-import { AppImage } from "../../AppImage";
+import { AppImage } from "../../common/AppImage";
 import { AppText } from "../../common/AppText";
+import { RankGauge } from "../../RankGauge";
 
 type Props = {
   onClose: () => void;
@@ -37,6 +39,14 @@ type Props = {
   giantKillingStreak: number;
   giantKillingBonus: boolean;
 };
+
+// 🐱 「いま目指しているゴール」（次のランク名と、そのスタートのレート）
+type NextTarget = { name: string; minRating: number } | null;
+
+const toNextTarget = (info: RankInfo): NextTarget =>
+  info.next
+    ? { name: info.next.name, minRating: RANKS[info.index + 1].minRating }
+    : null;
 
 export function MatchResultContent({
   onClose,
@@ -76,14 +86,7 @@ export function MatchResultContent({
   };
 
   // ゲージのアニメーション設定
-  const { progressAnim, animatedWidth } = useMemo(() => {
-    const anim = new Animated.Value(0);
-    const width = anim.interpolate({
-      inputRange: [0, 100],
-      outputRange: ["0%", "100%"],
-    });
-    return { progressAnim: anim, animatedWidth: width };
-  }, []);
+  const progressAnim = useMemo(() => new Animated.Value(0), []);
 
   const hasAnimated = useRef(false);
 
@@ -100,6 +103,25 @@ export function MatchResultContent({
     colors[afterInfo.color as keyof typeof colors] || colors.text;
   const [isRankNew, setIsRankNew] = useState(false);
 
+  // 🐱 吹き出しに表示するレート（ゲージと一緒にカウントアップする）
+  const [displayRating, setDisplayRating] = useState(ratingBefore);
+
+  // 🐱 いま目指しているゴール（ランクが変わる瞬間に切り替える）
+  const [displayNext, setDisplayNext] = useState<NextTarget>(() =>
+    toNextTarget(beforeInfo),
+  );
+
+  // 🐱 カウントアップ用：レートそのものを動かす Animated.Value
+  const ratingAnim = useMemo(() => new Animated.Value(ratingBefore), []);
+
+  // 🐱 値が動くたびに、整数に丸めて表示用 state に反映する
+  useEffect(() => {
+    const id = ratingAnim.addListener(({ value }) => {
+      setDisplayRating(Math.round(value));
+    });
+    return () => ratingAnim.removeListener(id);
+  }, [ratingAnim]);
+
   // giant killing コンボ判定(ボーナス発生 & 2回以上 & 差分が割り切れる場合のみ段階アニメーション)
   const ratingDiff = ratingAfter - ratingBefore;
   const isCombo =
@@ -114,38 +136,59 @@ export function MatchResultContent({
     if (hasAnimated.current) return;
     hasAnimated.current = true;
 
+    // 🐱 ゲージとレートを「同時に・同じ時間で」動かす
+    const run = (
+      percentTo: number,
+      ratingTo: number,
+      duration: number,
+      onDone?: () => void,
+    ) => {
+      Animated.parallel([
+        Animated.timing(progressAnim, {
+          toValue: percentTo,
+          duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(ratingAnim, {
+          toValue: ratingTo,
+          duration,
+          useNativeDriver: false,
+        }),
+      ]).start(onDone);
+    };
+
+    // 🐱 ランクをまたぐとき、ゲージが端っこ（100% or 0%）に着いた時点のレート
+    //    昇格 → 次のランクの minRating、降格 → 今のランクの minRating
+    const getBoundaryRating = (info: RankInfo, direction: number) =>
+      direction > 0
+        ? RANKS[info.index + 1].minRating
+        : RANKS[info.index].minRating;
+
     if (isCombo) {
-      // --- giant killing コンボ: chunkごとにゲージを段階的に上げる ---
+      // --- giant killing コンボ: chunkごとにゲージと数字を段階的に動かす ---
       const signedChunk = ratingDiff / giantKillingStreak;
       let prevInfo = beforeInfo;
       let stepIndex = 0;
 
       const animateToPercent = (
         targetPercent: number,
+        targetRating: number,
+        boundaryRating: number,
+        nextTarget: NextTarget,
         isTransition: boolean,
         direction: number,
         onDone: () => void,
       ) => {
         if (isTransition) {
-          Animated.timing(progressAnim, {
-            toValue: direction > 0 ? 100 : 0,
-            duration: 400,
-            useNativeDriver: false,
-          }).start(() => {
+          run(direction > 0 ? 100 : 0, boundaryRating, 400, () => {
             setIsRankNew(true);
+            // 🐱 ランクが切り替わる瞬間に、目指すゴールも新しいものに切り替える
+            setDisplayNext(nextTarget);
             progressAnim.setValue(direction > 0 ? 0 : 100);
-            Animated.timing(progressAnim, {
-              toValue: targetPercent,
-              duration: 400,
-              useNativeDriver: false,
-            }).start(onDone);
+            run(targetPercent, targetRating, 400, onDone);
           });
         } else {
-          Animated.timing(progressAnim, {
-            toValue: targetPercent,
-            duration: 500,
-            useNativeDriver: false,
-          }).start(onDone);
+          run(targetPercent, targetRating, 500, onDone);
         }
       };
 
@@ -154,6 +197,10 @@ export function MatchResultContent({
         const stepRating = ratingBefore + signedChunk * stepIndex;
         const stepInfo = getRankInfo(stepRating, t);
         const isTransition = stepInfo.name !== prevInfo.name;
+        // 🐱 ランクをまたぐなら、またぐ前のランク(prevInfo)を基準に境目を求める
+        const boundaryRating = isTransition
+          ? getBoundaryRating(prevInfo, signedChunk)
+          : stepRating;
         prevInfo = stepInfo;
 
         // 2回目以降のchunkはボーナス表示を出したまま、ゲージも同時に動かす
@@ -161,11 +208,19 @@ export function MatchResultContent({
           setBonusMultiplier(stepIndex);
         }
 
-        animateToPercent(stepInfo.percent, isTransition, signedChunk, () => {
-          if (stepIndex < giantKillingStreak) {
-            runStep();
-          }
-        });
+        animateToPercent(
+          stepInfo.percent,
+          stepRating,
+          boundaryRating,
+          toNextTarget(stepInfo),
+          isTransition,
+          signedChunk,
+          () => {
+            if (stepIndex < giantKillingStreak) {
+              runStep();
+            }
+          },
+        );
       };
 
       progressAnim.setValue(beforeInfo.percent);
@@ -175,37 +230,41 @@ export function MatchResultContent({
       const rankTransition = rankIndexAfter !== rankIndexBefore;
 
       if (rankTransition) {
+        const direction = rankIndexAfter > rankIndexBefore ? 1 : -1;
         progressAnim.setValue(beforeInfo.percent);
 
-        Animated.timing(progressAnim, {
-          toValue: rankIndexAfter > rankIndexBefore ? 100 : 0,
-          duration: 600,
-          useNativeDriver: false,
-        }).start(() => {
-          setIsRankNew(true);
-          progressAnim.setValue(rankIndexAfter > rankIndexBefore ? 0 : 100);
+        run(
+          direction > 0 ? 100 : 0,
+          getBoundaryRating(beforeInfo, direction),
+          600,
+          () => {
+            setIsRankNew(true);
+            // 🐱 ランクが切り替わる瞬間に、目指すゴールも新しいものに切り替える
+            setDisplayNext(toNextTarget(afterInfo));
+            progressAnim.setValue(direction > 0 ? 0 : 100);
 
-          setTimeout(() => {
-            Animated.timing(progressAnim, {
-              toValue: afterInfo.percent,
-              duration: 600,
-              useNativeDriver: false,
-            }).start();
-          }, 100);
-        });
+            setTimeout(() => {
+              run(afterInfo.percent, ratingAfter, 600);
+            }, 100);
+          },
+        );
       } else {
         progressAnim.setValue(beforeInfo.percent);
 
-        Animated.timing(progressAnim, {
-          toValue: afterInfo.percent,
-          duration: 1200,
-          useNativeDriver: false,
-        }).start();
+        run(afterInfo.percent, ratingAfter, 1200);
       }
     }
   }, []);
 
   const displayRankName = isRankNew ? afterInfo.name : beforeInfo.name;
+
+  // 🐱 あと何点か（ゴール − いまの数字。カウントアップと一緒に動く）
+  const footerText = displayNext
+    ? t("RankInfoModal.remaining", {
+        nextRank: displayNext.name,
+        rating: Math.max(displayNext.minRating - displayRating, 0),
+      })
+    : null;
 
   return (
     <View className="w-[100%]">
@@ -250,7 +309,7 @@ export function MatchResultContent({
                   disabled={loadingIndex !== null}
                   onPress={() => handleSelectIcon(newlyAcquiredIcon)}
                   className={`items-center justify-center p-2 rounded-3xl border-2 ${
-                    isSelected ? "border-primary" : "border-backgroundDark"
+                    isSelected ? "border-primary" : "border-backgroundStrong"
                   }`}
                   style={{
                     backgroundColor: colors.foreground,
@@ -278,20 +337,15 @@ export function MatchResultContent({
         </View>
       )}
 
-      {/* ランク進行度プログレスバー */}
-      <View
-        className="w-full h-8 rounded-3xl overflow-hidden relative"
-        style={{ backgroundColor: colors.background }}
-      >
-        <Animated.View
-          style={{
-            height: "100%",
-            borderRadius: 24,
-            backgroundColor: rankColor,
-            width: animatedWidth,
-          }}
-        />
-      </View>
+      {/* 🐱 ゲージ（吹き出し + ゲージ + あと◯）。動かすのはこの画面の仕事 */}
+      <RankGauge
+        progress={progressAnim}
+        color={rankColor}
+        height={32}
+        bubbleText={displayRating}
+        footerText={footerText}
+        reserveFooterSpace
+      />
 
       {/* アクションボタン群 */}
       <View className="flex-row mt-8 items-center justify-center w-full gap-8">
@@ -325,12 +379,12 @@ export function MatchResultContent({
           <FontAwesome
             name="repeat"
             size={22}
-            color={!isMatching ? colors.textSub : colors.backgroundDark}
+            color={!isMatching ? colors.textSub : colors.backgroundStrong}
           />
           <AppText
             className="text-sm mt-1 text-center"
             style={{
-              color: !isMatching ? colors.textSub : colors.backgroundDark,
+              color: !isMatching ? colors.textSub : colors.backgroundStrong,
             }}
           >
             {t("common.playAgain")}

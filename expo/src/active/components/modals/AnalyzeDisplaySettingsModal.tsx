@@ -59,13 +59,13 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
       size="md"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <AppText className="text-xl color-text text-center pb-4">
         {t("common.settings")}
       </AppText>
 
-      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden">
+      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundStrong overflow-hidden">
         {/* 1. Ownership */}
         <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
           <AppText className="text-lg text-text">
@@ -80,7 +80,7 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
               }
               iconColor={colors.primary}
               backgroundColor={colors.foreground}
-              borderColor={colors.backgroundDark}
+              borderColor={colors.backgroundStrong}
               onPress={() => {
                 setShowOwnershipTerritoryBoard(!showOwnershipTerritoryBoard);
               }}
@@ -98,7 +98,7 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
               icon={<Feather name={showWinRateBar ? "eye" : "eye-off"} />}
               iconColor={colors.primary}
               backgroundColor={colors.foreground}
-              borderColor={colors.backgroundDark}
+              borderColor={colors.backgroundStrong}
               onPress={() => {
                 setShowWinRateBar(!showWinRateBar);
               }}
@@ -116,7 +116,7 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
               icon={<Feather name={showCandidatesPoints ? "eye" : "eye-off"} />}
               iconColor={colors.primary}
               backgroundColor={colors.foreground}
-              borderColor={colors.backgroundDark}
+              borderColor={colors.backgroundStrong}
               onPress={() => {
                 setShowCandidatesPoints(!showCandidatesPoints);
               }}
@@ -134,7 +134,7 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
               icon={<Feather name={showScoreLeadGraph ? "eye" : "eye-off"} />}
               iconColor={colors.primary}
               backgroundColor={colors.foreground}
-              borderColor={colors.backgroundDark}
+              borderColor={colors.backgroundStrong}
               onPress={() => {
                 setShowScoreLeadGraph(!showScoreLeadGraph);
               }}
@@ -154,7 +154,7 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
               }
               iconColor={colors.primary}
               backgroundColor={colors.foreground}
-              borderColor={colors.backgroundDark}
+              borderColor={colors.backgroundStrong}
               onPress={() => {
                 setShowMoveEvaluationPoint(!showMoveEvaluationPoint);
               }}
@@ -174,7 +174,7 @@ export function AnalyzeDisplaySettingsModal({ onClose }: Props) {
               }
               iconColor={colors.primary}
               backgroundColor={colors.foreground}
-              borderColor={colors.backgroundDark}
+              borderColor={colors.backgroundStrong}
               onPress={() => {
                 setShowTerritoryResultBadge(!showTerritoryResultBadge);
               }}

@@ -16,7 +16,7 @@ type Props = {
 export function GuestNoticeCard({ description, onPress }: Props) {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-      <View className="bg-foreground rounded-3xl border-2 border-backgroundDark p-5">
+      <View className="bg-foreground rounded-3xl border-2 border-backgroundStrong p-5">
         <AppText className="text-sm text-textSub leading-5">
           {description}
         </AppText>

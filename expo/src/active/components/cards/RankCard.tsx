@@ -1,7 +1,8 @@
 // RankCard.tsx
 // プロフィール画面のランク表示カードコンポーネント
 
-import { RankProgressBar } from "@/src/active/components/common/RankProgressBar";
+import { RankGauge } from "@/src/active/components/RankGauge";
+import { useAnimatedPercent } from "@/src/active/hooks/useAnimatedPercent";
 
 import { RankInfo } from "@/src/active/constants/ranks";
 import { useTranslation } from "@/src/active/i18n/LangProvider";
@@ -23,11 +24,22 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
   const textColor =
     colors[rankInfo.color as keyof typeof colors] || colors.text;
 
+  // 🐱 0 から現在地点まで 1000ms で伸びる（ゲージと吹き出しが同じ値を使う）
+  const progress = useAnimatedPercent(rankInfo.percent);
+
+  // 🐱 あと何点か（最高ランクのときは次がないので出さない）
+  const footerText = rankInfo.next
+    ? t("RankInfoModal.remaining", {
+        nextRank: rankInfo.next.name,
+        rating: rankInfo.next.ratingNeeded,
+      })
+    : null;
+
   return (
     <TouchableOpacity
       onPress={onOpenInfo}
       activeOpacity={0.8}
-      className="bg-foreground rounded-3xl border-2 border-backgroundDark p-7 items-center"
+      className="bg-foreground rounded-3xl border-2 border-backgroundStrong p-6 items-center"
     >
       {/* YOUR RANK & インフォアイコン */}
       <View className="flex-row items-center gap-1.5">
@@ -39,17 +51,19 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
 
       {/* ランク名（翻訳済みの name が届いてる） */}
       <AppText
-        className="text-4xl tracking-wide my-2.5"
+        className="text-4xl tracking-wide mt-2"
         style={{ color: textColor }}
       >
         {rankInfo.name}
       </AppText>
 
-      {/* ゲージ＆昇級情報 */}
-      <RankProgressBar
-        progressPercent={rankInfo.percent}
+      {/* ゲージ（吹き出し + ゲージ + あと◯） */}
+      <RankGauge
+        progress={progress}
         color={textColor}
-        animationType="simple"
+        bubbleText={rankInfo.rating}
+        footerText={footerText}
+        height={32}
       />
     </TouchableOpacity>
   );

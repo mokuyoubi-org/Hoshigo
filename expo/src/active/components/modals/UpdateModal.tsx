@@ -55,14 +55,14 @@ export function UpdateModal({ kind }: { kind: UpdateModalKind }) {
       size="md"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <AppText className="text-base color-text text-center">
         {t(messageKey)}
       </AppText>
       <Pressable
         onPress={handlePress}
-        className="bg-foreground rounded-xl mt-4 px-6 py-3 border-2 border-backgroundDark"
+        className="bg-foreground rounded-xl mt-4 px-6 py-3 border-2 border-backgroundStrong"
       >
         <AppText className="text-base color-text text-center">
           {t(buttonKey)}

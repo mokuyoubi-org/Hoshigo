@@ -61,7 +61,7 @@ export function LoginModal({ visible, onClose }: Props) {
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <TurnstileWidget
         ref={turnstileRef}
@@ -69,7 +69,7 @@ export function LoginModal({ visible, onClose }: Props) {
         bgColor={colors.background}
         textColor={colors.text}
         spinnerColor={colors.primary}
-        spinnerTrackColor={colors.backgroundDark}
+        spinnerTrackColor={colors.backgroundStrong}
         lang={lang}
       />
       <KeyboardAvoidingView
@@ -95,7 +95,7 @@ export function LoginModal({ visible, onClose }: Props) {
               </View>
 
               <View className="mb-4">
-                <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+                <View className="rounded-xl border bg-foreground border-2 border-primaryStrong">
                   <AppTextInput
                     className="h-12 px-4 text-lg text-text"
                     placeholder={"example@email.com"}
@@ -120,7 +120,7 @@ export function LoginModal({ visible, onClose }: Props) {
                 <TouchableOpacity
                   className={`h-12 rounded-xl justify-center items-center ${
                     !canSendEmail || loading
-                      ? "bg-primaryDark"
+                      ? "bg-primaryStrong"
                       : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
@@ -137,7 +137,7 @@ export function LoginModal({ visible, onClose }: Props) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
@@ -162,9 +162,9 @@ export function LoginModal({ visible, onClose }: Props) {
                 <AppText className="text-lg mb-1.5 tracking-wide text-text">
                   {t("AccountLinking.otpLabel")}
                 </AppText>
-                <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+                <View className="rounded-xl border bg-foreground border-2 border-primaryStrong">
                   <AppTextInput
-                    className="px-4 text-2xl text-center text-text"
+                    className="h-12 px-4 text-2xl text-center text-text"
                     placeholder={"12345678"}
                     placeholderTextColor={colors.textOpacity} // 絵文字対策
                     value={otp}
@@ -184,9 +184,9 @@ export function LoginModal({ visible, onClose }: Props) {
 
               <View className="gap-2 mt-2">
                 <TouchableOpacity
-                  className={`rounded-xl justify-center items-center ${
+                  className={`h-12 rounded-xl justify-center items-center ${
                     !canVerifyOtp || loading
-                      ? "bg-primaryDark"
+                      ? "bg-primaryStrong"
                       : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
@@ -206,7 +206,7 @@ export function LoginModal({ visible, onClose }: Props) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
@@ -218,7 +218,7 @@ export function LoginModal({ visible, onClose }: Props) {
               </View>
 
               <TouchableOpacity
-                className="mt-3 items-center py-2"
+                className="items-center mt-4"
                 onPress={onSendOtp}
                 disabled={loading}
               >
@@ -245,7 +245,7 @@ export function LoginModal({ visible, onClose }: Props) {
                     className={`flex-1 rounded-xl p-4 items-center bg-foreground ${
                       selection === "guest"
                         ? "border-2 border-primary"
-                        : "border border-backgroundDark"
+                        : "border border-backgroundStrong"
                     }`}
                     activeOpacity={0.7}
                     onPress={() => setSelection("guest")}
@@ -268,7 +268,7 @@ export function LoginModal({ visible, onClose }: Props) {
                     className={`flex-1 rounded-xl p-4 items-center bg-foreground ${
                       selection === "existing"
                         ? "border-2 border-primary"
-                        : "border border-backgroundDark"
+                        : "border border-backgroundStrong"
                     }`}
                     activeOpacity={0.7}
                     onPress={() => setSelection("existing")}
@@ -300,7 +300,7 @@ export function LoginModal({ visible, onClose }: Props) {
                   className={`h-12 rounded-xl justify-center items-center ${
                     canConfirmSelection && !loading
                       ? "bg-blackStone"
-                      : "bg-backgroundDark"
+                      : "bg-backgroundStrong"
                   }`}
                   activeOpacity={0.8}
                   onPress={onConfirmSelection}
@@ -316,7 +316,7 @@ export function LoginModal({ visible, onClose }: Props) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}

@@ -20,7 +20,7 @@ function useIsHydrated() {
 export function ModalShell({
   children,
   onClose,
-  size = "md",
+  size,
   style,
   backgroundColor,
   borderColor,

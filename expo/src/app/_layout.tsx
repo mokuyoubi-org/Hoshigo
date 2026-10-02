@@ -95,7 +95,7 @@ function RoutedContent() {
             percent={null}
             backgroundColor={colors.background}
             textColor={colors.textSub}
-            trackColor={colors.backgroundDark}
+            trackColor={colors.backgroundStrong}
             fillColor={colors.primary}
             fontFamily={fontFamily}
           />
@@ -149,7 +149,7 @@ function AppContent() {
           backgroundColor={colors.background}
           textColor={colors.textSub}
           fillColor={colors.primary}
-          trackColor={colors.backgroundDark}
+          trackColor={colors.backgroundStrong}
           errorColor={colors.failure}
           lang={lang}
           fontFamily={fontFamily}

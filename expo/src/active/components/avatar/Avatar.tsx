@@ -9,7 +9,7 @@ import React from "react";
 import { View } from "react-native";
 import { useAppFont } from "../../hooks/useAppFont";
 import { useColors } from "../../hooks/useTheme";
-import { AppImage } from "../AppImage";
+import { AppImage } from "../common/AppImage";
 
 type Props = {
   rankIndex: number;
@@ -81,7 +81,7 @@ export const Avatar = ({
             {agehama !== undefined && agehama !== 0 && (
               <Agehama
                 count={agehama}
-                color={colors.primary}
+                color={ (playerColor === WHITE ? colors.blackStone : colors.whiteStone)+"88"}
                 size={stoneSize}
                 fontFamily={fontFamily}
               />

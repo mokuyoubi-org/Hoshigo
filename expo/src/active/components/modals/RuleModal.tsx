@@ -56,7 +56,7 @@ export function RuleModal({ visible, onClose }: Props) {
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <View className="w-full pb-3">
         <AppText className="text-xl text-text tracking-wide">
@@ -67,7 +67,7 @@ export function RuleModal({ visible, onClose }: Props) {
       <ScrollView
         style={{
           height: windowHeight * 0.5,
-          borderColor: colors.backgroundDark,
+          borderColor: colors.backgroundStrong,
           borderWidth: 2,
           borderRadius: 16,
           padding: 16,

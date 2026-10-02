@@ -414,7 +414,7 @@ function BoardEditScreenContent({
                 }}
                 activeOpacity={0.7}
               >
-                <Feather name="menu" size={32} color={colors.primaryDark} />
+                <Feather name="menu" size={32} color={colors.primaryStrong} />
               </TouchableOpacity>
             )}
           </View>
@@ -435,7 +435,7 @@ function BoardEditScreenContent({
                   }
                   iconColor={colors.primary}
                   backgroundColor={colors.foreground}
-                  borderColor={colors.backgroundDark}
+                  borderColor={colors.backgroundStrong}
                   onPress={botAnalysis.toggleAnalysis}
                 />
               )}
@@ -452,7 +452,7 @@ function BoardEditScreenContent({
                 }
                 iconColor={colors.botMoveColor}
                 backgroundColor={colors.foreground}
-                borderColor={colors.backgroundDark}
+                borderColor={colors.backgroundStrong}
                 onPress={handleBotSuggest}
                 disabled={isAnyProcessing}
                 style={{
@@ -462,7 +462,7 @@ function BoardEditScreenContent({
             )}
 
             {/* 地計算🧮の結果バッジ。計算中はくるくる、結果なしなら何も出ない。
-                背景 primary = 未確定 / primaryDark = 確定。タップで盤面に地を表示 */}
+                背景 primary = 未確定 / primaryStrong = 確定。タップで盤面に地を表示 */}
             {board.showTerritoryResultBadge && (
               <TerritoryResultBadge
                 isCalculating={
@@ -476,7 +476,7 @@ function BoardEditScreenContent({
 
             {/* 🔄 モード切り替えスイッチ */}
             <SegmentedIconControl
-              trackBackgroundColor={colors.backgroundDark}
+              trackBackgroundColor={colors.backgroundStrong}
               activeSegmentBackgroundColor={colors.foreground}
               activeIconColor={colors.text}
               inactiveIconColor={colors.textSub}
@@ -505,7 +505,7 @@ function BoardEditScreenContent({
                 icon={<FontAwesome6 name={"gear"} />}
                 iconColor={colors.primary}
                 backgroundColor={colors.foreground}
-                borderColor={colors.backgroundDark}
+                borderColor={colors.backgroundStrong}
                 onPress={() => {
                   show(<AnalyzeDisplaySettingsModal onClose={hide} />);
                 }}
@@ -649,9 +649,9 @@ function BoardEditScreenContent({
             onCurrentIndexChange={board.setCurrentIndex}
             primary={colors.primary}
             background={colors.background}
-            backgroundDark={colors.backgroundDark}
+            backgroundStrong={colors.backgroundStrong}
             foreground={colors.foreground}
-            primaryDark={colors.primaryDark}
+            primaryStrong={colors.primaryStrong}
           />
 
           {/* ─── 余白 D ─── */}

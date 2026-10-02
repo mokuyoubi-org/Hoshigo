@@ -315,7 +315,7 @@ export default function GameScreen() {
             icon={<FontAwesome6 name="info" />}
             iconColor={colors.primary}
             backgroundColor={colors.foreground}
-            borderColor={colors.backgroundDark}
+            borderColor={colors.backgroundStrong}
             onPress={showGameStartModal}
           />
 
@@ -323,7 +323,7 @@ export default function GameScreen() {
             icon={<FontAwesome6 name={"gear"} />}
             iconColor={colors.primary}
             backgroundColor={colors.foreground}
-            borderColor={colors.backgroundDark}
+            borderColor={colors.backgroundStrong}
             onPress={() => {
               show(<DoubleTapModal onClose={hide} />);
             }}
@@ -423,23 +423,27 @@ export default function GameScreen() {
         {/* ─── 二兄弟 ─── */}
         {!isGameEnded && (
           <View className="flex-row gap-2" style={{ width: boardWidth }}>
+            {/* パスボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
-                !isMyTurn ? "border-backgroundDark" : "border-primaryDark"
+                !isMyTurn ? "border-backgroundStrong" : "border-primaryStrong"
               }`}
               onPress={() => handlePutStone(PASS_GRID)}
               disabled={!isMyTurn}
               activeOpacity={0.7}
             >
               <AppText
-                className={`text-lg ${
-                  !isMyTurn ? "text-backgroundDark" : "text-primaryDark"
-                }`}
+                className={"text-lg"}
+                style={{
+                  color: !isMyTurn
+                    ? colors.backgroundStrong
+                    : colors.primaryStrong,
+                }}
               >
                 {t("common.pass")}
               </AppText>
             </TouchableOpacity>
-
+            {/* 投了ボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
                 !isMyTurn ? "border-failureLight" : "border-failure"
@@ -449,9 +453,10 @@ export default function GameScreen() {
               activeOpacity={0.7}
             >
               <AppText
-                className={`text-lg ${
-                  !isMyTurn ? "text-failureLight" : "text-failure"
-                }`}
+                className={"text-lg"}
+                style={{
+                  color: !isMyTurn ? colors.failureLight : colors.failure,
+                }}
               >
                 {t("common.resign")}
               </AppText>

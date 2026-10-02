@@ -7,30 +7,8 @@ import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
 import { Animated, Platform, TouchableOpacity, View } from "react-native";
 import { useColors } from "../../hooks/useTheme";
+import { Avatar } from "../avatar/Avatar";
 import { AppText } from "../common/AppText";
-import { Avatar } from "../common/Avatar";
-
-// 🌟 rank_index (0~17) を表示用ラベルに変換する表
-const RANK_LABELS: string[] = [
-  "10k",
-  "9k",
-  "8k",
-  "7k",
-  "6k",
-  "5k",
-  "4k",
-  "3k",
-  "2k",
-  "1k", // 0~9
-  "1D",
-  "2D",
-  "3D",
-  "4D",
-  "5D",
-  "6D",
-  "7D",
-  "8D", // 10~17
-];
 
 // ─── 型定義 ───────────────────────────────
 export type Profile = {
@@ -63,8 +41,8 @@ export const RankingCard = ({
   const { username } = useProfile();
   const isMe = item.username === username;
 
-  // 🌟 rank_index から表示用ラベルを取得する（無効な数値のときは "-"）
-  const rankLabel = RANK_LABELS[getRankInfo(item.rating, t).index] ?? "-";
+  // 🌟 rank_index から表示用ラベルを取得する
+  const rankLabel = getRankInfo(item.rating, t).name;
 
   // useMemo で Animated.Value を安全に生成・保持する
   const fadeIn = useMemo(() => new Animated.Value(0), []);
@@ -85,7 +63,7 @@ export const RankingCard = ({
         className={`bg-foreground rounded-xl overflow-hidden ${
           isMe
             ? "border-4 border-primary" // 自分：太い枠線
-            : "border-2 border-backgroundDark" // みんな：普通の枠線
+            : "border-2 border-backgroundStrong" // みんな：普通の枠線
         }`}
       >
         <View className="flex-row items-center px-2 py-4">
@@ -96,9 +74,7 @@ export const RankingCard = ({
             </View>
           ) : (
             <View className="w-12 h-12 justify-center items-center">
-              <AppText className="text-base color-textSub">
-                {rank}
-              </AppText>
+              <AppText className="text-base color-textSub">{rank}</AppText>
             </View>
           )}
 
@@ -114,9 +90,7 @@ export const RankingCard = ({
           {/* 名前 + 認証バッジ */}
           <View className="flex-1 flex-row items-center gap-1">
             <AppText
-              className={`text-base color-text ${
-                isTop3 ? "color-text" : ""
-              }`}
+              className={`text-base color-text ${isTop3 ? "color-text" : ""}`}
               numberOfLines={1}
             >
               {item.username}

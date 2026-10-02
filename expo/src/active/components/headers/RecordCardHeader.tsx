@@ -12,8 +12,8 @@ import { Color, MatchType } from "go-core";
 import React, { useMemo } from "react";
 import { View } from "react-native";
 import { useColors } from "../../hooks/useTheme";
+import { AvatarWithPass } from "../avatar/AvatarWithPass";
 import { AppText } from "../common/AppText";
-import { AvatarWithPass } from "../common/AvatarWithPass";
 
 // color の型を `Color` (go-coreの型) にした
 export type HeaderPlayerInfo = {

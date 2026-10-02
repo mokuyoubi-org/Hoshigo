@@ -63,7 +63,7 @@ export const AIDownloadModal = ({ from }: Props) => {
       size={"md"}
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       {isProgress ? (
         <View className="w-full items-center gap-4">
@@ -80,7 +80,7 @@ export const AIDownloadModal = ({ from }: Props) => {
           <View className="w-56">
             <ProgressBar
               percent={percent}
-              trackColor={colors.backgroundDark}
+              trackColor={colors.backgroundStrong}
               fillColor={colors.primary}
             />
           </View>
@@ -90,7 +90,7 @@ export const AIDownloadModal = ({ from }: Props) => {
           </AppText>
 
           <TouchableOpacity
-            className="w-full h-12 rounded-xl justify-center items-center bg-backgroundDark mt-2"
+            className="w-full h-12 rounded-xl justify-center items-center bg-backgroundStrong mt-2"
             onPress={hide}
             activeOpacity={0.8}
           >
@@ -121,7 +121,7 @@ export const AIDownloadModal = ({ from }: Props) => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="w-full h-12 rounded-xl justify-center items-center bg-backgroundDark"
+              className="w-full h-12 rounded-xl justify-center items-center bg-backgroundStrong"
               onPress={hide}
               activeOpacity={0.8}
             >

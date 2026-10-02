@@ -81,12 +81,12 @@ export default function RankingsModal({ visible, onClose }: Props) {
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
       contentPadding={16}
     >
       <View className="w-full pb-4 items-start">
         <SegmentedControl
-          trackBackgroundColor={colors.backgroundDark}
+          trackBackgroundColor={colors.backgroundStrong}
           activeSegmentBackgroundColor={colors.foreground}
           activeTextColor={colors.text}
           inactiveTextColor={colors.textSub}

@@ -24,7 +24,7 @@ export function VersionModal({ onClose }: Props) {
     <ModalShell
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
       onClose={onClose}
       size="md"
     >
@@ -32,7 +32,7 @@ export function VersionModal({ onClose }: Props) {
         {t("common.version")}
       </AppText>
 
-      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden">
+      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundStrong overflow-hidden">
         {/* アプリ本体のバージョン */}
         <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
           <AppText className="text-lg text-text">

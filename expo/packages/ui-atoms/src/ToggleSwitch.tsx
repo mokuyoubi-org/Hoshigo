@@ -24,7 +24,7 @@ export const ToggleSwitch = ({
   value,
   onToggle,
   backgroundOnColor, // primary
-  backgroundOffColor, // backgroundDark
+  backgroundOffColor, // backgroundStrong
   toggleColor, // foreground
   disabled,
 }: Props) => {

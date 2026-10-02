@@ -18,10 +18,10 @@ type Props = {
   totalMoves: number;
   onCurrentIndexChange: React.Dispatch<React.SetStateAction<number>>;
   primary: ColorValue;
-  primaryDark: ColorValue;
+  primaryStrong: ColorValue;
   foreground: ColorValue;
   background: ColorValue;
-  backgroundDark: ColorValue;
+  backgroundStrong: ColorValue;
 };
 
 const CHART_HEIGHT = 64;
@@ -64,9 +64,9 @@ export function ScoreLeadReplayControls({
   onCurrentIndexChange,
   primary,
   background,
-  backgroundDark,
+  backgroundStrong,
   foreground,
-  primaryDark,
+  primaryStrong,
 }: Props) {
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -140,7 +140,7 @@ export function ScoreLeadReplayControls({
         styles.cardContainer,
         {
           backgroundColor: foreground,
-          borderColor: backgroundDark, //
+          borderColor: backgroundStrong, //
         },
       ]}
     >
@@ -149,7 +149,7 @@ export function ScoreLeadReplayControls({
         <TouchableOpacity
           style={[
             styles.button,
-            { backgroundColor: isAtStart ? backgroundDark : primaryDark },
+            { backgroundColor: isAtStart ? backgroundStrong : primaryStrong },
           ]}
           onPress={onPrevious}
           disabled={isAtStart}
@@ -188,7 +188,7 @@ export function ScoreLeadReplayControls({
 
                     {/* 下側の面 */}
                     {bottomPathD.length > 0 && (
-                      <Path d={bottomPathD} fill={backgroundDark} />
+                      <Path d={bottomPathD} fill={backgroundStrong} />
                     )}
 
                     {/* 中央の基準線（横線） */}
@@ -197,7 +197,7 @@ export function ScoreLeadReplayControls({
                       y1={CHART_HEIGHT / 2}
                       x2={containerWidth - 8}
                       y2={CHART_HEIGHT / 2}
-                      stroke={(primaryDark as string) + "44"} // 線の色（お好みで変えてにゃ）
+                      stroke={(primaryStrong as string) + "44"} // 線の色
                       strokeWidth={4} // 線の太さ
                       strokeDasharray="1, 12" // 破線（点線）
                       strokeLinecap="round"
@@ -207,7 +207,7 @@ export function ScoreLeadReplayControls({
                       <Path
                         d={linePathD}
                         fill="none"
-                        stroke={primaryDark}
+                        stroke={primaryStrong}
                         strokeWidth={4}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -219,7 +219,7 @@ export function ScoreLeadReplayControls({
                       <Path
                         d={linePathD}
                         fill="none"
-                        stroke={primaryDark}
+                        stroke={primaryStrong}
                         strokeWidth={4}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -234,7 +234,7 @@ export function ScoreLeadReplayControls({
                       cy={currentPointY}
                       r={4}
                       fill={foreground}
-                      stroke={primaryDark}
+                      stroke={primaryStrong}
                       strokeWidth={4}
                     />
                   </Svg>
@@ -252,18 +252,18 @@ export function ScoreLeadReplayControls({
                 onValueChange={onSliderChange}
                 minimumTrackTintColor={
                   !(showScoreLeadGraph && hasAnalysis)
-                    ? (primaryDark as string)
+                    ? (primaryStrong as string)
                     : "transparent"
                 }
                 maximumTrackTintColor={
                   !(showScoreLeadGraph && hasAnalysis)
-                    ? (backgroundDark as string)
+                    ? (backgroundStrong as string)
                     : "transparent"
                 }
                 thumbTintColor={
                   !(showScoreLeadGraph && hasAnalysis)
-                    ? (primaryDark as string)
-                    : (primaryDark as string)
+                    ? (primaryStrong as string)
+                    : (primaryStrong as string)
                 }
               />
             </View>
@@ -274,7 +274,7 @@ export function ScoreLeadReplayControls({
         <TouchableOpacity
           style={[
             styles.button,
-            { backgroundColor: isAtEnd ? backgroundDark : primaryDark },
+            { backgroundColor: isAtEnd ? backgroundStrong : primaryStrong },
           ]}
           onPress={onNext}
           disabled={isAtEnd}

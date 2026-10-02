@@ -71,12 +71,12 @@ export function PracticeResultContent({ onClose, boardSize }: Props) {
         <FontAwesome6
           name="fire"
           size={22}
-          color={!isMatching ? colors.textSub : colors.backgroundDark}
+          color={!isMatching ? colors.textSub : colors.backgroundStrong}
         />
         <AppText
           className="text-sm mt-1 text-center"
           style={{
-            color: !isMatching ? colors.textSub : colors.backgroundDark,
+            color: !isMatching ? colors.textSub : colors.backgroundStrong,
           }}
         >
           {t("common.match")}

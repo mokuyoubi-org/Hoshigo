@@ -45,7 +45,7 @@ export function LanguageModal({ onClose }: Props) {
     <ModalShell
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
       onClose={onClose}
       size="md"
       contentPadding={16}
@@ -54,7 +54,7 @@ export function LanguageModal({ onClose }: Props) {
         {t("common.language")}
       </AppText>
 
-      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden">
+      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundStrong overflow-hidden">
         {orderedLanguages.map(({ code, labelKey }, index) => (
           <React.Fragment key={code}>
             <TouchableOpacity

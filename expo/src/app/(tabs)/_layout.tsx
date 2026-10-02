@@ -17,19 +17,11 @@ const TabIcon = ({
   focused: boolean;
 }) => {
   return (
-    <View className="w-11 h-9 items-center justify-center">
+    <View className="items-center justify-center">
       {focused && (
-        <View className="absolute w-12 h-8 rounded-full bg-backgroundDark" />
+        <View className="absolute w-12 h-12 rounded-full bg-backgroundStrong" />
       )}
-      <View
-        className={
-          focused
-            ? "items-center justify-center"
-            : "items-center justify-center w-10 h-8"
-        }
-      >
-        {icon}
-      </View>
+      {icon}
     </View>
   );
 };
@@ -54,7 +46,7 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: colors.primaryDark,
+          tabBarActiveTintColor: colors.primaryStrong,
           tabBarInactiveTintColor: colors.primary,
           // 💡 Webでは標準ボタン（undefined）にしてリロードを防止
           // ネイティブ（Android等）では Pressable を使ってリップルを非表示にする

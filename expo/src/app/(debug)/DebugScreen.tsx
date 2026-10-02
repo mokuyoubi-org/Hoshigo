@@ -1,6 +1,6 @@
 // (debug)/DebugScreen.tsx
 // デバッグしたいコンポーネント用のページ。
-import LoadingModal from "@/src/active/components/modals/LoadingModal";
+import { LoginModal } from "@/src/active/components/modals/LoginModal";
 import React from "react";
 import { View } from "react-native";
 
@@ -24,8 +24,8 @@ export default function DebugScreen() {
       {/* <VersionModal onClose={()=>{}}/> */}
       {/* <UpdateModal kind="reload" /> */}
       {/* <LogoutModal onCancel={()=>{}}  onConfirm={()=>{}} /> */}
-      <LoadingModal />
-
+      {/* <LoadingModal /> */}
+      <LoginModal visible={true} onClose={() => {}} />
       {/* <GameStartModal
         blackPlayer={{ ratingOrRank: 0, username: "", iconIndex: 0 }}
         whitePlayer={{ ratingOrRank: 0, username: "", iconIndex: 0 }}

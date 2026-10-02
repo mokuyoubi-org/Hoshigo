@@ -12,7 +12,7 @@ import {
 import { ModalShell } from "ui-atoms";
 import { useColors } from "../../hooks/useTheme";
 import { AppText } from "../common/AppText";
-import { RankProgressBar } from "../common/RankProgressBar";
+import { RankGauge } from "../RankGauge";
 
 type Props = {
   visible: boolean;
@@ -62,145 +62,115 @@ export default function RankInfoModal({ visible, onClose, rankInfo }: Props) {
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       {/* 📌【固定①】ヘッダー */}
       <View className="w-full flex-row justify-between items-center mb-4">
         <AppText className="text-xl tracking-wide text-text">
-          {t("RankInfoModal.title")}
-        </AppText>
-      </View>
-
-      {/* 📌【固定②】現在のくみ */}
-      <View className="w-full rounded-3xl p-4 items-center mb-4 bg-foreground border-2 border-backgroundDark">
-        <AppText
-          className="text-4xl m-2"
-          style={{
-            color: colors[rankInfo.color as keyof typeof colors] || colors.text,
-          }}
-        >
-          {rating}
-        </AppText>
-
-        {rankInfo.next && (
-          <AppText className="text-sm text-textSub">
-            {t("RankInfoModal.remaining", {
-              nextRank: rankInfo.next.name,
-              rating: rankInfo.next.ratingNeeded,
-            })}
-          </AppText>
-        )}
-      </View>
-
-      {/* 🌀【割合高さスクロール】端末高さの 30%（0.3）をセットした */}
-      <View className="w-full mb-3">
-        <AppText className="text-sm tracking-wider mb-2.5 text-textSub">
           {t("RankInfoModal.allRank")}
         </AppText>
+      </View>
 
-        <ScrollView
-          className="w-full rounded-3xl bg-foreground border-2 border-backgroundDark"
-          style={{ height: windowHeight * 0.45 }}
-          showsVerticalScrollIndicator
-        >
-          {colorBundles.map((bundle) => {
-            const bundleColor =
-              colors[bundle.color as keyof typeof colors] || colors.text;
+      <ScrollView
+        className="w-full rounded-3xl bg-foreground border-2 border-backgroundStrong"
+        style={{ height: windowHeight * 0.6 }}
+        showsVerticalScrollIndicator
+      >
+        {colorBundles.map((bundle) => {
+          const bundleColor =
+            colors[bundle.color as keyof typeof colors] || colors.text;
 
-            const tierCount = bundle.indices.length;
-            const rankItems = bundle.indices.map((i) => RANKS[i]);
+          const tierCount = bundle.indices.length;
+          const rankItems = bundle.indices.map((i) => RANKS[i]);
 
-            const bundleStart = rankItems[0]?.minRating ?? 0;
-            const nextRank =
-              RANKS[bundle.indices[bundle.indices.length - 1] + 1];
-            const bundleEnd = nextRank?.minRating ?? null;
+          const bundleStart = rankItems[0]?.minRating ?? 0;
+          const nextRank = RANKS[bundle.indices[bundle.indices.length - 1] + 1];
+          const bundleEnd = nextRank?.minRating ?? null;
 
-            const boundaryRating = [
-              ...rankItems.map((g) => g.minRating),
-              bundleEnd,
-            ];
+          const boundaryRating = [
+            ...rankItems.map((g) => g.minRating),
+            bundleEnd,
+          ];
 
-            const isPastBundle = bundleEnd !== null && rating >= bundleEnd;
-            const isFutureBundle = rating < bundleStart;
+          const isPastBundle = bundleEnd !== null && rating >= bundleEnd;
+          const isFutureBundle = rating < bundleStart;
 
-            let fillFraction = 0;
-            if (isPastBundle) {
-              fillFraction = 1;
-            } else if (isFutureBundle) {
-              fillFraction = 0;
-            } else {
-              const currentSubTierIndex = rankItems.findIndex((rank, idx) => {
-                const nextMin = rankItems[idx + 1]?.minRating ?? bundleEnd;
-                return nextMin === null || rating < nextMin;
-              });
+          let fillFraction = 0;
+          if (isPastBundle) {
+            fillFraction = 1;
+          } else if (isFutureBundle) {
+            fillFraction = 0;
+          } else {
+            const currentSubTierIndex = rankItems.findIndex((rank, idx) => {
+              const nextMin = rankItems[idx + 1]?.minRating ?? bundleEnd;
+              return nextMin === null || rating < nextMin;
+            });
 
-              if (currentSubTierIndex !== -1) {
-                const currentSubRank = rankItems[currentSubTierIndex];
-                const nextMinRating =
-                  rankItems[currentSubTierIndex + 1]?.minRating ?? bundleEnd;
+            if (currentSubTierIndex !== -1) {
+              const currentSubRank = rankItems[currentSubTierIndex];
+              const nextMinRating =
+                rankItems[currentSubTierIndex + 1]?.minRating ?? bundleEnd;
 
-                const tierStart = currentSubRank.minRating;
-                const tierEnd = nextMinRating;
+              const tierStart = currentSubRank.minRating;
+              const tierEnd = nextMinRating;
 
-                let subTierFraction = 1;
-                if (tierEnd !== null && tierEnd > tierStart) {
-                  subTierFraction = Math.min(
-                    Math.max((rating - tierStart) / (tierEnd - tierStart), 0),
-                    1,
-                  );
-                }
-
-                fillFraction =
-                  (currentSubTierIndex + subTierFraction) / tierCount;
+              let subTierFraction = 1;
+              if (tierEnd !== null && tierEnd > tierStart) {
+                subTierFraction = Math.min(
+                  Math.max((rating - tierStart) / (tierEnd - tierStart), 0),
+                  1,
+                );
               }
+
+              fillFraction =
+                (currentSubTierIndex + subTierFraction) / tierCount;
             }
+          }
 
-            return (
-              <TouchableOpacity
-                key={bundle.color}
-                activeOpacity={1}
-                className="px-4 py-4 w-full"
-              >
-                <View className="w-full h-8 rounded overflow-hidden mb-2 relative">
-                  <RankProgressBar
-                    progressPercent={fillFraction * 100}
-                    color={bundleColor}
-                    animationType="none"
-                    height={28}
-                    style={{ backgroundColor: `${bundleColor}44` }}
-                  />
+          return (
+            <TouchableOpacity
+              key={bundle.color}
+              activeOpacity={1}
+              className="px-4 py-4 w-full"
+            >
+              <View className="w-full h-8 rounded overflow-hidden mb-2 relative">
+                <RankGauge
+                  progress={fillFraction * 100}
+                  color={bundleColor}
+                  trackColor={`${bundleColor}44`}
+                  height={32}
+                />
 
-                  <View className="flex-row absolute inset-0 items-center">
-                    {rankItems.map((rank, i) => (
-                      <View
-                        key={i}
-                        className="flex-1 items-center justify-center"
+                <View className="flex-row absolute inset-0 items-center">
+                  {rankItems.map((rank, i) => (
+                    <View
+                      key={i}
+                      className="flex-1 items-center justify-center"
+                    >
+                      <AppText
+                        className="text-sm tracking-wider"
+                        style={{
+                          color: bundleColor,
+                        }}
                       >
-                        <AppText
-                          className="text-sm tracking-wider"
-                          style={{
-                            color: bundleColor,
-                          }}
-                        >
-                          {t(rank.nameKey)}
-                        </AppText>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                <View className="flex-row justify-between">
-                  {boundaryRating.map((p, i) => (
-                    <AppText key={i} className="text-sm text-textSub">
-                      {p !== null && p}
-                    </AppText>
+                        {t(rank.nameKey)}
+                      </AppText>
+                    </View>
                   ))}
                 </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+              </View>
+
+              <View className="flex-row justify-between">
+                {boundaryRating.map((p, i) => (
+                  <AppText key={i} className="text-sm text-textSub">
+                    {p !== null && p}
+                  </AppText>
+                ))}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </ModalShell>
   );
 }

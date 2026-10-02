@@ -13,8 +13,8 @@ import { useKVStorage } from "storage-kit";
 import { ModalShell } from "ui-atoms";
 import { useProfile } from "../../contexts/ProfileContexts";
 import { useColors } from "../../hooks/useTheme";
+import { AvatarWithPass } from "../avatar/AvatarWithPass";
 import { AppText } from "../common/AppText";
-import { AvatarWithPass } from "../common/AvatarWithPass";
 
 type PlayerInfo = {
   username: string;
@@ -84,7 +84,7 @@ export const GameStartModal = ({
     <ModalShell
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
       size="sm"
       onClose={onClose}
     >
@@ -167,7 +167,7 @@ export const GameStartModal = ({
         </View>
       </View>
 
-      <View className="bg-foreground mt-4 px-4 py-2 rounded-xl w-full items-center border-2 border-backgroundDark">
+      <View className="bg-foreground mt-4 px-4 py-2 rounded-xl w-full items-center border-2 border-backgroundStrong">
         <AppText className="text-sm text-textSub mb-0.5">
           {t("MatchType.handicap")}
         </AppText>

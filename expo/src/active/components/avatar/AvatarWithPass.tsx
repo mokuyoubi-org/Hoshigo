@@ -42,7 +42,7 @@ export const AvatarWithPass = ({
           isLeft={isLeft}
           textColor={colors.text}
           backgroundColor={colors.foreground}
-          borderColor={colors.backgroundDark}
+          borderColor={colors.backgroundStrong}
           passText={t("common.pass")}
           fontFamily={fontFamily}
         />

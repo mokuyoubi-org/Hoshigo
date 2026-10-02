@@ -11,14 +11,14 @@ export const TitleStones = () => {
         className="w-36 h-36 rounded-full absolute -translate-x-9 -translate-y-3"
         style={{
           backgroundColor: colors.primaryDark,
-          boxShadow: `0px 6px ${colors.backgroundDark}`,
+          boxShadow: `0px 6px ${colors.backgroundStrong}`,
         }}
       />
       <View
         className="w-36 h-36 rounded-full absolute translate-x-9 translate-y-3"
         style={{
           backgroundColor: colors.whiteStone,
-          boxShadow: `0px 6px ${colors.backgroundDark}`,
+          boxShadow: `0px 6px ${colors.backgroundStrong}`,
         }}
       />
     </View>

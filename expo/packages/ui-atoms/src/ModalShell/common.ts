@@ -43,6 +43,6 @@ export type ModalShellProps = {
   backgroundColor: ColorValue;
   borderColor: ColorValue;
   overlayColor: ColorValue;
-  size?: ModalSize;
+  size: ModalSize;
   contentPadding?: number;
 };

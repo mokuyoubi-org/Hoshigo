@@ -1,6 +1,6 @@
 import { MainButton } from "@/src/active/components/buttons/MainButton";
-import { MainTitle } from "@/src/active/components/common/MainTitle/MainTitle";
-import { Header } from "@/src/active/components/headers/Header";
+import { Header } from "@/src/active/components/common/Header";
+import { MainTitle } from "@/src/active/components/mainTitle/MainTitle";
 import RankingsModal from "@/src/active/components/modals/RankingsModal";
 import { RuleModal } from "@/src/active/components/modals/RuleModal";
 
@@ -59,7 +59,7 @@ export default function HomeScreen() {
             <View style={{ pointerEvents: isMatching ? "none" : "auto" }}>
               {isBoardSizeLoaded && (
                 <SegmentedControl
-                  trackBackgroundColor={colors.backgroundDark}
+                  trackBackgroundColor={colors.backgroundStrong}
                   activeSegmentBackgroundColor={colors.foreground}
                   activeTextColor={colors.text}
                   inactiveTextColor={colors.textSub}
@@ -77,7 +77,7 @@ export default function HomeScreen() {
             icon={<AntDesign name="crown" />}
             iconColor={colors.primary}
             backgroundColor={colors.foreground}
-            borderColor={colors.backgroundDark}
+            borderColor={colors.backgroundStrong}
             onPress={() =>
               show(<RankingsModal visible={true} onClose={hide} />)
             }
@@ -87,7 +87,7 @@ export default function HomeScreen() {
             icon={<FontAwesome6 name="question" />}
             iconColor={colors.primary}
             backgroundColor={colors.foreground}
-            borderColor={colors.backgroundDark}
+            borderColor={colors.backgroundStrong}
             onPress={() => show(<RuleModal visible={true} onClose={hide} />)}
           />
         </Header>

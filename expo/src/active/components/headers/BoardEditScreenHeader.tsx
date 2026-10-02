@@ -7,8 +7,8 @@ import { BLACK, Color, MatchType } from "go-core";
 import React from "react";
 import { View } from "react-native";
 import { useColors } from "../../hooks/useTheme";
+import { AvatarWithPass } from "../avatar/AvatarWithPass";
 import { AppText } from "../common/AppText";
-import { AvatarWithPass } from "../common/AvatarWithPass";
 
 // アバターの大きさ
 const AVATAR_SIZE = 60;
@@ -67,7 +67,7 @@ export const BoardEditScreenHeader = React.memo(function BoardEditScreenHeader({
     isBlack ? colors.whiteStone : colors.primaryDark;
   // 帯が細すぎて数字がはみ出すときは、下にある相手側の帯の色に合わせる
   const leftNumberColor =
-    leftPct >= 10 ? textOnBar(leftIsBlack) : textOnBar(rightIsBlack);
+    leftPct >= 3 ? textOnBar(leftIsBlack) : textOnBar(rightIsBlack);
   const rightNumberColor =
     rightPct >= 10 ? textOnBar(rightIsBlack) : textOnBar(leftIsBlack);
 

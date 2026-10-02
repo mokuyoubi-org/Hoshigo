@@ -2,9 +2,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleProp, View, ViewStyle } from "react-native";
-import { useColors } from "../../hooks/useTheme";
+import { useColors } from "../hooks/useTheme";
 
-export type AnimationType = "none" | "simple" | "transition";
+export type AnimationType = "none" | "simple";
 
 export type RankProgressBarProps = {
   /** ゲージの進捗率（0〜100） */
@@ -18,7 +18,6 @@ export type RankProgressBarProps = {
   /** 外枠の追加スタイル（オプション） */
   style?: StyleProp<ViewStyle>;
 
-  // 🌟 飛び級（transition）モード用オプション
   /** 遷移前の進捗率 (0〜100) */
   beforePercent?: number;
   /** 遷移後の進捗率 (0〜100) */
@@ -46,7 +45,7 @@ export function RankProgressBar({
   onStepChange,
   onAnimationEnd,
 }: RankProgressBarProps) {
-   const colors = useColors();
+  const colors = useColors();
   const [progressAnim] = useState(() => new Animated.Value(0));
 
   const onStepChangeRef = useRef(onStepChange);
@@ -71,66 +70,6 @@ export function RankProgressBar({
       return;
     }
 
-    // 3. 昇降級・飛び級
-    if (animationType === "transition") {
-      const isRankChanged = rankIndexBefore !== rankIndexAfter;
-
-      if (!isRankChanged) {
-        progressAnim.setValue(beforePercent);
-        Animated.timing(progressAnim, {
-          toValue: afterPercent,
-          duration: 1000,
-          useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
-        }).start(() => {
-          onAnimationEnd?.();
-        });
-        return;
-      }
-
-      const isRankUp = rankIndexAfter > rankIndexBefore;
-      const stepDiff = Math.abs(rankIndexAfter - rankIndexBefore);
-      const totalSteps = stepDiff;
-
-      const playStepAnimation = (step: number) => {
-        if (step > totalSteps) {
-          onAnimationEnd?.();
-          return;
-        }
-
-        const stepTargetRankIndex = isRankUp
-          ? rankIndexBefore + step
-          : rankIndexBefore - step;
-
-        onStepChangeRef.current?.(stepTargetRankIndex);
-
-        if (step === 0) {
-          progressAnim.setValue(beforePercent);
-          Animated.timing(progressAnim, {
-            toValue: isRankUp ? 100 : 0,
-            duration: 500,
-            useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
-          }).start(() => playStepAnimation(step + 1));
-        } else if (step < totalSteps) {
-          progressAnim.setValue(isRankUp ? 0 : 100);
-          Animated.timing(progressAnim, {
-            toValue: isRankUp ? 100 : 0,
-            duration: 450,
-            useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
-          }).start(() => playStepAnimation(step + 1));
-        } else {
-          progressAnim.setValue(isRankUp ? 0 : 100);
-          Animated.timing(progressAnim, {
-            toValue: afterPercent,
-            duration: 600,
-            useNativeDriver: false, // ⚠️widthを変更するため常にfalseにする
-          }).start(() => {
-            onAnimationEnd?.();
-          });
-        }
-      };
-
-      playStepAnimation(0);
-    }
   }, [
     progressPercent,
     animationType,

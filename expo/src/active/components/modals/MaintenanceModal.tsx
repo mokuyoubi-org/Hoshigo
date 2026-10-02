@@ -16,13 +16,13 @@ export function MaintenanceModal({ message }: { message: string | null }) {
       size="md"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <AppText className="text-base color-text text-center">
         {t("MaintenanceModal.defaultMessage")}
       </AppText>
       {hasMessage && (
-        <View className="bg-foreground rounded-xl mt-4 p-4 w-full border-2 border-backgroundDark">
+        <View className="bg-foreground rounded-xl mt-4 p-4 w-full border-2 border-backgroundStrong">
           <AppText className="text-base color-text text-center">
             {message}
           </AppText>

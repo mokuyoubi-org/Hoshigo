@@ -19,7 +19,7 @@ import {
 export function ModalShell({
   children,
   onClose,
-  size = "md",
+  size,
   style,
   dismissKeyboardOnPress = true,
   backgroundColor,
@@ -78,7 +78,7 @@ export function ModalShell({
       <Animated.View
         style={[
           styles.card,
-          { backgroundColor, padding: contentPadding , borderColor},
+          { backgroundColor, padding: contentPadding, borderColor },
           { transform: [{ scale: scaleAnim }] },
           { width: cardWidth, maxHeight: cardMaxHeight },
           style,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     zIndex: 50,
     borderRadius: 20,
     borderWidth: 4,
-    borderColor: "#e1e8ed", // backgroundDark
+    borderColor: "#e1e8ed", // backgroundStrong
   },
   fullWidth: {
     width: "100%",

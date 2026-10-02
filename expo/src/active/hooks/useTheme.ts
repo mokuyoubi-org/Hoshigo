@@ -10,7 +10,7 @@ export type ThemeMode = "system" | "light" | "dark";
 // 🎛️ 設定値(system/light/dark)の読み書き。ThemeModalが使う
 export function useThemeMode() {
   const { value, setValue, isLoaded } = useKVStorage<ThemeMode>(
-    "theme.mode",
+    "global.mode",
     "light",
   );
   return { mode: value, setMode: setValue, isLoaded };
@@ -26,7 +26,7 @@ export function useApplyTheme(): boolean {
   useEffect(() => {
     if (!isLoaded) return;
 
-    // requestAnimationFrame の代わりに setTimeout でマウント完了後に非同期で実行するにゃ！
+    // requestAnimationFrame の代わりに setTimeout でマウント完了後に非同期で実行する
     const timer = setTimeout(() => {
       setColorScheme(mode);
       setApplied(true);

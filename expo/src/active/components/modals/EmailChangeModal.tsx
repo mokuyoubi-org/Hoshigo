@@ -51,7 +51,7 @@ export function EmailChangeModal({ visible, onClose }: Props) {
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -79,7 +79,7 @@ export function EmailChangeModal({ visible, onClose }: Props) {
                 <AppText className="text-lg mb-1.5 tracking-wide text-text">
                   {t("EmailChange.newEmail")}
                 </AppText>
-                <View className="rounded-xl border border-2 bg-foreground border-primaryDark">
+                <View className="rounded-xl border border-2 bg-foreground border-primaryStrong">
                   <AppTextInput
                     className="h-12 px-4 text-lg text-text"
                     placeholder={"example@email.com"}
@@ -104,7 +104,7 @@ export function EmailChangeModal({ visible, onClose }: Props) {
                 <TouchableOpacity
                   className={`h-12 rounded-xl justify-center items-center ${
                     !canSendEmail || loading
-                      ? "bg-primaryDark"
+                      ? "bg-primaryStrong"
                       : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
@@ -121,7 +121,7 @@ export function EmailChangeModal({ visible, onClose }: Props) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}
@@ -146,7 +146,7 @@ export function EmailChangeModal({ visible, onClose }: Props) {
                 <AppText className="text-lg mb-1.5 tracking-wide text-text">
                   {t("EmailChange.otpLabel")}
                 </AppText>
-                <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+                <View className="rounded-xl border bg-foreground border-2 border-primaryStrong">
                   <AppTextInput
                     className="h-12 px-4 text-2xl text-center text-text"
                     placeholder={"12345678"}
@@ -170,7 +170,7 @@ export function EmailChangeModal({ visible, onClose }: Props) {
                 <TouchableOpacity
                   className={`h-12 rounded-xl justify-center items-center ${
                     !canVerifyOtp || loading
-                      ? "bg-primaryDark"
+                      ? "bg-primaryStrong"
                       : "bg-blackStone"
                   }`}
                   activeOpacity={0.8}
@@ -190,7 +190,7 @@ export function EmailChangeModal({ visible, onClose }: Props) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
+                  className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
                   onPress={onClose}
                   disabled={loading}
                   activeOpacity={0.8}

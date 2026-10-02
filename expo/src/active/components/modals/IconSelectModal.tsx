@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { ModalShell } from "ui-atoms";
 import { useColors } from "../../hooks/useTheme";
-import { AppImage } from "../AppImage";
+import { AppImage } from "../common/AppImage";
 import { AppText } from "../common/AppText";
 
 type Props = {
@@ -63,7 +63,7 @@ export default function IconSelectModal({
       size="md"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <View className="flex-row justify-between items-center mb-6">
         <AppText className="text-xl text-text">
@@ -92,7 +92,7 @@ export default function IconSelectModal({
                   className={`bg-foreground rounded-3xl justify-center items-center relative border-2 ${
                     isSelected
                       ? "border-primary border-4"
-                      : "border-backgroundDark border-2"
+                      : "border-backgroundStrong border-2"
                   }`}
                   style={{
                     width: iconSize,

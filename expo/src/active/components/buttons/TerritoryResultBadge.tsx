@@ -4,13 +4,17 @@
  * - 計算中 → くるくる（押せない）
  * - 結果あり → 電卓アイコン + 結果テキスト（タップで盤面に地を表示）
  *     背景 primary     = 未確定（終局前の暫定表示）
- *     背景 primaryDark = 確定（終局した局面）
+ *     背景 primaryStrong = 確定（終局した局面）
  * - 結果なし → 何も表示しない
  */
 
-import { FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useColors } from "../../hooks/useTheme";
 import { AppText } from "../common/AppText";
 
@@ -34,7 +38,7 @@ export const TerritoryResultBadge = ({
           styles.badge,
           {
             backgroundColor: colors.foreground,
-            borderColor: colors.backgroundDark,
+            borderColor: colors.backgroundStrong,
           },
         ]}
       >
@@ -50,7 +54,9 @@ export const TerritoryResultBadge = ({
       style={[
         styles.badge,
         {
-          backgroundColor: result.isFinal ? colors.primaryDark : colors.primary,
+          backgroundColor: result.isFinal
+            ? colors.primaryStrong
+            : colors.primary,
         },
       ]}
       activeOpacity={0.7}

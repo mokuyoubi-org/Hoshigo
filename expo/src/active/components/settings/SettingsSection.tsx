@@ -1,7 +1,7 @@
 import React from "react";
 import { View } from "react-native";
-import { AppText } from "./AppText";
-import { Divider } from "./Divider";
+import { AppText } from "../common/AppText";
+import { Divider } from "../common/Divider";
 
 type SettingsSectionProps = {
   title: string;
@@ -16,7 +16,7 @@ export function SettingsSection({ title, children }: SettingsSectionProps) {
       <AppText className="text-sm uppercase tracking-widest text-textSub mb-2.5 ml-1">
         {title}
       </AppText>
-      <View className="bg-foreground rounded-xl border-2 border-backgroundDark w-full overflow-hidden">
+      <View className="bg-foreground rounded-xl border-2 border-backgroundStrong w-full overflow-hidden">
         {items.map((child, index) => (
           <React.Fragment key={index}>
             {child}

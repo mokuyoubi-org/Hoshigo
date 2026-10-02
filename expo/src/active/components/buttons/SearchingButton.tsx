@@ -4,10 +4,9 @@ import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { boardSizeToText } from "@/src/stable/logics/boardSizeToText";
 import React, { useMemo, useState } from "react";
-import { FloatingToast, useTransientVisibility } from "ui-atoms";
+import { DotAnimation, FloatingToast, useTransientVisibility } from "ui-atoms";
 import { useAppFont } from "../../hooks/useAppFont";
 import { useColors } from "../../hooks/useTheme";
-import { DotAnimation } from "ui-atoms";
 
 export function SearchingButton() {
   const colors = useColors();
@@ -44,15 +43,13 @@ export function SearchingButton() {
   return (
     <FloatingToast
       visible={shouldRender}
-      label={
-        <DotAnimation text={baseText} />
-      }
+      label={<DotAnimation text={baseText} />}
       busy={frozen.isCanceling}
       onAction={handleCancel}
       fadeAnim={fadeAnim}
       slideAnim={slideAnim}
       backgroundColor={colors.background}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
       textColor={colors.text}
       textSubColor={colors.textSub}
       accentColor={colors.primary}

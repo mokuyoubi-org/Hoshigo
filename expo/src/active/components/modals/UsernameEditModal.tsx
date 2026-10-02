@@ -97,7 +97,7 @@ export default function UsernameEditModal({
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -118,7 +118,7 @@ export default function UsernameEditModal({
               <AppText className="text-sm mb-2 tracking-wide text-text">
                 {t("UsernameEditModal.placeholder")}
               </AppText>
-              <View className="rounded-xl border bg-foreground border-2 border-primaryDark">
+              <View className="rounded-xl border bg-foreground border-2 border-primaryStrong">
                 <AppTextInput
                   className="h-12 px-4 text-base text-text"
                   placeholder={t("UsernameEditModal.placeholder")}
@@ -145,7 +145,7 @@ export default function UsernameEditModal({
             <View className="gap-2 mt-2">
               <TouchableOpacity
                 className={`h-12 rounded-xl justify-center items-center ${
-                  isSaveDisabled ? "bg-primaryDark" : "bg-blackStone"
+                  isSaveDisabled ? "bg-primaryStrong" : "bg-blackStone"
                 }`}
                 activeOpacity={0.8}
                 onPress={handleSubmit}
@@ -161,7 +161,7 @@ export default function UsernameEditModal({
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
+                className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
                 onPress={onClose}
                 disabled={loading}
                 activeOpacity={0.8}

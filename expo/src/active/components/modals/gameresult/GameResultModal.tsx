@@ -36,7 +36,7 @@ export function GameResultModal(props: Props) {
       size="lg"
       backgroundColor={colors.foreground}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <View className="w-full items-center justify-center">
         {resultComment && (

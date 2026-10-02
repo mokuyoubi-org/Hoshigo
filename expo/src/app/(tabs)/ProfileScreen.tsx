@@ -12,11 +12,11 @@ import React, { useEffect } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Avatar } from "@/src/active/components/avatar/Avatar";
 import { GuestNoticeCard } from "@/src/active/components/cards/GuestNoticeCard";
 import { RankCard } from "@/src/active/components/cards/RankCard";
 import { AppText } from "@/src/active/components/common/AppText";
-import { Avatar } from "@/src/active/components/common/Avatar";
-import { Header } from "@/src/active/components/headers/Header";
+import { Header } from "@/src/active/components/common/Header";
 import IconSelectModal from "@/src/active/components/modals/IconSelectModal";
 import { LoginModal } from "@/src/active/components/modals/LoginModal";
 import RankInfoModal from "@/src/active/components/modals/RankInfoModal";
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
         <Header
           left={
             <SegmentedControl
-              trackBackgroundColor={colors.backgroundDark}
+              trackBackgroundColor={colors.backgroundStrong}
               activeSegmentBackgroundColor={colors.foreground}
               activeTextColor={colors.text}
               inactiveTextColor={colors.textSub}
@@ -75,7 +75,7 @@ export default function ProfileScreen() {
               disabled={isMatching}
               iconColor={colors.primary} // テキストの色
               backgroundColor={colors.foreground} // 背景色
-              borderColor={colors.backgroundDark} // 枠線の色
+              borderColor={colors.backgroundStrong} // 枠線の色
               onPress={() => show(<LoginModal visible={true} onClose={hide} />)}
             />
           )}
@@ -84,7 +84,7 @@ export default function ProfileScreen() {
             icon={<FontAwesome6 name="gear" />}
             iconColor={colors.primary}
             backgroundColor={colors.foreground}
-            borderColor={colors.backgroundDark}
+            borderColor={colors.backgroundStrong}
             onPress={() => {
               router.push("/SettingsScreen");
             }}
@@ -124,7 +124,7 @@ export default function ProfileScreen() {
                 />
                 <View
                   className={`absolute bottom-1 right-1 w-7 h-7 rounded-full border-2 border-foreground justify-center items-center ${
-                    isMatching ? "bg-backgroundDark" : "bg-primary"
+                    isMatching ? "bg-backgroundStrong" : "bg-primary"
                   }`}
                 >
                   <MaterialIcons
@@ -171,12 +171,14 @@ export default function ProfileScreen() {
                     color={colors.primary} // ブランドカラー（青など）で統一
                   />
                 )}
-                {/* ペンアイコンはただの飾りにしたにゃ！ */}
+                {/* ペンアイコン(ただの飾り) */}
                 <View className="p-1">
                   <MaterialIcons
                     name="edit"
                     size={20}
-                    color={!isMatching ? colors.primary : colors.backgroundDark}
+                    color={
+                      !isMatching ? colors.primary : colors.backgroundStrong
+                    }
                   />
                 </View>
               </TouchableOpacity>
@@ -201,7 +203,7 @@ export default function ProfileScreen() {
 
             {/* 棋譜 */}
             <TouchableOpacity
-              className="bg-foreground rounded-3xl border-2 border-backgroundDark p-4 flex-row justify-between items-center"
+              className="bg-foreground rounded-3xl border-2 border-backgroundStrong p-4 flex-row justify-between items-center"
               activeOpacity={0.7}
               onPress={() => {
                 router.push("/RecordsScreen");

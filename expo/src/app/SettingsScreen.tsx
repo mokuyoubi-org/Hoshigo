@@ -14,15 +14,15 @@ import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ToggleSwitch } from "ui-atoms";
 import { AppText } from "../active/components/common/AppText";
-import { SettingsRow } from "../active/components/common/SettingsRow";
-import { SettingsSection } from "../active/components/common/SettingsSection";
 import { DoubleTapModal } from "../active/components/modals/DoubleTapModal";
 import { EmailChangeModal } from "../active/components/modals/EmailChangeModal";
 import { LanguageModal } from "../active/components/modals/LanguageModal";
 import { LoginModal } from "../active/components/modals/LoginModal";
-import { ThemeModal } from "../active/components/modals/ThemeModal";
 import { VersionModal } from "../active/components/modals/VersionModal";
+import { SettingsRow } from "../active/components/settings/SettingsRow";
+import { SettingsSection } from "../active/components/settings/SettingsSection";
 import { useColors, useThemeMode } from "../active/hooks/useTheme";
+import { ThemeModal } from "../active/components/modals/ThemeModal";
 
 export default function SettingsScreen() {
   const t = useTranslation();
@@ -126,7 +126,7 @@ export default function SettingsScreen() {
                   onToggle={handleToggleBotMatch}
                   disabled={isMatching}
                   backgroundOnColor={colors.primary}
-                  backgroundOffColor={colors.backgroundDark}
+                  backgroundOffColor={colors.backgroundStrong}
                   toggleColor={colors.foreground}
                 />
               }
@@ -149,7 +149,7 @@ export default function SettingsScreen() {
                     value={isSoundEnabled}
                     onToggle={(val) => setIsSoundEnabled(val)}
                     backgroundOnColor={colors.primary}
-                    backgroundOffColor={colors.backgroundDark}
+                    backgroundOffColor={colors.backgroundStrong}
                     toggleColor={colors.foreground}
                   />
                 ) : null
@@ -168,7 +168,7 @@ export default function SettingsScreen() {
               }
             />
 
-            {/* <SettingsRow
+            <SettingsRow
               label={t("theme.theme")}
               onPress={() => show(<ThemeModal onClose={hide} />)}
               rightElement={
@@ -176,7 +176,7 @@ export default function SettingsScreen() {
                   {t(`theme.${mode}`)}
                 </AppText>
               }
-            /> */}
+            />
           </SettingsSection>
 
           {/* 情報セクション */}
@@ -199,7 +199,9 @@ export default function SettingsScreen() {
             {!isAnonymous && (
               <TouchableOpacity
                 className={`h-14 w-full rounded-xl justify-center items-center bg-foreground ${
-                  isDisabled ? "border-backgroundDark" : "border-primaryDark"
+                  isDisabled
+                    ? "border-backgroundStrong"
+                    : "border-primaryStrong"
                 } border-2`}
                 disabled={loading}
                 activeOpacity={0.8}
@@ -217,7 +219,7 @@ export default function SettingsScreen() {
               >
                 <AppText
                   className={`text-lg ${
-                    isDisabled ? "text-backgroundDark" : "text-primaryDark"
+                    isDisabled ? "text-backgroundStrong" : "text-primaryStrong"
                   } tracking-wide`}
                 >
                   {t("common.logout")}

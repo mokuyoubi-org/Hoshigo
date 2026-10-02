@@ -222,7 +222,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         bgColor={colors.background}
         textColor={colors.text}
         spinnerColor={colors.primary}
-        spinnerTrackColor={colors.backgroundDark}
+        spinnerTrackColor={colors.backgroundStrong}
         lang={lang}
       />
       {children}

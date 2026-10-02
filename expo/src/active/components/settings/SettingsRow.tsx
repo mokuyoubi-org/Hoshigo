@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { useColors } from "../../hooks/useTheme";
-import { AppText } from "./AppText";
+import { AppText } from "../common/AppText";
 
 type SettingsRowProps = {
   label: string;
@@ -16,7 +16,7 @@ export function SettingsRow({
   rightElement,
 }: SettingsRowProps) {
   const colors = useColors();
-  // onPressがあるときは、rightElementがあってもなくても右矢印を表示するにゃ！
+  // onPressがあるときは、rightElementがあってもなくても右矢印を表示する
   const right = (
     <View className="flex-row items-center gap-2">
       {rightElement}

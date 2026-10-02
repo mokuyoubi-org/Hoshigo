@@ -47,7 +47,7 @@ export function DeleteModal({ username, onConfirm, onCancel }: Props) {
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -67,7 +67,7 @@ export function DeleteModal({ username, onConfirm, onCancel }: Props) {
           {t("DeleteModal.confirmLabel", { username })}
         </AppText>
 
-        <View className="rounded-xl border border-2 mb-5 bg-foreground border-primaryDark">
+        <View className="rounded-xl border border-2 mb-5 bg-foreground border-primaryStrong">
           <AppTextInput
             className="h-12 px-4 text-base text-text" // text-baseはテキストの大きさ。fontの種類や太さとは別の話なので消さない
             placeholder={username}
@@ -99,7 +99,7 @@ export function DeleteModal({ username, onConfirm, onCancel }: Props) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="h-12 rounded-xl justify-center items-center bg-backgroundDark"
+            className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
             onPress={handleClose}
             disabled={loading}
             activeOpacity={0.8}

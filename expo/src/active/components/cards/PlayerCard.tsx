@@ -10,8 +10,8 @@ import { Color } from "go-core";
 import React from "react";
 import { View } from "react-native";
 import { useColors } from "../../hooks/useTheme";
+import { AvatarWithPass } from "../avatar/AvatarWithPass";
 import { AppText } from "../common/AppText";
-import { AvatarWithPass } from "../common/AvatarWithPass";
 
 type Props = {
   username: string;
@@ -42,7 +42,7 @@ export function PlayerCard({
 
   return (
     <View
-      className={`w-full items-center gap-2.5 rounded-2xl bg-foreground px-3 py-2 border-2 border-backgroundDark ${
+      className={`w-full items-center gap-2.5 rounded-2xl bg-foreground px-3 py-2 border-2 border-backgroundStrong ${
         isLeft ? "flex-row" : "flex-row-reverse"
       }`}
     >
@@ -87,7 +87,7 @@ export function PlayerCard({
           )}
         </View>
 
-        <View className="shrink-0 px-2 py-0.5 bg-backgroundDark rounded-full">
+        <View className="shrink-0 px-2 py-0.5 bg-backgroundStrong rounded-full">
           <AppText className="text-sm text-textSub">{rank.name}</AppText>
         </View>
       </View>

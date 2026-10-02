@@ -78,7 +78,7 @@ export const RecordCard = ({
       ? colors.success
       : playerWin === false
         ? colors.failure
-        : colors.backgroundDark;
+        : colors.backgroundStrong;
 
   const { iconIndex, username } = useProfile();
 
@@ -124,7 +124,6 @@ export const RecordCard = ({
           playerWin={playerWin}
           matchType={matchType}
           currentIndex={0}
-          showWinRateBar={false}
         />
       </View>
 

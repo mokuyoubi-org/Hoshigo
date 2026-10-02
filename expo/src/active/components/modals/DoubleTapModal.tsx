@@ -40,14 +40,14 @@ export function DoubleTapModal({ isMatching, onClose }: Props) {
       size="md"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
       contentPadding={16}
     >
       <AppText className="text-xl text-text text-center pb-4">
         {t("Settings.doubleTap")}
       </AppText>
 
-      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundDark overflow-hidden">
+      <View className="w-full bg-foreground rounded-xl border-2 border-backgroundStrong overflow-hidden">
         {/* 9路 */}
         <View className="flex-row justify-between items-center px-4 py-3 min-h-12">
           <AppText className="text-lg text-text">
@@ -59,7 +59,7 @@ export function DoubleTapModal({ isMatching, onClose }: Props) {
               onToggle={setDoubleTap9}
               disabled={isMatching}
               backgroundOnColor={colors.primary}
-              backgroundOffColor={colors.backgroundDark}
+              backgroundOffColor={colors.backgroundStrong}
               toggleColor={colors.foreground}
             />
           )}
@@ -78,7 +78,7 @@ export function DoubleTapModal({ isMatching, onClose }: Props) {
               onToggle={setDoubleTap13}
               disabled={isMatching}
               backgroundOnColor={colors.primary}
-              backgroundOffColor={colors.backgroundDark}
+              backgroundOffColor={colors.backgroundStrong}
               toggleColor={colors.foreground}
             />
           )}
@@ -97,7 +97,7 @@ export function DoubleTapModal({ isMatching, onClose }: Props) {
               onToggle={setDoubleTap19}
               disabled={isMatching}
               backgroundOnColor={colors.primary}
-              backgroundOffColor={colors.backgroundDark}
+              backgroundOffColor={colors.backgroundStrong}
               toggleColor={colors.foreground}
             />
           )}

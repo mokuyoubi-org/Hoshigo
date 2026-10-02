@@ -15,8 +15,8 @@ import { useOverlay } from "../../contexts/OverlayContext";
 import { PlayerType } from "../../hooks/practice/usePracticeSession";
 import { usePracticeSetup } from "../../hooks/practice/usePracticeSetup";
 import { useColors } from "../../hooks/useTheme";
+import { Avatar } from "../avatar/Avatar";
 import { AppText } from "../common/AppText";
-import { Avatar } from "../common/Avatar";
 import { AIDownloadModal } from "./AIDownloadModal";
 
 type Props = {
@@ -146,7 +146,7 @@ export function PracticeSetupModal({
     const rankIndex = getRankInfo(assignedPlayer.rating, t).index;
 
     return (
-      <View className="bg-foreground flex-row h-20 rounded-xl border border-backgroundDark bg-background overflow-hidden items-center">
+      <View className="bg-foreground flex-row h-20 rounded-xl border border-backgroundStrong bg-background overflow-hidden items-center">
         {/* 左矢印（固定幅で確保） */}
         <TouchableOpacity
           className="w-10 h-full justify-center items-center"
@@ -206,7 +206,7 @@ export function PracticeSetupModal({
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       {/* 戻るボタン */}
       <View className="flex-row items-center mb-4">
@@ -234,7 +234,9 @@ export function PracticeSetupModal({
             <TouchableOpacity
               key={size}
               className={`bg-foreground flex-1 h-12 rounded-xl border-2 justify-center items-center ${
-                boardSize === size ? "border-primary" : "border-backgroundDark"
+                boardSize === size
+                  ? "border-primary"
+                  : "border-backgroundStrong"
               }`}
               onPress={() => selectBoardSize(size)}
             >
@@ -249,7 +251,7 @@ export function PracticeSetupModal({
         {t("MatchType.handicap")}
       </AppText>
       {isLoaded && (
-        <View className="bg-foreground flex-row h-14 rounded-xl border border-backgroundDark bg-background overflow-hidden mb-4">
+        <View className="bg-foreground flex-row h-14 rounded-xl border border-backgroundStrong bg-background overflow-hidden mb-4">
           <TouchableOpacity
             className="flex-1 flex-row items-center justify-start pl-2"
             onPress={selectPreviousHandicap}
@@ -302,7 +304,7 @@ export function PracticeSetupModal({
       {/* 対局開始ボタン */}
       <TouchableOpacity
         className={`h-12 rounded-2xl justify-center items-center ${
-          isStartDisabled ? "bg-backgroundDark" : "bg-blackStone"
+          isStartDisabled ? "bg-backgroundStrong" : "bg-blackStone"
         }`}
         onPress={onStart}
         disabled={isStartDisabled}

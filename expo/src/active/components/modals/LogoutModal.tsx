@@ -32,7 +32,7 @@ export const LogoutModal = ({ onConfirm, onCancel }: Props) => {
       size="lg"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <View className="w-full flex-row justify-between items-center mb-3">
         <AppText className="text-lg flex-1 text-text text-center">
@@ -43,7 +43,7 @@ export const LogoutModal = ({ onConfirm, onCancel }: Props) => {
       <View className="w-full gap-2 mt-2">
         <TouchableOpacity
           className={`w-full h-12 rounded-xl justify-center items-center ${
-            loading ? "bg-primaryDark" : "bg-blackStone"
+            loading ? "bg-primaryStrong" : "bg-blackStone"
           }`}
           onPress={handleConfirm}
           disabled={loading}
@@ -60,7 +60,7 @@ export const LogoutModal = ({ onConfirm, onCancel }: Props) => {
 
         <TouchableOpacity
           className={`w-full h-12 rounded-xl justify-center items-center ${
-            loading ? "bg-background" : "bg-backgroundDark"
+            loading ? "bg-background" : "bg-backgroundStrong"
           }`}
           onPress={onCancel}
           disabled={loading}
@@ -68,7 +68,7 @@ export const LogoutModal = ({ onConfirm, onCancel }: Props) => {
         >
           <AppText
             className={`${
-              loading ? "bg-backgroundDark" : "text-textSub"
+              loading ? "bg-backgroundStrong" : "text-textSub"
             } text-base`}
           >
             {t("common.cancel")}

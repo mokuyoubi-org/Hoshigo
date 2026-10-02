@@ -20,7 +20,7 @@ export default function LoadingModal({ visible = true }: Props) {
       size="sm"
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
-      borderColor={colors.backgroundDark}
+      borderColor={colors.backgroundStrong}
     >
       <View className="w-48 h-36 justify-center items-center self-center">
         <ActivityIndicator size="large" color={colors.primary} />

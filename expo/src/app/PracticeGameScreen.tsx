@@ -363,9 +363,12 @@ function PracticeGameScreenContent({
             className="flex-row gap-2 self-center"
             style={{ width: boardWidth }}
           >
+             {/* パスボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
-                isBotThinking ? "border-backgroundDark" : "border-primaryDark"
+                isBotThinking
+                  ? "border-backgroundStrong"
+                  : "border-primaryStrong"
               }`}
               onPress={() => handlePutStone(PASS_GRID)}
               disabled={isBotThinking}
@@ -375,13 +378,14 @@ function PracticeGameScreenContent({
                 className="text-lg"
                 style={{
                   color: isBotThinking
-                    ? colors.backgroundDark
-                    : colors.primaryDark,
+                    ? colors.backgroundStrong
+                    : colors.primaryStrong,
                 }}
               >
                 {t("common.pass")}
               </AppText>
             </TouchableOpacity>
+             {/* 投了ボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
                 isBotThinking ? "border-failureLight" : "border-failure"
