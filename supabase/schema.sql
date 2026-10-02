@@ -44,6 +44,10 @@ declare
   v_white_rating smallint;
   v_black_giant_killing_streak smallint := 0;
   v_white_giant_killing_streak smallint := 0;
+  v_black_old_giant_killing_streak smallint := 0;
+  v_white_old_giant_killing_streak smallint := 0;
+  v_black_giant_killing_bonus boolean := false;
+  v_white_giant_killing_bonus boolean := false;
   v_black_new_rating smallint;
   v_white_new_rating smallint;
   v_black_wins smallint := 0;
@@ -78,6 +82,10 @@ begin
   where uid = new.white_uid and board_size = new.board_size;
 
   v_is_bot_match := (v_is_black_bot or v_is_white_bot);
+
+  -- 更新前の連続数を退避（ボーナス判定用）
+  v_black_old_giant_killing_streak := v_black_giant_killing_streak;
+  v_white_old_giant_killing_streak := v_white_giant_killing_streak;
 
   if new.result like 'B+%' then
     v_black_win_inc := 1;
@@ -130,6 +138,21 @@ begin
     v_white_delta := v_calc_res.o_white_delta;
   end if;
 
+  -- ジャイアントキリングのボーナス判定（連続数が上がった時のみ。ボットは対象外）
+  if v_is_black_bot then
+    v_black_giant_killing_streak := v_black_old_giant_killing_streak;
+  else
+    v_black_giant_killing_bonus :=
+      v_black_giant_killing_streak > v_black_old_giant_killing_streak;
+  end if;
+
+  if v_is_white_bot then
+    v_white_giant_killing_streak := v_white_old_giant_killing_streak;
+  else
+    v_white_giant_killing_bonus :=
+      v_white_giant_killing_streak > v_white_old_giant_killing_streak;
+  end if;
+
   if not v_is_black_bot then
     update private.user_stats set
       wins           = wins + v_black_win_inc,
@@ -180,12 +203,18 @@ begin
     jsonb_build_object(
       'result', new.result,
       'black', jsonb_build_object(
+        'old_rating', v_black_rating,
         'new_rating', v_black_new_rating,
-        'wins', v_black_wins + v_black_win_inc
+        'wins', v_black_wins + v_black_win_inc,
+        'giant_killing_streak', v_black_giant_killing_streak,
+        'giant_killing_bonus', v_black_giant_killing_bonus
       ),
       'white', jsonb_build_object(
+        'old_rating', v_white_rating,
         'new_rating', v_white_new_rating,
-        'wins', v_white_wins + v_white_win_inc
+        'wins', v_white_wins + v_white_win_inc,
+        'giant_killing_streak', v_white_giant_killing_streak,
+        'giant_killing_bonus', v_white_giant_killing_bonus
       )
     ),
     'rating_updated',
@@ -418,20 +447,23 @@ declare
   v_winner_rating smallint;
   v_loser_rating smallint;
   v_winner_giant_killing_streak smallint;
+  v_loser_giant_killing_streak smallint;
   v_winner_games smallint;
   v_diff smallint;
   v_win_delta smallint;
-  v_giant_killing_streak_cap constant smallint := 1000;
+  v_giant_killing_streak_cap constant smallint := 50; -- 格上勝利は最大50連勝まで
 begin
   if p_winner = 'black' then
     v_winner_rating    := coalesce(p_black_rating, 0);
     v_loser_rating     := coalesce(p_white_rating, 0);
     v_winner_giant_killing_streak := coalesce(p_black_giant_killing_streak, 0);
+    v_loser_giant_killing_streak := coalesce(p_white_giant_killing_streak, 0);
     v_winner_games     := coalesce(p_black_games, 0);
   else
     v_winner_rating    := coalesce(p_white_rating, 0);
     v_loser_rating     := coalesce(p_black_rating, 0);
     v_winner_giant_killing_streak := coalesce(p_white_giant_killing_streak, 0);
+    v_loser_giant_killing_streak := coalesce(p_black_giant_killing_streak, 0);
     v_winner_games     := coalesce(p_white_games, 0);
   end if;
 
@@ -440,8 +472,8 @@ begin
   if p_is_bot_match then
     o_winner_delta     := 5;
     o_loser_delta      := -5;
-    o_winner_giant_killing_streak := v_winner_giant_killing_streak;
-    o_loser_giant_killing_streak  := 0;
+    o_winner_giant_killing_streak := v_winner_giant_killing_streak; -- 触らず
+    o_loser_giant_killing_streak  := v_loser_giant_killing_streak; -- 触らず
   else
     v_win_delta := greatest(0, least(20,
       10 + (v_diff + case when v_diff >= 0 then 50 else -50 end) / 100
@@ -1382,7 +1414,7 @@ BEGIN
   IF v_row.uid IS NULL THEN
     LOOP
       v_retry_count := v_retry_count + 1;
-      v_username := substr(md5(random()::text), 1, 5);
+      v_username := substr(md5(random()::text), 1, 6);
 
       BEGIN
         INSERT INTO private.profiles (uid, username)
@@ -1785,6 +1817,38 @@ $$;
 ALTER FUNCTION "public"."resign"("p_match_id" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."rls_auto_enable"() RETURNS "event_trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'pg_catalog'
+    AS $$
+DECLARE
+  cmd record;
+BEGIN
+  FOR cmd IN
+    SELECT *
+    FROM pg_event_trigger_ddl_commands()
+    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
+      AND object_type IN ('table','partitioned table')
+  LOOP
+     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
+      BEGIN
+        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
+        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
+      END;
+     ELSE
+        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
+     END IF;
+  END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."rls_auto_enable"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."submit_match_result"("p_match_id" integer, "p_result" "text", "p_dead_stones" smallint[] DEFAULT '{}'::smallint[]) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -1949,7 +2013,7 @@ ALTER FUNCTION "public"."update_last_seen"("p_match_id" integer) OWNER TO "postg
 CREATE OR REPLACE FUNCTION "public"."update_username"("new_username" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
-    AS $_$
+    AS $$
 declare
   current_user_id uuid;
 begin
@@ -1963,13 +2027,29 @@ begin
   if current_user_id is null then
     raise exception 'Not authenticated';
   end if;
+  
+  -- ① NFC正規化して揃える
+  new_username := normalize(new_username, NFC);
 
-  -- 2. バリデーション（1〜8文字の半角英数字・アンダースコア）
-  if new_username !~ '^[A-Za-z0-9_]{1,8}$' then
+  -- ② 見えない絵文字パーツ(FE0F=65039, ZWJ=8205)を取り除く(TS側 normalizeUsername と同じ掃除)
+  new_username := translate(new_username, chr(65039) || chr(8205), '');
+
+  if new_username is null or new_username = '' then
     raise exception 'Invalid username format';
   end if;
 
-  -- 3. ユーザー名の重複チェック（他の人が使っていないか確認）
+  -- 2. 長さチェック: 6文字まで
+  --    (アプリ側は「幅6まで」で、どの文字も幅1以上なので、最大でも6文字になる)
+  if char_length(new_username) > 6 then
+    raise exception 'Username too long';
+  end if;
+
+  -- 3. 危険な文字(スペース・制御文字・見えない文字・向きを変える文字など)が入っていたら拒否
+  if new_username ~ '[\u0001-\u0020\u007F-\u00A0\u00AD\u115F\u1160\u2000-\u200F\u2028-\u202F\u205F-\u206F\u2800\u3000\u3164\uFE00-\uFE0E\uFEFF\uFFA0\uFFF0-\uFFFF\U000E0000-\U000E0FFF]' then
+    raise exception 'Invalid username format';
+  end if;
+
+  -- 4. ユーザー名の重複チェック（他の人が使っていないか確認）
   if exists (
     select 1 
     from private.profiles 
@@ -1979,13 +2059,13 @@ begin
     raise exception 'Username already taken';
   end if;
 
-  -- 4. ユーザー名を更新する
+  -- 5. ユーザー名を更新する（掃除された綺麗な文字列を入れる）
   update private.profiles
   set username = new_username
   where uid = current_user_id;
 
 end;
-$_$;
+$$;
 
 
 ALTER FUNCTION "public"."update_username"("new_username" "text") OWNER TO "postgres";
@@ -2399,6 +2479,12 @@ REVOKE ALL ON FUNCTION "public"."resign"("p_match_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."resign"("p_match_id" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."resign"("p_match_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."resign"("p_match_id" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "anon";
+GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "service_role";
 
 
 
