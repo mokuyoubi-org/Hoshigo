@@ -4,8 +4,9 @@ import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React, { useState } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
+import { useColors } from "../hooks/useTheme";
+import { AppText } from "../components/common/AppText";
+
 
 type Props = {
   onConfirm: () => Promise<void> | void;

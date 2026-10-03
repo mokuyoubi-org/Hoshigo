@@ -42,7 +42,7 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
       className="bg-foreground rounded-3xl border-2 border-backgroundStrong p-6 items-center"
     >
       {/* YOUR RANK & インフォアイコン */}
-      <View className="flex-row items-center gap-1.5">
+      <View className="flex-row items-center gap-2">
         <AppText className="text-sm text-text uppercase">
           {t("Profile.youAre")}
         </AppText>
@@ -51,7 +51,7 @@ export function RankCard({ rankInfo, onOpenInfo }: Props) {
 
       {/* ランク名（翻訳済みの name が届いてる） */}
       <AppText
-        className="text-4xl tracking-wide mt-2"
+        className="text-4xl tracking-wide my-2"
         style={{ color: textColor }}
       >
         {rankInfo.name}

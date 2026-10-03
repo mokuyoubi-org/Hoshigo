@@ -6,9 +6,9 @@ import React from "react";
 import { View } from "react-native";
 import { ModalShell } from "ui-atoms";
 
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
-import { Divider } from "../common/Divider";
+import { AppText } from "../components/common/AppText";
+import { Divider } from "../components/common/Divider";
+import { useColors } from "./../hooks/useTheme";
 
 type Props = {
   onClose: () => void;

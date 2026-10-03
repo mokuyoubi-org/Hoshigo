@@ -14,9 +14,10 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { useColors } from "../../hooks/useTheme";
-import { AppImage } from "../common/AppImage";
-import { AppText } from "../common/AppText";
+import { useColors } from "../hooks/useTheme";
+import { AppImage } from "../components/common/AppImage";
+import { AppText } from "../components/common/AppText";
+
 
 type Props = {
   visible: boolean;

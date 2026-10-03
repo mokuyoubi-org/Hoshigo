@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import type { FontName } from "./constants";
+import { FontName } from "../../constants/fonts";
 import { TITLE_TUNING, type LangKey, type PlatformKey } from "./titleTuning";
 
 export type TitleConfig = {
@@ -27,46 +27,46 @@ export const toLangKey = (lang: string): LangKey =>
 const getBaseConfig = (lang: LangKey, width: number): TitleConfig => {
   const configs: Record<LangKey, TitleConfig> = {
     ja: {
-      topFont: "MPLUSRounded1c_800ExtraBold",
-      titleFont: "MPLUSRounded1c_900Black" /** メインタイトルのフォント */,
+      topFont: "ResourceHanRoundedJ",
+      titleFont: "ResourceHanRoundedJ" /** メインタイトルのフォント */,
       subFont:
-        "Fredoka_600SemiBold" /** 「オンライン対局」やサブタイトルのフォント */,
+        "ResourceHanRoundedJ" /** 「オンライン対局」やサブタイトルのフォント */,
       fontSize: Math.min(
         120,
         width * 0.3,
       ) /** メインタイトルの文字サイズ(px)。親の幅に関係なく固定 */,
-      letterSpacing: 12 /** 文字間隔 */,
-      titleOffsetY: 8 /** メインタイトルを下にずらす量(px)。プラスで下、マイナスで上 */,
+      letterSpacing: 0 /** 文字間隔 */,
+      titleOffsetY: 0 /** メインタイトルを下にずらす量(px)。プラスで下、マイナスで上 */,
       subtitleOffsetY: 0 /** サブタイトルを下にずらす量(px) */,
       showSubtitle: true /** サブタイトル(Hoshigoなど)を表示するか */,
     },
     en: {
-      topFont: "Fredoka_600SemiBold",
-      titleFont: "Chango",
-      subFont: "Fredoka_600SemiBold", // 適当
+      topFont: "ResourceHanRoundedJ",
+      titleFont: "Chango", // せいぜい39KBなのでOK
+      subFont: "ResourceHanRoundedJ", // 適当
       fontSize: Math.min(96, width * 0.2),
-      letterSpacing: -4,
-      titleOffsetY: 12,
+      letterSpacing: 0,
+      titleOffsetY: 0,
       subtitleOffsetY: 0,
       showSubtitle: false,
     },
     zh: {
-      topFont: "Maoken",
-      titleFont: "Maoken",
-      subFont: "Maoken",
+      topFont: "ResourceHanRoundedJ",
+      titleFont: "ResourceHanRoundedJ",
+      subFont: "ResourceHanRoundedJ",
       fontSize: Math.min(108, width * 0.28),
-      letterSpacing: -4,
-      titleOffsetY: 12,
+      letterSpacing: 0,
+      titleOffsetY: 0,
       subtitleOffsetY: 0,
       showSubtitle: true,
     },
     ko: {
-      topFont: "Jua_400Regular",
-      titleFont: "Jua_400Regular",
-      subFont: "Fredoka_600SemiBold",
+      topFont: "ResourceHanRoundedJ",
+      titleFont: "ResourceHanRoundedJ",
+      subFont: "ResourceHanRoundedJ",
       fontSize: Math.min(108, width * 0.3),
       letterSpacing: 6,
-      titleOffsetY: 12,
+      titleOffsetY: 0,
       subtitleOffsetY: 0,
       showSubtitle: true,
     },

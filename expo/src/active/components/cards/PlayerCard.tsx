@@ -42,7 +42,7 @@ export function PlayerCard({
 
   return (
     <View
-      className={`w-full items-center gap-2.5 rounded-2xl bg-foreground px-3 py-2 border-2 border-backgroundStrong ${
+      className={`w-full items-center gap-2 rounded-2xl bg-foreground px-3 py-2 border-2 border-backgroundStrong ${
         isLeft ? "flex-row" : "flex-row-reverse"
       }`}
     >
@@ -61,7 +61,7 @@ export function PlayerCard({
 
       {/* 2. 名前とランク（中央の広いスペースを占有） */}
       <View
-        className={`flex-1 flex-row items-center gap-1.5 min-w-0 ${
+        className={`flex-1 flex-row items-center gap-2 min-w-0 ${
           isLeft ? "flex-row" : "flex-row-reverse"
         }`}
       >

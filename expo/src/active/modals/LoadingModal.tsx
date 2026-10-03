@@ -2,8 +2,9 @@ import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
+import { useColors } from "../hooks/useTheme";
+import { AppText } from "../components/common/AppText";
+
 
 type Props = {
   visible?: boolean;

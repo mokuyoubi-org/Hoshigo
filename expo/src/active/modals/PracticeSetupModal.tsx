@@ -11,13 +11,14 @@ import React, { useEffect } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
 
-import { useOverlay } from "../../contexts/OverlayContext";
-import { PlayerType } from "../../hooks/practice/usePracticeSession";
-import { usePracticeSetup } from "../../hooks/practice/usePracticeSetup";
-import { useColors } from "../../hooks/useTheme";
-import { Avatar } from "../avatar/Avatar";
-import { AppText } from "../common/AppText";
+
 import { AIDownloadModal } from "./AIDownloadModal";
+import { Avatar } from "../components/avatar/Avatar";
+import { AppText } from "../components/common/AppText";
+import { useOverlay } from "../contexts/OverlayContext";
+import { PlayerType } from "../hooks/practice/usePracticeSession";
+import { usePracticeSetup } from "../hooks/practice/usePracticeSetup";
+import { useColors } from "../hooks/useTheme";
 
 type Props = {
   boardSize: BoardSize;

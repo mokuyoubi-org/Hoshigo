@@ -12,10 +12,10 @@ import { useKataGoEngine } from "expo-katago";
 import React, { useEffect } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { DotAnimation, ModalShell, ProgressBar } from "ui-atoms";
+import { AppText } from "../components/common/AppText";
+import { useOverlay } from "../contexts/OverlayContext";
+import { useColors } from "../hooks/useTheme";
 
-import { useOverlay } from "../../contexts/OverlayContext";
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
 
 type Props = {
   // どこから呼ばれたか。not_downloaded時の文言の出し分けにだけ使う。

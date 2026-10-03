@@ -3,9 +3,10 @@ import { useTranslation } from "@/src/active/i18n/LangProvider";
 import React from "react";
 import { View } from "react-native";
 import { ModalShell } from "ui-atoms";
+import { AppText } from "../components/common/AppText";
+import { useColors } from "../hooks/useTheme";
 
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
+
 
 export function MaintenanceModal({ message }: { message: string | null }) {
   const t = useTranslation();

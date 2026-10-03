@@ -10,9 +10,10 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
-import { RankGauge } from "../RankGauge";
+import { AppText } from "../components/common/AppText";
+import { RankGauge } from "../components/RankGauge";
+import { useColors } from "../hooks/useTheme";
+
 
 type Props = {
   visible: boolean;

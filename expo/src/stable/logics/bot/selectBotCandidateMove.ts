@@ -4,13 +4,6 @@
 // KataGoのanalysis結果(候補手リスト)から、手数(moveNumber)と盤サイズに
 // 応じた「重み付きランダム」で1手を選ぶ。
 //
-// 2026/09/11: 最初は「1位の重みtop×減衰率^i」という式で組んでいたが、
-// これだと分子・分母の両方にtopが乗って約分されるため、topの値を
-// いくら変えても実際の抽選確率(相対比)が一切変わらないというバグが
-// あった(社長の指摘で発覚)。数式は「1箇所直したら他も連動する」の
-// 裏返しで「意図せず他も変わる/変わらない」事故が起きやすいため、
-// 各段階の重み配分は検算しやすい直書きのテーブルに戻した。
-//
 // 「どの盤サイズの何手目がどの段階(topWeight)に該当するか」だけは、
 // 9路を基準に13路=2倍・19路=3倍に間延びさせる機械的な計算にしている
 // (ここは「盤が大きいほど揺らぎ区間を伸ばす」という単純な規則なので、
@@ -105,8 +98,8 @@ export function selectBotCandidateMove(
 ): CandidateMove {
   const bestMove = moves[0];
 
-  // そもそも候補手が5ない場合は即、最善手を選ぶ
-  if (moves.length < 5) {
+  // そもそも候補手が3個ない場合は最善手を選ぶ
+  if (moves.length < 3) {
     return bestMove;
   }
 
@@ -126,9 +119,6 @@ export function selectBotCandidateMove(
 
   // 揺らぎ区間を過ぎたら常に最善手
   if (topWeight >= 100) {
-    console.log(
-      `🎲 [selectBotCandidateMove] moveNumber=${moveNumber}(${boardSize}路): 揺らぎ区間終了、最善手を選択`,
-    );
     return bestMove;
   }
 

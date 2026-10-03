@@ -11,10 +11,11 @@ import React, { useEffect } from "react";
 import { View } from "react-native";
 import { useKVStorage } from "storage-kit";
 import { ModalShell } from "ui-atoms";
-import { useProfile } from "../../contexts/ProfileContexts";
-import { useColors } from "../../hooks/useTheme";
-import { AvatarWithPass } from "../avatar/AvatarWithPass";
-import { AppText } from "../common/AppText";
+import { useColors } from "../hooks/useTheme";
+import { AvatarWithPass } from "../components/avatar/AvatarWithPass";
+import { AppText } from "../components/common/AppText";
+import { useProfile } from "../contexts/ProfileContexts";
+
 
 type PlayerInfo = {
   username: string;

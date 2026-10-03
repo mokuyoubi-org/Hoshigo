@@ -37,8 +37,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     ref,
   ) => {
     // 同時に複数箇所からgetToken()が呼ばれても、後勝ちで前の呼び出し元が
-    // 無反応(ハング)にならないよう、直列化する(KataGoEngineContextの
-    // isAnalyzingRef と同じ考え方)。ブラウザを二重に開かせない保険。
+    // 無反応(ハング)にならないよう、直列化する。ブラウザを二重に開かせない保険。
     const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
     const getTokenInternal = (): Promise<string> => {

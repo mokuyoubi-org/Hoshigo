@@ -1,6 +1,3 @@
-import { DeleteModal } from "@/src/active/components/modals/DeleteModal";
-import { LogoutModal } from "@/src/active/components/modals/LogoutModal";
-
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
 import { useSettingsScreen } from "@/src/active/hooks/screens/useSettingsScreen";
@@ -14,15 +11,18 @@ import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ToggleSwitch } from "ui-atoms";
 import { AppText } from "../active/components/common/AppText";
-import { DoubleTapModal } from "../active/components/modals/DoubleTapModal";
-import { EmailChangeModal } from "../active/components/modals/EmailChangeModal";
-import { LanguageModal } from "../active/components/modals/LanguageModal";
-import { LoginModal } from "../active/components/modals/LoginModal";
-import { VersionModal } from "../active/components/modals/VersionModal";
 import { SettingsRow } from "../active/components/settings/SettingsRow";
 import { SettingsSection } from "../active/components/settings/SettingsSection";
 import { useColors, useThemeMode } from "../active/hooks/useTheme";
-import { ThemeModal } from "../active/components/modals/ThemeModal";
+import { DeleteModal } from "../active/modals/DeleteModal";
+import { DoubleTapModal } from "../active/modals/DoubleTapModal";
+import { EmailChangeModal } from "../active/modals/EmailChangeModal";
+import { LanguageModal } from "../active/modals/LanguageModal";
+import { LoginModal } from "../active/modals/LoginModal";
+import { LogoutModal } from "../active/modals/LogoutModal";
+import { ThemeModal } from "../active/modals/ThemeModal";
+import { VersionModal } from "../active/modals/VersionModal";
+
 
 export default function SettingsScreen() {
   const t = useTranslation();

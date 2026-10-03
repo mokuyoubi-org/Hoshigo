@@ -4,10 +4,11 @@ import { useFonts } from "expo-font";
 import React from "react";
 import { useWindowDimensions, View } from "react-native";
 import { AppText } from "../common/AppText";
-import { FONTS, TITLE_BOX_WIDTH } from "./constants";
+import {  TITLE_BOX_WIDTH } from "./constants";
 import { resolveTitleConfig, toLangKey } from "./titleConfig";
 import { TitleStars } from "./TitleStars";
 import { TitleStones } from "./TitleStones";
+import { FONTS } from "../../constants/fonts";
 
 export const MainTitle = () => {
   const t = useTranslation();

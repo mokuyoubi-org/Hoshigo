@@ -9,7 +9,7 @@ import { router } from "expo-router";
 import { BoardSize } from "go-core";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
-import { AppText } from "../../common/AppText";
+import { AppText } from "../../components/common/AppText";
 
 type Props = {
   onClose: () => void;

@@ -6,5 +6,4 @@ export { ModalShell } from "./ModalShell";
 export { ProgressBar } from "./ProgressBar";
 export { SegmentedControl } from "./SegmentedControl";
 export { SegmentedIconControl } from "./SegmentedIconControl";
-export { TextButton } from "./TextButton";
 export { ToggleSwitch } from "./ToggleSwitch";

@@ -10,9 +10,9 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
-import { AppTextInput } from "../common/AppTextInput";
+import { AppText } from "../components/common/AppText";
+import { AppTextInput } from "../components/common/AppTextInput";
+import { useColors } from "../hooks/useTheme";
 
 type Props = {
   username: string;
@@ -59,15 +59,15 @@ export function DeleteModal({ username, onConfirm, onCancel }: Props) {
           </AppText>
         </View>
 
-        <AppText className="text-sm mb-4 leading-5 tracking-wide text-textSub">
+        <AppText className="text-sm mb-4 tracking-wide text-textSub">
           {t("DeleteModal.message")}
         </AppText>
 
-        <AppText className="text-sm mb-1.5 tracking-wide text-text">
+        <AppText className="text-sm mb-2 tracking-wide text-text">
           {t("DeleteModal.confirmLabel", { username })}
         </AppText>
 
-        <View className="rounded-xl border border-2 mb-5 bg-foreground border-primaryStrong">
+        <View className="rounded-xl border border-2 mb-6 bg-foreground border-primaryStrong">
           <AppTextInput
             className="h-12 px-4 text-base text-text" // text-baseはテキストの大きさ。fontの種類や太さとは別の話なので消さない
             placeholder={username}

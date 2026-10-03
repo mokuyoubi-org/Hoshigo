@@ -7,8 +7,9 @@
 
 import { BoardSize } from "go-core";
 import React, { createContext, useContext } from "react";
-import { AIDownloadModal } from "../components/modals/AIDownloadModal";
 import { useMatchingProvider } from "../hooks/useMatchingProvider";
+import { AIDownloadModal } from "../modals/AIDownloadModal";
+import { DailyLimitModal } from "../modals/DailyLimitModal";
 import { useOverlay } from "./OverlayContext";
 
 type MatchingContextType = {
@@ -26,9 +27,12 @@ export const MatchingProvider = ({
   children: React.ReactNode;
 }) => {
   const { show } = useOverlay();
-  const value = useMatchingProvider(() => {
-    show(<AIDownloadModal from="matching" />);
-  });
+  const value = useMatchingProvider(
+    () => {
+      show(<AIDownloadModal from="matching" />);
+    },
+    () => show(<DailyLimitModal />),
+  );
 
   return (
     <MatchingContext.Provider value={value}>

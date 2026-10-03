@@ -1,7 +1,6 @@
 // PracticeGameScreen.tsx
 
 import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
-import { PracticeSetupModal } from "@/src/active/components/modals/PracticeSetupModal";
 
 import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { Feather } from "@expo/vector-icons";
@@ -19,9 +18,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "../active/components/common/AppText";
-import { GameResultModal } from "../active/components/modals/gameresult/GameResultModal";
-import { GameStartModal } from "../active/components/modals/GameStartModal";
-import LoadingModal from "../active/components/modals/LoadingModal";
+
 import { useOverlay } from "../active/contexts/OverlayContext";
 import {
   PlayerType,
@@ -31,6 +28,10 @@ import { usePracticeSettings } from "../active/hooks/practice/usePracticeSetting
 import { useColors } from "../active/hooks/useTheme";
 import { ratingToRankIndex } from "../stable/logics/rankLogics";
 import { buildRecordFromMatch } from "../stable/logics/recordBuilder";
+import { GameResultModal } from "../active/modals/gameresult/GameResultModal";
+import { GameStartModal } from "../active/modals/GameStartModal";
+import LoadingModal from "../active/modals/LoadingModal";
+import { PracticeSetupModal } from "../active/modals/PracticeSetupModal";
 
 const LAYOUT_CONFIG = {
   // 余白の比率（flex）を設定する

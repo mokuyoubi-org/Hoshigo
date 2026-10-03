@@ -5,10 +5,11 @@ import { BoardSize } from "go-core";
 import React from "react";
 import { View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { FromType } from "../../../types/from";
-import { AppText } from "../../common/AppText";
+
 import { MatchResultContent } from "./MatchResultContent";
 import { PracticeResultContent } from "./PracticeResultContent";
+import { AppText } from "../../components/common/AppText";
+import { FromType } from "../../types/from";
 
 type Props = {
   visible: boolean;

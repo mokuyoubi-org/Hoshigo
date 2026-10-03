@@ -15,7 +15,7 @@ export function buildMoveAnalysisEntry(
     winRate: toPercent(result.winRate),
     scoreLead: round2(result.scoreLead),
     ownership: Array.from(result.ownership, round2),
-    candidates: result.moves.slice(0, 5).map((m) => ({
+    candidates: result.moves.slice(0, 10).map((m) => ({ // ⚠️⚠️⚠️⚠️⚠️ここでtopKをトリミングしていた！
       x: m.x,
       y: m.y,
       winRate: toPercent(m.winRate),

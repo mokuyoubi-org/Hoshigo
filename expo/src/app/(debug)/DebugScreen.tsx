@@ -1,6 +1,6 @@
 // (debug)/DebugScreen.tsx
 // デバッグしたいコンポーネント用のページ。
-import { LoginModal } from "@/src/active/components/modals/LoginModal";
+import { LoginModal } from "@/src/active/modals/LoginModal";
 import React from "react";
 import { View } from "react-native";
 

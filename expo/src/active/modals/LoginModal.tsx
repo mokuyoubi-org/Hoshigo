@@ -13,9 +13,9 @@ import {
 } from "react-native";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { ModalShell } from "ui-atoms";
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
-import { AppTextInput } from "../common/AppTextInput";
+import { AppText } from "../components/common/AppText";
+import { AppTextInput } from "../components/common/AppTextInput";
+import { useColors } from "../hooks/useTheme";
 
 type Props = {
   visible: boolean;

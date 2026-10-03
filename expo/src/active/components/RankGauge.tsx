@@ -10,14 +10,14 @@ import { AppText } from "./common/AppText";
 // 🐱 吹き出しの横幅（半分の値で左にずらして、ゲージの先っぽの真上に中央揃えする）
 const BUBBLE_WIDTH = 56;
 
-export type RankGaugeProps = {
+type Props = {
   /** ゲージの進捗率（0〜100）。数字でも Animated.Value でもOK */
   progress: number | Animated.Value;
   /** ゲージ・吹き出しの色（くみのテーマカラー） */
   color: string;
   /** ゲージの高さ（デフォルト: 24） */
   height?: number;
-  /** ゲージの背景色（デフォルト: colors.background） */
+  /** ゲージの背景色（デフォルト: colors.foreground） */
   trackColor?: string;
   /** 吹き出しに表示する文字（レートなど）。渡さなければ吹き出しなし */
   bubbleText?: string | number;
@@ -35,7 +35,7 @@ export function RankGauge({
   bubbleText,
   footerText,
   reserveFooterSpace = false,
-}: RankGaugeProps) {
+}: Props) {
   const colors = useColors();
 
   // 🐱 ゲージの幅と吹き出しの位置は、同じ1つの progress から作る（ズレようがない）
@@ -69,10 +69,10 @@ export function RankGauge({
             }}
           >
             <View
-              className="rounded-lg px-2.5 py-0.5"
+              className="rounded-lg px-2 py-0.5"
               style={{ backgroundColor: color }}
             >
-              <AppText className="text-sm" style={{ color: colors.background }}>
+              <AppText className="text-sm" style={{ color: colors.foreground }}>
                 {bubbleText}
               </AppText>
             </View>

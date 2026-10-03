@@ -5,9 +5,7 @@
 // ということで、useEffectでモーダルを表示したりする処理はこちらに書いてあります。
 // stateを変更した、その場ではなく、こちらでstateの変更に気づいて発火するようになっています。
 import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
-import { GameResultModal } from "@/src/active/components/modals/gameresult/GameResultModal";
-import { GameStartModal } from "@/src/active/components/modals/GameStartModal";
-import LoadingModal from "@/src/active/components/modals/LoadingModal";
+
 
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
@@ -31,9 +29,12 @@ import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton } from "ui-atoms";
 import { AppText } from "../active/components/common/AppText";
-import { DoubleTapModal } from "../active/components/modals/DoubleTapModal";
 import { useColors } from "../active/hooks/useTheme";
 import { clearPeriodicCache } from "../stable/logics/syncUtils";
+import { DoubleTapModal } from "../active/modals/DoubleTapModal";
+import { GameResultModal } from "../active/modals/gameresult/GameResultModal";
+import { GameStartModal } from "../active/modals/GameStartModal";
+import LoadingModal from "../active/modals/LoadingModal";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {

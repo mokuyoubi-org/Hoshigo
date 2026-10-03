@@ -1,4 +1,5 @@
-// useMatchingProvider.ts 🔥2026/09/19現在、騙し騙しtsxになってる。
+// useMatchingProvider.ts
+// 2026/10/03: 対局数上限検知追加
 // マッチングの状態管理と、開始/キャンセル処理のロジック本体。
 // MatchingContext.tsx から呼ばれる想定。
 import { useProfile } from "@/src/active/contexts/ProfileContexts";
@@ -21,6 +22,10 @@ export function useMatchingProvider(
   // phaseを渡すことで、「未DL」なのか「DL中/ウォームアップ中」なのかを
   // 呼び出し元が区別して表示を出し分けられるようにする(readyのときは呼ばれない)。
   onNeedsB18Download: (phase: ModelStatus["phase"]) => void,
+  // 匿名ユーザが、その盤面の1日の対局数の上限に達していて、
+  // サーバ(join_waitlist)に待機列への追加を断られた瞬間に呼ばれる。
+  // 「ログインしてください」モーダルなどのUI関心事は、呼び出し元の責務にする。
+  onDailyLimitReached: () => void,
 ) {
   const [isMatching, setIsMatching] = useState(false);
   const [matchingBoardSize, setMatchingBoardSize] = useState<BoardSize | null>(
@@ -120,6 +125,14 @@ export function useMatchingProvider(
       unsubscribeUserChannel();
       setIsMatching(false);
       setMatchingBoardSize(null);
+
+      // 🎫 1日の対局数の上限に達していた場合は、エラーログではなくUIに知らせる
+      if (error.message?.includes("daily_play_limit_reached")) {
+        console.log("🐱 1日の対局数の上限に達している");
+        onDailyLimitReached();
+        return;
+      }
+
       console.error("join_waitlist error:", error);
       return;
     }

@@ -4,9 +4,10 @@ import * as Updates from "expo-updates";
 import React from "react";
 import { Linking, Platform, Pressable } from "react-native";
 import { ModalShell } from "ui-atoms";
+import { AppText } from "../components/common/AppText";
+import { useColors } from "../hooks/useTheme";
 
-import { useColors } from "../../hooks/useTheme";
-import { AppText } from "../common/AppText";
+
 
 export type UpdateModalKind = "reload" | "store" | "restart";
 

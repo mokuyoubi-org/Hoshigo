@@ -17,9 +17,10 @@ import {
 } from "react-native";
 import { useKVStorage } from "storage-kit";
 import { ModalShell, SegmentedControl } from "ui-atoms";
-import { useAppFont } from "../../hooks/useAppFont";
-import { useColors } from "../../hooks/useTheme";
-import { useTranslation } from "../../i18n/LangProvider";
+import { useAppFont } from "../hooks/useAppFont";
+import { useColors } from "../hooks/useTheme";
+import { useTranslation } from "../i18n/LangProvider";
+
 
 type RankingItem = Profile & {
   board_size: number;
@@ -114,7 +115,7 @@ export default function RankingsModal({ visible, onClose }: Props) {
           contentContainerStyle={{
             paddingBottom: 16,
           }}
-          ItemSeparatorComponent={() => <View className="h-2.5" />}
+          ItemSeparatorComponent={() => <View className="h-2" />}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           style={{ height: windowHeight * 0.65 }}

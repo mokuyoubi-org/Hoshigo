@@ -9,8 +9,9 @@ import { Feather, FontAwesome } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { AppText } from "../common/AppText";
-import { Divider } from "../common/Divider";
+import { AppText } from "../components/common/AppText";
+import { Divider } from "../components/common/Divider";
+
 
 type Props = {
   onClose: () => void;

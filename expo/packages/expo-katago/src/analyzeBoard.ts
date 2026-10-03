@@ -294,7 +294,6 @@ export async function analyzeBoard(
       ? currentPlayer
       : colorToPlayer(currentPlayer);
 
-
   // ③ moveHistory 用に zeroBasedMoves の各 move.player を Player 型に変換
   const moveHistoryConverted = zeroBasedMoves.map((m) => ({
     ...m,

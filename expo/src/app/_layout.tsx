@@ -9,8 +9,7 @@ import { Stack } from "expo-router";
 import React, { useEffect } from "react";
 import "../../global.css";
 // import "../active/i18n/polyfills";
-import { MaintenanceModal } from "@/src/active/components/modals/MaintenanceModal";
-import { UpdateModal } from "@/src/active/components/modals/UpdateModal";
+
 import { FONTS } from "@/src/active/constants/fonts";
 import { preloadAssets } from "@/src/active/constants/preload";
 import { MatchingProvider } from "@/src/active/contexts/MatchingContext";
@@ -27,6 +26,8 @@ import { LoadingScreen } from "ui-atoms";
 import { THEME_VARS } from "../active/constants/themeVars";
 import { useAppFont } from "../active/hooks/useAppFont";
 import { useApplyTheme, useColors } from "../active/hooks/useTheme";
+import { UpdateModal } from "../active/modals/UpdateModal";
+import { MaintenanceModal } from "../active/modals/MaintenanceModal";
 
 function RoutedContent() {
   const fontFamily = useAppFont();

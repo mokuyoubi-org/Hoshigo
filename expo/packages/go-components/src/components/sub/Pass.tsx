@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   bubble: {
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,

@@ -13,7 +13,7 @@ export function SettingsSection({ title, children }: SettingsSectionProps) {
 
   return (
     <View className="mb-6">
-      <AppText className="text-sm uppercase tracking-widest text-textSub mb-2.5 ml-1">
+      <AppText className="text-sm uppercase tracking-widest text-textSub mb-2 ml-2">
         {title}
       </AppText>
       <View className="bg-foreground rounded-xl border-2 border-backgroundStrong w-full overflow-hidden">

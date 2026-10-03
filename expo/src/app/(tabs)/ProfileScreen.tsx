@@ -1,4 +1,20 @@
 // ProfileScreen.tsx
+import { Avatar } from "@/src/active/components/avatar/Avatar";
+import { GuestNoticeCard } from "@/src/active/components/cards/GuestNoticeCard";
+import { RankCard } from "@/src/active/components/cards/RankCard";
+import { AppText } from "@/src/active/components/common/AppText";
+import { Header } from "@/src/active/components/common/Header";
+import { useMatching } from "@/src/active/contexts/MatchingContext";
+import { useOverlay } from "@/src/active/contexts/OverlayContext";
+import { useProfileScreen } from "@/src/active/hooks/screens/useProfileScreen";
+import { useAppFont } from "@/src/active/hooks/useAppFont";
+import { useColors } from "@/src/active/hooks/useTheme";
+import { useTranslation } from "@/src/active/i18n/LangProvider";
+import IconSelectModal from "@/src/active/modals/IconSelectModal";
+import { LoginModal } from "@/src/active/modals/LoginModal";
+import RankInfoModal from "@/src/active/modals/RankInfoModal";
+import UsernameEditModal from "@/src/active/modals/UsernameEditModal";
+import { boardSizeOptions } from "@/src/stable/logics/boardSizeToText";
 import {
   Feather,
   FontAwesome6,
@@ -11,24 +27,6 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { Avatar } from "@/src/active/components/avatar/Avatar";
-import { GuestNoticeCard } from "@/src/active/components/cards/GuestNoticeCard";
-import { RankCard } from "@/src/active/components/cards/RankCard";
-import { AppText } from "@/src/active/components/common/AppText";
-import { Header } from "@/src/active/components/common/Header";
-import IconSelectModal from "@/src/active/components/modals/IconSelectModal";
-import { LoginModal } from "@/src/active/components/modals/LoginModal";
-import RankInfoModal from "@/src/active/components/modals/RankInfoModal";
-import UsernameEditModal from "@/src/active/components/modals/UsernameEditModal";
-
-import { useMatching } from "@/src/active/contexts/MatchingContext";
-import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useProfileScreen } from "@/src/active/hooks/screens/useProfileScreen";
-import { useAppFont } from "@/src/active/hooks/useAppFont";
-import { useColors } from "@/src/active/hooks/useTheme";
-import { useTranslation } from "@/src/active/i18n/LangProvider";
-import { boardSizeOptions } from "@/src/stable/logics/boardSizeToText";
 import { IconButton, SegmentedControl } from "ui-atoms";
 
 export default function ProfileScreen() {
@@ -159,7 +157,7 @@ export default function ProfileScreen() {
                   )
                 }
                 activeOpacity={0.7}
-                className="flex-row items-center gap-1 mb-2.5"
+                className="flex-row items-center gap-1 mb-2"
               >
                 <AppText className="text-3xl text-text tracking-wide">
                   {profileData.username}
@@ -210,7 +208,7 @@ export default function ProfileScreen() {
               }}
             >
               <View className="flex-row items-center gap-2">
-                <View className="w-9 h-9 rounded-xl bg-background justify-center items-center mr-1.5">
+                <View className="w-9 h-9 rounded-xl bg-background justify-center items-center">
                   <Octicons name="history" size={18} color={colors.primary} />
                 </View>
                 <AppText className="text-lg text-text">

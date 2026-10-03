@@ -35,13 +35,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, SegmentedIconControl } from "ui-atoms";
 import { TerritoryResultBadge } from "../active/components/buttons/TerritoryResultBadge";
-import { AnalyzeDisplaySettingsModal } from "../active/components/modals/AnalyzeDisplaySettingsModal";
-import { GameResultModal } from "../active/components/modals/gameresult/GameResultModal";
+
 import { useOverlay } from "../active/contexts/OverlayContext";
 import { useColors } from "../active/hooks/useTheme";
 import { FromType } from "../active/types/from";
 import { recordsRepo } from "../stable/logics/records-repo";
 import { subscribeToRecordsChange } from "../stable/logics/records-repo/records-repo-events";
+import { AnalyzeDisplaySettingsModal } from "../active/modals/AnalyzeDisplaySettingsModal";
+import { GameResultModal } from "../active/modals/gameresult/GameResultModal";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -398,7 +399,7 @@ function BoardEditScreenContent({
                 onPress={() => {
                   show(
                     <GameResultModal
-                      boardSize={9}
+                      boardSize={board.boardSize}
                       visible={true}
                       resultComment={resultComment}
                       onClose={hide}

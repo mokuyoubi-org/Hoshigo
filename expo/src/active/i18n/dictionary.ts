@@ -222,6 +222,12 @@ export const dictionary = {
       you: "내",
     },
   },
+  matching: {
+    en: { daily_limit_reached: "You've reached today's game limit for this board size. Log in to keep playing." },
+    ja: { daily_limit_reached: "この盤面の1日の対局数の上限に達しました。さらに遊ぶにはログインしてください。" },
+    zh: { daily_limit_reached: "今天这个棋盘大小的对局次数已达上限。登录后即可继续对局。" },
+    ko: { daily_limit_reached: "이 판 크기의 오늘 대국 한도에 도달했어요. 계속하려면 로그인해 주세요." },
+  },
   Settings: {
     en: {
       accountInfo: "Account",
@@ -823,8 +829,8 @@ export const dictionary = {
       bot3: "Muffin",
     },
     ja: {
-      bot1: "よもぎ",
-      bot2: "ラムネ",
+      bot1: "みんと",
+      bot2: "らむね",
       bot3: "まろん",
     },
     ko: {

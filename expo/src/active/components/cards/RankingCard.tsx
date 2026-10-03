@@ -107,7 +107,7 @@ export const RankingCard = ({
           </View>
 
           {/* 🌟 右側に表示するランク*/}
-          <View className="ml-2 mr-2 px-2.5 py-1 bg-background rounded-full">
+          <View className="ml-2 mr-2 px-2 py-1 bg-background rounded-full">
             <AppText className="text-sm color-textSub">{rankLabel}</AppText>
           </View>
         </View>

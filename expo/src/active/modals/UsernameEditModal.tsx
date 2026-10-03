@@ -15,11 +15,12 @@ import {
   View,
 } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { useColors } from "../../hooks/useTheme";
-import { useTranslation } from "../../i18n/LangProvider";
-import { TranslationKey } from "../../i18n/types";
-import { AppText } from "../common/AppText";
-import { AppTextInput } from "../common/AppTextInput";
+import { AppText } from "../components/common/AppText";
+import { AppTextInput } from "../components/common/AppTextInput";
+import { useColors } from "../hooks/useTheme";
+import { useTranslation } from "../i18n/LangProvider";
+import { TranslationKey } from "../i18n/types";
+
 
 type Props = {
   visible: boolean;

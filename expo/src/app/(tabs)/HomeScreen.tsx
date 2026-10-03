@@ -1,14 +1,15 @@
 import { MainButton } from "@/src/active/components/buttons/MainButton";
 import { Header } from "@/src/active/components/common/Header";
 import { MainTitle } from "@/src/active/components/mainTitle/MainTitle";
-import RankingsModal from "@/src/active/components/modals/RankingsModal";
-import { RuleModal } from "@/src/active/components/modals/RuleModal";
+
 
 import { useMatching } from "@/src/active/contexts/MatchingContext";
 import { useOverlay } from "@/src/active/contexts/OverlayContext";
 import { useAppFont } from "@/src/active/hooks/useAppFont";
 import { useColors } from "@/src/active/hooks/useTheme";
 import { useTranslation } from "@/src/active/i18n/LangProvider";
+import RankingsModal from "@/src/active/modals/RankingsModal";
+import { RuleModal } from "@/src/active/modals/RuleModal";
 import { boardSizeOptions } from "@/src/stable/logics/boardSizeToText";
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
 import { router } from "expo-router";

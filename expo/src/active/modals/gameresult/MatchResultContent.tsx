@@ -25,9 +25,10 @@ import { useColors } from "@/src/active/hooks/useTheme";
 import { useTranslation } from "@/src/active/i18n/LangProvider";
 import { getRankInfo } from "@/src/stable/logics/rankLogics";
 import { winsToNewlyAcquiredIconIndex } from "@/src/stable/logics/winsToAcquiredIcons";
-import { AppImage } from "../../common/AppImage";
-import { AppText } from "../../common/AppText";
-import { RankGauge } from "../../RankGauge";
+import { AppImage } from "../../components/common/AppImage";
+import { AppText } from "../../components/common/AppText";
+import { RankGauge } from "../../components/RankGauge";
+
 
 type Props = {
   onClose: () => void;
