@@ -786,6 +786,13 @@ begin
   from private.user_stats
   where uid = new.white_uid and board_size = new.board_size;
 
+  -- ★ 二人の「今日の対局数」を+1（行がまだ無い人は、0から作って1にする）
+  insert into private.user_stats as us (uid, board_size, daily_play_count)
+  select u, new.board_size, 1
+  from unnest(array[new.black_uid, new.white_uid]) as u
+  on conflict (uid, board_size)
+  do update set daily_play_count = coalesce(us.daily_play_count, 0) + 1;
+
   -- bot 判定（追加SELECTなし）
   v_bot_match := (coalesce(v_black.is_bot, false) or coalesce(v_white.is_bot, false));
 
@@ -901,6 +908,21 @@ $$;
 
 
 ALTER FUNCTION "private"."rating_to_rank_index"("p_rating" smallint) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "private"."reset_daily_play_count"() RETURNS "void"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO ''
+    AS $$
+BEGIN
+  UPDATE private.user_stats
+  SET daily_play_count = 0
+  WHERE daily_play_count > 0;
+END;
+$$;
+
+
+ALTER FUNCTION "private"."reset_daily_play_count"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "private"."time_connection_check"() RETURNS "void"
@@ -1645,10 +1667,13 @@ CREATE OR REPLACE FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_
     SET "search_path" TO ''
     AS $$
 declare
+  c_daily_limit  constant integer := 10;  -- 匿名ユーザの1日の対局数上限（盤面ごと）
+
   v_match        private.matches%rowtype;
   v_player_uid   uuid := auth.uid();
   v_match_json   jsonb := null;
   v_records_json jsonb := '[]'::jsonb;
+  v_play_count   smallint := 0;
 begin
   PERFORM private.check_version();
   perform private.check_maintenance();
@@ -1666,6 +1691,18 @@ begin
   if found then
     v_match_json := private.build_match_json(v_match, v_player_uid);
   else
+    -- ★ 匿名ユーザは、その盤面の今日の対局数が上限に達していたら待機列に入れない
+    if not private.is_authenticated_user(v_player_uid) then
+      select coalesce(us.daily_play_count, 0) into v_play_count
+      from private.user_stats us
+      where us.uid = v_player_uid
+        and us.board_size = p_board_size;
+
+      if coalesce(v_play_count, 0) >= c_daily_limit then
+        raise exception 'daily_play_limit_reached';
+      end if;
+    end if;
+
     -- 待機列に追加（既に待機中なら何もしない）
     begin
       insert into private.waitlist (player_uid, board_size, has_b18)
@@ -2176,7 +2213,8 @@ CREATE TABLE IF NOT EXISTS "private"."user_stats" (
     "draws" smallint DEFAULT '0'::smallint,
     "highest_rating" smallint DEFAULT '0'::smallint,
     "giant_killing_streak" smallint DEFAULT '0'::smallint,
-    "win_streak" smallint DEFAULT '0'::smallint
+    "win_streak" smallint DEFAULT '0'::smallint,
+    "daily_play_count" smallint DEFAULT '0'::smallint
 );
 
 
@@ -2462,6 +2500,7 @@ GRANT ALL ON FUNCTION "public"."get_records_older"("p_uid" "uuid", "p_limit" sma
 
 
 
+REVOKE ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."join_waitlist"("p_board_size" smallint, "p_has_b18" boolean, "p_after_id" integer) TO "service_role";
