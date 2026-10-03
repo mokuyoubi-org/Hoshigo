@@ -1,0 +1,1 @@
+export { RESOURCE_HAN_ROUNDED } from "./resourceHanRoundedSource"; // ⚠️⚠️⚠️⚠️ここがnativeにならないよう注意

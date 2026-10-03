@@ -1,7 +1,11 @@
+// fonts.ts
+
+import { RESOURCE_HAN_ROUNDED } from "./resourceHanRoundedSource";
+
 // 🔤 アプリで使うフォントはここだけに登録(キー名がそのままフォント名になります)
 export const FONTS = {
-  ResourceHanRoundedJ: require("@/assets/fonts/ResourceHanRoundedJ-Bold.ttf"),
-  Chango: require("@/assets/fonts/Chango-Regular.ttf"),
+  ResourceHanRoundedJ: RESOURCE_HAN_ROUNDED,
+  Chango: require("@/assets/fonts/Chango-Regular.ttf"), // 英語版のタイトルのみで使用。39KB
 };
 
 export type FontName = keyof typeof FONTS;

@@ -1,0 +1,1 @@
+export const RESOURCE_HAN_ROUNDED = require("@/assets/fonts/ResourceHanRoundedJ-Bold.woff2");

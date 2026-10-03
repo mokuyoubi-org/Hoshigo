@@ -22,6 +22,6 @@ const { withNativeWind } = require("nativewind/metro");
 
 const config = getDefaultConfig(__dirname);
 
-config.resolver.assetExts.push("gz", "mp3");
+config.resolver.assetExts.push("gz", "mp3", "woff2");
 
 module.exports = withNativeWind(config, { input: "./global.css" });
