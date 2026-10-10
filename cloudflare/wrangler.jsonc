@@ -1,0 +1,21 @@
+// wrangler.jsonc
+
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "hoshigo-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-10",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "hoshigo-db",
+			"database_id": "50856c52-a430-4bd4-be06-62ea1093cb39"
+		}
+	]
+}
