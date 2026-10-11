@@ -1,23 +1,18 @@
-// index.ts
-
 import { Hono } from "hono";
-import { createAuth } from "./auth";
+import { createAuth, type AuthEnv } from "./auth";
+import { pickLocale } from "./email";
 
-type AppEnv = {
-  Bindings: {
-    DB: D1Database;
-    BETTER_AUTH_SECRET: string;
-    BETTER_AUTH_URL: string;
-  };
-};
-
-const app = new Hono<AppEnv>();
+const app = new Hono<{ Bindings: AuthEnv }>();
 
 app.get("/", (c) => c.text("Hello Hono!"));
 
-// ログイン関係(Better Auth)は、/api/auth/ 以下を、全部おまかせする
+// ログイン関係(Better Auth)は、/api/auth/ 以下を、全部おまかせする。
+// アプリが送ってくる言語(x-app-language)を読んで、メールの言語を決める。
 app.on(["GET", "POST"], "/api/auth/*", (c) => {
-  return createAuth(c.env).handler(c.req.raw);
+  const locale = pickLocale(
+    c.req.header("x-app-language") ?? c.req.header("accept-language"),
+  );
+  return createAuth(c.env, locale).handler(c.req.raw);
 });
 
 export default app;

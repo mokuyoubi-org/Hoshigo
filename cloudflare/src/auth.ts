@@ -1,19 +1,44 @@
-// auth.ts
-
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous, emailOTP } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./db/auth-schema";
+import { buildOtpEmail, type Locale } from "./email";
 
-type AuthEnv = {
+export type AuthEnv = {
   DB: D1Database;
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL: string;
+  RESEND_API_KEY: string;
+  MAIL_FROM: string;
 };
 
+// ResendのAPIで、OTPのメールを送る。文面は、言語別に用意したものを使う。
+async function sendOtpEmail(
+  env: AuthEnv,
+  to: string,
+  otp: string,
+  locale: Locale,
+) {
+  const { subject, html } = buildOtpEmail(locale, otp);
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from: env.MAIL_FROM, to, subject, html }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Resend error ${res.status}: ${await res.text()}`);
+  }
+}
+
 // 本番・手元の開発で使う、認証の本体。リクエストのたびに作る。
-export function createAuth(env: AuthEnv) {
+// locale は、このリクエストを送ってきたユーザーの言語(メールの言語になる)。
+export function createAuth(env: AuthEnv, locale: Locale = "en") {
   const db = drizzle(env.DB, { schema });
 
   return betterAuth({
@@ -26,9 +51,8 @@ export function createAuth(env: AuthEnv) {
       // メールのOTPログイン(6桁)
       emailOTP({
         otpLength: 6,
-        async sendVerificationOTP({ email, otp, type }) {
-          // 今は、ターミナルに表示するだけ。あとでResendのメール送信に差し替える。
-          console.log(`[OTP] ${type} ${email}: ${otp}`);
+        async sendVerificationOTP({ email, otp }) {
+          await sendOtpEmail(env, email, otp, locale);
         },
       }),
     ],
@@ -40,4 +64,6 @@ export const auth = createAuth({
   DB: {} as D1Database,
   BETTER_AUTH_SECRET: "cli-only-dummy-secret-not-used-at-runtime-0123456789",
   BETTER_AUTH_URL: "http://localhost:8787",
+  RESEND_API_KEY: "cli-only",
+  MAIL_FROM: "cli-only",
 });
