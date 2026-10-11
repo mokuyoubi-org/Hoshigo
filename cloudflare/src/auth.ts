@@ -1,5 +1,6 @@
 // auth.ts
 
+import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous, captcha, emailOTP } from "better-auth/plugins";
@@ -48,6 +49,9 @@ export function createAuth(env: AuthEnv, locale: Locale = "en") {
     database: drizzleAdapter(db, { provider: "sqlite" }),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    // アプリ(Expo)からのリクエストを信用する入り口
+        // アプリ(Expo)と、Web版からのリクエストを信用する入り口
+    trustedOrigins: ["hoshigo://", "https://hoshigo.app", "http://localhost:8081"],
     plugins: [
       // ロボット避け(Turnstile)。ゲストログインとOTP送信にゲートをつける。
       // endpoints を書くと、標準の対象は置き換わる(メール+パスワード用は使わないので、入れない)。
@@ -56,6 +60,8 @@ export function createAuth(env: AuthEnv, locale: Locale = "en") {
         secretKey: env.TURNSTILE_SECRET,
         endpoints: ["/sign-in/anonymous", "/email-otp/send-verification-otp"],
       }),
+      // Expoアプリとのやりとりを助ける
+      expo(),
       // ゲスト(匿名)ログイン
       anonymous(),
       // メールのOTPログイン(6桁)
