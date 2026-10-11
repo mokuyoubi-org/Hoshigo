@@ -1,3 +1,5 @@
+// email.ts
+
 // OTPメールの文面を、言語別に用意する。
 
 export type Locale = "ja" | "en" | "ko" | "zh";

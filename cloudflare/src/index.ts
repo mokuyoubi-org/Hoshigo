@@ -1,3 +1,5 @@
+// index.ts
+
 import { Hono } from "hono";
 import { createAuth, type AuthEnv } from "./auth";
 import { pickLocale } from "./email";
