@@ -1,6 +1,8 @@
+// auth.ts
+
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous, emailOTP } from "better-auth/plugins";
+import { anonymous, captcha, emailOTP } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./db/auth-schema";
 import { buildOtpEmail, type Locale } from "./email";
@@ -11,6 +13,7 @@ export type AuthEnv = {
   BETTER_AUTH_URL: string;
   RESEND_API_KEY: string;
   MAIL_FROM: string;
+  TURNSTILE_SECRET: string;
 };
 
 // ResendのAPIで、OTPのメールを送る。文面は、言語別に用意したものを使う。
@@ -46,6 +49,13 @@ export function createAuth(env: AuthEnv, locale: Locale = "en") {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     plugins: [
+      // ロボット避け(Turnstile)。ゲストログインとOTP送信にゲートをつける。
+      // endpoints を書くと、標準の対象は置き換わる(メール+パスワード用は使わないので、入れない)。
+      captcha({
+        provider: "cloudflare-turnstile",
+        secretKey: env.TURNSTILE_SECRET,
+        endpoints: ["/sign-in/anonymous", "/email-otp/send-verification-otp"],
+      }),
       // ゲスト(匿名)ログイン
       anonymous(),
       // メールのOTPログイン(6桁)
@@ -66,4 +76,5 @@ export const auth = createAuth({
   BETTER_AUTH_URL: "http://localhost:8787",
   RESEND_API_KEY: "cli-only",
   MAIL_FROM: "cli-only",
+  TURNSTILE_SECRET: "cli-only",
 });
