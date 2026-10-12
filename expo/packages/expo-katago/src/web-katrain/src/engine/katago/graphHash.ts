@@ -1,4 +1,12 @@
-import { BOARD_AREA, EMPTY, NEIGHBOR_COUNTS, NEIGHBOR_LIST, NEIGHBOR_STARTS, PASS_MOVE, type StoneColor } from './fastBoard';
+import {
+  BOARD_AREA,
+  EMPTY,
+  NEIGHBOR_COUNTS,
+  NEIGHBOR_LIST,
+  NEIGHBOR_STARTS,
+  PASS_MOVE,
+  type StoneColor,
+} from "./fastBoard";
 
 /**
  * Position hashing for graph search, ported from cpp/game/graphhash.cpp and
@@ -28,7 +36,7 @@ const ZOBRIST_PLAYER_0 = new Int32Array(3);
 const ZOBRIST_PLAYER_1 = new Int32Array(3);
 
 /** xorshift128, so the tables are the same on every machine and every run. */
-function makeRandom(): () => number {
+const makeRandom = (): () => number => {
   let x = 0x9e3779b9;
   let y = 0x243f6a88;
   let z = 0xb7e15162;
@@ -41,9 +49,9 @@ function makeRandom(): () => number {
     w = (w ^ (w >>> 19) ^ (t ^ (t >>> 8))) | 0;
     return w;
   };
-}
+};
 
-function ensureZobrist(): void {
+const ensureZobrist = (): void => {
   if (zobristBoardArea === BOARD_AREA) return;
   zobristBoardArea = BOARD_AREA;
   const random = makeRandom();
@@ -65,19 +73,19 @@ function ensureZobrist(): void {
     ZOBRIST_PLAYER_0[i] = random();
     ZOBRIST_PLAYER_1[i] = random();
   }
-}
+};
 
 /**
  * KataGo GraphHash::getStateHash: everything that decides what is legal here and
  * what passing would do. Writes the two halves into `out`.
  */
-export function computeStateHash(
+export const computeStateHash = (
   stones: Uint8Array,
   koPoint: number,
   playerToMove: StoneColor,
   consecutiveEndingPasses: number,
-  out: Int32Array
-): void {
+  out: Int32Array,
+): void => {
   ensureZobrist();
   let h0 = 0;
   let h1 = 0;
@@ -101,14 +109,20 @@ export function computeStateHash(
   h1 = (h1 + Math.imul(passes, 0x85ebca77)) | 0;
   out[0] = h0;
   out[1] = h1;
-}
+};
 
 /**
  * KataGo GraphHash::getGraphHash's chaining branch: scramble the path's hash and
  * add the state hash, so a position that could repeat is only ever equal to itself
  * along the same path.
  */
-export function mixGraphHash(prevH0: number, prevH1: number, stateH0: number, stateH1: number, out: Int32Array): void {
+export const mixGraphHash = (
+  prevH0: number,
+  prevH1: number,
+  stateH0: number,
+  stateH1: number,
+  out: Int32Array,
+) => {
   let h0 = prevH0 ^ prevH1;
   h0 = Math.imul(h0 ^ (h0 >>> 16), 0x85ebca6b) | 0;
   h0 = Math.imul(h0 ^ (h0 >>> 13), 0xc2b2ae35) | 0;
@@ -118,19 +132,24 @@ export function mixGraphHash(prevH0: number, prevH1: number, stateH0: number, st
   h1 = (h1 + h0) | 0;
   out[0] = (h0 + stateH0) | 0;
   out[1] = (h1 + stateH1) | 0;
-}
+};
 
 /** A Map key for a hash pair. Two 32-bit halves do not fit exactly, which costs a
  * few of the low bits and is far more precision than the few thousand nodes of a
  * browser-sized search need. */
-export function packHashKey(h0: number, h1: number): number {
+export const packHashKey = (h0: number, h1: number) => {
   return (h0 >>> 0) * 4294967296 + (h1 >>> 0);
-}
+};
 
 const emptyCounted = { mark: new Int32Array(0), epoch: 0, area: -1 };
 const expandQueue = { buf: new Int32Array(0), area: -1 };
 
-function countEmptyHelper(stones: Uint8Array, initialLoc: number, count: number, bound: number): number {
+const countEmptyHelper = (
+  stones: Uint8Array,
+  initialLoc: number,
+  count: number,
+  bound: number,
+): number => {
   const mark = emptyCounted.mark;
   const epoch = emptyCounted.epoch;
   if (mark[initialLoc] === epoch) return count;
@@ -157,7 +176,7 @@ function countEmptyHelper(stones: Uint8Array, initialLoc: number, count: number,
     }
   }
   return count;
-}
+};
 
 /**
  * KataGo Board::simpleRepetitionBoundGt, called on the board after `loc` was
@@ -165,7 +184,11 @@ function countEmptyHelper(stones: Uint8Array, initialLoc: number, count: number,
  * repetition can come back through here in fewer than `bound` moves, so the
  * position is safe to identify by itself alone.
  */
-export function simpleRepetitionBoundGt(stones: Uint8Array, loc: number, bound: number): boolean {
+export const simpleRepetitionBoundGt = (
+  stones: Uint8Array,
+  loc: number,
+  bound: number,
+) => {
   if (loc < 0 || loc === PASS_MOVE || loc >= BOARD_AREA) return false;
 
   if (emptyCounted.area !== BOARD_AREA) {
@@ -232,4 +255,4 @@ export function simpleRepetitionBoundGt(stones: Uint8Array, loc: number, bound: 
     }
   }
   return false;
-}
+};

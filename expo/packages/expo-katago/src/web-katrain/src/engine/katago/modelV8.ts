@@ -30,13 +30,13 @@ type TfMatBias = {
   b: tf.Tensor2D; // [1,channels]
 };
 
-function makeBn(bn: ParsedBatchNorm): TfBn {
+const makeBn = (bn: ParsedBatchNorm): TfBn => {
   const scale = tf.tensor4d(bn.mergedScale, [1, 1, 1, bn.channels]);
   const bias = tf.tensor4d(bn.mergedBias, [1, 1, 1, bn.channels]);
   return { scale, bias };
-}
+};
 
-function makeConv(conv: ParsedConv2d): TfConv {
+const makeConv = (conv: ParsedConv2d): TfConv => {
   // File weights are in [kY,kX,inC,outC] which matches tf.conv2d filter format.
   const filter = tf.tensor4d(conv.weights, [conv.kernelY, conv.kernelX, conv.inChannels, conv.outChannels]);
   return {
@@ -48,50 +48,48 @@ function makeConv(conv: ParsedConv2d): TfConv {
     dilationX: conv.dilationX,
     filter,
   };
-}
+};
 
-function makeMatMul(mm: ParsedMatMul): TfMatMul {
+const makeMatMul = (mm: ParsedMatMul): TfMatMul => {
   const w = tf.tensor2d(mm.weights, [mm.inChannels, mm.outChannels]);
   return { inChannels: mm.inChannels, outChannels: mm.outChannels, w };
-}
+};
 
-function makeMatBias(bias: ParsedMatBias): TfMatBias {
+const makeMatBias = (bias: ParsedMatBias): TfMatBias => {
   const b = tf.tensor2d(bias.weights, [1, bias.channels]);
   return { channels: bias.channels, b };
-}
+};
 
-function applyActivation4D(x: tf.Tensor4D, kind: ActivationKind): tf.Tensor4D {
+const applyActivation4D = (x: tf.Tensor4D, kind: ActivationKind): tf.Tensor4D => {
   if (kind === 'identity') return x;
   if (kind === 'relu') return tf.relu(x) as tf.Tensor4D;
   // mish: x * tanh(softplus(x))
   return tf.mul(x, tf.tanh(tf.softplus(x))) as tf.Tensor4D;
-}
+};
 
-function applyActivation2D(x: tf.Tensor2D, kind: ActivationKind): tf.Tensor2D {
+const applyActivation2D = (x: tf.Tensor2D, kind: ActivationKind): tf.Tensor2D => {
   if (kind === 'identity') return x;
   if (kind === 'relu') return tf.relu(x) as tf.Tensor2D;
   return tf.mul(x, tf.tanh(tf.softplus(x))) as tf.Tensor2D;
-}
+};
 
-function bnAct(x: tf.Tensor4D, bn: TfBn, activation: ActivationKind): tf.Tensor4D {
+const bnAct = (x: tf.Tensor4D, bn: TfBn, activation: ActivationKind): tf.Tensor4D => {
   const y = tf.add(tf.mul(x, bn.scale), bn.bias) as tf.Tensor4D;
   return applyActivation4D(y, activation);
-}
+};
 
-function conv2d(x: tf.Tensor4D, conv: TfConv): tf.Tensor4D {
-  return tf.conv2d(x, conv.filter, 1, 'same', 'NHWC', [conv.dilationY, conv.dilationX]) as tf.Tensor4D;
-}
+const conv2d = (x: tf.Tensor4D, conv: TfConv): tf.Tensor4D => tf.conv2d(x, conv.filter, 1, 'same', 'NHWC', [conv.dilationY, conv.dilationX]) as tf.Tensor4D;
 
-function poolRowsGPool(x: tf.Tensor4D): tf.Tensor2D {
+const poolRowsGPool = (x: tf.Tensor4D): tf.Tensor2D => {
   // KataGo gpool: concat(mean, mean * (sqrt(div)-14)*0.1, max).
   const boardSize = x.shape[1] ?? 19;
   const factor = (boardSize - 14) * 0.1;
   const mean = tf.mean(x, [1, 2]) as tf.Tensor2D; // [N,C]
   const max = tf.max(x, [1, 2]) as tf.Tensor2D; // [N,C]
   return tf.concat([mean, mean.mul(factor), max], 1) as tf.Tensor2D;
-}
+};
 
-function poolRowsValueHead(x: tf.Tensor4D): tf.Tensor2D {
+const poolRowsValueHead = (x: tf.Tensor4D): tf.Tensor2D => {
   // KataGo value pooling: concat(mean, mean * (sqrt(div)-14)*0.1, mean * (((sqrt(div)-14)^2)*0.01 - 0.1)).
   const boardSize = x.shape[1] ?? 19;
   const base = boardSize - 14;
@@ -99,7 +97,7 @@ function poolRowsValueHead(x: tf.Tensor4D): tf.Tensor2D {
   const factor2 = base * base * 0.01 - 0.1;
   const mean = tf.mean(x, [1, 2]) as tf.Tensor2D; // [N,C]
   return tf.concat([mean, mean.mul(factor1), mean.mul(factor2)], 1) as tf.Tensor2D;
-}
+};
 
 export type ParsedTrunkBlock =
   | {

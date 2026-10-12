@@ -1,57 +1,49 @@
-import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useSettingsScreen } from "@/src/active/hooks/screens/useSettingsScreen";
-import { useTranslation } from "@/src/active/i18n/LangProvider";
-import { openURL } from "@/src/stable/logics/linking";
+// SettingsScreen.tsx
+
+import { MyText } from "@/src/components/common/MyText";
+import { VersionModal } from "@/src/components/modals/common/VersionModal";
+import { AllowBotMatchModal } from "@/src/components/modals/settings/AllowBotMatchModal";
+import { DeleteModal } from "@/src/components/modals/settings/DeleteModal";
+import { DoubleTapModal } from "@/src/components/modals/settings/DoubleTapModal";
+import { EmailChangeModal } from "@/src/components/modals/settings/EmailChangeModal";
+import { LanguageModal } from "@/src/components/modals/settings/LanguageModal";
+import { LoginModal } from "@/src/components/modals/settings/LoginModal";
+import { LogoutModal } from "@/src/components/modals/settings/LogoutModal";
+import { ThemeModal } from "@/src/components/modals/settings/ThemeModal";
+import { SettingsRow } from "@/src/components/settings/SettingsRow";
+import { SettingsSection } from "@/src/components/settings/SettingsSection";
+import { useOverlay } from "@/src/contexts/OverlayContext";
+import { useProfile } from "@/src/contexts/ProfileContexts";
+import { useColors, useThemeMode } from "@/src/hooks/common/useTheme";
+import { useSettingsScreen } from "@/src/hooks/screens/useSettingsScreen";
+import { useTranslation } from "@/src/i18n/LangProvider";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import React from "react";
+import { Linking, ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ToggleSwitch } from "ui-atoms";
-import { AppText } from "../active/components/common/AppText";
-import { SettingsRow } from "../active/components/settings/SettingsRow";
-import { SettingsSection } from "../active/components/settings/SettingsSection";
-import { useColors, useThemeMode } from "../active/hooks/useTheme";
-import { DeleteModal } from "../active/modals/DeleteModal";
-import { DoubleTapModal } from "../active/modals/DoubleTapModal";
-import { EmailChangeModal } from "../active/modals/EmailChangeModal";
-import { LanguageModal } from "../active/modals/LanguageModal";
-import { LoginModal } from "../active/modals/LoginModal";
-import { LogoutModal } from "../active/modals/LogoutModal";
-import { ThemeModal } from "../active/modals/ThemeModal";
-import { VersionModal } from "../active/modals/VersionModal";
-
+import { ScreenHeader, ToggleSwitch } from "ui-atoms";
+import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
 
 export default function SettingsScreen() {
   const t = useTranslation();
   const colors = useColors();
   const { mode } = useThemeMode();
   const { show, hide } = useOverlay();
-  const { username, email, allowBotMatch, isAnonymous, country } = useProfile();
+  const { username, email, isAnonymous } = useProfile();
   const {
     loading,
     isDisabled,
     isMatching,
-    handleToggleBotMatch,
     onLogout,
     handleConfirmDelete,
     lang,
     isSoundEnabled,
     setIsSoundEnabled,
-    isSoundEnabledLoaded,
   } = useSettingsScreen();
 
-  useEffect(() => {
-    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
-    if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-    ) {
-      document.activeElement.blur();
-    }
-  }, []);
+  useBlurActiveElement();
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -60,25 +52,29 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}
       >
-        <View className="w-full max-w-160 mx-auto px-5 pb-10">
-          <View className="mt-2 h-11 justify-center">
-            <TouchableOpacity
-              onPress={() => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace("/ProfileScreen");
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <Feather name="chevron-left" size={36} color={colors.textSub} />
-            </TouchableOpacity>
-          </View>
+        <View className="w-full max-w-160 mx-auto px-4 pt-2">
+          <ScreenHeader
+            left={
+              <TouchableOpacity
+                onPress={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace({ pathname: "/ProfileScreen" });
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Feather name="chevron-left" size={36} color={colors.textSub} />
+              </TouchableOpacity>
+            }
+          />
 
-          <AppText className="text-3xl text-text tracking-wider mb-5">
+          <MyText
+            className="text-3xl text-text tracking-wider mb-4 h-10" // h-10が大事
+          >
             {t("common.settings")}
-          </AppText>
+          </MyText>
 
           <SettingsSection title={t("Settings.accountInfo")}>
             <SettingsRow
@@ -93,49 +89,26 @@ export default function SettingsScreen() {
                 )
               }
               rightElement={
-                <AppText className="text-lg text-textSub tracking-wide">
+                <MyText className="text-lg text-textSub tracking-wide">
                   {email ? email : t("Settings.notSet")}
-                </AppText>
+                </MyText>
               }
             />
-            {/* <SettingsRow
-              label={t("common.country")}
-              onPress={() =>
-                show(
-                  <CountryModal
-                    onSelectCountry={updateCountry}
-                    onClose={hide}
-                  />,
-                )
-              }
-              rightElement={
-                <AppText className="text-lg text-textSub tracking-wide">
-                  {country ? getCountryLabel(country) : t("Settings.notSet")}
-                </AppText>
-              }
-            /> */}
           </SettingsSection>
 
           {/* 対局セクション */}
           <SettingsSection title={t("Settings.matchSettings")}>
             <SettingsRow
               label={t("Settings.allowBotMatch")}
-              rightElement={
-                <ToggleSwitch
-                  value={allowBotMatch ?? true}
-                  onToggle={handleToggleBotMatch}
-                  disabled={isMatching}
-                  backgroundOnColor={colors.primary}
-                  backgroundOffColor={colors.backgroundStrong}
-                  toggleColor={colors.foreground}
-                />
+              onPress={() =>
+                show(
+                  <AllowBotMatchModal isMatching={isMatching} onClose={hide} />,
+                )
               }
             />
             <SettingsRow
               label={t("Settings.doubleTap")}
-              onPress={() =>
-                show(<DoubleTapModal isMatching={isMatching} onClose={hide} />)
-              }
+              onPress={() => show(<DoubleTapModal onClose={hide} />)}
             />
           </SettingsSection>
 
@@ -144,15 +117,13 @@ export default function SettingsScreen() {
             <SettingsRow
               label={t("common.sound")}
               rightElement={
-                isSoundEnabledLoaded ? (
-                  <ToggleSwitch
-                    value={isSoundEnabled}
-                    onToggle={(val) => setIsSoundEnabled(val)}
-                    backgroundOnColor={colors.primary}
-                    backgroundOffColor={colors.backgroundStrong}
-                    toggleColor={colors.foreground}
-                  />
-                ) : null
+                <ToggleSwitch
+                  value={isSoundEnabled}
+                  onToggle={(val) => setIsSoundEnabled(val)}
+                  backgroundOnColor={colors.primary}
+                  backgroundOffColor={colors.backgroundStrong}
+                  toggleColor={colors.foreground}
+                />
               }
             />
 
@@ -162,9 +133,9 @@ export default function SettingsScreen() {
                 show(<LanguageModal onClose={hide} />);
               }}
               rightElement={
-                <AppText className="text-lg text-textSub tracking-wide">
+                <MyText className="text-lg text-textSub tracking-wide">
                   {t(`language.${lang}`)}
-                </AppText>
+                </MyText>
               }
             />
 
@@ -172,9 +143,9 @@ export default function SettingsScreen() {
               label={t("theme.theme")}
               onPress={() => show(<ThemeModal onClose={hide} />)}
               rightElement={
-                <AppText className="text-lg text-textSub tracking-wide">
+                <MyText className="text-lg text-textSub tracking-wide">
                   {t(`theme.${mode}`)}
-                </AppText>
+                </MyText>
               }
             />
           </SettingsSection>
@@ -183,11 +154,11 @@ export default function SettingsScreen() {
           <SettingsSection title={t("common.information")}>
             <SettingsRow
               label={t("Settings.privacyPolicy")}
-              onPress={() => openURL("https://mokuyoubi.org/privacy")}
+              onPress={() => Linking.openURL("https://mokuyoubi.org/privacy")}
             />
             <SettingsRow
               label={t("Settings.termsOfService")}
-              onPress={() => openURL("https://mokuyoubi.org/terms")}
+              onPress={() => Linking.openURL("https://mokuyoubi.org/terms")}
             />
             <SettingsRow
               label={t("common.version")}
@@ -217,13 +188,13 @@ export default function SettingsScreen() {
                   );
                 }}
               >
-                <AppText
+                <MyText
                   className={`text-lg ${
                     isDisabled ? "text-backgroundStrong" : "text-primaryStrong"
                   } tracking-wide`}
                 >
                   {t("common.logout")}
-                </AppText>
+                </MyText>
               </TouchableOpacity>
             )}
 
@@ -246,13 +217,13 @@ export default function SettingsScreen() {
                 );
               }}
             >
-              <AppText
+              <MyText
                 className={`text-lg ${
                   isDisabled ? "text-failureLight" : "text-failure"
                 } tracking-wide`}
               >
                 {t("Settings.deleteAccount")}
-              </AppText>
+              </MyText>
             </TouchableOpacity>
           </View>
         </View>

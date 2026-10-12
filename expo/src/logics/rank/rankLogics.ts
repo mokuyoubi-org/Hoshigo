@@ -1,0 +1,64 @@
+// rankLogics.ts
+
+import { RANKS } from "@/src/constants/ranks";
+import { TFunction } from "@/src/i18n/types";
+
+const RATING_PER_WIN = 10;
+
+export const ratingToRankIndex = (rating: number): number => {
+  const safeRating = Math.max(0, rating);
+  const rankIndex = RANKS.findLastIndex((rank) => rank.minRating <= safeRating);
+  return rankIndex !== -1 ? rankIndex : 0;
+};
+
+const ratingNeededToWinsNeeded = (
+  rating: number,
+  ratingPerWin: number = RATING_PER_WIN,
+): number => {
+  if (rating <= 0 || ratingPerWin <= 0) return 0;
+  return Math.ceil(rating / ratingPerWin);
+};
+
+export const getRankInfo = (rating: number | null, t: TFunction) => {
+  const safeRating = Math.max(0, rating ?? 0);
+  const rankIndex = ratingToRankIndex(safeRating);
+  const rank = RANKS[rankIndex];
+  const nextRank = RANKS[rankIndex + 1];
+
+  if (nextRank) {
+    const currentMin = rank.minRating;
+    const nextMin = nextRank.minRating;
+    const totalRange = nextMin - currentMin;
+    const currentProgress = safeRating - currentMin;
+    const percent = Math.min(
+      100,
+      Math.floor((currentProgress / totalRange) * 100),
+    );
+    const ratingNeeded = Math.max(0, nextMin - safeRating);
+    const winsNeeded = ratingNeededToWinsNeeded(ratingNeeded, RATING_PER_WIN);
+
+    return {
+      index: rankIndex,
+      name: t(rank.nameKey),
+      color: rank.color,
+      rating: safeRating,
+      percent,
+      next: {
+        index: rankIndex + 1,
+        name: t(nextRank.nameKey),
+        color: nextRank.color,
+        ratingNeeded,
+        winsNeeded,
+      },
+    };
+  }
+
+  return {
+    index: rankIndex,
+    name: t(rank.nameKey),
+    color: rank.color,
+    rating: safeRating,
+    percent: 100,
+    next: null,
+  };
+};

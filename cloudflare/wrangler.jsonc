@@ -17,5 +17,47 @@
 			"database_name": "hoshigo-db",
 			"database_id": "50856c52-a430-4bd4-be06-62ea1093cb39"
 		}
-	]
+	],
+		// R2(棋譜・分析の倉庫)。手元の wrangler dev では、手元の仮のR2が使われる(本物には書かない)。
+	"r2_buckets": [
+		{
+			"binding": "RECORDS",
+			"bucket_name": "hoshigo-records"
+		}
+	],
+	// Durable Objects(リアルタイム対局の部屋)
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "QUEUE_ROOM",
+				"class_name": "QueueRoom"
+			},
+			{
+				"name": "GAME_ROOM",
+				"class_name": "GameRoom"
+			}
+		]
+	},
+	// 部屋のクラスの登録。SQLite版で作る(いまの標準)。
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"QueueRoom"
+			]
+		},
+		{
+			"tag": "v2",
+			"new_sqlite_classes": [
+				"GameRoom"
+			]
+		}
+	],
+	// 時間割(UTC)。cron.ts の CRON_DAILY_CLEANUP と CRON_DAILY_RESET と、同じ文字列にする。
+	"triggers": {
+		"crons": [
+			"0 0 * * *",
+			"0 5 * * *"
+		]
+	}
 }

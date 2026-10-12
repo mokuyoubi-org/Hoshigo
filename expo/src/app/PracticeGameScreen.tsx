@@ -1,37 +1,52 @@
 // PracticeGameScreen.tsx
 
-import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
-
-import { useTranslation } from "@/src/active/i18n/LangProvider";
-import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { IconButton } from "@/packages/ui-atoms/src";
+import { BotPlayStopButtons } from "@/src/components/buttons/BotPlayStopButtons";
+import { MyText } from "@/src/components/common/MyText";
+import {
+  BoardEditScreenHeader,
+  HeaderPlayerInfo,
+} from "@/src/components/headers/BoardEditScreenHeader";
+import LoadingModal from "@/src/components/modals/common/LoadingModal";
+import { GameScreenSettingsModal } from "@/src/components/modals/game/GameScreenSettingsModal";
+import { GameStartModal } from "@/src/components/modals/game/GameStartModal";
+import { PassConfirmModal } from "@/src/components/modals/game/PassConfirmModal";
+import { PracticeSetupModal } from "@/src/components/modals/practice/PracticeSetupModal";
+import { GameResultModal } from "@/src/components/modals/result/GameResultModal";
+import { useOverlay } from "@/src/contexts/OverlayContext";
+import { useProfile } from "@/src/contexts/ProfileContexts";
+import { useAppFont } from "@/src/hooks/common/useAppFont";
+import { useColors } from "@/src/hooks/common/useTheme";
+import { usePracticeSession } from "@/src/hooks/practice/usePracticeSession";
+import { usePracticeSettings } from "@/src/hooks/practice/usePracticeSettings";
+import { useTranslation } from "@/src/i18n/LangProvider";
+import { Feather, FontAwesome6 } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { GoBoard } from "go-components";
+import { GoBoard, ScoreLeadReplayControls } from "go-components";
 import {
   BLACK,
   BoardSize,
+  endsWithDoublePass,
+  Grid,
   MatchType,
   movesToBoardHistory,
   PASS_GRID,
+  RecordAnalysis,
 } from "go-core";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppText } from "../active/components/common/AppText";
-
-import { useOverlay } from "../active/contexts/OverlayContext";
+import { ScreenHeader } from "ui-atoms";
+import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
+import { getOwnershipTerritoryBoard } from "../logics/game/ownershipTerritory";
 import {
-  PlayerType,
-  usePracticeSession,
-} from "../active/hooks/practice/usePracticeSession";
-import { usePracticeSettings } from "../active/hooks/practice/usePracticeSettings";
-import { useColors } from "../active/hooks/useTheme";
-import { ratingToRankIndex } from "../stable/logics/rankLogics";
-import { buildRecordFromMatch } from "../stable/logics/recordBuilder";
-import { GameResultModal } from "../active/modals/gameresult/GameResultModal";
-import { GameStartModal } from "../active/modals/GameStartModal";
-import LoadingModal from "../active/modals/LoadingModal";
-import { PracticeSetupModal } from "../active/modals/PracticeSetupModal";
+  parseAnalysisParam,
+  parseMovesParam,
+} from "../logics/game/parseMovesParam";
+import { ratingToRankIndex } from "../logics/rank/rankLogics";
+import { buildRecordFromMatch } from "../logics/record/recordBuilder";
+import { PlayerCardView, PlayerType } from "../types/player";
 
 const LAYOUT_CONFIG = {
   // 余白の比率（flex）を設定する
@@ -43,11 +58,23 @@ const LAYOUT_CONFIG = {
   FLEX_C: 2,
 };
 
+// 🌟 PlayerCard用の表示情報(rating / agehamaCount)を、
+// ヘッダー用の形(rankIndex / agehama)に翻訳する
+const toHeaderPlayer = (p: PlayerCardView): HeaderPlayerInfo => ({
+  username: p.username,
+  rankIndex: ratingToRankIndex(p.rating),
+  iconIndex: p.iconIndex,
+  color: p.color,
+  agehama: p.agehamaCount,
+  showPass: p.showPass,
+});
+
 export default function PracticeGameScreen() {
   const colors = useColors();
   const { width, height } = useWindowDimensions();
   const boardWidth = Math.min(width * 0.94, height * 0.6);
   const [hasStarted, setHasStarted] = useState(false);
+  const [resumed, setResumed] = useState(false);
 
   const {
     boardSize,
@@ -58,7 +85,6 @@ export default function PracticeGameScreen() {
     setBlackPlayer,
     whitePlayer,
     setWhitePlayer,
-    isLoaded,
     isSoundEnabled,
     doubleTap,
     myRatingForBoardSize,
@@ -72,15 +98,52 @@ export default function PracticeGameScreen() {
     [boardSize, matchType],
   );
 
+  const { from, boardSizeParam, matchTypeParam, movesP, analysisP } =
+    useLocalSearchParams<{
+      from: string;
+      boardSizeParam?: string;
+      matchTypeParam?: string;
+      movesP?: string | string[]; // 1つだと string、複数だと string[] になる可能性がある
+      analysisP?: string; // 途中までの分析結果(JSON文字列)
+    }>();
+
+  // 🌟 URLで受け取った盤サイズ・ハンデ。数字として読めない時は undefined にする
+  //   (matchType は 0 もありうるので、「0だからダメ」とは判定しない)
+  const paramBoardSize = Number(boardSizeParam);
+  const paramMatchType = Number(matchTypeParam);
+  const resumeBoardSize = Number.isFinite(paramBoardSize)
+    ? (paramBoardSize as BoardSize)
+    : undefined;
+  const resumeMatchType = Number.isFinite(paramMatchType)
+    ? (paramMatchType as MatchType)
+    : undefined;
+
+  // 🌟 盤サイズは、再開の時はURLの値で作り直した後のものを使う
+  const effectiveBoardSize = resumed
+    ? (resumeBoardSize ?? boardSize)
+    : boardSize;
+  const parsedMoves: Grid[] = parseMovesParam(movesP, effectiveBoardSize);
+
+  // 🌟 連続パスで終わっている手の列は、再開しても対局が続けられないので、
+  //   そのパス2回を外して「パスする前の局面」から再開する。
+  const movesParam: Grid[] = endsWithDoublePass(parsedMoves)
+    ? parsedMoves.slice(0, -2)
+    : parsedMoves;
+  // 🌟 連続パスを外した後の手数に合わせて、分析結果もちょん切る
+  const initialAnalysis = resumed
+    ? parseAnalysisParam(analysisP, movesParam.length)
+    : undefined;
   if (hasStarted) {
     return (
       <PracticeGameScreenContent
-        boardSize={boardSize}
-        matchType={matchType}
+        boardSize={resumed ? (resumeBoardSize ?? boardSize) : boardSize}
+        matchType={resumed ? (resumeMatchType ?? matchType) : matchType}
         blackPlayer={blackPlayer}
         whitePlayer={whitePlayer}
         isSoundEnabled={isSoundEnabled}
         doubleTap={doubleTap}
+        movesParam={resumed ? movesParam : []}
+        initialAnalysis={initialAnalysis}
       />
     );
   }
@@ -124,6 +187,7 @@ export default function PracticeGameScreen() {
       </View>
 
       <PracticeSetupModal
+        from={from}
         boardSize={boardSize}
         setBoardSize={setBoardSize}
         blackPlayer={blackPlayer}
@@ -132,8 +196,13 @@ export default function PracticeGameScreen() {
         setWhitePlayer={setWhitePlayer}
         matchType={matchType}
         setMatchType={setMatchType}
-        onStart={() => setHasStarted(true)}
-        isLoaded={isLoaded}
+        onStart={() => {
+          setHasStarted(true);
+        }}
+        onResume={() => {
+          setHasStarted(true);
+          setResumed(true);
+        }}
         myRating={myRatingForBoardSize}
         myIconIndex={myIconIndex}
         myUid={uid ?? ""}
@@ -143,15 +212,17 @@ export default function PracticeGameScreen() {
 }
 
 // 🌟対局中の画面。「対局開始」が押された瞬間にだけマウントされる。
-// これにより、内部で呼んでいる usePracticeSession (と useGoGame) も
+// これにより、内部で呼んでいる usePracticeSession も
 // この瞬間のboardSize/matchType/プレイヤーで新しく作られる。
-function PracticeGameScreenContent({
+const PracticeGameScreenContent = ({
   boardSize,
   matchType,
   blackPlayer,
   whitePlayer,
   isSoundEnabled,
   doubleTap,
+  movesParam,
+  initialAnalysis,
 }: {
   boardSize: BoardSize;
   matchType: MatchType;
@@ -159,12 +230,16 @@ function PracticeGameScreenContent({
   whitePlayer: PlayerType;
   isSoundEnabled: boolean;
   doubleTap: boolean;
-}) {
+  movesParam: Grid[];
+  initialAnalysis: RecordAnalysis | undefined;
+}) => {
   const t = useTranslation();
   const colors = useColors();
   const { show, hide } = useOverlay();
   const { width, height } = useWindowDimensions();
   const boardWidth = Math.min(width * 0.94, height * 0.6);
+  const { uid } = useProfile();
+  const fontFamily = useAppFont();
 
   const {
     boardHistory,
@@ -172,32 +247,102 @@ function PracticeGameScreenContent({
     moves,
     movesRef,
     currentIndex,
+    maxViewIndex,
+    setCurrentIndex,
     territoryBoard,
     isGameEnded,
     isBotThinking,
     handlePutStone,
     handleResign,
-    topPlayerView,
-    bottomPlayerView,
+    shouldConfirmPass,
+    handleTogglePause,
+    handleStop,
+    isPaused,
+    topPlayer,
+    bottomPlayer,
     resultRaw,
     resultComment,
-    finalDeadStones,
     liveAnalysisResult,
     practiceMatchStatus,
     getPlayerGameStartInfo,
     isDoublePass,
     isCalculating,
-  } = usePracticeSession({ boardSize, matchType, blackPlayer, whitePlayer });
-
+    isHumanBotMatch,
+  } = usePracticeSession({
+    boardSize,
+    matchType,
+    blackPlayer,
+    whitePlayer,
+    initialMoves: movesParam,
+    initialAnalysis,
+  });
+  // 🌟最新のhandlePutStoneを指すref。確認モーダルの「はい」から呼ぶ時に、
+  //   モーダルを出した時点の古い関数を使ってしまわないため。
+  const handlePutStoneRef = useRef(handlePutStone);
   useEffect(() => {
-    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
-    if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-    ) {
-      document.activeElement.blur();
+    handlePutStoneRef.current = handlePutStone;
+  });
+
+  // パスボタンを押した時の処理。
+  // 終局していない局面でのパスは、確認のモーダルを出す。
+  //   「はい」→ パスする / 「いいえ」→ 何もしない(手を打っていない状態のまま)
+  // 終局している局面、または分析がまだ届いていなくて判定できない時は、
+  // 確認なしでそのままパスする。
+  const handlePassPress = () => {
+    if (!shouldConfirmPass()) {
+      handlePutStone(PASS_GRID);
+      return;
     }
-  }, []);
+    show(
+      <PassConfirmModal
+        onYes={() => {
+          hide();
+          handlePutStoneRef.current(PASS_GRID);
+        }}
+        onNo={hide}
+      />,
+    );
+  };
+
+  // 🌟 練習対局での、地の表示。棋譜画面の showOwnershipTerritoryBoard にあたるもの。
+  // 一旦、常にtrue。あとで設定(KVStorageなど)につなぐ時は、この1行を差し替えればいい。
+  const showOwnershipTerritoryBoard = true;
+
+  // いま見ている局面の ownership(予想)から作った地。
+  // 見せる局面は「分析が届いた局面」までなので、ライブ中でも通常は null にならない。
+  // ownership が無い局面(分析の失敗など)は null(=何も出さない)。
+  const ownershipTerritoryBoard = useMemo(
+    () =>
+      showOwnershipTerritoryBoard
+        ? getOwnershipTerritoryBoard(
+            boardSize,
+            boardHistory[currentIndex],
+            liveAnalysisResult,
+            currentIndex,
+          )
+        : null,
+    [
+      showOwnershipTerritoryBoard,
+      boardSize,
+      boardHistory,
+      currentIndex,
+      liveAnalysisResult,
+    ],
+  );
+
+  const isPlayerBlack = blackPlayer.uid === uid;
+  const blackWins = resultRaw?.startsWith("B")
+    ? true
+    : resultRaw?.startsWith("W")
+      ? false
+      : undefined;
+  const playerWin = !isHumanBotMatch
+    ? undefined
+    : isPlayerBlack
+      ? blackWins
+      : !blackWins;
+
+  useBlurActiveElement();
 
   // 🐱 対局開始時の挨拶モーダル
   useEffect(() => {
@@ -216,7 +361,6 @@ function PracticeGameScreenContent({
     if (!isCalculating) {
       return;
     }
-    console.log("show_LoadingModal");
     show(<LoadingModal />);
   }, [isCalculating]);
 
@@ -229,14 +373,13 @@ function PracticeGameScreenContent({
       boardSize,
       matchType,
       moves: movesRef.current,
-      deadStones: finalDeadStones,
       result: resultRaw,
-      blackUid: blackPlayer.uid, // botは適当
+      blackUid: blackPlayer.uid,
       blackUsername: blackPlayer.username,
       blackIconIndex: blackPlayer.iconIndex,
       blackRankIndex: ratingToRankIndex(blackPlayer.rating),
       blackRating: blackPlayer.rating,
-      whiteUid: whitePlayer.uid, // botは適当
+      whiteUid: whitePlayer.uid,
       whiteUsername: whitePlayer.username,
       whiteIconIndex: whitePlayer.iconIndex,
       whiteRankIndex: ratingToRankIndex(whitePlayer.rating),
@@ -245,6 +388,7 @@ function PracticeGameScreenContent({
     });
 
     router.replace({
+      // 2026/10/05: ⚠️ここはreplaceでなければならない
       pathname: "/BoardEditScreen",
       params: {
         recordParam: JSON.stringify(record),
@@ -257,6 +401,11 @@ function PracticeGameScreenContent({
     show(
       <GameResultModal
         boardSize={boardSize}
+        matchType={matchType}
+        moves={moves.slice(0, currentIndex)} // 今の盤面までちょん切る
+        analysis={{
+          perMove: liveAnalysisResult.perMove.slice(0, currentIndex + 1),
+        }}
         visible={true}
         resultComment={resultComment}
         onClose={hide}
@@ -267,64 +416,77 @@ function PracticeGameScreenContent({
         from={"PracticeGameScreen"}
         giantKillingStreak={0}
         giantKillingBonus={false}
+        playerWin={playerWin}
       />,
     );
   }, [isGameEnded]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background items-center">
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
 
-      <View className="flex-1 w-full max-w-160 mx-auto px-5">
+      <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
         {/* ─── ヘッダー ─── */}
-        <View className="mt-2 h-11 justify-center">
-          <TouchableOpacity
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace("/HomeScreen");
-              }
-            }}
-            activeOpacity={0.7}
-          >
-            <Feather name="chevron-left" size={36} color={colors.textSub} />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          left={
+            <TouchableOpacity
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace({ pathname: "/HomeScreen" });
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Feather name="chevron-left" size={36} color={colors.textSub} />
+            </TouchableOpacity>
+          }
+          right={
+            <IconButton
+              icon={<FontAwesome6 name={"gear"} />}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundStrong}
+              onPress={() => {
+                show(
+                  <GameScreenSettingsModal
+                    onClose={hide}
+                    boardSize={boardSize}
+                  />,
+                );
+              }}
+            />
+          }
+        />
 
         {/* コンテンツ領域 */}
         {/* ─── 余白 A ─── */}
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_A }} />
-
         {/* ─── 三兄弟 ─── */}
         <View className="items-center gap-2">
-          <View style={{ width: boardWidth }}>
-            <PlayerCard
-              username={topPlayerView.username}
-              iconIndex={topPlayerView.iconIndex}
-              rating={topPlayerView.rating}
-              color={topPlayerView.color}
-              isLeft={true}
-              showPass={topPlayerView.showPass}
-              agehamaCount={topPlayerView.agehamaCount}
-            />
-          </View>
-
+          <BoardEditScreenHeader
+            analysis={liveAnalysisResult}
+            leftPlayer={toHeaderPlayer(bottomPlayer)}
+            rightPlayer={toHeaderPlayer(topPlayer)}
+            currentIndex={currentIndex}
+            showWinRateBar={true}
+          />
           <GoBoard
             boardSize={boardSize}
             matchType={matchType}
-            playerColor={bottomPlayerView.color}
+            playerColor={bottomPlayer.color}
             board={boardHistory[currentIndex] ?? {}}
             currentIndex={currentIndex}
-            territoryBoard={territoryBoard}
-            moveHistory={moves}
+            territoryBoard={ownershipTerritoryBoard ?? territoryBoard}
+            moveHistory={moves.slice(0, currentIndex + 1)}
             boardHistory={boardHistory}
             agehamaHistory={agehamaHistory}
             onPutStone={handlePutStone}
             disabled={isGameEnded || isBotThinking}
             isGameEnded={isGameEnded}
             doubleTap={doubleTap}
-            forceShowTerritory={false}
+            forceShowTerritory={ownershipTerritoryBoard !== null}
             editMarkers={new Map()}
             candidatePoints={[]}
             moveEvaluationPoint={0}
@@ -341,18 +503,6 @@ function PracticeGameScreenContent({
             sound={isSoundEnabled}
             practiceMatchStatus={practiceMatchStatus}
           />
-
-          <View style={{ width: boardWidth }}>
-            <PlayerCard
-              username={bottomPlayerView.username}
-              iconIndex={bottomPlayerView.iconIndex}
-              rating={bottomPlayerView.rating}
-              color={bottomPlayerView.color}
-              isLeft={false}
-              showPass={bottomPlayerView.showPass}
-              agehamaCount={bottomPlayerView.agehamaCount}
-            />
-          </View>
         </View>
 
         {/* ─── 余白 B ─── */}
@@ -364,18 +514,18 @@ function PracticeGameScreenContent({
             className="flex-row gap-2 self-center"
             style={{ width: boardWidth }}
           >
-             {/* パスボタン */}
+            {/* パスボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
                 isBotThinking
                   ? "border-backgroundStrong"
                   : "border-primaryStrong"
               }`}
-              onPress={() => handlePutStone(PASS_GRID)}
+              onPress={handlePassPress}
               disabled={isBotThinking}
               activeOpacity={0.7}
             >
-              <AppText
+              <MyText
                 className="text-lg"
                 style={{
                   color: isBotThinking
@@ -384,9 +534,9 @@ function PracticeGameScreenContent({
                 }}
               >
                 {t("common.pass")}
-              </AppText>
+              </MyText>
             </TouchableOpacity>
-             {/* 投了ボタン */}
+            {/* 投了ボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
                 isBotThinking ? "border-failureLight" : "border-failure"
@@ -395,15 +545,38 @@ function PracticeGameScreenContent({
               disabled={isBotThinking}
               activeOpacity={0.7}
             >
-              <AppText
+              <MyText
                 className="text-lg"
                 style={{
                   color: isBotThinking ? colors.failureLight : colors.failure,
                 }}
               >
                 {t("common.resign")}
-              </AppText>
+              </MyText>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ─── botbot戦の場合は分析・再生コントロールも ─── */}
+        {!isGameEnded && !isDoublePass && practiceMatchStatus === "bot_bot" && (
+          <View className="gap-2">
+            <ScoreLeadReplayControls
+              showMode={"both"} // 一旦
+              analysis={liveAnalysisResult}
+              currentIndex={currentIndex}
+              totalMoves={maxViewIndex}
+              onCurrentIndexChange={setCurrentIndex}
+              backgroundStrong={colors.backgroundStrong}
+              foreground={colors.foreground}
+              primaryStrong={colors.primaryStrong}
+              fontFamily={fontFamily}
+            />
+            <BotPlayStopButtons
+              isPaused={isPaused}
+              disabled={isCalculating}
+              onTogglePause={handleTogglePause}
+              onStop={handleStop}
+            />
           </View>
         )}
 
@@ -412,4 +585,4 @@ function PracticeGameScreenContent({
       </View>
     </SafeAreaView>
   );
-}
+};

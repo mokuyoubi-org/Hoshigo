@@ -1,4 +1,4 @@
-import { BOARD_AREA, BOARD_SIZE } from './fastBoard';
+import { BOARD_AREA, BOARD_SIZE } from "./fastBoard";
 
 const TWO_OVER_PI = 2 / Math.PI;
 const EXTRA_SCORE_DISTR_RADIUS = 60;
@@ -10,19 +10,26 @@ let svTableStdevLen = 0;
 
 let expectedSVTable: Float64Array | null = null;
 
-function whiteScoreValueOfScoreSmoothNoDrawAdjust(finalWhiteMinusBlackScore: number, center: number, scale: number, sqrtBoardArea: number): number {
+const whiteScoreValueOfScoreSmoothNoDrawAdjust = (
+  finalWhiteMinusBlackScore: number,
+  center: number,
+  scale: number,
+  sqrtBoardArea: number,
+): number => {
   const adjustedScore = finalWhiteMinusBlackScore - center;
   return Math.atan(adjustedScore / (scale * sqrtBoardArea)) * TWO_OVER_PI;
-}
+};
 
-function initScoreValueTables(): void {
+const initScoreValueTables = (): void => {
   const boardSize = BOARD_SIZE;
   if (expectedSVTable && svTableBoardSize === boardSize) return;
 
   svTableBoardSize = boardSize;
-  svTableMeanRadius = svTableBoardSize * svTableBoardSize + EXTRA_SCORE_DISTR_RADIUS;
+  svTableMeanRadius =
+    svTableBoardSize * svTableBoardSize + EXTRA_SCORE_DISTR_RADIUS;
   svTableMeanLen = svTableMeanRadius * 2;
-  svTableStdevLen = svTableBoardSize * svTableBoardSize + EXTRA_SCORE_DISTR_RADIUS;
+  svTableStdevLen =
+    svTableBoardSize * svTableBoardSize + EXTRA_SCORE_DISTR_RADIUS;
   expectedSVTable = new Float64Array(svTableMeanLen * svTableStdevLen);
 
   const stepsPerUnit = 10;
@@ -46,11 +53,17 @@ function initScoreValueTables(): void {
   const svPrecomp = new Float64Array(maxSVSteps - minSVSteps + 1);
   for (let i = minSVSteps; i <= maxSVSteps; i++) {
     const mean = i / stepsPerUnit;
-    svPrecomp[i - minSVSteps] = whiteScoreValueOfScoreSmoothNoDrawAdjust(mean, 0.0, 1.0, svTableBoardSize);
+    svPrecomp[i - minSVSteps] = whiteScoreValueOfScoreSmoothNoDrawAdjust(
+      mean,
+      0.0,
+      1.0,
+      svTableBoardSize,
+    );
   }
 
   for (let meanIdx = 0; meanIdx < svTableMeanLen; meanIdx++) {
-    const meanSteps = (meanIdx - svTableMeanRadius) * stepsPerUnit - stepsPerUnit / 2;
+    const meanSteps =
+      (meanIdx - svTableMeanRadius) * stepsPerUnit - stepsPerUnit / 2;
     const rowBase = meanIdx * svTableStdevLen;
 
     for (let stdevIdx = 0; stdevIdx < svTableStdevLen; stdevIdx++) {
@@ -68,17 +81,17 @@ function initScoreValueTables(): void {
       expectedSVTable[rowBase + stdevIdx] = wsvSum / wSum;
     }
   }
-}
+};
 
-export function expectedWhiteScoreValue(args: {
+export const expectedWhiteScoreValue = (args: {
   whiteScoreMean: number;
   whiteScoreStdev: number;
   center: number;
   scale: number;
   sqrtBoardArea: number;
-}): number {
+}): number => {
   initScoreValueTables();
-  if (!expectedSVTable) throw new Error('ScoreValue tables not initialized');
+  if (!expectedSVTable) throw new Error("ScoreValue tables not initialized");
 
   const scaleFactor = svTableBoardSize / (args.scale * args.sqrtBoardArea);
 
@@ -120,27 +133,31 @@ export function expectedWhiteScoreValue(args: {
   const b0 = a00 + lambdaStdev * (a01 - a00);
   const b1 = a10 + lambdaStdev * (a11 - a10);
   return b0 + lambdaMean * (b1 - b0);
-}
+};
 
 /**
  * d(scoreValue)/d(score), KataGo ScoreValue::whiteDScoreValueDScoreSmoothNoDrawAdjust
  * (cpp/neuralnet/nninputs.cpp). Used to turn a score error into a utility error.
  */
-export function whiteDScoreValueDScoreSmoothNoDrawAdjust(args: {
+export const whiteDScoreValueDScoreSmoothNoDrawAdjust = (args: {
   finalWhiteMinusBlackScore: number;
   center: number;
   scale: number;
   sqrtBoardArea: number;
-}): number {
+}): number => {
   const adjustedScore = args.finalWhiteMinusBlackScore - args.center;
   const scaleFactor = args.scale * args.sqrtBoardArea;
-  return (scaleFactor / (scaleFactor * scaleFactor + adjustedScore * adjustedScore)) * (2 / Math.PI);
-}
+  return (
+    (scaleFactor /
+      (scaleFactor * scaleFactor + adjustedScore * adjustedScore)) *
+    (2 / Math.PI)
+  );
+};
 
-export function getScoreStdev(scoreMean: number, scoreMeanSq: number): number {
+export const getScoreStdev = (scoreMean: number, scoreMeanSq: number) => {
   const variance = scoreMeanSq - scoreMean * scoreMean;
   if (variance <= 0) return 0;
   return Math.sqrt(variance);
-}
+};
 
 export const getSqrtBoardArea = (): number => Math.sqrt(BOARD_AREA);

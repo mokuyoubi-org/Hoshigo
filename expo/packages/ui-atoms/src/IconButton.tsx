@@ -1,7 +1,4 @@
-/**
- * IconButton.tsx
- * アイコンボタン。サイズは統一されている。色は呼び出し側が指定する。
- */
+// IconButton.tsx
 
 import React from "react";
 import {

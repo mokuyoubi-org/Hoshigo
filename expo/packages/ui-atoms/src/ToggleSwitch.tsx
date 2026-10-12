@@ -12,11 +12,11 @@ type Props = {
   disabled?: boolean;
 };
 
-// 🟨その他パラメータ。
+// その他パラメータ。
 const HITSLOP = 8; // トグルスイッチの反応範囲を上下左右のpadding何px分広げるか。ボタンの押しやすさのための配慮。
 const ANIM_DURATION = 150; // 元のNativeWind版のduration-150に合わせる
 
-// ⚠️ knobの移動距離(22px)は「レール幅52px − つまみ24px − 左右padding3px×2」を
+// ⚠️ knobの移動距離(22px)は「レール幅52px − つまみ24px − 左右padding3px * 2」を
 //    あらかじめ計算した値。トラックやknobのサイズを変えたら、ここも手計算し直す必要がある。
 const KNOB_TRANSLATE_X = 22;
 

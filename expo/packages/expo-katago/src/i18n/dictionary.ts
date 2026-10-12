@@ -1,7 +1,7 @@
-// expo-katago/src/i18n/dictionary.ts
+// packages/expo-katago/src/i18n/dictionary.ts
 
 export const kataGoDictionary = {
-gate: {
+  gate: {
     en: {
       connecting: "Connecting to AI",
       downloading: "Downloading AI for the first time",

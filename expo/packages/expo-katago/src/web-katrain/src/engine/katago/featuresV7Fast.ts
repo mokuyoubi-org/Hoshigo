@@ -21,11 +21,9 @@ export type RecentMove = {
 
 const idxNHWC = (x: number, y: number, c: number) => ((y * BOARD_SIZE + x) * INPUT_SPATIAL_CHANNELS_V7 + c);
 
-function playerToColor(p: Player): StoneColor {
-  return p === 'black' ? BLACK : WHITE;
-}
+const playerToColor = (p: Player): StoneColor => p === 'black' ? BLACK : WHITE;
 
-export function fillInputsV7Fast(args: {
+export const fillInputsV7Fast = (args: {
   stones: Uint8Array; // 0 empty, 1 black, 2 white
   koPoint: number; // 0..360 or -1
   superkoBanned?: Uint8Array;
@@ -65,7 +63,7 @@ export function fillInputsV7Fast(args: {
   historyFeatures?: HistoryFeaturesV7;
   outSpatial: Float32Array; // len 19*19*22
   outGlobal: Float32Array; // len 19
-}): void {
+}): void => {
   const { stones, koPoint, currentPlayer, recentMoves, komi } = args;
   const rules: GameRules = args.rules ?? 'japanese';
   const playoutDoublingAdvantage = args.playoutDoublingAdvantage ?? 0;
@@ -236,9 +234,9 @@ export function fillInputsV7Fast(args: {
     else wave = delta - 2.0;
     global[18] = wave;
   }
-}
+};
 
-export function extractInputsV7Fast(args: {
+export const extractInputsV7Fast = (args: {
   stones: Uint8Array; // 0 empty, 1 black, 2 white
   koPoint: number; // 0..360 or -1
   currentPlayer: Player;
@@ -273,9 +271,9 @@ export function extractInputsV7Fast(args: {
   prevLadderedStones?: Uint8Array; // V7 plane 15
   prevPrevLadderedStones?: Uint8Array; // V7 plane 16
   ladderWorkingMoves?: Uint8Array; // V7 plane 17, 1 where moves are ladder-capturing
-}): KataGoInputsV7 {
+}): KataGoInputsV7 => {
   const spatial = new Float32Array(BOARD_SIZE * BOARD_SIZE * INPUT_SPATIAL_CHANNELS_V7);
   const global = new Float32Array(INPUT_GLOBAL_CHANNELS_V7);
   fillInputsV7Fast({ ...args, outSpatial: spatial, outGlobal: global });
   return { spatial, global };
-}
+};

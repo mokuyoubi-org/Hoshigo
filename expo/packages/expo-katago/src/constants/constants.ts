@@ -1,0 +1,1 @@
+export const KATAGO_MODEL = "b10";

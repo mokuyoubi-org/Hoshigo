@@ -1,20 +1,22 @@
 // ProfileScreen.tsx
-import { Avatar } from "@/src/active/components/avatar/Avatar";
-import { GuestNoticeCard } from "@/src/active/components/cards/GuestNoticeCard";
-import { RankCard } from "@/src/active/components/cards/RankCard";
-import { AppText } from "@/src/active/components/common/AppText";
-import { Header } from "@/src/active/components/common/Header";
-import { useMatching } from "@/src/active/contexts/MatchingContext";
-import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useProfileScreen } from "@/src/active/hooks/screens/useProfileScreen";
-import { useAppFont } from "@/src/active/hooks/useAppFont";
-import { useColors } from "@/src/active/hooks/useTheme";
-import { useTranslation } from "@/src/active/i18n/LangProvider";
-import IconSelectModal from "@/src/active/modals/IconSelectModal";
-import { LoginModal } from "@/src/active/modals/LoginModal";
-import RankInfoModal from "@/src/active/modals/RankInfoModal";
-import UsernameEditModal from "@/src/active/modals/UsernameEditModal";
-import { boardSizeOptions } from "@/src/stable/logics/boardSizeToText";
+
+import { Avatar } from "@/src/components/avatar/Avatar";
+import { GuestNoticeCard } from "@/src/components/cards/GuestNoticeCard";
+import { RankCard } from "@/src/components/cards/RankCard";
+import { MixedText } from "@/src/components/common/MixedText";
+import { MyText } from "@/src/components/common/MyText";
+import IconSelectModal from "@/src/components/modals/profile/IconSelectModal";
+import RankInfoModal from "@/src/components/modals/profile/RankInfoModal";
+import { LoginModal } from "@/src/components/modals/settings/LoginModal";
+import UsernameEditModal from "@/src/components/modals/profile/UsernameEditModal";
+import { useMatching } from "@/src/contexts/MatchingContext";
+import { useOverlay } from "@/src/contexts/OverlayContext";
+import { useAppFont } from "@/src/hooks/common/useAppFont";
+import { useBlurActiveElement } from "@/src/hooks/common/useBlurActiveElement";
+import { useColors } from "@/src/hooks/common/useTheme";
+import { useProfileScreen } from "@/src/hooks/screens/useProfileScreen";
+import { useTranslation } from "@/src/i18n/LangProvider";
+import { boardSizeOptions } from "@/src/logics/format/boardSizeToText";
 import {
   Feather,
   FontAwesome6,
@@ -24,10 +26,15 @@ import {
 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
+import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconButton, SegmentedControl } from "ui-atoms";
+import {
+  IconButton,
+  ScreenHeader,
+  SegmentedControl,
+  TextButton,
+} from "ui-atoms";
 
 export default function ProfileScreen() {
   const fontFamily = useAppFont();
@@ -37,22 +44,14 @@ export default function ProfileScreen() {
   const { isMatching } = useMatching();
   const { show, hide } = useOverlay();
 
-  useEffect(() => {
-    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
-    if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-    ) {
-      document.activeElement.blur();
-    }
-  }, []);
+  useBlurActiveElement();
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
 
-      <View className="flex-1 w-full max-w-160 mx-auto px-5 pt-3">
-        <Header
+      <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
+        <ScreenHeader
           left={
             <SegmentedControl
               trackBackgroundColor={colors.backgroundStrong}
@@ -68,10 +67,11 @@ export default function ProfileScreen() {
         >
           {/* ログインボタン */}
           {profileData.isAnonymous && (
-            <IconButton
-              icon={<Feather name="log-in" />}
+            <TextButton
+              text={t("common.login")}
+              fontFamily={fontFamily}
               disabled={isMatching}
-              iconColor={colors.primary} // テキストの色
+              textColor={colors.primary} // テキストの色
               backgroundColor={colors.foreground} // 背景色
               borderColor={colors.backgroundStrong} // 枠線の色
               onPress={() => show(<LoginModal visible={true} onClose={hide} />)}
@@ -84,10 +84,10 @@ export default function ProfileScreen() {
             backgroundColor={colors.foreground}
             borderColor={colors.backgroundStrong}
             onPress={() => {
-              router.push("/SettingsScreen");
+              router.push({ pathname: "/DebugScreen" });
             }}
           />
-        </Header>
+        </ScreenHeader>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -159,9 +159,9 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
                 className="flex-row items-center gap-1 mb-2"
               >
-                <AppText className="text-3xl text-text tracking-wide">
+                <MixedText className="text-3xl text-text tracking-wide">
                   {profileData.username}
-                </AppText>
+                </MixedText>
                 {!profileData.isAnonymous && (
                   <MaterialCommunityIcons
                     name="check-decagram"
@@ -204,16 +204,16 @@ export default function ProfileScreen() {
               className="bg-foreground rounded-3xl border-2 border-backgroundStrong p-4 flex-row justify-between items-center"
               activeOpacity={0.7}
               onPress={() => {
-                router.push("/RecordsScreen");
+                router.push({ pathname: "/RecordsScreen" });
               }}
             >
               <View className="flex-row items-center gap-2">
                 <View className="w-9 h-9 rounded-xl bg-background justify-center items-center">
                   <Octicons name="history" size={18} color={colors.primary} />
                 </View>
-                <AppText className="text-lg text-text">
+                <MyText className="text-lg text-text">
                   {t("common.records")}
-                </AppText>
+                </MyText>
               </View>
               <Feather name="chevron-right" size={24} color={colors.primary} />
             </TouchableOpacity>

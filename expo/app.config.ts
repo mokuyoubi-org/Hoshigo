@@ -5,7 +5,6 @@ import { ExpoConfig } from "expo/config";
 
 import * as dotenv from "dotenv";
 import * as path from "path";
-import withRemoveForegroundServicePermission from "./plugins/withRemoveForegroundServicePermission";
 
 dotenv.config({
   path: [
@@ -19,7 +18,7 @@ const config: ExpoConfig = {
   name: "Hoshigo",
   slug: "Hoshigo",
   // 2026/10/02: 1.0.4 ▶︎ 1.0,5
-  version: "1.0.5", // アプリのバージョン。必ずruntimeVersionと揃える。なお、webでは-cでstartし直す必要あり
+  version: "1.0.5", // アプリのバージョン。必ずruntimeVersionと揃える。なお、Webでは-cでstartし直す必要あり
   orientation: "portrait",
   icon: "./assets/icons/icon.png", // 使われない
   scheme: "hoshigo",
@@ -28,7 +27,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.mokuyoubi.hoshigo",
-    icon: "./assets/icons/Hoshigo.icon",  // iosのアイコンとして使う
+    icon: "./assets/icons/Hoshigo.icon", // iosのアイコンとして使う
     associatedDomains: ["applinks:hoshigo.app"],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -44,9 +43,9 @@ const config: ExpoConfig = {
 
   android: {
     adaptiveIcon: {
-      backgroundColor: "#FFE5C9",
-      foregroundImage: "./assets/icons/icon-transparent.png", // androidのアイコンとして使う
-      monochromeImage: "./assets/icons/icon-transparent.png", // androidのアイコンとして使う
+      backgroundColor: "#FFE5C9", // Androidのアイコンの背景色
+      foregroundImage: "./assets/icons/icon-transparent.png", // Androidのアイコンとして使う
+      monochromeImage: "./assets/icons/icon-transparent.png", // Androidのアイコンとして使う
     },
 
     predictiveBackGestureEnabled: false,
@@ -63,7 +62,7 @@ const config: ExpoConfig = {
 
   web: {
     output: "static",
-    favicon: "./assets/icons/favicon.png", // webのアイコンとして使う
+    favicon: "./assets/icons/favicon.png", // Webのアイコンとして使う
     bundler: "metro",
   },
 
@@ -72,14 +71,20 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "./assets/icons/icon-transparent.png", // ios/android共通で、スプラッシュスクリーンに使う
+        image: "./assets/icons/icon-transparent.png", // iOS/Android共通で、スプラッシュスクリーンに使う
         imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#000000",
       },
     ],
     "expo-secure-store",
-    "expo-audio",
+    [
+      "expo-audio",
+      {
+        enableBackgroundPlayback: false,
+        enableBackgroundRecording: false,
+      },
+    ],
     "expo-asset",
     "expo-localization",
     "expo-font",
@@ -98,7 +103,6 @@ const config: ExpoConfig = {
         },
       },
     ],
-    withRemoveForegroundServicePermission as any,
   ],
 
   experiments: {
@@ -117,7 +121,7 @@ const config: ExpoConfig = {
     },
   },
   // 2026/10/02: 1.0.4 ▶︎ 1.0,5
-  runtimeVersion: "1.0.5", // 誰に対してotaを配信するか。必ずversionと揃える。なお、webでは-cでstartし直す必要あり
+  runtimeVersion: "1.0.5", // 誰に対してOTAを配信するか。必ずversionと揃える。なお、Webでは-cでstartし直す必要あり
 };
 
 export default config;

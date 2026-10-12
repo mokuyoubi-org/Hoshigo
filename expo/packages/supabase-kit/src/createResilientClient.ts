@@ -50,23 +50,21 @@ export type CreateResilientClientArgs = {
   isRetryableError?: (error: { code?: string; message: string }) => boolean;
 };
 
-function defaultIsRetryableError(error: {
+const defaultIsRetryableError = (error: {
   code?: string;
   message: string;
-}): boolean {
+}): boolean => {
   if (!error) return false;
   // codeが付いている = サーバーまで届いて、意味のある応答(RAISE EXCEPTION等)が
   // 返ってきたということ。これは再送すべきではない「論理エラー」。
   if (error.code) return false;
   // codeが無い = fetch自体が失敗した(タイムアウト、通信断など)予期しないエラー。
   return true;
-}
+};
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export function createResilientClient({
+export const createResilientClient = ({
   url,
   anonKey,
   storage,
@@ -76,7 +74,7 @@ export function createResilientClient({
   maxRetries = 3,
   retryBaseDelayMs = 500,
   isRetryableError = defaultIsRetryableError,
-}: CreateResilientClientArgs): SupabaseClient {
+}: CreateResilientClientArgs): SupabaseClient => {
   const raw = createClient(url, anonKey, {
     auth: {
       storage,
@@ -110,7 +108,7 @@ export function createResilientClient({
   };
 
   return new Proxy(raw, {
-    get(target, prop, receiver) {
+    get: (target, prop, receiver) => {
       if (prop === "rpc") {
         return (...args: Parameters<typeof raw.rpc>) => {
           // 1回分の呼び出し(=1回のfetch)を毎回新しく作るための関数。
@@ -145,4 +143,4 @@ export function createResilientClient({
       return Reflect.get(target, prop, receiver);
     },
   }) as SupabaseClient;
-}
+};

@@ -3,7 +3,7 @@
 // 0-100の実測%を表示するプログレスバー。percentがnullのときは
 // 「不確定バー」として、帯の中を左右にスライドし続けるアニメーションを表示する。
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
   ColorValue,
@@ -21,17 +21,18 @@ type ProgressBarProps = {
   fillColor: ColorValue;
 };
 
-export function ProgressBar({
+export const ProgressBar = ({
   percent,
-  height = 6,
+  height = 12,
   trackColor,
   fillColor,
-}: ProgressBarProps) {
+}: ProgressBarProps) => {
   const isIndeterminate = percent === null;
   const [containerWidth, setContainerWidth] = useState(0);
 
   // 不確定モード用：帯の中を左右にスライドし続けるアニメーション
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  // useStateの遅延初期化で、最初の1回だけ作って使い回す
+  const [slideAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (!isIndeterminate) return;
@@ -93,4 +94,4 @@ export function ProgressBar({
       )}
     </View>
   );
-}
+};

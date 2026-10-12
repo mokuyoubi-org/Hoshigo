@@ -38,7 +38,7 @@ const softPlus = (x: number): number => {
   return Math.log1p(Math.exp(x));
 };
 
-export function postprocessKataGoV8(args: {
+export const postprocessKataGoV8 = (args: {
   nextPlayer: Player;
   valueLogits: ArrayLike<number>; // [win, loss, noResult] from player-to-move perspective
   // [scoreMean, scoreStdevPreSoftplus, lead, varTimeLeftPreSoftplus,
@@ -46,7 +46,7 @@ export function postprocessKataGoV8(args: {
   scoreValue: ArrayLike<number>;
   postProcessParams?: KataGoPostProcessParams;
   modelVersion?: number;
-}): KataGoEval {
+}): KataGoEval => {
   const { nextPlayer, valueLogits, scoreValue } = args;
   const postProcessParams = args.postProcessParams;
 
@@ -132,4 +132,4 @@ export function postprocessKataGoV8(args: {
     shorttermWinlossError,
     shorttermScoreError,
   };
-}
+};

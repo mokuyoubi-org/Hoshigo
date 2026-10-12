@@ -1,4 +1,5 @@
 // turnstile-callback.tsx
+
 import { router } from "expo-router";
 import { useEffect } from "react";
 
@@ -7,7 +8,7 @@ export default function TurnstileCallback() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace("/");
+      router.replace({ pathname: "/" });
     }
   }, []);
   return null;

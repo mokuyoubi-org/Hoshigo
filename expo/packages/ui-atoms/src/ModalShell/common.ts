@@ -21,18 +21,18 @@ const MIN_WIDTH = 240;
 const HEIGHT_RATIO = 0.85;
 export const DEFAULT_CONTENT_PADDING = 20; // デフォルトのパディングサイズ。
 
-export function computeModalBox(
+export const computeModalBox = (
   windowWidth: number,
   windowHeight: number,
   size: ModalSize,
-) {
+) => {
   const width = Math.max(
     MIN_WIDTH,
     Math.min(windowWidth * SIZE_WIDTH_RATIO[size], SIZE_MAX_WIDTH[size]),
   );
   const maxHeight = windowHeight * HEIGHT_RATIO;
   return { width, maxHeight };
-}
+};
 
 
 export type ModalShellProps = {

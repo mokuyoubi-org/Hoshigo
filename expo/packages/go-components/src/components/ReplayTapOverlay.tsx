@@ -8,11 +8,11 @@ type ReplayTapOverlayProps = {
   onCurrentIndexChange?: (index: number) => void;
 };
 
-export function ReplayTapOverlay({
+export const ReplayTapOverlay = ({
   currentIndex,
   maxIndex,
   onCurrentIndexChange,
-}: ReplayTapOverlayProps) {
+}: ReplayTapOverlayProps) => {
   if (!onCurrentIndexChange) return null;
 
   const handleLeftTap = () => {
@@ -44,7 +44,7 @@ export function ReplayTapOverlay({
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   // 🐱 ④ タップ領域用のスタイルを追加

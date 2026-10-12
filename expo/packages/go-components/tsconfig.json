@@ -8,5 +8,5 @@
     "moduleResolution": "bundler",
     "module": "esnext"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "../ui-atoms/src/Bubble.tsx"]
 }

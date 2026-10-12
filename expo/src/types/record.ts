@@ -1,0 +1,27 @@
+// types/record.ts
+
+import { BoardSize, MatchType, RecordAnalysis } from "go-core";
+
+export type RecordType = {
+  id: number;
+  black_uid: string;
+  white_uid: string;
+  created_at: string;
+  black_username: string;
+  white_username: string;
+  black_icon_index: number;
+  white_icon_index: number;
+  black_rank_index: number;
+  white_rank_index: number;
+  black_rating: number;
+  white_rating: number;
+  board_size: BoardSize;
+  result: string | null;
+  moves: number[];
+  match_type: MatchType;
+  analysis: RecordAnalysis | null;
+};
+export type RecordOrSkeleton = SkeletonOr<RecordType>;
+
+export type Skeleton = { id: number; isSkeleton: true };
+export type SkeletonOr<T extends { id: number | string }> = T | Skeleton;

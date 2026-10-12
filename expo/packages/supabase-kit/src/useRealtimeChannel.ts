@@ -10,14 +10,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef } from "react";
 
-export function useRealtimeChannel<
+export const useRealtimeChannel = <
   T extends Record<string, (payload: any) => void>,
 >(
   client: SupabaseClient,
   channelName: string | null,
   handlers: T,
   enabled: boolean = true,
-) {
+) => {
   const handlersRef = useRef(handlers);
   // チャンネルオブジェクトを保持しておくref
   const channelRef = useRef<ReturnType<SupabaseClient["channel"]> | null>(null);
@@ -72,4 +72,4 @@ export function useRealtimeChannel<
 
   // reconnect を外に返してあげる
   return { reconnect };
-}
+};

@@ -2,6 +2,7 @@
 
 import { sql } from "drizzle-orm";
 import {
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -75,3 +76,50 @@ export const appStatus = sqliteTable("app_status", {
   appVersion: text("app_version"),
   otaVersion: text("ota_version"),
 });
+
+
+// 棋譜の「貸出カード」(持ち主ごとの、棋譜の一覧)。
+// 棋譜の本体は、R2の records/{gameId}.json にある。ボットには作らない。
+// プロフィールが消えたら、いっしょに消える。
+export const recordCards = sqliteTable(
+  "record_cards",
+  {
+    uid: text("uid")
+      .notNull()
+      .references(() => profiles.uid, { onDelete: "cascade" }),
+    gameId: text("game_id").notNull(),
+    boardSize: integer("board_size").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    color: text("color").notNull(), // 自分の色: "black" か "white"
+    oppUid: text("opp_uid").notNull(), // 相手(相手が退会しても、そのまま残る)
+    result: text("result").notNull(),
+    rating: integer("rating").notNull(), // 対局前の、自分のレーティング
+    oppRating: integer("opp_rating").notNull(), // 対局前の、相手のレーティング
+    matchType: integer("match_type").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.uid, table.gameId] }),
+    // 一覧(自分の、この盤面の、新しい順)を、速く引くための索引
+    index("record_cards_list_idx").on(
+      table.uid,
+      table.boardSize,
+      table.createdAt,
+    ),
+  ],
+);
+
+// 対局中の人の目印(1人につき、同時に1局まで)。
+// アプリを閉じて、開き直したときに、続きから再開するため。
+// ボットには作らない。対局が終わると消える。プロフィールが消えたら、いっしょに消える。
+export const activeGames = sqliteTable(
+  "active_games",
+  {
+    uid: text("uid")
+      .primaryKey()
+      .references(() => profiles.uid, { onDelete: "cascade" }),
+    gameId: text("game_id").notNull(),
+    boardSize: integer("board_size").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("active_games_game_idx").on(table.gameId)],
+);

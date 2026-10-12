@@ -1,4 +1,5 @@
 // ModalShell.web.tsx
+
 import React, { useSyncExternalStore } from "react";
 import ReactDOM from "react-dom";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
@@ -9,15 +10,13 @@ import {
 } from "./common";
 
 const emptySubscribe = () => () => {};
-function useIsHydrated() {
-  return useSyncExternalStore(
+const useIsHydrated = () => useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false,
   );
-}
 
-export function ModalShell({
+export const ModalShell = ({
   children,
   onClose,
   size,
@@ -26,7 +25,7 @@ export function ModalShell({
   borderColor,
   overlayColor,
   contentPadding = DEFAULT_CONTENT_PADDING,
-}: ModalShellProps) {
+}: ModalShellProps) => {
   const isHydrated = useIsHydrated();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
@@ -80,7 +79,7 @@ export function ModalShell({
     </View>,
     document.body,
   );
-}
+};
 
 const styles = StyleSheet.create({
   overlay: {

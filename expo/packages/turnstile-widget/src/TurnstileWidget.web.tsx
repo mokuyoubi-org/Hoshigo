@@ -30,8 +30,7 @@ type Props = {
 };
 
 // スクリプトタグが未挿入なら挿入し、読み込み完了を待つ
-function loadTurnstileScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
+const loadTurnstileScript = (): Promise<void> => new Promise((resolve, reject) => {
     if (window.turnstile) {
       resolve();
       return;
@@ -53,7 +52,6 @@ function loadTurnstileScript(): Promise<void> {
     script.onerror = () => reject(new Error("Turnstile script failed to load"));
     document.head.appendChild(script);
   });
-}
 
 export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
   ({ sitekey }, ref) => {

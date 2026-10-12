@@ -1,24 +1,25 @@
 // RecordsScreen.tsx
 
-import { RecordCard } from "@/src/active/components/cards/RecordCard";
-import { SkeletonCard } from "@/src/active/components/cards/SkeletonCard";
-import { useRecordsScreen } from "@/src/active/hooks/records/useRecordsScreen";
-import { useTranslation } from "@/src/active/i18n/LangProvider";
-import { RecordOrSkeleton } from "@/src/active/types/record";
-import { isSkeletonCard } from "@/src/stable/logics/recordCardLogics";
+import { RecordCard } from "@/src/components/cards/RecordCard";
+import { SkeletonCard } from "@/src/components/cards/SkeletonCard";
+import { MyText } from "@/src/components/common/MyText";
+import { useAppFont } from "@/src/hooks/common/useAppFont";
+import { useColors } from "@/src/hooks/common/useTheme";
+import { useRecordsScreen } from "@/src/hooks/records/useRecordsScreen";
+import { useTranslation } from "@/src/i18n/LangProvider";
+import { isSkeletonCard } from "@/src/logics/record/recordCardLogics";
+import { RecordOrSkeleton } from "@/src/types/record";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { BLACK, WHITE } from "go-core";
-import React, { useEffect } from "react";
+import React from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SegmentedControl } from "ui-atoms";
-import { AppText } from "../active/components/common/AppText";
-import { useAppFont } from "../active/hooks/useAppFont";
-import { useColors } from "../active/hooks/useTheme";
-import { boardSizeOptions } from "../stable/logics/boardSizeToText";
-import { resultToSubjectiveComment } from "../stable/logics/textFormatter";
+import { ScreenHeader, SegmentedControl } from "ui-atoms";
+import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
+import { boardSizeOptions } from "../logics/format/boardSizeToText";
+import { resultToSubjectiveComment } from "../logics/format/textFormatter";
 
 export default function RecordsScreen() {
   const fontFamily = useAppFont();
@@ -38,7 +39,6 @@ export default function RecordsScreen() {
     handleToggle,
     loadMore,
     handleScroll,
-    isBoardSizeLoaded,
   } = useRecordsScreen();
 
   // 関数
@@ -73,6 +73,7 @@ export default function RecordsScreen() {
         isPlayerBlack={isPlayerBlack}
         onPress={() => {
           router.push({
+            // 2026/10/05: ⚠️ここはpushでいい
             pathname: "/BoardEditScreen",
             params: {
               matchId: item.id,
@@ -90,15 +91,7 @@ export default function RecordsScreen() {
     );
   };
 
-  useEffect(() => {
-    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
-    if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-    ) {
-      document.activeElement.blur();
-    }
-  }, []);
+  useBlurActiveElement();
 
   // 一つ一つのレコードカードに与えられた固有のid。
   // ※上から順番の0,1,2,...みたいなindexではないらしい。というのは、要素の並び替えなどにも柔軟に対応するため。
@@ -113,34 +106,31 @@ export default function RecordsScreen() {
           justifyContent: "center" as const,
         }
       : {
-          paddingHorizontal: 16,
-          paddingTop: 18,
-          paddingBottom: 32,
-          gap: 18,
+          gap: 16,
         };
 
   return (
     <SafeAreaView className="flex-1 bg-background items-center">
       <StatusBar style="dark" />
       {/* コンテナ */}
-      <View className="flex-1 w-full max-w-160">
+      <View className="flex-1 w-full max-w-160 px-4 p-2">
         {/* ヘッダ部分 */}
-        <View className="flex-row justify-between items-center px-5 py-3">
-          {/* 戻るボタン */}
-          <TouchableOpacity
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace("/HomeScreen");
-              }
-            }}
-            activeOpacity={0.7}
-          >
-            <Feather name="chevron-left" size={36} color={colors.textSub} />
-          </TouchableOpacity>
-          {/* 盤面サイズ選択 */}
-          {isBoardSizeLoaded && (
+        <ScreenHeader
+          left={
+            <TouchableOpacity
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace({ pathname: "/HomeScreen" });
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Feather name="chevron-left" size={36} color={colors.textSub} />
+            </TouchableOpacity>
+          }
+          right={
             <SegmentedControl
               trackBackgroundColor={colors.backgroundStrong}
               activeSegmentBackgroundColor={colors.foreground}
@@ -151,11 +141,11 @@ export default function RecordsScreen() {
               onSelect={handleToggle}
               fontFamily={fontFamily}
             />
-          )}
-        </View>
+          }
+        />
 
         {/* リスト領域 */}
-        <View className="flex-1">
+        <View className="flex-1 pt-2">
           <FlatList
             ref={flatListRef} // FlatListを直接操作するための参照（スクロール位置の制御など）
             pagingEnabled // カード単位のスワイプになる
@@ -188,9 +178,9 @@ export default function RecordsScreen() {
             ListEmptyComponent={
               // データが空（0件）のときに表示するコンポーネント
               <View className="items-center gap-4">
-                <AppText className="text-base text-textSub tracking-wider">
+                <MyText className="text-base text-textSub tracking-wider">
                   {t("MyRecords.empty")}
-                </AppText>
+                </MyText>
               </View>
             }
           />

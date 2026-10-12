@@ -1,13 +1,12 @@
-/**
- *  tsconfig.json
- *
- * 【このファイルの役割】
- *  TSファイルを書くときの決まりごと。
- *  例えばパスで@はどこのことだよ、とか、コードの型はどこまで厳しく見るか、とか。
- */
+// tsconfig.json
+// ts先生への指示書。
+// パスで、@が意味するのはここのことだよーとか。
+// ts先生の仕事は、型チェックと、tsxやtsの、jsへの翻訳。
 
 {
+  // ts先生がチェックするときに参考にする、基本の教科書。
   "extends": "expo/tsconfig.base",
+  // ts先生への、細かい要求。
   "compilerOptions": {
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -22,11 +21,12 @@
     }
   },
 
+  // ts先生が見る対象のファイル。
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts", "plugins/withRemoveForegroundServicePermission.js",
+    "nativewind-env.d.ts"
   ]
 }

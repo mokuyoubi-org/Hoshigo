@@ -24,3 +24,5 @@ export const KOMI = 6.5;
 // 置き石(2〜9子局)が無いかどうかの判定
 export const isNoOkiishi = (matchType: MatchType): boolean =>
   matchType === 0 || matchType === 1;
+
+export type Board2D = Color[][];

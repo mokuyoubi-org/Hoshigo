@@ -1,10 +1,8 @@
-// @/src/active/logics/goLogics.ts
+// goLogics.ts
 
-// ====================================================================================
 // 【ファイル全体の責務】
 // 囲碁のルール判定や盤面の操作（石を置く・合法手チェックなど）を行うロジック部分。
 // 座標はすべて `0`〜`80` の数値インデックス（1次元）で計算します。
-// ====================================================================================
 
 import {
   BLACK,
@@ -17,11 +15,7 @@ import {
   WHITE,
 } from "../types/go";
 
-// ====================================================================================
-// 【ロジックパート】（内部ヘルパー）
-// ====================================================================================
-
-// 🟩上下左右の隣接点インデックスを取得する
+// 上下左右の隣接点インデックスを取得する
 const getNeighbors = (grid: Grid, boardSize: BoardSize): Grid[] => {
   const row = Math.floor(grid / boardSize);
   const col = grid % boardSize;
@@ -35,10 +29,10 @@ const getNeighbors = (grid: Grid, boardSize: BoardSize): Grid[] => {
   return neighbors;
 };
 
-// 🟩空点かどうか
+// 空点かどうか
 const isEmptyGrid = (grid: Grid, board: Board): boolean => board[grid] === null;
 
-// 🟩コウ判定
+// コウ判定
 const isKoViolation = (
   boardSize: BoardSize,
   grid: Grid,
@@ -76,7 +70,7 @@ const isKoViolation = (
   return false;
 };
 
-// 🟩自殺手判定
+// 自殺手判定
 const isSelfCapture = (
   boardSize: BoardSize,
   grid: Grid,
@@ -108,11 +102,11 @@ const isSelfCapture = (
   return true;
 };
 
-// 🟩Set合体ヘルパー
+// Set合体ヘルパー
 const mergeStringSets = (first: Set<Grid>, second: Set<Grid>): Set<Grid> =>
   new Set([...first, ...second]);
 
-// 🟩連を盤から取り除く
+// 連を盤から取り除く
 const removeGoString = (
   goString: GoString,
   board: Board,
@@ -129,7 +123,7 @@ const removeGoString = (
   }
 };
 
-// 🟩呼吸点を減らす
+// 呼吸点を減らす
 const reduceLiberty = (
   goString: GoString,
   board: Board,
@@ -147,7 +141,7 @@ const reduceLiberty = (
   return 0; // ← 明示的に0を返す
 };
 
-// 🟩連を合体する
+// 連を合体する
 const mergeGoStrings = (
   playedGrid: Grid,
   baseString: GoString,
@@ -179,11 +173,7 @@ const mergeGoStrings = (
   return mergedGoString;
 };
 
-// ====================================================================================
-// 【インターフェースパート】（仕様・説明書）
-// ====================================================================================
-
-/** 🟩🟦 (行, 列) の 1-based インデックスから 0〜80 の Grid 数値を生成する */
+/**  (行, 列) の 1-based インデックスから 0〜80 の Grid 数値を生成する */
 export const makeGrid = (
   row: number,
   col: number,
@@ -194,15 +184,15 @@ export const makeGrid = (
   return (safeRow - 1) * boardSize + (safeCol - 1);
 };
 
-/** 🟩🟦 手番交代（black ↔ white） */
+/**  手番交代（black ↔ white） */
 export const getOppositeColor = (color: Color): Color =>
   color === BLACK ? WHITE : BLACK;
 
-/** 🟩🟦 空の盤面（オブジェクト）を作成する */
+/**  空の盤面（オブジェクト）を作成する */
 export const initBoard = (boardSize: BoardSize): Board =>
   new Array(boardSize * boardSize).fill(null);
 
-/** 🟩🟦 Boardをディープコピーする（参照関係を維持） */
+/**  Boardをディープコピーする（参照関係を維持） */
 export const cloneBoard = (board: Board): Board => {
   const newBoard: Board = new Array(board.length);
   const goStringMap = new Map<GoString, GoString>();
@@ -228,7 +218,7 @@ export const cloneBoard = (board: Board): Board => {
   return newBoard;
 };
 
-/** 🟩🟦 合法手判定 */
+/**  合法手判定 */
 export const isLegalMove = (
   boardSize: BoardSize,
   grid: Grid,
@@ -261,7 +251,7 @@ export const isLegalMove = (
   return true;
 };
 
-/** 🟩🟦 着手処理（安全のためにクローンした盤面を操作して返す） */
+/**  着手処理（安全のためにクローンした盤面を操作して返す） */
 export const applyMove = (
   boardSize: BoardSize,
   grid: Grid,

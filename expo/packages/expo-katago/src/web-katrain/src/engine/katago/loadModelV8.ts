@@ -5,19 +5,21 @@ import {
   parseConv2d,
   parseMatBias,
   parseMatMul,
-} from './binModelParser';
-import type { ParsedKataGoModelV8 } from './modelV8';
+} from "./binModelParser";
+import type { ParsedKataGoModelV8 } from "./modelV8";
 
 /** KataGo SGFMetadata::METADATA_INPUT_NUM_CHANNELS for meta encoder version 1. */
 export const NUM_INPUT_META_CHANNELS_V1 = 192;
 
-export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
+export const parseKataGoModelV8 = (data: Uint8Array) => {
   const p = new KataGoBinModelParser(data);
 
   const modelName = p.readToken();
   const modelVersion = p.readInt();
   if (modelVersion < 8 || modelVersion > 16) {
-    throw new Error(`Unsupported modelVersion ${modelVersion}, supported 8..16`);
+    throw new Error(
+      `Unsupported modelVersion ${modelVersion}, supported 8..16`,
+    );
   }
   const numInputChannels = p.readInt();
   const numInputGlobalChannels = p.readInt();
@@ -67,7 +69,8 @@ export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
     const trunkNormKind = p.readInt();
     // 0 is KataGo's standard batch-norm trunk; 1 is RMS norm, which this port does
     // not implement, so refuse rather than reading the weights as the wrong shape.
-    if (trunkNormKind !== 0) throw new Error(`Unsupported trunk norm kind ${trunkNormKind}`);
+    if (trunkNormKind !== 0)
+      throw new Error(`Unsupported trunk norm kind ${trunkNormKind}`);
     for (let i = 0; i < 5; i++) p.readInt(); // Unused trunk params in KataGo v15+.
   }
 
@@ -76,12 +79,14 @@ export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
 
   // KataGo SGFMetadataEncoderDesc: a small MLP over the game metadata whose output
   // is added to the trunk as another per-channel bias (cpp/neuralnet/desc.cpp).
-  let metaEncoder: ParsedKataGoModelV8['metaEncoder'];
+  let metaEncoder: ParsedKataGoModelV8["metaEncoder"];
   if (metaEncoderVersion > 0) {
     p.readToken(); // meta encoder name
     const numInputMetaChannels = p.readInt();
     if (numInputMetaChannels !== NUM_INPUT_META_CHANNELS_V1) {
-      throw new Error(`Unexpected numInputMetaChannels ${numInputMetaChannels}`);
+      throw new Error(
+        `Unexpected numInputMetaChannels ${numInputMetaChannels}`,
+      );
     }
     const mul1 = parseMatMul(p);
     const bias1 = parseMatBias(p);
@@ -91,15 +96,26 @@ export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
     const act2 = parseActivationKind(p, modelVersion);
     const mul3 = parseMatMul(p);
     if (mul3.outChannels !== trunkNumChannels) {
-      throw new Error(`Meta encoder output ${mul3.outChannels} does not match trunk channels ${trunkNumChannels}`);
+      throw new Error(
+        `Meta encoder output ${mul3.outChannels} does not match trunk channels ${trunkNumChannels}`,
+      );
     }
-    metaEncoder = { numInputMetaChannels, mul1, bias1, act1, mul2, bias2, act2, mul3 };
+    metaEncoder = {
+      numInputMetaChannels,
+      mul1,
+      bias1,
+      act1,
+      mul2,
+      bias2,
+      act2,
+      mul3,
+    };
   }
 
-  function parseResidualBlock(): ParsedKataGoModelV8['trunk']['blocks'][number] {
+  const parseResidualBlock = (): ParsedKataGoModelV8["trunk"]["blocks"][number] => {
     const kindTok = p.readToken();
 
-    if (kindTok === 'ordinary_block') {
+    if (kindTok === "ordinary_block") {
       p.readToken(); // block name
       const preBN = parseBatchNormV8(p);
       const preActivation = parseActivationKind(p, modelVersion);
@@ -107,10 +123,18 @@ export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
       const midBN = parseBatchNormV8(p);
       const midActivation = parseActivationKind(p, modelVersion);
       const w2 = parseConv2d(p);
-      return { kind: 'ordinary', preBN, preActivation, w1, midBN, midActivation, w2 };
+      return {
+        kind: "ordinary",
+        preBN,
+        preActivation,
+        w1,
+        midBN,
+        midActivation,
+        w2,
+      };
     }
 
-    if (kindTok === 'gpool_block') {
+    if (kindTok === "gpool_block") {
       p.readToken(); // block name
       const preBN = parseBatchNormV8(p);
       const preActivation = parseActivationKind(p, modelVersion);
@@ -122,29 +146,52 @@ export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
       const midBN = parseBatchNormV8(p);
       const midActivation = parseActivationKind(p, modelVersion);
       const w2 = parseConv2d(p);
-      return { kind: 'gpool', preBN, preActivation, w1a, w1b, gpoolBN, gpoolActivation, w1r, midBN, midActivation, w2 };
+      return {
+        kind: "gpool",
+        preBN,
+        preActivation,
+        w1a,
+        w1b,
+        gpoolBN,
+        gpoolActivation,
+        w1r,
+        midBN,
+        midActivation,
+        w2,
+      };
     }
 
-    if (kindTok === 'nested_bottleneck_block') {
+    if (kindTok === "nested_bottleneck_block") {
       p.readToken(); // block name
       const numInnerBlocks = p.readInt();
       const preBN = parseBatchNormV8(p);
       const preActivation = parseActivationKind(p, modelVersion);
       const preConv = parseConv2d(p);
 
-      const blocks: ParsedKataGoModelV8['trunk']['blocks'] = [];
-      for (let i = 0; i < numInnerBlocks; i++) blocks.push(parseResidualBlock());
+      const blocks: ParsedKataGoModelV8["trunk"]["blocks"] = [];
+      for (let i = 0; i < numInnerBlocks; i++)
+        blocks.push(parseResidualBlock());
 
       const postBN = parseBatchNormV8(p);
       const postActivation = parseActivationKind(p, modelVersion);
       const postConv = parseConv2d(p);
-      return { kind: 'nested_bottleneck', numBlocks: numInnerBlocks, preBN, preActivation, preConv, blocks, postBN, postActivation, postConv };
+      return {
+        kind: "nested_bottleneck",
+        numBlocks: numInnerBlocks,
+        preBN,
+        preActivation,
+        preConv,
+        blocks,
+        postBN,
+        postActivation,
+        postConv,
+      };
     }
 
     throw new Error(`Unsupported trunk block kind ${kindTok}`);
-  }
+  };
 
-  const blocks: ParsedKataGoModelV8['trunk']['blocks'] = [];
+  const blocks: ParsedKataGoModelV8["trunk"]["blocks"] = [];
   for (let i = 0; i < numBlocks; i++) blocks.push(parseResidualBlock());
 
   const tipBN = parseBatchNormV8(p);
@@ -162,7 +209,8 @@ export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
   const p2 = parseConv2d(p);
   const passMul = parseMatMul(p);
   const passBias = modelVersion >= 15 ? parseMatBias(p) : undefined;
-  const passActivation = modelVersion >= 15 ? parseActivationKind(p, modelVersion) : undefined;
+  const passActivation =
+    modelVersion >= 15 ? parseActivationKind(p, modelVersion) : undefined;
   const passMul2 = modelVersion >= 15 ? parseMatMul(p) : undefined;
 
   // value head
@@ -229,4 +277,4 @@ export function parseKataGoModelV8(data: Uint8Array): ParsedKataGoModelV8 {
       ownership,
     },
   };
-}
+};

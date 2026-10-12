@@ -1,6 +1,7 @@
 // babel.config.js
+// tsに変更不可みたい。
 
-module.exports = function (api) {
+module.exports = (api) => {
   api.cache(true);
   return {
     presets: [

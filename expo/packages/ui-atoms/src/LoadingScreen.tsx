@@ -14,7 +14,7 @@ type LoadingScreenProps = {
   fontFamily: string; // 文字のフォント(省略時はシステムのフォント)
 };
 
-export function LoadingScreen({
+export const LoadingScreen = ({
   label,
   percent,
   backgroundColor,
@@ -22,7 +22,7 @@ export function LoadingScreen({
   fillColor,
   textColor,
   fontFamily,
-}: LoadingScreenProps) {
+}: LoadingScreenProps) => {
   const fontStyle = fontFamily ? { fontFamily } : null;
 
   return (
@@ -34,16 +34,11 @@ export function LoadingScreen({
         backgroundColor,
       }}
     >
-      <Text
-        style={[
-          { marginBottom: 15, fontSize: 14, color: textColor },
-          fontStyle,
-        ]}
-      >
+      <Text style={[{ fontSize: 16, color: textColor }, fontStyle]}>
         {label}
       </Text>
 
-      <View style={{ width: 180 }}>
+      <View style={{ width: 180, margin: 8 }}>
         <ProgressBar
           percent={percent}
           trackColor={trackColor}
@@ -53,13 +48,18 @@ export function LoadingScreen({
 
       {/* %の有無に関わらず高さを固定で確保。DLの時だけ帯下に文字が出て
           UIが伸び縮みするジャンプを防ぐための「空箱」 */}
-      <View style={{ height: 18, justifyContent: "center", marginTop: 6 }}>
+      <View style={{ height: 20, justifyContent: "center" }}>
         {percent !== null && (
-          <Text style={[{ fontSize: 12, color: textColor }, fontStyle]}>
+          <Text
+            style={[
+              { fontSize: 16, color: textColor, includeFontPadding: false }, // ⚠️Android用。大事
+              fontStyle,
+            ]}
+          >
             {percent}%
           </Text>
         )}
       </View>
     </View>
   );
-}
+};

@@ -4,6 +4,7 @@ import {
   AgehamaCount,
   BLACK,
   Board,
+  Board2D,
   BoardSize,
   Color,
   EMPTY,
@@ -16,7 +17,6 @@ import {
 import { applyMove, cloneBoard, getOppositeColor, initBoard } from "./goLogics";
 import { generateOkigoBoard } from "./okigoLogics";
 
-export type Board2D = Color[][];
 
 const initBoard2D = (boardSize: BoardSize): Board2D => {
   return Array.from({ length: boardSize }, () => Array(boardSize).fill(0));

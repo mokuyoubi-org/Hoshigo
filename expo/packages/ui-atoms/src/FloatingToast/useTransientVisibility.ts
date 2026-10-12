@@ -10,7 +10,7 @@ import { Animated, Platform } from "react-native";
  * 注意: contentは呼び出し側でuseMemoして参照を安定させること
  * （このhookは参照の変化でしか「更新すべきか」を判定しないため）
  */
-export function useTransientVisibility<T>(active: boolean, content: T) {
+export const useTransientVisibility = <T>(active: boolean, content: T) => {
   const [isMounted, setIsMounted] = useState(active);
   const shouldRender = active || isMounted;
 
@@ -59,4 +59,4 @@ export function useTransientVisibility<T>(active: boolean, content: T) {
   }, [active, isMounted, fadeAnim, slideAnim]);
 
   return { shouldRender, fadeAnim, slideAnim, content: frozenContent };
-}
+};

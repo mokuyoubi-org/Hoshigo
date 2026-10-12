@@ -1,3 +1,3 @@
-// index.ts // ⚠️⚠️⚠️ここがnativeにならないよう、細心の注意！！
+// index.ts
 
-export { ModalShell } from "./ModalShell";
+export { ModalShell } from "./ModalShell"; // ⚠️⚠️⚠️ここがnativeにならないよう、細心の注意！！

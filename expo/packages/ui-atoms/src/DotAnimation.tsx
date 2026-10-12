@@ -1,3 +1,5 @@
+// ui-atoms/src/DotAnimation.tsx
+
 import React, { useEffect, useState } from "react";
 import { Text, TextProps } from "react-native";
 
@@ -6,12 +8,12 @@ type Props = {
   interval?: number;
 } & TextProps;
 
-export function DotAnimation({
+export const DotAnimation = ({
   text,
   interval = 1000,
   style,
   ...props
-}: Props) {
+}: Props) => {
   const [count, setCount] = useState(1);
 
   useEffect(() => {
@@ -23,13 +25,14 @@ export function DotAnimation({
   }, [interval]);
 
   const visibleDots = ".".repeat(count);
-  const hiddenDots = ".".repeat(3 - count);
+  // 見えない「点と同じ幅のすき間」で場所とりをする
+  const hiddenDots = "\u2008".repeat(3 - count);
 
   return (
     <Text style={style} {...props}>
       {text}
       {visibleDots}
-      <Text style={{ opacity: 0 }}>{hiddenDots}</Text>
+      {hiddenDots}
     </Text>
   );
-}
+};

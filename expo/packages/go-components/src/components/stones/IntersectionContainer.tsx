@@ -46,7 +46,7 @@ type Props = {
   practiceMatchStatus: string;
 };
 
-export const IntersectionContainer = memo(function DecoratedStone({
+export const IntersectionContainer = memo(({
   grid,
   boardSize,
   cellSize,
@@ -74,7 +74,7 @@ export const IntersectionContainer = memo(function DecoratedStone({
   badMoveColor,
   matchType,
   practiceMatchStatus,
-}: Props) {
+}: Props) => {
   const row = Math.floor(grid / boardSize);
   const col = grid % boardSize;
   const isDead = territoryValue === 3; // 1は黒の陣地、2は白の陣地、3は死に石

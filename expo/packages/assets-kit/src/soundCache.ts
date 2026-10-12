@@ -1,39 +1,31 @@
 // assets-kit/src/soundCache.ts
 //
-// AudioPlayerをURLごとにキャッシュしておく、アプリ全体で共有される仕組み。
-// 同じURLに対して二重にダウンロード・生成が走らないようにする。
+// AudioPlayerを音ごとに1つだけ作って、アプリ全体で使い回す仕組み。
+// 音は同梱ファイル(require したもの)なので、いつでも同期で作れる。
 
-import { AudioPlayer, createAudioPlayer } from "expo-audio";
+import { AudioPlayer, AudioSource, createAudioPlayer } from "expo-audio";
 
-type SoundSource = Parameters<typeof createAudioPlayer>[0];
+// 🎒 同梱ファイル(requireの結果)だけを受け付ける型。
+//    文字列を弾くことで、古い呼び出し("stone.mp3")を型エラーで見つけられる
+export type SoundSource = Exclude<AudioSource, string | null>;
 
-const playerCache = new Map<string, AudioPlayer>();
-
-const getCacheKey = (source: SoundSource): string => {
-  // sourceは基本的にURL文字列(リモート音源)を想定
-  return typeof source === "string" ? source : JSON.stringify(source);
-};
+const players = new Map<SoundSource, AudioPlayer>();
 
 /**
- * 指定した音源のAudioPlayerを取得する。
- * 既にキャッシュにあればそれを返し、無ければ新規作成してキャッシュする。
+ * プレイヤーを返す。まだ無ければ、その場で作る(同期)。
  */
-export const getOrCreatePlayer = (source: SoundSource): AudioPlayer => {
-  const key = getCacheKey(source);
-  const cached = playerCache.get(key);
-  if (cached) return cached;
-
-  const player = createAudioPlayer(source);
-  playerCache.set(key, player);
+export const getPlayer = (source: SoundSource): AudioPlayer => {
+  let player = players.get(source);
+  if (!player) {
+    player = createAudioPlayer(source);
+    players.set(source, player);
+  }
   return player;
 };
 
 /**
- * 起動時などに事前に呼んでおくことで、音源のダウンロード/デコードを
- * 前もって開始しておくための関数。戻り値は使わなくてよい。
+ * 起動時などに呼んで、プレイヤーを先に作っておく(初回再生のラグを減らす)。
  */
 export const preloadSounds = (sources: SoundSource[]): void => {
-  sources.forEach((source) => {
-    getOrCreatePlayer(source);
-  });
+  sources.forEach(getPlayer);
 };

@@ -1,4 +1,5 @@
 // Stone.tsx
+
 import { BLACK, Color } from "go-core";
 import React, { memo } from "react";
 import { ColorValue, StyleSheet, View } from "react-native";
@@ -12,13 +13,13 @@ type StoneProps = {
 };
 
 // 🐱 余計なものは一切持たず、丸い石を描画するだけのピュアな部品
-export const Stone = memo(function Stone({
+export const Stone = memo(({
   color,
   stoneSize,
   opacity = 1,
   blackStoneColor,
   whiteStoneColor,
-}: StoneProps) {
+}: StoneProps) => {
   const isBlack = color === BLACK;
 
   return (

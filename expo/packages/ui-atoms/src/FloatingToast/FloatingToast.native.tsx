@@ -1,5 +1,6 @@
 // FloatingToast.native.tsx
 
+import { FontAwesome } from "@expo/vector-icons";
 import React from "react";
 import {
   ActivityIndicator,
@@ -10,12 +11,11 @@ import {
 } from "react-native";
 import { FloatingToastProps } from "./shared";
 
-export function FloatingToast({
+export const FloatingToast = ({
   visible,
   label,
   busy = false,
   onAction,
-  actionLabel = "×",
   bottomOffset = 90,
   fadeAnim,
   slideAnim,
@@ -26,12 +26,10 @@ export function FloatingToast({
   accentColor,
   foregroundColor,
   fontFamily,
-}: FloatingToastProps) {
+}: FloatingToastProps) => {
   if (!visible) return null;
 
-  const fontStyle = fontFamily
-    ? { fontFamily, }
-    : null;
+  const fontStyle = fontFamily ? { fontFamily } : null;
 
   return (
     <Animated.View
@@ -96,17 +94,10 @@ export function FloatingToast({
           {busy ? (
             <ActivityIndicator size="small" color={accentColor} />
           ) : (
-            <Text
-              style={[
-                { fontSize: 16,  color: textSubColor },
-                fontStyle,
-              ]}
-            >
-              {actionLabel}
-            </Text>
+            <FontAwesome name="close" size={16} color={textSubColor} />
           )}
         </TouchableOpacity>
       </View>
     </Animated.View>
   );
-}
+};

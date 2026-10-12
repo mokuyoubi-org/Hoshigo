@@ -13,7 +13,7 @@ export type HistoryFeaturesV7 = {
  * A repeated-position (Spight-like) ending needs board history beyond these moves;
  * this function does not infer that condition from a five-move tail.
  */
-export function historyFeaturesV7(args: {
+export const historyFeaturesV7 = (args: {
   recentMoves: readonly RecentMove[];
   currentPlayer: Player;
   rules: GameRules;
@@ -23,7 +23,7 @@ export function historyFeaturesV7(args: {
   areaMap?: Uint8Array;
   /** Komi including draw adjustment, signed for the player to move. */
   selfKomi?: number;
-}): HistoryFeaturesV7 {
+}): HistoryFeaturesV7 => {
   const { recentMoves, currentPlayer } = args;
   const rules = rulesOf(args.rules);
   const last = recentMoves.length - 1;
@@ -60,4 +60,4 @@ export function historyFeaturesV7(args: {
     expected = expected === 'black' ? 'white' : 'black';
   }
   return { turnsIncluded, passWouldEndPhase: afterPass };
-}
+};

@@ -7,6 +7,7 @@ import { anonymous, captcha, emailOTP } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./db/auth-schema";
 import { buildOtpEmail, type Locale } from "./email";
+import { carryOverGuestProfile } from "./guest-link";
 
 export type AuthEnv = {
   DB: D1Database;
@@ -63,7 +64,25 @@ export function createAuth(env: AuthEnv, locale: Locale = "en") {
       // Expoアプリとのやりとりを助ける
       expo(),
       // ゲスト(匿名)ログイン
-      anonymous(),
+            // ゲスト(匿名)ログイン。
+      // ゲストが、メールでログインしたとき(onLinkAccount):
+      //  ・すでにアカウントがあるメール → ゲストの記録は捨てる(何もしない)
+      //  ・はじめてのメール → ゲストのプロフィールと成績を、新しいアカウントに引き継ぐ
+      // (ゲストのuserは、このあと、自動で削除される)
+      anonymous({
+        onLinkAccount: async ({ anonymousUser, newUser }) => {
+          try {
+            await carryOverGuestProfile(
+              env.DB,
+              anonymousUser.user.id,
+              newUser.user.id,
+            );
+          } catch (e) {
+            // 引き継ぎに失敗しても、ログイン自体は止めない
+            console.error("ゲストの引き継ぎに失敗:", e);
+          }
+        },
+      }),
       // メールのOTPログイン(6桁)
       emailOTP({
         otpLength: 6,

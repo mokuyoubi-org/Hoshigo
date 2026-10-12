@@ -1,8 +1,8 @@
 // @/src/app/(tabs)/_layout.tsx
 
-import { useAppFont } from "@/src/active/hooks/useAppFont";
-import { useColors } from "@/src/active/hooks/useTheme";
-import { useTranslation } from "@/src/active/i18n/LangProvider";
+import { useAppFont } from "@/src/hooks/common/useAppFont";
+import { useColors } from "@/src/hooks/common/useTheme";
+import { useTranslation } from "@/src/i18n/LangProvider";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { NavigationBar } from "expo-navigation-bar";
 import { Tabs } from "expo-router";
@@ -73,10 +73,7 @@ export default function TabsLayout() {
             fontFamily,
             fontSize: 14,
             letterSpacing: 1.2,
-            marginTop: 3,
-          },
-          tabBarItemStyle: {
-            gap: 2,
+            includeFontPadding: false, // ⚠️Android用。大事
           },
         }}
       >

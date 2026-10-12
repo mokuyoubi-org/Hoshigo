@@ -13,13 +13,13 @@ type Props = {
 };
 
 // 編集マーク・最新手・テリトリー・死に石・良悪手をこれ1つで表示する
-export const Marker = memo(function Marker({
+export const Marker = memo(({
   size,
   color,
   shape = "square",
   opacity = 1,
   zIndex = 10,
-}: Props) {
+}: Props) => {
   if (!color) return null;
 
   // 中身のコンポーネントを切り替えるヘルパー

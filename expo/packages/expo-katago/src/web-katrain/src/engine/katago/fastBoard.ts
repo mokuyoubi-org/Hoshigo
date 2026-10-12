@@ -8,9 +8,9 @@ export const EMPTY: StoneColor = 0;
 export const BLACK: StoneColor = 1;
 export const WHITE: StoneColor = 2;
 
-export function opponentOf(color: StoneColor): StoneColor {
+export const opponentOf = (color: StoneColor) => {
   return (3 - color) as StoneColor;
-}
+};
 
 let NEIGHBOR_START = new Int16Array(BOARD_AREA);
 let NEIGHBOR_COUNT = new Int8Array(BOARD_AREA);
@@ -27,12 +27,12 @@ let bfsStamp = 0;
 let GROUP_BUF = new Int16Array(BOARD_AREA);
 let STACK_BUF = new Int16Array(BOARD_AREA);
 
-function collectGroupAndLiberties(
+const collectGroupAndLiberties = (
   stones: Uint8Array,
   start: number,
   color: StoneColor,
-  maxLibertiesToCount: number
-): { groupLen: number; liberties: number } {
+  maxLibertiesToCount: number,
+): { groupLen: number; liberties: number } => {
   bfsStamp++;
   const stamp = bfsStamp;
   let groupLen = 0;
@@ -66,7 +66,7 @@ function collectGroupAndLiberties(
   }
 
   return { groupLen, liberties };
-}
+};
 
 let PROCESSED_GROUP = new Int32Array(BOARD_AREA);
 let processedStamp = 0;
@@ -197,11 +197,11 @@ const initBoardArrays = (size: number): void => {
   };
 };
 
-export function setBoardSize(size: number): void {
+export const setBoardSize = (size: number) => {
   const next = Math.max(2, Math.floor(size));
   if (next === BOARD_SIZE) return;
   initBoardArrays(next);
-}
+};
 
 export type UndoSnapshot = {
   readonly koPointBefore: number;
@@ -215,13 +215,13 @@ export type SimPosition = {
   koPoint: number; // 0..360 or -1
 };
 
-export function playMove(
+export const playMove = (
   pos: SimPosition,
   move: number,
   player: StoneColor,
   captureStack: number[],
-  multiStoneSuicideLegal = false
-): UndoSnapshot {
+  multiStoneSuicideLegal = false,
+): UndoSnapshot => {
   const koPointBefore = pos.koPoint;
   const captureStart = captureStack.length;
 
@@ -230,9 +230,10 @@ export function playMove(
     return { koPointBefore, captureStart };
   }
 
-  if (move < 0 || move >= BOARD_AREA) throw new Error(`Invalid move index ${move}`);
-  if (pos.stones[move] !== EMPTY) throw new Error('Move on occupied point');
-  if (pos.koPoint === move) throw new Error('Move violates simple ko');
+  if (move < 0 || move >= BOARD_AREA)
+    throw new Error(`Invalid move index ${move}`);
+  if (pos.stones[move] !== EMPTY) throw new Error("Move on occupied point");
+  if (pos.koPoint === move) throw new Error("Move violates simple ko");
 
   const opp = opponentOf(player);
   pos.stones[move] = player;
@@ -250,7 +251,12 @@ export function playMove(
     if ((pos.stones[n] as StoneColor) !== opp) continue;
     if (PROCESSED_GROUP[n] === pStamp) continue;
 
-    const { groupLen, liberties } = collectGroupAndLiberties(pos.stones, n, opp, 1);
+    const { groupLen, liberties } = collectGroupAndLiberties(
+      pos.stones,
+      n,
+      opp,
+      1,
+    );
     for (let j = 0; j < groupLen; j++) PROCESSED_GROUP[GROUP_BUF[j]!] = pStamp;
 
     if (liberties !== 0) continue;
@@ -262,7 +268,8 @@ export function playMove(
     }
 
     totalCaptured += groupLen;
-    if (totalCaptured === 1 && groupLen === 1) capturedSinglePos = GROUP_BUF[0]!;
+    if (totalCaptured === 1 && groupLen === 1)
+      capturedSinglePos = GROUP_BUF[0]!;
     if (totalCaptured > 1) capturedSinglePos = -1;
   }
 
@@ -289,19 +296,30 @@ export function playMove(
       pos.stones[captureStack[j]!] = opp;
     }
     captureStack.length = captureStart;
-    throw new Error('Illegal suicide move');
+    throw new Error("Illegal suicide move");
   }
 
-  if (totalCaptured === 1 && capturedSinglePos >= 0 && selfGroup.groupLen === 1 && selfGroup.liberties === 1) {
+  if (
+    totalCaptured === 1 &&
+    capturedSinglePos >= 0 &&
+    selfGroup.groupLen === 1 &&
+    selfGroup.liberties === 1
+  ) {
     pos.koPoint = capturedSinglePos;
   } else {
     pos.koPoint = -1;
   }
 
   return { koPointBefore, captureStart };
-}
+};
 
-export function undoMove(pos: SimPosition, move: number, player: StoneColor, snapshot: UndoSnapshot, captureStack: number[]): void {
+export const undoMove = (
+  pos: SimPosition,
+  move: number,
+  player: StoneColor,
+  snapshot: UndoSnapshot,
+  captureStack: number[],
+) => {
   const captureEnd = captureStack.length;
   const capturedColor = snapshot.selfCapture ? player : opponentOf(player);
 
@@ -314,10 +332,13 @@ export function undoMove(pos: SimPosition, move: number, player: StoneColor, sna
   if (move !== PASS_MOVE) pos.stones[move] = EMPTY;
   captureStack.length = snapshot.captureStart;
   pos.koPoint = snapshot.koPointBefore;
-}
+};
 
-export function computeLibertyMapInto(stones: Uint8Array, out: Uint8Array): Uint8Array {
-  if (out.length !== BOARD_AREA) throw new Error(`computeLibertyMapInto: expected out length ${BOARD_AREA}, got ${out.length}`);
+export const computeLibertyMapInto = (stones: Uint8Array, out: Uint8Array) => {
+  if (out.length !== BOARD_AREA)
+    throw new Error(
+      `computeLibertyMapInto: expected out length ${BOARD_AREA}, got ${out.length}`,
+    );
   out.fill(0);
   groupSeenStamp++;
   const stamp = groupSeenStamp;
@@ -337,10 +358,18 @@ export function computeLibertyMapInto(stones: Uint8Array, out: Uint8Array): Uint
   }
 
   return out;
-}
+};
 
-export function updateLibertyMapForSeeds(stones: Uint8Array, seeds: Int16Array, seedCount: number, out: Uint8Array): void {
-  if (out.length !== BOARD_AREA) throw new Error(`updateLibertyMapForSeeds: expected out length ${BOARD_AREA}, got ${out.length}`);
+export const updateLibertyMapForSeeds = (
+  stones: Uint8Array,
+  seeds: Int16Array,
+  seedCount: number,
+  out: Uint8Array,
+) => {
+  if (out.length !== BOARD_AREA)
+    throw new Error(
+      `updateLibertyMapForSeeds: expected out length ${BOARD_AREA}, got ${out.length}`,
+    );
   if (seedCount <= 0) return;
   groupSeenStamp++;
   const stamp = groupSeenStamp;
@@ -359,18 +388,18 @@ export function updateLibertyMapForSeeds(stones: Uint8Array, seeds: Int16Array, 
       GROUP_SEEN[gp] = stamp;
     }
   }
-}
+};
 
-export function computeLibertyMap(stones: Uint8Array): Uint8Array {
+export const computeLibertyMap = (stones: Uint8Array) => {
   return computeLibertyMapInto(stones, new Uint8Array(BOARD_AREA));
-}
+};
 
 // KataGo-style "area" for V7 inputs, following `Board::calculateArea` and `Board::calculateAreaForPla`:
 // - Uses Benson pass-alive groups/territory.
 // - Includes large territories via safe/unsafe big territory marking.
 // - Fills remaining stones when `nonPassAliveStones` is true.
 
-function buildGroups(stones: Uint8Array): number {
+const buildGroups = (stones: Uint8Array): number => {
   GROUP_INDEX_BY_POS.fill(-1);
   let numGroups = 0;
   let flat = 0;
@@ -409,10 +438,14 @@ function buildGroups(stones: Uint8Array): number {
   }
 
   return numGroups;
-}
+};
 
 /** Board::isAdjacentToPla. */
-export function isAdjacentToColor(stones: Uint8Array, pos: number, color: StoneColor): boolean {
+export const isAdjacentToColor = (
+  stones: Uint8Array,
+  pos: number,
+  color: StoneColor,
+) => {
   const nStart = NEIGHBOR_START[pos]!;
   const nCount = NEIGHBOR_COUNT[pos]!;
   for (let i = 0; i < nCount; i++) {
@@ -420,9 +453,14 @@ export function isAdjacentToColor(stones: Uint8Array, pos: number, color: StoneC
     if ((stones[n] as StoneColor) === color) return true;
   }
   return false;
-}
+};
 
-function isAdjacentToPlaGroup(stones: Uint8Array, pos: number, plaColor: StoneColor, plaGroup: number): boolean {
+const isAdjacentToPlaGroup = (
+  stones: Uint8Array,
+  pos: number,
+  plaColor: StoneColor,
+  plaGroup: number,
+): boolean => {
   const nStart = NEIGHBOR_START[pos]!;
   const nCount = NEIGHBOR_COUNT[pos]!;
   for (let i = 0; i < nCount; i++) {
@@ -431,9 +469,9 @@ function isAdjacentToPlaGroup(stones: Uint8Array, pos: number, plaColor: StoneCo
     if (GROUP_INDEX_BY_POS[n] === plaGroup) return true;
   }
   return false;
-}
+};
 
-function calculateAreaForPla(args: {
+const calculateAreaForPla = (args: {
   stones: Uint8Array;
   numGroups: number;
   plaColor: StoneColor;
@@ -441,8 +479,16 @@ function calculateAreaForPla(args: {
   unsafeBigTerritories: boolean;
   isMultiStoneSuicideLegal: boolean;
   result: Uint8Array;
-}): void {
-  const { stones, numGroups, plaColor, safeBigTerritories, unsafeBigTerritories, isMultiStoneSuicideLegal, result } = args;
+}): void => {
+  const {
+    stones,
+    numGroups,
+    plaColor,
+    safeBigTerritories,
+    unsafeBigTerritories,
+    isMultiStoneSuicideLegal,
+    result,
+  } = args;
   const oppColor = opponentOf(plaColor);
 
   REGION_IDX_BY_POS.fill(-1);
@@ -465,7 +511,10 @@ function calculateAreaForPla(args: {
     while (qh !== qt) {
       const pos = REGION_QUEUE[qh++]!;
 
-      if (hasVital && (isMultiStoneSuicideLegal || (stones[pos] as StoneColor) === EMPTY)) {
+      if (
+        hasVital &&
+        (isMultiStoneSuicideLegal || (stones[pos] as StoneColor) === EMPTY)
+      ) {
         const vStart = VITAL_START[regionIdx]!;
         const oldLen = VITAL_LEN[regionIdx]!;
         let newLen = 0;
@@ -480,8 +529,13 @@ function calculateAreaForPla(args: {
         hasVital = newLen > 0;
       }
 
-      if (NUM_INTERNAL_SPACES_MAX2[regionIdx]! < 2 && !isAdjacentToColor(stones, pos, plaColor)) {
-        NUM_INTERNAL_SPACES_MAX2[regionIdx] = (NUM_INTERNAL_SPACES_MAX2[regionIdx]! + 1) as number;
+      if (
+        NUM_INTERNAL_SPACES_MAX2[regionIdx]! < 2 &&
+        !isAdjacentToColor(stones, pos, plaColor)
+      ) {
+        NUM_INTERNAL_SPACES_MAX2[regionIdx] = (NUM_INTERNAL_SPACES_MAX2[
+          regionIdx
+        ]! + 1) as number;
       }
 
       if ((stones[pos] as StoneColor) === oppColor) CONTAINS_OPP[regionIdx] = 1;
@@ -600,7 +654,8 @@ function calculateAreaForPla(args: {
           const vl = VITAL_LEN[regionIdx]!;
           for (let u = 0; u < vl; u++) {
             const gg = VITAL_LIST[vs + u]!;
-            VITAL_COUNT_BY_GROUP[gg] = (VITAL_COUNT_BY_GROUP[gg]! - 1) as number;
+            VITAL_COUNT_BY_GROUP[gg] = (VITAL_COUNT_BY_GROUP[gg]! -
+              1) as number;
           }
         }
       }
@@ -622,8 +677,16 @@ function calculateAreaForPla(args: {
   for (let i = 0; i < numRegions; i++) {
     const headPos = REGION_HEADS[i]!;
 
-    let shouldMark = NUM_INTERNAL_SPACES_MAX2[i]! <= 1 && !BORDERS_NONPASSALIVE_BY_HEADPOS[headPos] && atLeastOnePla;
-    shouldMark = shouldMark || (safeBigTerritories && !CONTAINS_OPP[i] && !BORDERS_NONPASSALIVE_BY_HEADPOS[headPos] && atLeastOnePla);
+    let shouldMark =
+      NUM_INTERNAL_SPACES_MAX2[i]! <= 1 &&
+      !BORDERS_NONPASSALIVE_BY_HEADPOS[headPos] &&
+      atLeastOnePla;
+    shouldMark =
+      shouldMark ||
+      (safeBigTerritories &&
+        !CONTAINS_OPP[i] &&
+        !BORDERS_NONPASSALIVE_BY_HEADPOS[headPos] &&
+        atLeastOnePla);
 
     if (shouldMark) {
       let cur = headPos;
@@ -632,7 +695,8 @@ function calculateAreaForPla(args: {
         cur = NEXT_EMPTY_OR_OPP[cur]!;
       } while (cur !== headPos);
     } else {
-      const shouldMarkIfEmpty = unsafeBigTerritories && !CONTAINS_OPP[i] && atLeastOnePla;
+      const shouldMarkIfEmpty =
+        unsafeBigTerritories && !CONTAINS_OPP[i] && atLeastOnePla;
       if (shouldMarkIfEmpty) {
         let cur = headPos;
         do {
@@ -642,15 +706,22 @@ function calculateAreaForPla(args: {
       }
     }
   }
-}
+};
 
 /**
  * Strictly pass-alive groups and strictly safe territory: KataGo's rootSafeArea,
  * which is Board::calculateArea with nonPassAliveStones, safeBigTerritories and
  * unsafeBigTerritories all false (cpp/search/search.cpp computeRootValues).
  */
-export function computePassAliveAreaInto(stones: Uint8Array, out: Uint8Array, isMultiStoneSuicideLegal = false): Uint8Array {
-  if (out.length !== BOARD_AREA) throw new Error(`computePassAliveAreaInto: expected out length ${BOARD_AREA}, got ${out.length}`);
+export const computePassAliveAreaInto = (
+  stones: Uint8Array,
+  out: Uint8Array,
+  isMultiStoneSuicideLegal = false,
+) => {
+  if (out.length !== BOARD_AREA)
+    throw new Error(
+      `computePassAliveAreaInto: expected out length ${BOARD_AREA}, got ${out.length}`,
+    );
   out.fill(EMPTY);
   const numGroups = buildGroups(stones);
   for (const plaColor of [BLACK, WHITE] as StoneColor[]) {
@@ -665,10 +736,15 @@ export function computePassAliveAreaInto(stones: Uint8Array, out: Uint8Array, is
     });
   }
   return out;
-}
+};
 
 /** Board::wouldBeCapture: playing here takes at least one opposing stone off. */
-export function wouldBeCapture(stones: Uint8Array, libertyMap: Uint8Array, pos: number, pla: StoneColor): boolean {
+export const wouldBeCapture = (
+  stones: Uint8Array,
+  libertyMap: Uint8Array,
+  pos: number,
+  pla: StoneColor,
+) => {
   if ((stones[pos] as StoneColor) !== EMPTY) return false;
   const opp = opponentOf(pla);
   const nStart = NEIGHBOR_START[pos]!;
@@ -678,18 +754,18 @@ export function wouldBeCapture(stones: Uint8Array, libertyMap: Uint8Array, pos: 
     if ((stones[n] as StoneColor) === opp && libertyMap[n] === 1) return true;
   }
   return false;
-}
+};
 
 /**
  * Board::isNonPassAliveSelfConnection: does playing here join two different
  * chains of the player's own, at least one of which is not already pass-alive?
  */
-export function isNonPassAliveSelfConnection(
+export const isNonPassAliveSelfConnection = (
   stones: Uint8Array,
   pos: number,
   pla: StoneColor,
-  passAliveArea: Uint8Array
-): boolean {
+  passAliveArea: Uint8Array,
+): boolean => {
   if ((stones[pos] as StoneColor) !== EMPTY) return false;
   if ((passAliveArea[pos] as StoneColor) === pla) return false;
 
@@ -699,7 +775,10 @@ export function isNonPassAliveSelfConnection(
   let seedStone = -1;
   for (let i = 0; i < nCount; i++) {
     const n = NEIGHBORS[nStart + i]!;
-    if ((stones[n] as StoneColor) === pla && (passAliveArea[n] as StoneColor) === EMPTY) {
+    if (
+      (stones[n] as StoneColor) === pla &&
+      (passAliveArea[n] as StoneColor) === EMPTY
+    ) {
       seedStone = n;
       break;
     }
@@ -728,14 +807,28 @@ export function isNonPassAliveSelfConnection(
     if ((stones[n] as StoneColor) === pla && !seen.has(n)) return true;
   }
   return false;
-}
+};
 
-export function computeAreaMapV7KataGo(stones: Uint8Array, isMultiStoneSuicideLegal = false): Uint8Array {
-  return computeAreaMapV7KataGoInto(stones, new Uint8Array(BOARD_AREA), isMultiStoneSuicideLegal);
-}
+export const computeAreaMapV7KataGo = (
+  stones: Uint8Array,
+  isMultiStoneSuicideLegal = false,
+) => {
+  return computeAreaMapV7KataGoInto(
+    stones,
+    new Uint8Array(BOARD_AREA),
+    isMultiStoneSuicideLegal,
+  );
+};
 
-export function computeAreaMapV7KataGoInto(stones: Uint8Array, out: Uint8Array, isMultiStoneSuicideLegal = false): Uint8Array {
-  if (out.length !== BOARD_AREA) throw new Error(`computeAreaMapV7KataGoInto: expected out length ${BOARD_AREA}, got ${out.length}`);
+export const computeAreaMapV7KataGoInto = (
+  stones: Uint8Array,
+  out: Uint8Array,
+  isMultiStoneSuicideLegal = false,
+) => {
+  if (out.length !== BOARD_AREA)
+    throw new Error(
+      `computeAreaMapV7KataGoInto: expected out length ${BOARD_AREA}, got ${out.length}`,
+    );
   out.fill(EMPTY);
   const numGroups = buildGroups(stones);
 
@@ -764,7 +857,7 @@ export function computeAreaMapV7KataGoInto(stones: Uint8Array, out: Uint8Array, 
   }
 
   return out;
-}
+};
 
 // ---------------------------------------------------------------------------------------------
 // Independent life area, following `Board::calculateIndependentLifeArea` and its helper.
@@ -776,11 +869,11 @@ export function computeAreaMapV7KataGoInto(stones: Uint8Array, out: Uint8Array, 
 // ---------------------------------------------------------------------------------------------
 
 /** Liberties of the chain at `p`, capped at 2 -- enough to answer "is it in atari?". */
-function groupLibertyCount(stones: Uint8Array, p: number): number {
+const groupLibertyCount = (stones: Uint8Array, p: number): number => {
   const color = stones[p] as StoneColor;
   if (color === EMPTY) return 0;
   return collectGroupAndLiberties(stones, p, color, 2).liberties;
-}
+};
 
 const INDEPENDENT_LIFE_SEKI = new Uint8Array(BOARD_AREA);
 const INDEPENDENT_LIFE_QUEUE = new Int16Array(BOARD_AREA);
@@ -801,18 +894,25 @@ export type IndependentLifeResult = {
   whiteMinusBlackIndependentLifeRegionCount: number;
 };
 
-export function computeIndependentLifeAreaInto(
+export const computeIndependentLifeAreaInto = (
   stones: Uint8Array,
   out: Uint8Array,
-  options: IndependentLifeOptions = {}
-): IndependentLifeResult {
+  options: IndependentLifeOptions = {},
+): IndependentLifeResult => {
   if (out.length !== BOARD_AREA) {
-    throw new Error(`computeIndependentLifeAreaInto: expected out length ${BOARD_AREA}, got ${out.length}`);
+    throw new Error(
+      `computeIndependentLifeAreaInto: expected out length ${BOARD_AREA}, got ${out.length}`,
+    );
   }
-  if (INDEPENDENT_LIFE_BASIC.length !== BOARD_AREA) INDEPENDENT_LIFE_BASIC = new Uint8Array(BOARD_AREA);
+  if (INDEPENDENT_LIFE_BASIC.length !== BOARD_AREA)
+    INDEPENDENT_LIFE_BASIC = new Uint8Array(BOARD_AREA);
 
   const basicArea = INDEPENDENT_LIFE_BASIC;
-  computeAreaMapV7KataGoInto(stones, basicArea, options.isMultiStoneSuicideLegal ?? false);
+  computeAreaMapV7KataGoInto(
+    stones,
+    basicArea,
+    options.isMultiStoneSuicideLegal ?? false,
+  );
 
   out.fill(EMPTY);
   const seki = INDEPENDENT_LIFE_SEKI.subarray(0, BOARD_AREA);
@@ -826,13 +926,20 @@ export function computeIndependentLifeAreaInto(
     if (owner === EMPTY || seki[p]) continue;
 
     let isSeki = false;
-    if ((stones[p] as StoneColor) === owner && groupLibertyCount(stones, p) === 1) isSeki = true;
+    if (
+      (stones[p] as StoneColor) === owner &&
+      groupLibertyCount(stones, p) === 1
+    )
+      isSeki = true;
     if (!isSeki) {
       const nStart = NEIGHBOR_START[p]!;
       const nCount = NEIGHBOR_COUNT[p]!;
       for (let i = 0; i < nCount; i++) {
         const n = NEIGHBORS[nStart + i]!;
-        if ((stones[n] as StoneColor) === EMPTY && (basicArea[n] as StoneColor) === EMPTY) {
+        if (
+          (stones[n] as StoneColor) === EMPTY &&
+          (basicArea[n] as StoneColor) === EMPTY
+        ) {
           isSeki = true;
           break;
         }
@@ -862,7 +969,8 @@ export function computeIndependentLifeAreaInto(
   let whiteMinusBlack = 0;
   for (let p = 0; p < BOARD_AREA; p++) {
     const owner = basicArea[p] as StoneColor;
-    if (owner === EMPTY || seki[p] || (out[p] as StoneColor) === owner) continue;
+    if (owner === EMPTY || seki[p] || (out[p] as StoneColor) === owner)
+      continue;
 
     whiteMinusBlack += owner === WHITE ? 1 : -1;
     out[p] = owner;
@@ -875,7 +983,10 @@ export function computeIndependentLifeAreaInto(
       const nCount = NEIGHBOR_COUNT[next]!;
       for (let i = 0; i < nCount; i++) {
         const adj = NEIGHBORS[nStart + i]!;
-        if ((basicArea[adj] as StoneColor) === owner && (out[adj] as StoneColor) !== owner) {
+        if (
+          (basicArea[adj] as StoneColor) === owner &&
+          (out[adj] as StoneColor) !== owner
+        ) {
           out[adj] = owner;
           queue[tail++] = adj;
         }
@@ -888,12 +999,18 @@ export function computeIndependentLifeAreaInto(
       const owner = basicArea[p] as StoneColor;
       if (owner === EMPTY || owner === (stones[p] as StoneColor)) continue;
       let adjChainInAtari = false;
-      if (options.excludeTerritoryAdjacentToAtari && (stones[p] as StoneColor) === EMPTY) {
+      if (
+        options.excludeTerritoryAdjacentToAtari &&
+        (stones[p] as StoneColor) === EMPTY
+      ) {
         const nStart = NEIGHBOR_START[p]!;
         const nCount = NEIGHBOR_COUNT[p]!;
         for (let i = 0; i < nCount; i++) {
           const adj = NEIGHBORS[nStart + i]!;
-          if ((stones[adj] as StoneColor) === owner && groupLibertyCount(stones, adj) === 1) {
+          if (
+            (stones[adj] as StoneColor) === owner &&
+            groupLibertyCount(stones, adj) === 1
+          ) {
             adjChainInAtari = true;
             break;
           }
@@ -906,21 +1023,23 @@ export function computeIndependentLifeAreaInto(
   if (options.keepStones) {
     for (let p = 0; p < BOARD_AREA; p++) {
       const owner = basicArea[p] as StoneColor;
-      if (owner !== EMPTY && owner === (stones[p] as StoneColor)) out[p] = owner;
+      if (owner !== EMPTY && owner === (stones[p] as StoneColor))
+        out[p] = owner;
     }
   }
 
   return { whiteMinusBlackIndependentLifeRegionCount: whiteMinusBlack };
-}
+};
 
-export function computeIndependentLifeArea(
+export const computeIndependentLifeArea = (
   stones: Uint8Array,
-  options: IndependentLifeOptions = {}
-): { area: Uint8Array; whiteMinusBlackIndependentLifeRegionCount: number } {
+  options: IndependentLifeOptions = {},
+): { area: Uint8Array; whiteMinusBlackIndependentLifeRegionCount: number } => {
   const area = new Uint8Array(BOARD_AREA);
-  const { whiteMinusBlackIndependentLifeRegionCount } = computeIndependentLifeAreaInto(stones, area, options);
+  const { whiteMinusBlackIndependentLifeRegionCount } =
+    computeIndependentLifeAreaInto(stones, area, options);
   return { area, whiteMinusBlackIndependentLifeRegionCount };
-}
+};
 
 // ---------------------------------------------------------------------------------------------
 // Ladder features for KataGo V7 inputs (spatial planes 14-17), following `iterLadders` in
@@ -967,14 +1086,15 @@ let ladderConnectGroupSeenStamp = 0;
 let LADDER_CAPTURED = new Int32Array(BOARD_AREA);
 let ladderCapturedStamp = 0;
 
-function isAdjacent(a: number, b: number): boolean {
+const isAdjacent = (a: number, b: number): boolean => {
   if (a === b) return false;
   const d = a - b;
-  if (d === 1 || d === -1) return ((a / BOARD_SIZE) | 0) === ((b / BOARD_SIZE) | 0);
+  if (d === 1 || d === -1)
+    return ((a / BOARD_SIZE) | 0) === ((b / BOARD_SIZE) | 0);
   return d === BOARD_SIZE || d === -BOARD_SIZE;
-}
+};
 
-function getNumImmediateLiberties(stones: Uint8Array, pos: number): number {
+const getNumImmediateLiberties = (stones: Uint8Array, pos: number): number => {
   let num = 0;
   const nStart = NEIGHBOR_START[pos]!;
   const nCount = NEIGHBOR_COUNT[pos]!;
@@ -983,9 +1103,16 @@ function getNumImmediateLiberties(stones: Uint8Array, pos: number): number {
     if ((stones[n] as StoneColor) === EMPTY) num++;
   }
   return num;
-}
+};
 
-function findLibertiesIntoBuf(stones: Uint8Array, start: number, color: StoneColor, buf: Int16Array, bufIdx: number, max: number): number {
+const findLibertiesIntoBuf = (
+  stones: Uint8Array,
+  start: number,
+  color: StoneColor,
+  buf: Int16Array,
+  bufIdx: number,
+  max: number,
+): number => {
   bfsStamp++;
   const stamp = bfsStamp;
   let stackLen = 0;
@@ -1020,15 +1147,23 @@ function findLibertiesIntoBuf(stones: Uint8Array, start: number, color: StoneCol
   }
 
   return liberties;
-}
+};
 
-function getNumLibertiesCapped(stones: Uint8Array, loc: number, cap: number): number {
+const getNumLibertiesCapped = (
+  stones: Uint8Array,
+  loc: number,
+  cap: number,
+): number => {
   const c = stones[loc] as StoneColor;
   if (c === EMPTY) return 0;
   return collectGroupAndLiberties(stones, loc, c, cap).liberties;
-}
+};
 
-function wouldBeKoCapture(stones: Uint8Array, loc: number, pla: StoneColor): boolean {
+const wouldBeKoCapture = (
+  stones: Uint8Array,
+  loc: number,
+  pla: StoneColor,
+): boolean => {
   if ((stones[loc] as StoneColor) !== EMPTY) return false;
   const opp = opponentOf(pla);
   let oppCapturableLoc = -1;
@@ -1054,9 +1189,9 @@ function wouldBeKoCapture(stones: Uint8Array, loc: number, pla: StoneColor): boo
   const oppGroup = collectGroupAndLiberties(stones, oppCapturableLoc, opp, 2);
   if (oppGroup.liberties !== 1) return false;
   return oppGroup.groupLen === 1;
-}
+};
 
-function hasLibertyGainingCaptures(stones: Uint8Array, loc: number): boolean {
+const hasLibertyGainingCaptures = (stones: Uint8Array, loc: number): boolean => {
   const pla = stones[loc] as StoneColor;
   if (pla === EMPTY) return false;
   const opp = opponentOf(pla);
@@ -1075,9 +1210,13 @@ function hasLibertyGainingCaptures(stones: Uint8Array, loc: number): boolean {
     }
   }
   return false;
-}
+};
 
-function countHeuristicConnectionLibertiesX2(stones: Uint8Array, loc: number, pla: StoneColor): number {
+const countHeuristicConnectionLibertiesX2 = (
+  stones: Uint8Array,
+  loc: number,
+  pla: StoneColor,
+): number => {
   let numLibsX2 = 0;
   const nStart = NEIGHBOR_START[loc]!;
   const nCount = NEIGHBOR_COUNT[loc]!;
@@ -1088,9 +1227,13 @@ function countHeuristicConnectionLibertiesX2(stones: Uint8Array, loc: number, pl
     if (libs > 1) numLibsX2 += libs * 2 - 3;
   }
   return numLibsX2;
-}
+};
 
-function getBoundNumLibertiesAfterPlay(stones: Uint8Array, loc: number, pla: StoneColor): { lowerBound: number; upperBound: number } {
+const getBoundNumLibertiesAfterPlay = (
+  stones: Uint8Array,
+  loc: number,
+  pla: StoneColor,
+): { lowerBound: number; upperBound: number } => {
   const opp = opponentOf(pla);
 
   let numImmediateLibs = 0;
@@ -1120,12 +1263,22 @@ function getBoundNumLibertiesAfterPlay(stones: Uint8Array, loc: number, pla: Sto
     }
   }
 
-  const lowerBound = numCaps + (maxConnectionLibs > numImmediateLibs ? maxConnectionLibs : numImmediateLibs);
-  const upperBound = numImmediateLibs + potentialLibsFromCaps + numConnectionLibs;
+  const lowerBound =
+    numCaps +
+    (maxConnectionLibs > numImmediateLibs
+      ? maxConnectionLibs
+      : numImmediateLibs);
+  const upperBound =
+    numImmediateLibs + potentialLibsFromCaps + numConnectionLibs;
   return { lowerBound, upperBound };
-}
+};
 
-function getNumLibertiesAfterPlay(stones: Uint8Array, loc: number, pla: StoneColor, max: number): number {
+const getNumLibertiesAfterPlay = (
+  stones: Uint8Array,
+  loc: number,
+  pla: StoneColor,
+  max: number,
+): number => {
   if ((stones[loc] as StoneColor) !== EMPTY) return 0;
   const opp = opponentOf(pla);
 
@@ -1157,7 +1310,8 @@ function getNumLibertiesAfterPlay(stones: Uint8Array, loc: number, pla: StoneCol
         // Captured stones become empty, so the adjacent stone location is a liberty.
         addLib(adj);
         if (numLibs >= max) return max;
-        for (let j = 0; j < oppInfo.groupLen; j++) LADDER_CAPTURED[GROUP_BUF[j]!] = capStamp;
+        for (let j = 0; j < oppInfo.groupLen; j++)
+          LADDER_CAPTURED[GROUP_BUF[j]!] = capStamp;
       }
     }
   }
@@ -1177,7 +1331,8 @@ function getNumLibertiesAfterPlay(stones: Uint8Array, loc: number, pla: StoneCol
     if (LADDER_CONNECT_GROUP_SEEN[adj] === seenStamp) continue;
 
     const g = collectGroupAndLiberties(stones, adj, pla, max);
-    for (let j = 0; j < g.groupLen; j++) LADDER_CONNECT_GROUP_SEEN[GROUP_BUF[j]!] = seenStamp;
+    for (let j = 0; j < g.groupLen; j++)
+      LADDER_CONNECT_GROUP_SEEN[GROUP_BUF[j]!] = seenStamp;
 
     for (let j = 0; j < g.groupLen; j++) {
       const cur = GROUP_BUF[j]!;
@@ -1194,9 +1349,14 @@ function getNumLibertiesAfterPlay(stones: Uint8Array, loc: number, pla: StoneCol
   }
 
   return numLibs;
-}
+};
 
-function findLibertyGainingCaptures(stones: Uint8Array, loc: number, buf: Int16Array, bufStart: number): number {
+const findLibertyGainingCaptures = (
+  stones: Uint8Array,
+  loc: number,
+  buf: Int16Array,
+  bufStart: number,
+): number => {
   const pla = stones[loc] as StoneColor;
   if (pla === EMPTY) return 0;
   const opp = opponentOf(pla);
@@ -1217,9 +1377,17 @@ function findLibertyGainingCaptures(stones: Uint8Array, loc: number, buf: Int16A
       if ((stones[adj] as StoneColor) !== opp) continue;
       if (LADDER_OPP_GROUP_SEEN[adj] === seenStamp) continue;
 
-      const libCount = findLibertiesIntoBuf(stones, adj, opp, buf, bufStart + numFound, 2);
+      const libCount = findLibertiesIntoBuf(
+        stones,
+        adj,
+        opp,
+        buf,
+        bufStart + numFound,
+        2,
+      );
       const groupLen = collectGroupAndLiberties(stones, adj, opp, 2).groupLen;
-      for (let k = 0; k < groupLen; k++) LADDER_OPP_GROUP_SEEN[GROUP_BUF[k]!] = seenStamp;
+      for (let k = 0; k < groupLen; k++)
+        LADDER_OPP_GROUP_SEEN[GROUP_BUF[k]!] = seenStamp;
 
       if (libCount === 1) {
         numFound += 1;
@@ -1228,9 +1396,16 @@ function findLibertyGainingCaptures(stones: Uint8Array, loc: number, buf: Int16A
     }
   }
   return numFound;
-}
+};
 
-function undoMoveRaw(pos: SimPosition, move: number, player: StoneColor, koPointBefore: number, captureStart: number, captureStack: number[]): void {
+const undoMoveRaw = (
+  pos: SimPosition,
+  move: number,
+  player: StoneColor,
+  koPointBefore: number,
+  captureStart: number,
+  captureStack: number[],
+): void => {
   const captureEnd = captureStack.length;
   const opp = opponentOf(player);
 
@@ -1242,17 +1417,17 @@ function undoMoveRaw(pos: SimPosition, move: number, player: StoneColor, koPoint
   }
   captureStack.length = captureStart;
   pos.koPoint = koPointBefore;
-}
+};
 
-function tryPlayMoveNoThrow(
+const tryPlayMoveNoThrow = (
   pos: SimPosition,
   move: number,
   player: StoneColor,
   captureStack: number[],
   koPointBeforeOut: Int16Array,
   captureStartOut: Int32Array,
-  recordIdx: number
-): boolean {
+  recordIdx: number,
+): boolean => {
   const koPointBefore = pos.koPoint;
   const captureStart = captureStack.length;
   koPointBeforeOut[recordIdx] = koPointBefore;
@@ -1283,7 +1458,12 @@ function tryPlayMoveNoThrow(
     if ((pos.stones[n] as StoneColor) !== opp) continue;
     if (PROCESSED_GROUP[n] === pStamp) continue;
 
-    const { groupLen, liberties } = collectGroupAndLiberties(pos.stones, n, opp, 1);
+    const { groupLen, liberties } = collectGroupAndLiberties(
+      pos.stones,
+      n,
+      opp,
+      1,
+    );
     for (let j = 0; j < groupLen; j++) PROCESSED_GROUP[GROUP_BUF[j]!] = pStamp;
     if (liberties !== 0) continue;
 
@@ -1294,7 +1474,8 @@ function tryPlayMoveNoThrow(
     }
 
     totalCaptured += groupLen;
-    if (totalCaptured === 1 && groupLen === 1) capturedSinglePos = GROUP_BUF[0]!;
+    if (totalCaptured === 1 && groupLen === 1)
+      capturedSinglePos = GROUP_BUF[0]!;
     if (totalCaptured > 1) capturedSinglePos = -1;
   }
 
@@ -1304,16 +1485,26 @@ function tryPlayMoveNoThrow(
     return false;
   }
 
-  if (totalCaptured === 1 && capturedSinglePos >= 0 && selfGroup.groupLen === 1 && selfGroup.liberties === 1) {
+  if (
+    totalCaptured === 1 &&
+    capturedSinglePos >= 0 &&
+    selfGroup.groupLen === 1 &&
+    selfGroup.liberties === 1
+  ) {
     pos.koPoint = capturedSinglePos;
   } else {
     pos.koPoint = -1;
   }
 
   return true;
-}
+};
 
-function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: boolean, scratch: LadderSearchScratch): boolean {
+const searchIsLadderCaptured = (
+  pos: SimPosition,
+  loc: number,
+  defenderFirst: boolean,
+  scratch: LadderSearchScratch,
+): boolean => {
   if (loc < 0 || loc >= BOARD_AREA) return false;
   const c = pos.stones[loc] as StoneColor;
   if (c !== BLACK && c !== WHITE) return false;
@@ -1327,7 +1518,17 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
   const koSaved = pos.koPoint;
   if (defenderFirst) pos.koPoint = -1;
 
-  const { bufMoves, moveListStarts, moveListLens, moveListCur, recordMoves, recordPlayers, recordKoPointBefore, recordCaptureStart, captureStack } = scratch;
+  const {
+    bufMoves,
+    moveListStarts,
+    moveListLens,
+    moveListCur,
+    recordMoves,
+    recordPlayers,
+    recordKoPointBefore,
+    recordCaptureStart,
+    captureStack,
+  } = scratch;
 
   const stackSize = LADDER_STACK_SIZE;
   let stackIdx = 0;
@@ -1355,13 +1556,22 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
 
     if (searchNodeCount >= LADDER_SEARCH_NODE_BUDGET) {
       for (let i = stackIdx - 1; i >= 0; i--) {
-        undoMoveRaw(pos, recordMoves[i]!, recordPlayers[i]! as StoneColor, recordKoPointBefore[i]!, recordCaptureStart[i]!, captureStack);
+        undoMoveRaw(
+          pos,
+          recordMoves[i]!,
+          recordPlayers[i]! as StoneColor,
+          recordKoPointBefore[i]!,
+          recordCaptureStart[i]!,
+          captureStack,
+        );
       }
       pos.koPoint = koSaved;
       return false;
     }
 
-    const isDefender = (defenderFirst && (stackIdx % 2) === 0) || (!defenderFirst && (stackIdx % 2) === 1);
+    const isDefender =
+      (defenderFirst && stackIdx % 2 === 0) ||
+      (!defenderFirst && stackIdx % 2 === 1);
 
     if (moveListCur[stackIdx] === -1) {
       const libs = getNumLibertiesCapped(pos.stones, loc, 3);
@@ -1395,8 +1605,20 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
       let moveListLen = 0;
 
       if (isDefender) {
-        moveListLen = findLibertyGainingCaptures(pos.stones, loc, bufMoves, start);
-        moveListLen += findLibertiesIntoBuf(pos.stones, loc, pla, bufMoves, start + moveListLen, 1);
+        moveListLen = findLibertyGainingCaptures(
+          pos.stones,
+          loc,
+          bufMoves,
+          start,
+        );
+        moveListLen += findLibertiesIntoBuf(
+          pos.stones,
+          loc,
+          pla,
+          bufMoves,
+          start + moveListLen,
+          1,
+        );
 
         if (moveListLen <= 0) {
           returnValue = true;
@@ -1420,7 +1642,14 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
           continue;
         }
       } else {
-        moveListLen += findLibertiesIntoBuf(pos.stones, loc, pla, bufMoves, start, 2);
+        moveListLen += findLibertiesIntoBuf(
+          pos.stones,
+          loc,
+          pla,
+          bufMoves,
+          start,
+          2,
+        );
         if (moveListLen !== 2) {
           returnValue = false;
           returnedFromDeeper = true;
@@ -1431,8 +1660,22 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
         let libsA = getNumImmediateLiberties(pos.stones, bufMoves[start]!);
         let libsB = getNumImmediateLiberties(pos.stones, bufMoves[start + 1]!);
 
-        if (libsA === 0 && libsB === 0 && wouldBeKoCapture(pos.stones, bufMoves[start]!, opp) && wouldBeKoCapture(pos.stones, bufMoves[start + 1]!, opp)) {
-          if (getNumLibertiesAfterPlay(pos.stones, bufMoves[start]!, pla, 3) <= 2 && getNumLibertiesAfterPlay(pos.stones, bufMoves[start + 1]!, pla, 3) <= 2) {
+        if (
+          libsA === 0 &&
+          libsB === 0 &&
+          wouldBeKoCapture(pos.stones, bufMoves[start]!, opp) &&
+          wouldBeKoCapture(pos.stones, bufMoves[start + 1]!, opp)
+        ) {
+          if (
+            getNumLibertiesAfterPlay(pos.stones, bufMoves[start]!, pla, 3) <=
+              2 &&
+            getNumLibertiesAfterPlay(
+              pos.stones,
+              bufMoves[start + 1]!,
+              pla,
+              3,
+            ) <= 2
+          ) {
             if (!hasLibertyGainingCaptures(pos.stones, loc)) {
               returnValue = true;
               returnedFromDeeper = true;
@@ -1457,8 +1700,20 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
         }
 
         if (moveListLen > 1) {
-          libsA = libsA * 2 + countHeuristicConnectionLibertiesX2(pos.stones, bufMoves[start]!, pla);
-          libsB = libsB * 2 + countHeuristicConnectionLibertiesX2(pos.stones, bufMoves[start + 1]!, pla);
+          libsA =
+            libsA * 2 +
+            countHeuristicConnectionLibertiesX2(
+              pos.stones,
+              bufMoves[start]!,
+              pla,
+            );
+          libsB =
+            libsB * 2 +
+            countHeuristicConnectionLibertiesX2(
+              pos.stones,
+              bufMoves[start + 1]!,
+              pla,
+            );
           if (libsB > libsA) {
             const tmp = bufMoves[start]!;
             bufMoves[start] = bufMoves[start + 1]!;
@@ -1477,7 +1732,7 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
           recordPlayers[stackIdx]! as StoneColor,
           recordKoPointBefore[stackIdx]!,
           recordCaptureStart[stackIdx]!,
-          captureStack
+          captureStack,
         );
       }
 
@@ -1508,7 +1763,17 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
     recordMoves[stackIdx] = move;
     recordPlayers[stackIdx] = p;
 
-    if (!tryPlayMoveNoThrow(pos, move, p, captureStack, recordKoPointBefore, recordCaptureStart, stackIdx)) {
+    if (
+      !tryPlayMoveNoThrow(
+        pos,
+        move,
+        p,
+        captureStack,
+        recordKoPointBefore,
+        recordCaptureStart,
+        stackIdx,
+      )
+    ) {
       returnValue = isDefender;
       returnedFromDeeper = false;
       continue;
@@ -1518,17 +1783,18 @@ function searchIsLadderCaptured(pos: SimPosition, loc: number, defenderFirst: bo
 
     stackIdx++;
     moveListCur[stackIdx] = -1;
-    moveListStarts[stackIdx] = moveListStarts[stackIdx - 1]! + moveListLens[stackIdx - 1]!;
+    moveListStarts[stackIdx] =
+      moveListStarts[stackIdx - 1]! + moveListLens[stackIdx - 1]!;
     moveListLens[stackIdx] = 0;
   }
-}
+};
 
-function searchIsLadderCapturedAttackerFirst2Libs(
+const searchIsLadderCapturedAttackerFirst2Libs = (
   pos: SimPosition,
   loc: number,
   scratch: LadderSearchScratch,
-  outWorkingMoves: number[]
-): boolean {
+  outWorkingMoves: number[],
+): boolean => {
   if (loc < 0 || loc >= BOARD_AREA) return false;
   const c = pos.stones[loc] as StoneColor;
   if (c !== BLACK && c !== WHITE) return false;
@@ -1551,14 +1817,48 @@ function searchIsLadderCapturedAttackerFirst2Libs(
   outWorkingMoves.length = 0;
   scratch.captureStack.length = 0;
 
-  if (tryPlayMoveNoThrow(pos, move0, opp, scratch.captureStack, scratch.tmpKoPointBefore, scratch.tmpCaptureStart, 0)) {
+  if (
+    tryPlayMoveNoThrow(
+      pos,
+      move0,
+      opp,
+      scratch.captureStack,
+      scratch.tmpKoPointBefore,
+      scratch.tmpCaptureStart,
+      0,
+    )
+  ) {
     move0Works = searchIsLadderCaptured(pos, loc, true, scratch);
-    undoMoveRaw(pos, move0, opp, scratch.tmpKoPointBefore[0]!, scratch.tmpCaptureStart[0]!, scratch.captureStack);
+    undoMoveRaw(
+      pos,
+      move0,
+      opp,
+      scratch.tmpKoPointBefore[0]!,
+      scratch.tmpCaptureStart[0]!,
+      scratch.captureStack,
+    );
   }
 
-  if (tryPlayMoveNoThrow(pos, move1, opp, scratch.captureStack, scratch.tmpKoPointBefore, scratch.tmpCaptureStart, 0)) {
+  if (
+    tryPlayMoveNoThrow(
+      pos,
+      move1,
+      opp,
+      scratch.captureStack,
+      scratch.tmpKoPointBefore,
+      scratch.tmpCaptureStart,
+      0,
+    )
+  ) {
     move1Works = searchIsLadderCaptured(pos, loc, true, scratch);
-    undoMoveRaw(pos, move1, opp, scratch.tmpKoPointBefore[0]!, scratch.tmpCaptureStart[0]!, scratch.captureStack);
+    undoMoveRaw(
+      pos,
+      move1,
+      opp,
+      scratch.tmpKoPointBefore[0]!,
+      scratch.tmpCaptureStart[0]!,
+      scratch.captureStack,
+    );
   }
 
   if (move0Works || move1Works) {
@@ -1567,7 +1867,7 @@ function searchIsLadderCapturedAttackerFirst2Libs(
     return true;
   }
   return false;
-}
+};
 
 export type KataGoLadderFeaturesV7 = {
   ladderedStones: Uint8Array; // plane 14
@@ -1586,14 +1886,20 @@ let LADDER_FEATURES_SCRATCH_V7: KataGoLadderFeaturesScratchV7 = {
   workingMoves: [],
 };
 
-export function computeLadderFeaturesV7KataGoInto(args: {
+export const computeLadderFeaturesV7KataGoInto = (args: {
   stones: Uint8Array;
   koPoint: number;
   currentPlayer: StoneColor;
   outLadderedStones: Uint8Array;
   outLadderWorkingMoves: Uint8Array;
-}): void {
-  const { stones, koPoint, currentPlayer, outLadderedStones, outLadderWorkingMoves } = args;
+}): void => {
+  const {
+    stones,
+    koPoint,
+    currentPlayer,
+    outLadderedStones,
+    outLadderWorkingMoves,
+  } = args;
   outLadderedStones.fill(0);
   outLadderWorkingMoves.fill(0);
 
@@ -1612,7 +1918,8 @@ export function computeLadderFeaturesV7KataGoInto(args: {
     if (LADDER_GROUP_SEEN[p] === seenStamp) continue;
 
     const g = collectGroupAndLiberties(stones, p, c, 3);
-    for (let i = 0; i < g.groupLen; i++) LADDER_GROUP_SEEN[GROUP_BUF[i]!] = seenStamp;
+    for (let i = 0; i < g.groupLen; i++)
+      LADDER_GROUP_SEEN[GROUP_BUF[i]!] = seenStamp;
 
     if (g.liberties !== 1 && g.liberties !== 2) continue;
 
@@ -1627,27 +1934,45 @@ export function computeLadderFeaturesV7KataGoInto(args: {
     if (g.liberties === 1) {
       laddered = searchIsLadderCaptured(copyPos, p, true, LADDER_SCRATCH);
     } else {
-      laddered = searchIsLadderCapturedAttackerFirst2Libs(copyPos, p, LADDER_SCRATCH, workingMoves);
+      laddered = searchIsLadderCapturedAttackerFirst2Libs(
+        copyPos,
+        p,
+        LADDER_SCRATCH,
+        workingMoves,
+      );
     }
 
     if (!laddered) continue;
 
     for (let i = 0; i < g.groupLen; i++) outLadderedStones[groupStones[i]!] = 1;
     if (g.liberties === 2 && c === opp && workingMoves.length > 0) {
-      for (let i = 0; i < workingMoves.length; i++) outLadderWorkingMoves[workingMoves[i]!] = 1;
+      for (let i = 0; i < workingMoves.length; i++)
+        outLadderWorkingMoves[workingMoves[i]!] = 1;
     }
   }
-}
+};
 
-export function computeLadderFeaturesV7KataGo(args: { stones: Uint8Array; koPoint: number; currentPlayer: StoneColor }): KataGoLadderFeaturesV7 {
+export const computeLadderFeaturesV7KataGo = (args: {
+  stones: Uint8Array;
+  koPoint: number;
+  currentPlayer: StoneColor;
+}) => {
   const ladderedStones = new Uint8Array(BOARD_AREA);
   const ladderWorkingMoves = new Uint8Array(BOARD_AREA);
-  computeLadderFeaturesV7KataGoInto({ ...args, outLadderedStones: ladderedStones, outLadderWorkingMoves: ladderWorkingMoves });
+  computeLadderFeaturesV7KataGoInto({
+    ...args,
+    outLadderedStones: ladderedStones,
+    outLadderWorkingMoves: ladderWorkingMoves,
+  });
 
   return { ladderedStones, ladderWorkingMoves };
-}
+};
 
-export function computeLadderedStonesV7KataGoInto(args: { stones: Uint8Array; koPoint: number; outLadderedStones: Uint8Array }): void {
+export const computeLadderedStonesV7KataGoInto = (args: {
+  stones: Uint8Array;
+  koPoint: number;
+  outLadderedStones: Uint8Array;
+}) => {
   const { stones, koPoint, outLadderedStones } = args;
   outLadderedStones.fill(0);
 
@@ -1664,7 +1989,8 @@ export function computeLadderedStonesV7KataGoInto(args: { stones: Uint8Array; ko
     if (LADDER_GROUP_SEEN[p] === seenStamp) continue;
 
     const g = collectGroupAndLiberties(stones, p, c, 3);
-    for (let i = 0; i < g.groupLen; i++) LADDER_GROUP_SEEN[GROUP_BUF[i]!] = seenStamp;
+    for (let i = 0; i < g.groupLen; i++)
+      LADDER_GROUP_SEEN[GROUP_BUF[i]!] = seenStamp;
 
     if (g.liberties !== 1 && g.liberties !== 2) continue;
 
@@ -1676,18 +2002,28 @@ export function computeLadderedStonesV7KataGoInto(args: { stones: Uint8Array; ko
 
     workingMoves.length = 0;
     let ladderedGroup = false;
-    if (g.liberties === 1) ladderedGroup = searchIsLadderCaptured(copyPos, p, true, LADDER_SCRATCH);
-    else ladderedGroup = searchIsLadderCapturedAttackerFirst2Libs(copyPos, p, LADDER_SCRATCH, workingMoves);
+    if (g.liberties === 1)
+      ladderedGroup = searchIsLadderCaptured(copyPos, p, true, LADDER_SCRATCH);
+    else
+      ladderedGroup = searchIsLadderCapturedAttackerFirst2Libs(
+        copyPos,
+        p,
+        LADDER_SCRATCH,
+        workingMoves,
+      );
 
     if (!ladderedGroup) continue;
     for (let i = 0; i < g.groupLen; i++) outLadderedStones[groupStones[i]!] = 1;
   }
-}
+};
 
-export function computeLadderedStonesV7KataGo(args: { stones: Uint8Array; koPoint: number }): Uint8Array {
+export const computeLadderedStonesV7KataGo = (args: {
+  stones: Uint8Array;
+  koPoint: number;
+}) => {
   const laddered = new Uint8Array(BOARD_AREA);
   computeLadderedStonesV7KataGoInto({ ...args, outLadderedStones: laddered });
   return laddered;
-}
+};
 
 initBoardArrays(BOARD_SIZE);

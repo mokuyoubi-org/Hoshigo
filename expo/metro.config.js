@@ -1,4 +1,6 @@
 // metro/metro.config.js
+// tsに変更不可みたい。
+
 // ターミナルのうるさい λ WARN ログを黙らせる
 const originalWarn = console.warn;
 console.warn = (...args) => {

@@ -1,40 +1,37 @@
 // GameScreen.tsx
+
 // 2026/08/29
 // ロジックのことはuseMatchSessionが管理役を務める。
 // UIのことはGameScreenが管理役を務める。
 // ということで、useEffectでモーダルを表示したりする処理はこちらに書いてあります。
 // stateを変更した、その場ではなく、こちらでstateの変更に気づいて発火するようになっています。
-import { PlayerCard } from "@/src/active/components/cards/PlayerCard";
-
-
-import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useMatchSession } from "@/src/active/hooks/match/useMatchSession";
-import { useTranslation } from "@/src/active/i18n/LangProvider";
+import { PlayerCard } from "@/src/components/cards/PlayerCard";
+import { MyText } from "@/src/components/common/MyText";
+import LoadingModal from "@/src/components/modals/common/LoadingModal";
+import { GameScreenSettingsModal } from "@/src/components/modals/game/GameScreenSettingsModal";
+import { GameStartModal } from "@/src/components/modals/game/GameStartModal";
+import { PassConfirmModal } from "@/src/components/modals/game/PassConfirmModal";
+import { GameResultModal } from "@/src/components/modals/result/GameResultModal";
+import { useOverlay } from "@/src/contexts/OverlayContext";
+import { useProfile } from "@/src/contexts/ProfileContexts";
+import { useColors } from "@/src/hooks/common/useTheme";
+import { useMatchSession } from "@/src/hooks/match/useMatchSession";
+import { useTranslation } from "@/src/i18n/LangProvider";
 import {
   GameScreenParams,
   getPassState,
   parseGameParams,
-} from "@/src/stable/logics/gameScreenLogics";
-import { getRankInfo } from "@/src/stable/logics/rankLogics";
-import { buildRecordFromMatch } from "@/src/stable/logics/recordBuilder";
-import { recordsRepo } from "@/src/stable/logics/records-repo";
+} from "@/src/logics/game/gameScreenLogics";
+import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GoBoard } from "go-components";
 import { BLACK, Grid, PASS_GRID } from "go-core";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconButton } from "ui-atoms";
-import { AppText } from "../active/components/common/AppText";
-import { useColors } from "../active/hooks/useTheme";
-import { clearPeriodicCache } from "../stable/logics/syncUtils";
-import { DoubleTapModal } from "../active/modals/DoubleTapModal";
-import { GameResultModal } from "../active/modals/gameresult/GameResultModal";
-import { GameStartModal } from "../active/modals/GameStartModal";
-import LoadingModal from "../active/modals/LoadingModal";
+import { IconButton, ScreenHeader } from "ui-atoms";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -65,8 +62,7 @@ export default function GameScreen() {
     height * BOARD_HEIGHT_RATIO,
   );
   // 対局する人の情報
-  const { uid, iconIndex, username, rating9, rating13, rating19 } =
-    useProfile();
+  const { iconIndex, username, rating9, rating13, rating19 } = useProfile();
   const [rank9, rank13, rank19] = [
     getRankInfo(rating9, t),
     getRankInfo(rating13, t),
@@ -84,7 +80,7 @@ export default function GameScreen() {
     oppUsername,
     oppRating,
     oppIconIndex,
-    oppUid,
+    // oppUid,
   } = parseGameParams(params);
   const myRankIndex =
     (boardSize === 9
@@ -110,14 +106,14 @@ export default function GameScreen() {
     loading,
     handlePutStone,
     handleResign,
+    shouldConfirmPass,
     turnState,
     ratingBefore,
     ratingAfter,
     rankIndexBefore,
     rankIndexAfter,
     resultRaw,
-    finalDeadStones,
-    analysis,
+    // analysis,
     giantKillingStreak,
     giantKillingBonus,
     doubleTap,
@@ -134,6 +130,14 @@ export default function GameScreen() {
     initialMySeconds: Number(params.mySeconds),
     initialOppSeconds: Number(params.oppSeconds),
   });
+
+  const isPlayerBlack = myColor === BLACK;
+  const blackWins = resultRaw?.startsWith("B")
+    ? true
+    : resultRaw?.startsWith("W")
+      ? false
+      : undefined;
+  const playerWin = isPlayerBlack ? blackWins : !blackWins;
 
   // 対局自体の情報
   const moveHistory = moves?.slice(0, currentIndex + 1) ?? [];
@@ -198,6 +202,8 @@ export default function GameScreen() {
     show(
       <GameResultModal
         boardSize={boardSize}
+        matchType={matchType}
+        moves={moves}
         visible={true}
         resultComment={resultComment}
         onClose={onClose}
@@ -208,10 +214,38 @@ export default function GameScreen() {
         from={"GameScreen"}
         giantKillingStreak={giantKillingStreak}
         giantKillingBonus={giantKillingBonus}
+        playerWin={playerWin}
       />,
     );
   };
+  // 🌟最新のhandlePutStoneを指すref。確認モーダルの「はい」から呼ぶ時に、
+  //   モーダルを出した時点の古い関数(古いisGameEndedなどを握っている)ではなく、
+  //   常に最新の関数を使うため。
+  const handlePutStoneRef = useRef(handlePutStone);
+  useEffect(() => {
+    handlePutStoneRef.current = handlePutStone;
+  });
 
+  // パスボタンを押した時の処理。
+  // 終局していない局面でのパスは、確認のモーダルを出す。
+  //   「はい」→ パスする / 「いいえ」→ 何もしない(手を打っていない状態のまま)
+  // 終局している局面、または分析がまだ届いていなくて判定できない時は、
+  // 確認なしでそのままパスする。
+  const handlePassPress = () => {
+    if (!shouldConfirmPass()) {
+      handlePutStone(PASS_GRID);
+      return;
+    }
+    show(
+      <PassConfirmModal
+        onYes={() => {
+          hide();
+          handlePutStoneRef.current(PASS_GRID);
+        }}
+        onNo={hide}
+      />,
+    );
+  };
   // ---------- useEffect ----------
 
   // 🛡️ガード
@@ -240,40 +274,34 @@ export default function GameScreen() {
   // isGameEndedは対局が終了しているか否か。
   useEffect(() => {
     if (isGameEnded) {
-      const isMyBlack = myColor === BLACK;
-      const oppRankIndex = getRankInfo(oppRating, t).index;
+      // const isMyBlack = myColor === BLACK;
+      // const oppRankIndex = getRankInfo(oppRating, t).index;
 
-      const record = buildRecordFromMatch({
-        matchId,
-        boardSize,
-        matchType,
-        moves: moves ?? [],
-        deadStones: finalDeadStones,
-        result: resultRaw,
-        blackUid: isMyBlack ? (uid ?? "") : oppUid,
-        blackUsername: isMyBlack ? (username ?? "") : (oppUsername ?? ""),
-        blackIconIndex: isMyBlack ? (iconIndex ?? 0) : (oppIconIndex ?? 0),
-        blackRankIndex: isMyBlack ? rankIndexAfter : oppRankIndex,
-        blackRating: isMyBlack ? ratingAfter : (oppRating ?? 0),
-        whiteUid: isMyBlack ? oppUid : (uid ?? ""),
-        whiteUsername: isMyBlack ? (oppUsername ?? "") : (username ?? ""),
-        whiteIconIndex: isMyBlack ? (oppIconIndex ?? 0) : (iconIndex ?? 0),
-        whiteRankIndex: isMyBlack ? oppRankIndex : rankIndexAfter,
-        whiteRating: isMyBlack ? (oppRating ?? 0) : ratingAfter,
-        analysis,
-      });
+      // const record = buildRecordFromMatch({
+      //   matchId,
+      //   boardSize,
+      //   matchType,
+      //   moves: moves ?? [],
+      //   result: resultRaw,
+      //   blackUid: isMyBlack ? (uid ?? "") : oppUid,
+      //   blackUsername: isMyBlack ? (username ?? "") : (oppUsername ?? ""),
+      //   blackIconIndex: isMyBlack ? (iconIndex ?? 0) : (oppIconIndex ?? 0),
+      //   blackRankIndex: isMyBlack ? rankIndexAfter : oppRankIndex,
+      //   blackRating: isMyBlack ? ratingAfter : (oppRating ?? 0),
+      //   whiteUid: isMyBlack ? oppUid : (uid ?? ""),
+      //   whiteUsername: isMyBlack ? (oppUsername ?? "") : (username ?? ""),
+      //   whiteIconIndex: isMyBlack ? (oppIconIndex ?? 0) : (iconIndex ?? 0),
+      //   whiteRankIndex: isMyBlack ? oppRankIndex : rankIndexAfter,
+      //   whiteRating: isMyBlack ? (oppRating ?? 0) : ratingAfter,
+      //   analysis,
+      // });
 
       // 🐱 分析結果込みでローカルにも保存しておく。INSERT OR IGNOREなので、
       //    後からsyncNewerがサーバー版(analysisを持たない)を取ってきても
       //    上書きされず、この時点のanalysisがそのまま残り続ける。
       const saveAndNavigate = async () => {
-        try {
-          await recordsRepo.insertMany([record]);
-        } catch (e) {
-          console.error("対局記録のローカル保存に失敗:", e);
-        }
-
         router.replace({
+          // 2026/10/05: ⚠️ここはreplaceでなければならない
           pathname: "/BoardEditScreen",
           params: {
             matchId: matchId,
@@ -284,18 +312,15 @@ export default function GameScreen() {
             ratingBefore: ratingBefore,
             ratingAfter: ratingAfter,
             giantKillingStreak: giantKillingStreak,
-            giantKillingBonus: String(
-              // なんか、booleanは明示的にキャストしなきゃいけないみたいだ。
-              giantKillingBonus,
-            ),
+            // booleanはrouterのparamsを通ると文字列になり、"false"も真と判定されてしまう。
+            // なので、whiteRotationと同じく「あれば印の文字列、なければ空文字」で渡す。
+            giantKillingBonus: giantKillingBonus ? "giantKillingBonus" : "",
+            whiteRotation: isPlayerBlack ? "" : "whiteRotation",
           },
         });
 
         showResultModal();
       };
-
-      clearPeriodicCache("global_rankings"); // ランキングのキャッシュ消しておく(レートが変動するから)
-
       saveAndNavigate();
     }
   }, [isGameEnded]);
@@ -305,37 +330,46 @@ export default function GameScreen() {
   if (!matchId) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-background items-center">
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
 
-      <View className="flex-1 px-6 py-5 items-center w-full max-w-160 mx-auto">
+      <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
         {/* ─── ヘッダー ─── */}
-        <View className="w-full mb-2 flex-row justify-between">
-          {/* ─── infoボタン ─── */}
-          <IconButton
-            icon={<FontAwesome6 name="info" />}
-            iconColor={colors.primary}
-            backgroundColor={colors.foreground}
-            borderColor={colors.backgroundStrong}
-            onPress={showGameStartModal}
-          />
-
-          <IconButton
-            icon={<FontAwesome6 name={"gear"} />}
-            iconColor={colors.primary}
-            backgroundColor={colors.foreground}
-            borderColor={colors.backgroundStrong}
-            onPress={() => {
-              show(<DoubleTapModal onClose={hide} />);
-            }}
-          />
-        </View>
+        <ScreenHeader
+          left={
+            <IconButton
+              icon={<FontAwesome6 name="info" />}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundStrong}
+              onPress={showGameStartModal}
+            />
+          }
+          right={
+            <IconButton
+              icon={<FontAwesome6 name={"gear"} />}
+              iconColor={colors.primary}
+              backgroundColor={colors.foreground}
+              borderColor={colors.backgroundStrong}
+              onPress={() => {
+                show(
+                  <GameScreenSettingsModal
+                    onClose={hide}
+                    boardSize={boardSize}
+                  />,
+                );
+              }}
+            />
+          }
+        />
 
         {/* ─── 余白 A ─── */}
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_A }} />
 
         {/* ─── 三兄弟 ─── */}
-        <View className="items-center gap-2">
+        <View
+          className="items-center gap-2 self-center" // self-center大事
+        >
           {/* 相手情報 */}
           <View style={{ width: boardWidth }}>
             <PlayerCard
@@ -356,47 +390,54 @@ export default function GameScreen() {
           </View>
 
           {/* 碁盤 */}
-          <GoBoard
-            // 盤面サイズ: 1
-            boardSize={boardSize}
-            matchType={matchType}
-            // プレイヤの色: 1
-            playerColor={myColor}
-            // 現在の盤面、インデックス、テリトリーボード: 3
-            board={boardHistory[currentIndex] ?? {}}
-            currentIndex={currentIndex}
-            territoryBoard={territoryBoard}
-            // history系: 3
-            moveHistory={moves}
-            boardHistory={boardHistory}
-            agehamaHistory={agehamaHistory}
-            // タッチした時の処理: 1
-            onPutStone={handlePutStone}
-            // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
-            disabled={!isMyTurn || isGameEnded}
-            isGameEnded={isGameEnded}
-            doubleTap={doubleTap}
-            // その他情報: 5
-            forceShowTerritory={false} // ダミーだけどちゃんとfalse
-            editMarkers={new Map<Grid, "human" | "bot">()} // ダミー
-            candidatePoints={[]} // ダミー
-            moveEvaluationPoint={0} // ダミー
-            moveEvaluation={undefined} // ダミー
-            // 物理サイズ: 1
-            boardWidth={boardWidth}
-            // 色: 10
-            boardColor={colors.primary}
-            lineColor={colors.background}
-            blackStoneColor={colors.blackStone}
-            whiteStoneColor={colors.whiteStone}
-            humanMoveColor={colors.humanMoveColor}
-            botMoveColor={colors.botMoveColor}
-            goodMoveColor={colors.success}
-            badMoveColor={colors.failure}
-            // 音
-            sound={isSoundEnabled}
-            practiceMatchStatus={""} // 適当
-          />
+          {/* 白番のときは、向かい合って打つ感じを出すために180度回転させる */}
+          <View
+            style={
+              isPlayerBlack ? undefined : { transform: [{ rotate: "180deg" }] }
+            }
+          >
+            <GoBoard
+              // 盤面サイズ: 1
+              boardSize={boardSize}
+              matchType={matchType}
+              // プレイヤの色: 1
+              playerColor={myColor}
+              // 現在の盤面、インデックス、テリトリーボード: 3
+              board={boardHistory[currentIndex] ?? {}}
+              currentIndex={currentIndex}
+              territoryBoard={territoryBoard}
+              // history系: 3
+              moveHistory={moves}
+              boardHistory={boardHistory}
+              agehamaHistory={agehamaHistory}
+              // タッチした時の処理: 1
+              onPutStone={handlePutStone}
+              // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
+              disabled={!isMyTurn || isGameEnded}
+              isGameEnded={isGameEnded}
+              doubleTap={doubleTap}
+              // その他情報: 5
+              forceShowTerritory={false} // ダミーだけどちゃんとfalse
+              editMarkers={new Map<Grid, "human" | "bot">()} // ダミー
+              candidatePoints={[]} // ダミー
+              moveEvaluationPoint={0} // ダミー
+              moveEvaluation={undefined} // ダミー
+              // 物理サイズ: 1
+              boardWidth={boardWidth}
+              // 色: 10
+              boardColor={colors.primary}
+              lineColor={colors.background}
+              blackStoneColor={colors.blackStone}
+              whiteStoneColor={colors.whiteStone}
+              humanMoveColor={colors.humanMoveColor}
+              botMoveColor={colors.botMoveColor}
+              goodMoveColor={colors.success}
+              badMoveColor={colors.failure}
+              // 音
+              sound={isSoundEnabled}
+              practiceMatchStatus={""} // 適当
+            />
+          </View>
 
           {/* 自分情報 */}
           <View style={{ width: boardWidth }}>
@@ -423,17 +464,20 @@ export default function GameScreen() {
 
         {/* ─── 二兄弟 ─── */}
         {!isGameEnded && (
-          <View className="flex-row gap-2" style={{ width: boardWidth }}>
+          <View
+            className="flex-row gap-2 self-center" // self-center大事
+            style={{ width: boardWidth }}
+          >
             {/* パスボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
                 !isMyTurn ? "border-backgroundStrong" : "border-primaryStrong"
               }`}
-              onPress={() => handlePutStone(PASS_GRID)}
+              onPress={handlePassPress}
               disabled={!isMyTurn}
               activeOpacity={0.7}
             >
-              <AppText
+              <MyText
                 className={"text-lg"}
                 style={{
                   color: !isMyTurn
@@ -442,7 +486,7 @@ export default function GameScreen() {
                 }}
               >
                 {t("common.pass")}
-              </AppText>
+              </MyText>
             </TouchableOpacity>
             {/* 投了ボタン */}
             <TouchableOpacity
@@ -453,14 +497,14 @@ export default function GameScreen() {
               disabled={!isMyTurn}
               activeOpacity={0.7}
             >
-              <AppText
+              <MyText
                 className={"text-lg"}
                 style={{
                   color: !isMyTurn ? colors.failureLight : colors.failure,
                 }}
               >
                 {t("common.resign")}
-              </AppText>
+              </MyText>
             </TouchableOpacity>
           </View>
         )}

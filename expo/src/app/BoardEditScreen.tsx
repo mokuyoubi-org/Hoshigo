@@ -1,15 +1,21 @@
-// app/BoardEditScreen.tsx
+// BoardEditScreen.tsx
+
+import { TerritoryResultButton } from "@/src/components/buttons/TerritoryResultButton";
 import {
   BoardEditScreenHeader,
   HeaderPlayerInfo,
-} from "@/src/active/components/headers/BoardEditScreenHeader";
-
-import { useProfile } from "@/src/active/contexts/ProfileContexts";
-import { useBotAnalysis } from "@/src/active/hooks/bot/useBotAnalysis";
-import { useBoardEditActions } from "@/src/active/hooks/edit/useBoardEditActions";
-import { useEditableGoBoard } from "@/src/active/hooks/edit/useEditableGoBoard";
-import { useReplayMoveEvaluation } from "@/src/active/hooks/edit/useReplayMoveEvaluation";
-import { RecordType } from "@/src/active/types/record";
+} from "@/src/components/headers/BoardEditScreenHeader";
+import { BoardEditScreenSettingsModal } from "@/src/components/modals/boardEdit/BoardEditScreenSettingsModal";
+import { GameResultModal } from "@/src/components/modals/result/GameResultModal";
+import { useOverlay } from "@/src/contexts/OverlayContext";
+import { useProfile } from "@/src/contexts/ProfileContexts";
+import { useRecordAnalysisLoop } from "@/src/hooks/ai/useRecordAnalysisLoop";
+import { useAppFont } from "@/src/hooks/common/useAppFont";
+import { useColors } from "@/src/hooks/common/useTheme";
+import { useBoardEditActions } from "@/src/hooks/edit/useBoardEditActions";
+import { useEditableGoBoard } from "@/src/hooks/edit/useEditableGoBoard";
+import { useReplayMoveEvaluation } from "@/src/hooks/edit/useReplayMoveEvaluation";
+import { RecordType } from "@/src/types/record";
 import {
   Feather,
   FontAwesome6,
@@ -17,14 +23,14 @@ import {
   MaterialIcons,
   Octicons,
 } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
   GoBoard,
   ReplayTapOverlay,
   ScoreLeadReplayControls,
 } from "go-components";
-import { BLACK, ownershipToTerritoryBoard, WHITE } from "go-core";
+import { BLACK, TerritoryBoard, WHITE } from "go-core";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -33,16 +39,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconButton, SegmentedIconControl } from "ui-atoms";
-import { TerritoryResultBadge } from "../active/components/buttons/TerritoryResultBadge";
-
-import { useOverlay } from "../active/contexts/OverlayContext";
-import { useColors } from "../active/hooks/useTheme";
-import { FromType } from "../active/types/from";
-import { recordsRepo } from "../stable/logics/records-repo";
-import { subscribeToRecordsChange } from "../stable/logics/records-repo/records-repo-events";
-import { AnalyzeDisplaySettingsModal } from "../active/modals/AnalyzeDisplaySettingsModal";
-import { GameResultModal } from "../active/modals/gameresult/GameResultModal";
+import { IconButton, ScreenHeader, SegmentedIconControl } from "ui-atoms";
+import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
+import { FromType } from "../types/from";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -71,6 +70,7 @@ export default function BoardEditScreen() {
     practiceMatchStatus,
     giantKillingStreak,
     giantKillingBonus,
+    whiteRotation,
   } = useLocalSearchParams<{
     matchId?: string;
     recordParam?: string;
@@ -83,22 +83,13 @@ export default function BoardEditScreen() {
     practiceMatchStatus?: string;
     giantKillingStreak?: string;
     giantKillingBonus?: string;
+    whiteRotation?: string;
   }>();
-
-  const colors = useColors();
 
   const [record, setRecord] = useState<RecordType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
-    if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-    ) {
-      document.activeElement.blur();
-    }
-  }, []);
+  useBlurActiveElement();
 
   useEffect(() => {
     let isMounted = true;
@@ -118,13 +109,13 @@ export default function BoardEditScreen() {
         }
 
         // 2. 本体がなくて matchId だけあるなら DB から取ってくる
-        if (matchId) {
-          const targetId = Number(matchId);
-          if (!isNaN(targetId)) {
-            const data = await recordsRepo.getById(targetId);
-            if (isMounted) setRecord(data);
-          }
-        }
+        // if (matchId) {
+        //   const targetId = Number(matchId);
+        //   if (!isNaN(targetId)) {
+        //     const data = await recordsRepo.getById(targetId);
+        //     if (isMounted) setRecord(data);
+        //   }
+        // }
       } catch (e) {
         console.error("Failed to load record:", e);
       } finally {
@@ -140,23 +131,23 @@ export default function BoardEditScreen() {
   }, [matchId, recordParam]);
 
   // 🔔 matchId経由(DB由来)のときだけ、他の場所での書き込みに気づいて取り直す
-  useEffect(() => {
-    if (!matchId) return;
-    const targetId = Number(matchId);
-    if (isNaN(targetId)) return;
+  // useEffect(() => {
+  //   if (!matchId) return;
+  //   const targetId = Number(matchId);
+  //   if (isNaN(targetId)) return;
 
-    return subscribeToRecordsChange(() => {
-      recordsRepo.getById(targetId).then((data) => {
-        if (data) setRecord(data);
-      });
-    });
-  }, [matchId]);
+  //   return subscribeToRecordsChange(() => {
+  //     recordsRepo.getById(targetId).then((data) => {
+  //       if (data) setRecord(data);
+  //     });
+  //   });
+  // }, [matchId]);
 
   if (isLoading || !record) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
         {/* <ActivityIndicator size="large" color={colors.primary} />
-        <AppText className="text-text mt-2">{t("common.loading")}...</AppText> */}
+        <MyText className="text-text mt-2">{t("common.loading")}...</MyText> */}
       </SafeAreaView>
     );
   }
@@ -172,12 +163,13 @@ export default function BoardEditScreen() {
       ratingAfter={Number(ratingAfter)}
       practiceMatchStatus={practiceMatchStatus ?? ""}
       giantKillingStreak={Number(giantKillingStreak)}
-      giantKillingBonus={Boolean(giantKillingBonus)}
+      giantKillingBonus={giantKillingBonus === "giantKillingBonus"}
+      whiteRotation={whiteRotation}
     />
   );
 }
 
-function BoardEditScreenContent({
+const BoardEditScreenContent = ({
   record,
   from,
   resultComment,
@@ -188,6 +180,7 @@ function BoardEditScreenContent({
   practiceMatchStatus,
   giantKillingStreak,
   giantKillingBonus,
+  whiteRotation,
 }: {
   record: RecordType;
   from: FromType;
@@ -199,7 +192,9 @@ function BoardEditScreenContent({
   practiceMatchStatus: string;
   giantKillingStreak: number;
   giantKillingBonus: boolean;
-}) {
+  whiteRotation: string | undefined;
+}) => {
+  const fontFamily = useAppFont();
   const colors = useColors();
   const { show, hide } = useOverlay();
   const { width, height } = useWindowDimensions();
@@ -209,19 +204,19 @@ function BoardEditScreenContent({
   const { uid } = useProfile();
 
   // 🐱 棋譜モード専用：手ごとのKataGo解析を進める・止める・DBに永続化する
-  const botAnalysis = useBotAnalysis(record);
+  const analysisLoop = useRecordAnalysisLoop(record);
 
   // 🐱 「完全に分析済みか」は手ごとの解析(analyzedCount)に加えて、最後の1手の
   //    効果を測るための最終局面(perMove[totalMoves])まで埋まっているかも見る
   const isFullyAnalyzed =
-    botAnalysis.analyzedCount >= botAnalysis.totalMoves &&
-    botAnalysis.analysis.perMove[botAnalysis.totalMoves] != null;
+    analysisLoop.analyzedCount >= analysisLoop.totalMoves &&
+    analysisLoop.analysis.perMove[analysisLoop.totalMoves] != null;
 
   // 🐱 botAnalysisが進めた解析結果を反映させたrecord。編集モードの分析キャッシュも
   //    リプレイモードの好手/悪手判定も、どちらもこちらを見るようにする
   const liveRecord = useMemo(
-    () => ({ ...record, analysis: botAnalysis.analysis }),
-    [record, botAnalysis.analysis],
+    () => ({ ...record, analysis: analysisLoop.analysis }),
+    [record, analysisLoop.analysis],
   );
 
   // 🐱 編集モード・盤面履歴・分析キャッシュはすべてここに集約されている
@@ -235,7 +230,7 @@ function BoardEditScreenContent({
     handleBotSuggest,
     isBotSuggesting,
     isAnyProcessing,
-  } = useBoardEditActions(board, board.boardSize, record.match_type);
+  } = useBoardEditActions(board, board.boardSize);
   // 🐱 リプレイモードでの好手・悪手判定と代替候補手
   const { lastMoveEvaluation, lastMoveGrid, candidatePoints } =
     useReplayMoveEvaluation(
@@ -252,37 +247,41 @@ function BoardEditScreenContent({
     [record, board.combinedAnalysis],
   );
 
-  const ownership = useMemo(
-    () => board.combinedAnalysis?.perMove[board.currentIndex]?.ownership,
-    [board.combinedAnalysis, board.currentIndex],
+  // 🐱 地の盤面は、useBoardEditActionsのterritoryResult(分析の ownership が元)だけを
+  //    見る。確定した最終局面でも、それ以外の局面でも、同じ窓口から取る。
+  const currentTerritoryBoard = territoryResult?.territoryBoard ?? null;
+
+  // 🐱 地を出さない時に渡す、全部0の盤面(territoryBoardの必須の値を埋めるだけ)
+  const emptyTerritoryBoard: TerritoryBoard = useMemo(
+    () =>
+      Array.from({ length: board.boardSize }, () =>
+        Array(board.boardSize).fill(0),
+      ),
+    [board.boardSize],
   );
 
-  const ownershipTerritoryBoard = useMemo(() => {
-    if (!ownership) return null;
-    const currentBoard =
-      board.processed.boardHistory[board.currentIndex] ??
-      board.processed.boardHistory[0];
-    if (!currentBoard) return null;
-    return ownershipToTerritoryBoard(board.boardSize, currentBoard, ownership);
-  }, [
-    ownership,
-    board.processed.boardHistory,
-    board.currentIndex,
-    board.boardSize,
-  ]);
-
-  // 🐱 board.processed.territoryBoardは「終局した最終局面」専用のデータ(record.dead_stones由来)。
-  //    今まさにその最終局面(棋譜モードで、かつ一番最後の手)を見ている時だけ、
-  //    これを最優先で使う。それ以外の局面では、たとえownershipトグルがonでも
-  //    このデータは無関係(別の局面のデータ)なので絶対に使ってはいけない。
+  // 🐱 棋譜モードで、一番最後の手の局面を見ていて、その手の並びが連続パスで
+  //    終わっている時は「確定した終局局面」として、地を常に表示する。
   const isAtConfirmedFinalPosition =
     !board.isEditMode &&
     board.currentIndex === board.maxIdx &&
-    !!record.dead_stones;
+    !!territoryResult?.isFinal;
+
+  // 🐱 盤面に出す地。確定した終局局面では常に、それ以外ではバッジをタップした時か、
+  //    設定(showOwnershipTerritoryBoard)がonの時だけ出す。
+  const territoryBoardToShow =
+    isAtConfirmedFinalPosition ||
+    !!manualTerritory ||
+    board.showOwnershipTerritoryBoard
+      ? currentTerritoryBoard
+      : null;
 
   const isUserBlack = record.black_uid === uid;
   const isUserWhite = record.white_uid === uid;
   const isUserParticipant = isUserBlack || isUserWhite; // 🔥自分が対局者として実在するか
+  const isHumanHumanMatch = isUserBlack && isUserWhite;
+  const isBotBotMatch = !isUserBlack && !isUserWhite;
+
   const isMyBlack = isUserBlack; // 互換のため名称は維持(黒番かどうかの判定に使用)
 
   const blackWins = record.result?.startsWith("B")
@@ -291,15 +290,15 @@ function BoardEditScreenContent({
       ? false
       : undefined;
   const playerWin =
-    blackWins === undefined || !isUserParticipant
-      ? undefined
+    blackWins === undefined || isBotBotMatch || isHumanHumanMatch
+      ? undefined // botbotもしくはhumanhumanの場合、モーダルの文字は赤や緑にはならない、ということ
       : isMyBlack
         ? blackWins
         : !blackWins;
 
   const boardWidth = width > height - 210 ? height * 0.7 : width * 0.96;
 
-  const { iconIndex, username } = useProfile();
+  const { iconIndex } = useProfile();
   // プレイヤーと対戦相手の情報をまとめる(自分が対局者である場合のみ使用)
   const playerColor = isMyBlack ? BLACK : WHITE;
   const playerRankIndex = isMyBlack
@@ -309,7 +308,9 @@ function BoardEditScreenContent({
     ? board.currentAgehama.black
     : board.currentAgehama.white;
   const playerPass = isMyBlack ? board.isBlackPass : board.isWhitePass;
-
+  const myUsername = isMyBlack
+    ? recordForHeader.black_username
+    : recordForHeader.white_username;
   const oppUsername = isMyBlack
     ? recordForHeader.white_username
     : recordForHeader.black_username;
@@ -330,8 +331,7 @@ function BoardEditScreenContent({
   // 存在しない場合(bot vs bot など)は単純に黒番を左側に表示する
   const leftPlayer: HeaderPlayerInfo = isUserParticipant
     ? {
-        username:
-          practiceMatchStatus === "human_human" ? "you" : (username ?? "user"),
+        username: myUsername,
         rankIndex: playerRankIndex,
         iconIndex: iconIndex ?? 0,
         color: playerColor,
@@ -370,150 +370,182 @@ function BoardEditScreenContent({
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
 
-      <View className="flex-1 w-full max-w-160 mx-auto">
+      <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
         {/* ヘッダー */}
-        <View className="flex-row justify-between items-center px-5 py-3">
-          {/* 🐱 左側：戻るボタン or 再対局ボタン */}
-          <View className="flex-row items-center gap-4">
-            {/* 戻るボタン */}
-            {from === "RecordScreen" && (
-              <TouchableOpacity
-                onPress={() => {
-                  // 🐱 分析ループが裏で走ったままナビゲーションするのを防ぐ
-                  if (botAnalysis.isAnalyzing) botAnalysis.requestStop();
-                  if (router.canGoBack()) {
-                    router.back();
-                  } else {
-                    router.replace("/HomeScreen");
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <Feather name="chevron-left" size={36} color={colors.textSub} />
-              </TouchableOpacity>
-            )}
+        <ScreenHeader
+          left={
+            <View className="flex-row items-center gap-4">
+              {/* 戻るボタン */}
+              {/* {from === "RecordScreen" && (
+                <TouchableOpacity
+                  onPress={() => {
+                    // 🐱 分析ループが裏で走ったままナビゲーションするのを防ぐ
+                    if (analysisLoop.isAnalyzing) analysisLoop.requestStop();
+                    if (router.canGoBack()) {
+                      router.back();
+                    } else {
+                      router.replace({ pathname: "/HomeScreen" });
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Feather
+                    name="chevron-left"
+                    size={36}
+                    color={colors.textSub}
+                  />
+                </TouchableOpacity>
+              )} */}
 
-            {/* メニューボタン */}
-            {from !== "RecordScreen" && (
-              <TouchableOpacity
-                onPress={() => {
-                  show(
-                    <GameResultModal
-                      boardSize={board.boardSize}
-                      visible={true}
-                      resultComment={resultComment}
-                      onClose={hide}
-                      ratingBefore={ratingBefore}
-                      ratingAfter={ratingAfter}
-                      rankIndexBefore={rankIndexBefore}
-                      rankIndexAfter={rankIndexAfter}
-                      from={from}
-                      giantKillingStreak={giantKillingStreak}
-                      giantKillingBonus={giantKillingBonus}
-                    />,
-                  );
-                }}
-                activeOpacity={0.7}
-              >
-                <Feather name="menu" size={32} color={colors.primaryStrong} />
-              </TouchableOpacity>
-            )}
-          </View>
+              {/* メニューボタン */}
+              {
+                <TouchableOpacity
+                  onPress={() => {
+                    if (analysisLoop.isAnalyzing) analysisLoop.requestStop();
 
-          {/* 🐱 右側：機能アイコン群（分析・編集・モード切り替え） */}
-          <View className="flex-row items-center gap-2">
-            {/* 分析📈ボタン */}
-            {!board.isEditMode &&
-              !isFullyAnalyzed &&
-              board.processed.moves.length >= 1 && (
+                    // 🌟 いま見ている局面(currentIndex手打った後)までの手と分析だけを渡す。
+                    //   結果モーダルの「練習モードへ」「もう一度練習」で、そのまま途中再開に使われる。
+                    //   分岐した後でも正しい合成データ(combinedAnalysis)を使う。
+                    const movesUpToCurrent = board.processed.moves.slice(
+                      0,
+                      board.currentIndex,
+                    );
+                    const analysisUpToCurrent = {
+                      perMove: board.combinedAnalysis.perMove.slice(
+                        0,
+                        board.currentIndex + 1,
+                      ),
+                    };
+
+                    show(
+                      <GameResultModal
+                        boardSize={board.boardSize}
+                        matchType={record.match_type}
+                        moves={movesUpToCurrent}
+                        analysis={analysisUpToCurrent}
+                        visible={true}
+                        resultComment={resultComment}
+                        onClose={hide}
+                        ratingBefore={ratingBefore}
+                        ratingAfter={ratingAfter}
+                        rankIndexBefore={rankIndexBefore}
+                        rankIndexAfter={rankIndexAfter}
+                        from={from}
+                        giantKillingStreak={giantKillingStreak}
+                        giantKillingBonus={giantKillingBonus}
+                        playerWin={playerWin}
+                      />,
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Feather name="menu" size={32} color={colors.primaryStrong} />
+                </TouchableOpacity>
+              }
+            </View>
+          }
+          right={
+            <View className="flex-row items-center gap-2">
+              {/* 分析📈ボタン */}
+              {!board.isEditMode &&
+                !isFullyAnalyzed &&
+                board.processed.moves.length >= 1 && (
+                  <IconButton
+                    icon={
+                      analysisLoop.isAnalyzing ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.primary}
+                        />
+                      ) : (
+                        <Octicons name="graph" />
+                      )
+                    }
+                    iconColor={colors.primary}
+                    backgroundColor={colors.foreground}
+                    borderColor={colors.backgroundStrong}
+                    onPress={analysisLoop.toggleAnalysis}
+                  />
+                )}
+
+              {/* ボット🤖ボタン */}
+              {board.isEditMode && (
                 <IconButton
                   icon={
-                    botAnalysis.isAnalyzing ? (
+                    isBotSuggesting ? (
                       <ActivityIndicator size="small" color={colors.primary} />
                     ) : (
-                      <Octicons name="graph" />
+                      <MaterialCommunityIcons name="robot" />
                     )
                   }
-                  iconColor={colors.primary}
+                  iconColor={colors.botMoveColor}
                   backgroundColor={colors.foreground}
                   borderColor={colors.backgroundStrong}
-                  onPress={botAnalysis.toggleAnalysis}
+                  onPress={handleBotSuggest}
+                  disabled={isAnyProcessing}
+                  style={{
+                    opacity: isAnyProcessing && !isBotSuggesting ? 0.4 : 1,
+                  }}
                 />
               )}
 
-            {/* ボット🤖ボタン */}
-            {board.isEditMode && (
-              <IconButton
-                icon={
-                  isBotSuggesting ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <MaterialCommunityIcons name="robot" />
-                  )
-                }
-                iconColor={colors.botMoveColor}
-                backgroundColor={colors.foreground}
-                borderColor={colors.backgroundStrong}
-                onPress={handleBotSuggest}
-                disabled={isAnyProcessing}
-                style={{
-                  opacity: isAnyProcessing && !isBotSuggesting ? 0.4 : 1,
+              {/* 地計算🧮ボタン。計算中はくるくる、結果なしなら何も出ない。
+                普段は電卓マークだけ。タップすると、結果テキストと盤面の地を表示する */}
+              {board.showTerritoryResultBadge && (
+                <TerritoryResultButton
+                  isCalculating={
+                    !territoryResult &&
+                    (board.isAnalyzing || analysisLoop.isAnalyzing)
+                  }
+                  result={territoryResult}
+                  isShown={!!manualTerritory}
+                  onPress={handleShowTerritory}
+                />
+              )}
+
+              {/* 🔄 モード切り替えスイッチ */}
+              <SegmentedIconControl
+                trackBackgroundColor={colors.backgroundStrong}
+                activeSegmentBackgroundColor={colors.foreground}
+                activeIconColor={colors.text}
+                inactiveIconColor={colors.textSub}
+                value={board.isEditMode}
+                onSelect={() => {
+                  if (analysisLoop.isAnalyzing) analysisLoop.requestStop();
+                  board.toggleEditMode();
                 }}
+                options={[
+                  {
+                    value: false,
+                    icon: <FontAwesome6 name="book-open" />,
+                    color: colors.primary,
+                  },
+                  {
+                    value: true,
+                    icon: <MaterialIcons name="edit" />,
+                    color: colors.humanMoveColor,
+                  },
+                ]}
               />
-            )}
 
-            {/* 地計算🧮の結果バッジ。計算中はくるくる、結果なしなら何も出ない。
-                背景 primary = 未確定 / primaryStrong = 確定。タップで盤面に地を表示 */}
-            {board.showTerritoryResultBadge && (
-              <TerritoryResultBadge
-                isCalculating={
-                  !territoryResult &&
-                  (board.isAnalyzing || botAnalysis.isAnalyzing)
-                }
-                result={territoryResult}
-                onPress={handleShowTerritory}
-              />
-            )}
-
-            {/* 🔄 モード切り替えスイッチ */}
-            <SegmentedIconControl
-              trackBackgroundColor={colors.backgroundStrong}
-              activeSegmentBackgroundColor={colors.foreground}
-              activeIconColor={colors.text}
-              inactiveIconColor={colors.textSub}
-              value={board.isEditMode}
-              onSelect={() => {
-                if (botAnalysis.isAnalyzing) botAnalysis.requestStop();
-                board.toggleEditMode();
-              }}
-              options={[
-                {
-                  value: false,
-                  icon: <FontAwesome6 name="book-open" />,
-                  color: colors.primary,
-                },
-                {
-                  value: true,
-                  icon: <MaterialIcons name="edit" />,
-                  color: colors.humanMoveColor,
-                },
-              ]}
-            />
-
-            {/* 設定ボタン⚙️ */}
-            {board.analysisComponentsLoaded && (
+              {/* 設定ボタン⚙️ */}
               <IconButton
                 icon={<FontAwesome6 name={"gear"} />}
                 iconColor={colors.primary}
                 backgroundColor={colors.foreground}
                 borderColor={colors.backgroundStrong}
                 onPress={() => {
-                  show(<AnalyzeDisplaySettingsModal onClose={hide} />);
+                  show(
+                    <BoardEditScreenSettingsModal
+                      onClose={hide}
+                      boardSize={board.boardSize}
+                    />,
+                  );
                 }}
               />
-            )}
-          </View>
-        </View>
+            </View>
+          }
+        />
 
         {/* コンテンツ領域 */}
 
@@ -522,11 +554,9 @@ function BoardEditScreenContent({
           <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_A }} />
 
           <BoardEditScreenHeader
-            record={recordForHeader}
+            analysis={board.combinedAnalysis}
             leftPlayer={leftPlayer}
             rightPlayer={rightPlayer}
-            playerWin={playerWin}
-            matchType={record.match_type}
             currentIndex={board.currentIndex}
             showWinRateBar={board.showWinRateBar}
           />
@@ -542,6 +572,10 @@ function BoardEditScreenContent({
                   width: boardWidth,
                   height: boardWidth,
                   position: "relative",
+                  transform:
+                    whiteRotation === "whiteRotation"
+                      ? [{ rotate: "180deg" }]
+                      : undefined,
                 }}
               >
                 <GoBoard
@@ -551,29 +585,16 @@ function BoardEditScreenContent({
                   // プレイヤの色: 1
                   playerColor={isMyBlack ? BLACK : WHITE}
                   // 現在の盤面、インデックス、テリトリーボード: 3
+                  // 現在の盤面、インデックス、テリトリーボード: 3
                   board={
                     board.processed.boardHistory[board.currentIndex] ??
                     board.processed.boardHistory[0] ??
                     {}
                   }
                   currentIndex={board.currentIndex}
-                  territoryBoard={
-                    isAtConfirmedFinalPosition &&
-                    !board.processed.territoryBoard.every(
-                      (row) => row.every((cell) => cell === 0), // territoryboardがあると言いながら、中身が全部0ならそれはノーカウント
-                    )
-                      ? board.processed.territoryBoard
-                      : (manualTerritory?.territoryBoard ??
-                        (board.showOwnershipTerritoryBoard
-                          ? ownershipTerritoryBoard
-                          : null) ??
-                        board.processed.territoryBoard)
-                  }
+                  territoryBoard={territoryBoardToShow ?? emptyTerritoryBoard}
                   forceShowTerritory={
-                    !isAtConfirmedFinalPosition &&
-                    (!!manualTerritory ||
-                      (board.showOwnershipTerritoryBoard &&
-                        !!ownershipTerritoryBoard))
+                    !isAtConfirmedFinalPosition && !!territoryBoardToShow
                   }
                   // history系: 3
                   moveHistory={board.processed.moves.slice(
@@ -643,16 +664,15 @@ function BoardEditScreenContent({
           {/* 📈 リプレイコントロール＆グラフ（一体型） */}
 
           <ScoreLeadReplayControls
-            showScoreLeadGraph={board.showScoreLeadGraph}
+            showMode={board.showMode}
             analysis={board.combinedAnalysis}
             currentIndex={board.currentIndex}
             totalMoves={board.processed.moves.length}
             onCurrentIndexChange={board.setCurrentIndex}
-            primary={colors.primary}
-            background={colors.background}
             backgroundStrong={colors.backgroundStrong}
             foreground={colors.foreground}
             primaryStrong={colors.primaryStrong}
+            fontFamily={fontFamily}
           />
 
           {/* ─── 余白 D ─── */}
@@ -661,4 +681,4 @@ function BoardEditScreenContent({
       </View>
     </SafeAreaView>
   );
-}
+};

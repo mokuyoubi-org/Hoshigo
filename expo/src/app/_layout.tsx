@@ -1,35 +1,34 @@
 // app/_layout.tsx
 
-import { SearchingButton } from "@/src/active/components/buttons/SearchingButton";
-import { useApp } from "@/src/active/contexts/AppContexts";
-import { AuthGate } from "@/src/active/contexts/providers/AuthGate";
-import { RootProvider } from "@/src/active/contexts/providers/RootProvider";
-import { KataGoGate } from "expo-katago";
-import { Stack } from "expo-router";
-import React, { useEffect } from "react";
-import "../../global.css";
-// import "../active/i18n/polyfills";
-
-import { FONTS } from "@/src/active/constants/fonts";
-import { preloadAssets } from "@/src/active/constants/preload";
-import { MatchingProvider } from "@/src/active/contexts/MatchingContext";
-import {
-  OverlayOutlet,
-  OverlayProvider,
-} from "@/src/active/contexts/OverlayContext";
-import { useLang, useTranslation } from "@/src/active/i18n/LangProvider";
+import { SearchingButton } from "@/src/components/buttons/SearchingButton";
+import { MaintenanceModal } from "@/src/components/modals/common/MaintenanceModal";
+import { UpdateModal } from "@/src/components/modals/common/UpdateModal";
+import { FONTS } from "@/src/constants/fonts";
+import { preloadAssets } from "@/src/constants/preload";
+import { THEME_VARS } from "@/src/constants/themeVars";
+import { useApp } from "@/src/contexts/AppContexts";
+import { AuthGate } from "@/src/contexts/AuthGate";
+import { MatchingProvider } from "@/src/contexts/MatchingContext";
+import { OverlayOutlet, OverlayProvider } from "@/src/contexts/OverlayContext";
+import { RootProvider } from "@/src/contexts/RootProvider";
+import { useAppFont } from "@/src/hooks/common/useAppFont";
+import { useApplyTheme, useColors } from "@/src/hooks/common/useTheme";
+import { useLang, useTranslation } from "@/src/i18n/LangProvider";
 import { configureAudioMode } from "assets-kit";
 import { useFonts } from "expo-font";
+import { KataGoGate } from "expo-katago";
+import { SplashScreen, Stack } from "expo-router"; // 🆕 SplashScreenを追加
+import { kvStore } from "kv-store"; // 🆕 パッケージ名は実際のものに合わせてください
 import { useColorScheme } from "nativewind";
+import React, { useEffect, useState } from "react"; // 🆕 useStateを追加
 import { Platform, View } from "react-native";
-import { LoadingScreen } from "ui-atoms";
-import { THEME_VARS } from "../active/constants/themeVars";
-import { useAppFont } from "../active/hooks/useAppFont";
-import { useApplyTheme, useColors } from "../active/hooks/useTheme";
-import { UpdateModal } from "../active/modals/UpdateModal";
-import { MaintenanceModal } from "../active/modals/MaintenanceModal";
+import { DotAnimation, LoadingScreen } from "ui-atoms";
+import "../../global.css";
 
-function RoutedContent() {
+// 🆕 準備ができるまで、スプラッシュ画面を出したままにする
+SplashScreen.preventAutoHideAsync();
+
+const RoutedContent = () => {
   const fontFamily = useAppFont();
   const colors = useColors();
 
@@ -92,7 +91,7 @@ function RoutedContent() {
           {/* AuthGate.tsx の initialize() が待ち先。セッション確認〜匿名ログイン
         〜プロフィール同期までを一括してこの1状態で表現している(子段階なし) */}
           <LoadingScreen
-            label={`${t("auth.checkingAuthentication")}...`}
+            label={<DotAnimation text={t("auth.checkingAuthentication")} />}
             percent={null}
             backgroundColor={colors.background}
             textColor={colors.textSub}
@@ -136,9 +135,9 @@ function RoutedContent() {
       )}
     </>
   );
-}
+};
 
-function AppContent() {
+const AppContent = () => {
   const fontFamily = useAppFont();
   const colors = useColors();
 
@@ -162,9 +161,10 @@ function AppContent() {
       </OverlayProvider>
     </AuthGate>
   );
-}
+};
 
-export default function Layout() {
+// 🆕 今までの Layout の中身。名前だけ LayoutContent に変わった
+const LayoutContent = () => {
   // 🔤 アプリ全体のフォントは、起動時にここで1回だけ読み込む
   const [fontsLoaded, fontError] = useFonts(FONTS); // ⚠️大事！！！
 
@@ -179,8 +179,18 @@ export default function Layout() {
     }
   }, [fontError]);
 
+  // 🆕 フォントとテーマの準備ができたか
+  const isReady = (fontsLoaded || !!fontError) && themeReady;
+
+  // 🆕 準備ができたら、スプラッシュ画面を閉じる
+  useEffect(() => {
+    if (isReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [isReady]);
+
   // Hookはすべてこの行より上に置くこと(下に置くとクラッシュします)
-  if ((!fontsLoaded && !fontError) || !themeReady) {
+  if (!isReady) {
     return null;
   }
 
@@ -194,4 +204,21 @@ export default function Layout() {
       </RootProvider>
     </View>
   );
+};
+
+// 🆕 kvStoreの準備(引き出し → 机の上への書き写し)を待つだけの親。
+//    LayoutContent以下は、すべて準備完了後に動き出すので、
+//    どこでkvStore.get / useKVStorageを使ってもloadingは要らない
+export default function Layout() {
+  const [kvReady, setKvReady] = useState(false);
+
+  useEffect(() => {
+    kvStore.init().finally(() => setKvReady(true));
+  }, []);
+
+  if (!kvReady) {
+    return null;
+  }
+
+  return <LayoutContent />;
 }

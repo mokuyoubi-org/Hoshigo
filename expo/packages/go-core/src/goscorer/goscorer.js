@@ -33,14 +33,14 @@ class LocScore {
       is_unscorable_false_eye is true.
  * @return { {black:finalBlackScore,white:finalWhiteScore} }
  */
-function finalTerritoryScore(
+const finalTerritoryScore = (
   stones,
   markedDead,
   blackPointsFromCaptures,
   whitePointsFromCaptures,
   komi,
   scoreFalseEyes = false,
-) {
+) => {
   const scoring = territoryScoring(stones, markedDead, scoreFalseEyes);
 
   const ysize = stones.length;
@@ -60,7 +60,7 @@ function finalTerritoryScore(
   finalWhiteScore += whitePointsFromCaptures;
   finalWhiteScore += komi;
   return { black: finalBlackScore, white: finalWhiteScore };
-}
+};
 
 /**
  * @param {color[][]} stones - BLACK or WHITE or EMPTY indicating the stones on the board.
@@ -68,7 +68,7 @@ function finalTerritoryScore(
  * @param {float} komi - points to add to white's score due to komi
  * @return { {black:finalBlackScore,white:finalWhiteScore} }
  */
-function finalAreaScore(stones, markedDead, komi) {
+const finalAreaScore = (stones, markedDead, komi) => {
   const scoring = areaScoring(stones, markedDead);
 
   const ysize = stones.length;
@@ -83,7 +83,7 @@ function finalAreaScore(stones, markedDead, komi) {
   }
   finalWhiteScore += komi;
   return { black: finalBlackScore, white: finalWhiteScore };
-}
+};
 
 /**
  * @param {color[][]} stones - BLACK or WHITE or EMPTY indicating the stones on the board.
@@ -92,7 +92,7 @@ function finalAreaScore(stones, markedDead, komi) {
       is_unscorable_false_eye is true.
  * @return {LocScore[][]}
  */
-function territoryScoring(stones, markedDead, scoreFalseEyes = false) {
+const territoryScoring = (stones, markedDead, scoreFalseEyes = false) => {
   const ysize = stones.length;
   const xsize = stones[0].length;
 
@@ -277,14 +277,14 @@ function territoryScoring(stones, markedDead, scoreFalseEyes = false) {
     scoring,
   );
   return scoring;
-}
+};
 
 /**
  * @param {color[][]} stones - BLACK or WHITE or EMPTY indicating the stones on the board.
  * @param {bool[][]} markedDead - true if the location has a stone marked as dead, and false otherwise.
  * @return {color[][]}
  */
-function areaScoring(stones, markedDead) {
+const areaScoring = (stones, markedDead) => {
   const ysize = stones.length;
   const xsize = stones[0].length;
 
@@ -330,44 +330,30 @@ function areaScoring(stones, markedDead) {
     }
   }
   return scoring;
-}
+};
 
-function getOpp(pla) {
-  return 3 - pla;
-}
+const getOpp = (pla) => 3 - pla;
 
-function makeArray(ysize, xsize, initialValue) {
-  return Array.from({ length: ysize }, () =>
+const makeArray = (ysize, xsize, initialValue) => Array.from({ length: ysize }, () =>
     Array.from({ length: xsize }, () => initialValue),
   );
-}
 
-function makeArrayFromCallable(ysize, xsize, f) {
-  return Array.from({ length: ysize }, () =>
+const makeArrayFromCallable = (ysize, xsize, f) => Array.from({ length: ysize }, () =>
     Array.from({ length: xsize }, () => f()),
   );
-}
 
-function isOnBoard(y, x, ysize, xsize) {
-  return y >= 0 && x >= 0 && y < ysize && x < xsize;
-}
+const isOnBoard = (y, x, ysize, xsize) => y >= 0 && x >= 0 && y < ysize && x < xsize;
 
-function isOnBorder(y, x, ysize, xsize) {
-  return y === 0 || x === 0 || y === ysize - 1 || x === xsize - 1;
-}
+const isOnBorder = (y, x, ysize, xsize) => y === 0 || x === 0 || y === ysize - 1 || x === xsize - 1;
 
-function isAdjacent(y1, x1, y2, x2) {
-  return (
-    (y1 === y2 && (x1 === x2 + 1 || x1 === x2 - 1)) ||
-    (x1 === x2 && (y1 === y2 + 1 || y1 === y2 - 1))
-  );
-}
+const isAdjacent = (y1, x1, y2, x2) => (y1 === y2 && (x1 === x2 + 1 || x1 === x2 - 1)) ||
+    (x1 === x2 && (y1 === y2 + 1 || y1 === y2 - 1));
 
-function print2d(board, f) {
+const print2d = (board, f) => {
   console.log(string2d(board, f));
-}
+};
 
-function string2d(board, f) {
+const string2d = (board, f) => {
   const ysize = board.length;
   const lines = [];
 
@@ -377,9 +363,9 @@ function string2d(board, f) {
     lines.push(pieces.join(""));
   }
   return lines.join("\n");
-}
+};
 
-function string2d2(board1, board2, f) {
+const string2d2 = (board1, board2, f) => {
   const ysize = board1.length;
   const lines = [];
 
@@ -393,22 +379,22 @@ function string2d2(board1, board2, f) {
     lines.push(pieces.join(""));
   }
   return lines.join("\n");
-}
+};
 
-function colorToStr(color) {
+const colorToStr = (color) => {
   if (color === EMPTY) return ".";
   if (color === BLACK) return "x";
   if (color === WHITE) return "o";
   throw new Error("Invalid color: " + color);
-}
+};
 
-function markConnectionBlocks(
+const markConnectionBlocks = (
   ysize,
   xsize,
   stones,
   markedDead,
   connectionBlocks, // mutated by this function
-) {
+) => {
   const patterns = [
     ["pp", "@e", "pe"],
     ["ep?", "e@e", "ep?"],
@@ -450,12 +436,10 @@ function markConnectionBlocks(
 
         for (let y of yRange) {
           for (let x of xRange) {
-            function getTargetYX(pdy, pdx) {
-              return [
+            const getTargetYX = (pdy, pdx) => [
                 y + pdydy * pdy + pdxdy * pdx,
                 x + pdydx * pdy + pdxdx * pdx,
               ];
-            }
 
             let [ty, tx] = getTargetYX(pylen - 1, pxlen - 1);
             if (!isOnBoard(ty, tx, ysize, xsize)) continue;
@@ -507,9 +491,9 @@ function markConnectionBlocks(
       }
     }
   }
-}
+};
 
-function markReachability(
+const markReachability = (
   ysize,
   xsize,
   stones,
@@ -517,8 +501,8 @@ function markReachability(
   connectionBlocks,
   reachesBlack, // mutated by this function
   reachesWhite, // mutated by this function
-) {
-  function fillReach(y, x, reachesPla, pla) {
+) => {
+  const fillReach = (y, x, reachesPla, pla) => {
     if (!isOnBoard(y, x, ysize, xsize)) return;
     if (reachesPla[y][x]) return;
     if (stones[y][x] === getOpp(pla) && !markedDead[y][x]) return;
@@ -531,7 +515,7 @@ function markReachability(
     fillReach(y + 1, x, reachesPla, pla);
     fillReach(y, x - 1, reachesPla, pla);
     fillReach(y, x + 1, reachesPla, pla);
-  }
+  };
 
   for (let y = 0; y < ysize; y++) {
     for (let x = 0; x < xsize; x++) {
@@ -541,7 +525,7 @@ function markReachability(
         fillReach(y, x, reachesWhite, WHITE);
     }
   }
-}
+};
 
 class RegionInfo {
   constructor(regionId, color, regionAndDame, eyes) {
@@ -552,7 +536,7 @@ class RegionInfo {
   }
 }
 
-function markRegions(
+const markRegions = (
   ysize,
   xsize,
   stones,
@@ -562,8 +546,8 @@ function markRegions(
   reachesWhite,
   regionIds, // mutated by this function
   regionInfosById, // mutated by this function
-) {
-  function fillRegion(y, x, withId, opp, reachesPla, reachesOpp, visited) {
+) => {
+  const fillRegion = (y, x, withId, opp, reachesPla, reachesOpp, visited) => {
     if (!isOnBoard(y, x, ysize, xsize)) return;
     if (visited[y][x]) return;
     if (regionIds[y][x] !== -1) return;
@@ -580,7 +564,7 @@ function markRegions(
     fillRegion(y + 1, x, withId, opp, reachesPla, reachesOpp, visited);
     fillRegion(y, x - 1, withId, opp, reachesPla, reachesOpp, visited);
     fillRegion(y, x + 1, withId, opp, reachesPla, reachesOpp, visited);
-  }
+  };
 
   let nextRegionId = 0;
 
@@ -612,7 +596,7 @@ function markRegions(
       }
     }
   }
-}
+};
 
 class ChainInfo {
   constructor(
@@ -636,7 +620,7 @@ class ChainInfo {
   }
 }
 
-function markChains(
+const markChains = (
   ysize,
   xsize,
   stones,
@@ -644,8 +628,8 @@ function markChains(
   regionIds,
   chainIds, // mutated by this function
   chainInfosById, // mutated by this function
-) {
-  function fillChain(y, x, withId, color, isMarkedDead) {
+) => {
+  const fillChain = (y, x, withId, color, isMarkedDead) => {
     if (!isOnBoard(y, x, ysize, xsize)) return;
     if (chainIds[y][x] === withId) return;
 
@@ -676,7 +660,7 @@ function markChains(
     fillChain(y + 1, x, withId, color, isMarkedDead);
     fillChain(y, x - 1, withId, color, isMarkedDead);
     fillChain(y, x + 1, withId, color, isMarkedDead);
-  }
+  };
 
   let nextChainId = 0;
 
@@ -703,7 +687,7 @@ function markChains(
       }
     }
   }
-}
+};
 
 class MacroChainInfo {
   constructor(macrochainId, regionId, color, points, chains, eyeNeighborsFrom) {
@@ -716,7 +700,7 @@ class MacroChainInfo {
   }
 }
 
-function markMacrochains(
+const markMacrochains = (
   ysize,
   xsize,
   stones,
@@ -728,7 +712,7 @@ function markMacrochains(
   chainInfosById,
   macrochainIds, // mutated by this function
   macrochainInfosById, // mutated by this function
-) {
+) => {
   let nextMacrochainId = 0;
 
   for (const pla of [BLACK, WHITE]) {
@@ -750,7 +734,7 @@ function markMacrochains(
       const points = [];
       const chains = new Set();
 
-      function walkAndAccumulate(y, x) {
+      const walkAndAccumulate = (y, x) => {
         if (!isOnBoard(y, x, ysize, xsize)) return;
         if (visited[y][x]) return;
 
@@ -777,7 +761,7 @@ function markMacrochains(
           walkAndAccumulate(y, x - 1);
           walkAndAccumulate(y, x + 1);
         }
-      }
+      };
 
       const [y, x] = chainInfo.points[0];
       walkAndAccumulate(y, x);
@@ -792,7 +776,7 @@ function markMacrochains(
       );
     }
   }
-}
+};
 
 class EyeInfo {
   constructor(
@@ -816,7 +800,7 @@ class EyeInfo {
   }
 }
 
-function markPotentialEyes(
+const markPotentialEyes = (
   ysize,
   xsize,
   stones,
@@ -829,7 +813,7 @@ function markPotentialEyes(
   macrochainInfosById, // mutated by this function
   eyeIds, // mutated by this function
   eyeInfosById, // mutated by this function
-) {
+) => {
   let nextEyeId = 0;
   const visited = makeArray(ysize, xsize, false);
   for (let y = 0; y < ysize; y++) {
@@ -848,7 +832,7 @@ function markPotentialEyes(
       const potentialPoints = new CoordinateSet();
       const macrochainNeighborsFrom = {};
 
-      function accRegion(y, x, prevY, prevX) {
+      const accRegion = (y, x, prevY, prevX) => {
         if (!isOnBoard(y, x, ysize, xsize)) return;
         if (visited[y][x]) return;
         if (regionIds[y][x] !== regionId) return;
@@ -876,7 +860,7 @@ function markPotentialEyes(
         accRegion(y + 1, x, y, x);
         accRegion(y, x - 1, y, x);
         accRegion(y, x + 1, y, x);
-      }
+      };
 
       assert(macrochainIds[y][x] === -1);
       accRegion(y, x, 10000, 10000);
@@ -895,9 +879,9 @@ function markPotentialEyes(
       regionInfosById[regionId].eyes.add(eyeId);
     }
   }
-}
+};
 
-function markFalseEyePoints(
+const markFalseEyePoints = (
   ysize,
   xsize,
   regionIds,
@@ -905,7 +889,7 @@ function markFalseEyePoints(
   macrochainInfosById,
   eyeInfosById,
   isFalseEyePoint, // mutated by this function
-) {
+) => {
   for (let origEyeId in eyeInfosById) {
     origEyeId = Number(origEyeId);
     const origEyeInfo = eyeInfosById[origEyeId];
@@ -947,7 +931,7 @@ function markFalseEyePoints(
             targetSideCount += 1;
         }
         // console.log("CHECKING EYE " + origEyeId + " " + [ey,ex]);
-        function search(macrochainId) {
+        const search = (macrochainId) => {
           if (visitedMacro.has(macrochainId)) return false;
           visitedMacro.add(macrochainId);
           // console.log("Searching macrochain " + macrochainId + "");
@@ -1012,7 +996,7 @@ function markFalseEyePoints(
             }
           }
           return false;
-        }
+        };
 
         if (search(origMacrochainId)) {
           // pass
@@ -1022,9 +1006,9 @@ function markFalseEyePoints(
       }
     }
   }
-}
+};
 
-function findRecursivelyAdjacentPoints(withinSet, fromPoints, excludingPoints) {
+const findRecursivelyAdjacentPoints = (withinSet, fromPoints, excludingPoints) => {
   const expanded = new CoordinateSet();
   fromPoints = [...fromPoints];
 
@@ -1045,11 +1029,11 @@ function findRecursivelyAdjacentPoints(withinSet, fromPoints, excludingPoints) {
   }
 
   return expanded;
-}
+};
 
-function getPieces(ysize, xsize, points, pointsToDelete) {
+const getPieces = (ysize, xsize, points, pointsToDelete) => {
   const usedPoints = new CoordinateSet();
-  function floodfill(point, piece) {
+  const floodfill = (point, piece) => {
     if (usedPoints.has(point) || pointsToDelete.has(point)) return;
     usedPoints.add(point);
     piece.add(point);
@@ -1063,7 +1047,7 @@ function getPieces(ysize, xsize, points, pointsToDelete) {
     for (let adjacent of adjacents) {
       if (points.has(adjacent)) floodfill(adjacent, piece);
     }
-  }
+  };
 
   const pieces = [];
   for (let point of points) {
@@ -1074,9 +1058,9 @@ function getPieces(ysize, xsize, points, pointsToDelete) {
     }
   }
   return pieces;
-}
+};
 
-function isPseudoLegal(
+const isPseudoLegal = (
   ysize,
   xsize,
   stones,
@@ -1085,7 +1069,7 @@ function isPseudoLegal(
   y,
   x,
   pla,
-) {
+) => {
   if (stones[y][x] !== EMPTY) return false;
   const adjacents = [
     [y - 1, x],
@@ -1101,9 +1085,9 @@ function isPseudoLegal(
     }
   }
   return false;
-}
+};
 
-function countAdjacentsIn(y, x, points) {
+const countAdjacentsIn = (y, x, points) => {
   let count = 0;
   const adjacents = [
     [y - 1, x],
@@ -1115,7 +1099,7 @@ function countAdjacentsIn(y, x, points) {
     if (points.has(a)) count += 1;
   }
   return count;
-}
+};
 
 class EyePointInfo {
   constructor(
@@ -1141,16 +1125,16 @@ class EyePointInfo {
   }
 }
 
-function count(points, predicate) {
+const count = (points, predicate) => {
   let c = 0;
   for (let p of points)
     if (predicate(p)) {
       c++;
     }
   return c;
-}
+};
 
-function markEyeValues(
+const markEyeValues = (
   ysize,
   xsize,
   stones,
@@ -1162,7 +1146,7 @@ function markEyeValues(
   isFalseEyePoint,
   eyeIds,
   eyeInfosById, // mutated by this function
-) {
+) => {
   for (let eyeId in eyeInfosById) {
     eyeId = Number(eyeId);
 
@@ -1498,9 +1482,9 @@ function markEyeValues(
     eyeValue = Math.min(eyeValue, 2);
     eyeInfo.eyeValue = eyeValue;
   }
-}
+};
 
-function markScoring(
+const markScoring = (
   ysize,
   xsize,
   stones,
@@ -1517,7 +1501,7 @@ function markScoring(
   eyeInfosById,
   isUnscorableFalseEyePoint,
   scoring, // mutated by this function
-) {
+) => {
   const extraBlackUnscoreablePoints = new CoordinateSet();
   const extraWhiteUnscoreablePoints = new CoordinateSet();
   for (let y = 0; y < ysize; y++) {
@@ -1584,13 +1568,13 @@ function markScoring(
       }
     }
   }
-}
+};
 
-function assert(condition, message) {
+const assert = (condition, message) => {
   if (!condition) {
     throw new Error(message || "Assertion failed");
   }
-}
+};
 
 class CoordinateSet {
   constructor(initialCoords = []) {

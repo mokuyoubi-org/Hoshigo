@@ -1,12 +1,10 @@
-// useGoSounds.ts
+// src/hooks/useGameSounds.ts
 
-import { getSoundUrl, useSoundPlayer } from "assets-kit";
+import { useSoundPlayer } from "assets-kit";
+import { SOUNDS } from "../constants/sounds";
 
-export type SoundName = "stone" | "pass";
-
-export const useSounds = () => {
-  return useSoundPlayer<SoundName>({
-    stone: getSoundUrl("stone.mp3"),
-    pass: getSoundUrl("pass.mp3"),
+export const useGoSounds = () =>
+  useSoundPlayer({
+    stone: SOUNDS.stone,
+    pass: SOUNDS.pass,
   });
-};

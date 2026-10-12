@@ -77,33 +77,33 @@ export type HumanBotStyle = keyof typeof humanBotPresets;
  * KataGo Search::interpolateEarly: `earlyValue` on move 0 decaying to `value`, with
  * the halflife measured in 19x19 moves and rescaled for smaller boards.
  */
-export function interpolateEarly(args: {
+export const interpolateEarly = (args: {
   halflife: number;
   earlyValue: number;
   value: number;
   turnNumber: number;
   boardWidth: number;
   boardHeight: number;
-}): number {
+}): number => {
   const { halflife, earlyValue, value, turnNumber } = args;
   if (!(halflife > 0)) return value;
   const rawHalflives = turnNumber / halflife;
   const halflives = (rawHalflives * 19.0) / Math.sqrt(args.boardWidth * args.boardHeight);
   return value + (earlyValue - value) * Math.pow(0.5, halflives);
-}
+};
 
 /**
  * KataGo Search::chooseIndexWithTemperature. Samples an index in proportion to
  * `relativeProbs` after reshaping everything below `onlyBelowProb` of the total by
  * `temperature`. Returns -1 when nothing has positive weight.
  */
-export function chooseIndexWithTemperature(
+export const chooseIndexWithTemperature = (
   relativeProbs: ArrayLike<number>,
   temperature: number,
   onlyBelowProb: number,
   random: () => number = Math.random,
   processedOut?: Float64Array
-): number {
+): number => {
   const n = relativeProbs.length;
   if (n <= 0) return -1;
 
@@ -166,14 +166,14 @@ export function chooseIndexWithTemperature(
   // Only reachable through floating point drift at the very end of the range.
   for (let i = n - 1; i >= 0; i--) if (processed[i]! > 0) return i;
   return -1;
-}
+};
 
 /** KataGo chosenMoveSubtract / chosenMovePrune, both capped at a 64th of the max. */
-export function subtractAndPrunePlaySelectionValues(
+export const subtractAndPrunePlaySelectionValues = (
   values: Float64Array,
   chosenMoveSubtract: number,
   chosenMovePrune: number
-): void {
+): void => {
   let maxValue = 0;
   for (let i = 0; i < values.length; i++) if (values[i]! > maxValue) maxValue = values[i]!;
   if (!(maxValue > 0)) return;
@@ -183,7 +183,7 @@ export function subtractAndPrunePlaySelectionValues(
     if (values[i]! < amountToPrune) values[i] = 0;
     else values[i] = Math.max(0, values[i]! - amountToSubtract);
   }
-}
+};
 
 export type HumanChosenCandidate = {
   /** KataGo play selection value from the search; 0 for a move it never visited. */
@@ -200,13 +200,13 @@ export type HumanChosenCandidate = {
  * human policy toward moves the search likes (PIKL), then move the play selection
  * values `chosenMoveProp` of the way onto it, keeping their overall scale.
  */
-export function blendHumanChosenMove(args: {
+export const blendHumanChosenMove = (args: {
   candidates: HumanChosenCandidate[];
   playerToMove: 'black' | 'white';
   params: Pick<HumanChosenMoveParams, 'chosenMoveProp' | 'piklLambda' | 'chosenMoveIgnorePass'>;
   /** Set when the caller has already ruled passing out, as KataGo's suppressPass does. */
   suppressPass?: boolean;
-}): Float64Array {
+}): Float64Array => {
   const { candidates, params } = args;
   const n = candidates.length;
   const values = new Float64Array(n);
@@ -280,4 +280,4 @@ export function blendHumanChosenMove(args: {
     values[i] = values[i]! + params.chosenMoveProp * (psvSum * shifted[i]! - values[i]!);
   }
   return values;
-}
+};

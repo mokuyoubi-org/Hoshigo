@@ -16,7 +16,6 @@ export type FloatingToastProps = {
   /** trueの間：先頭スピナーを隠し、アクションボタンをスピナー表示にして無効化する */
   busy?: boolean;
   onAction?: () => void;
-  actionLabel?: string;
   bottomOffset?: number;
   fadeAnim: Animated.Value;
   slideAnim: Animated.Value;

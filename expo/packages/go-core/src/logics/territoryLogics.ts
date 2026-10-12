@@ -5,6 +5,7 @@ import {
   LocScore,
   territoryScoring,
 } from "../goscorer/goscorer";
+import { MoveAnalysisEntry } from "../types/analysis";
 import {
   BLACK,
   Board,
@@ -14,9 +15,10 @@ import {
   Grid,
   KOMI,
   MatchType,
+  PASS_GRID,
   WHITE,
 } from "../types/go";
-import { boardToBoard2D } from "./boardConverters";
+import { boardToBoard2D, movesToBoardHistory } from "./boardConverters";
 import { ownershipToDeadStones } from "./moveConverters";
 
 const BLACK_TERRITORY = 1;
@@ -34,14 +36,19 @@ const initTerritoryBoard = (boardSize: BoardSize): TerritoryBoard => {
 };
 
 // 地計算ボードの生成
-export const generateTerritoryBoard = (
+// 地計算(goscorer)の本体。地の盤面と、黒・白それぞれの点数を返す。
+const scoreTerritory = (
   boardSize: BoardSize,
   board: Board,
   deadStones: Grid[],
   matchType: MatchType,
   blackAgehama: number,
   whiteAgehama: number,
-): { territoryBoard: TerritoryBoard; result: string } => {
+): {
+  territoryBoard: TerritoryBoard;
+  blackScore: number;
+  whiteScore: number;
+} => {
   const komi = matchType === 0 ? KOMI : 0; // matchtype0つまり互先なら
   const stones: Color[][] = boardToBoard2D(board, boardSize);
   const markedDead: boolean[][] = Array.from({ length: boardSize }, () =>
@@ -76,17 +83,42 @@ export const generateTerritoryBoard = (
     }
   }
 
-  if (finalScore.black === finalScore.white) {
+  return {
+    territoryBoard,
+    blackScore: finalScore.black,
+    whiteScore: finalScore.white,
+  };
+};
+
+// 地計算ボードの生成
+const generateTerritoryBoard = (
+  boardSize: BoardSize,
+  board: Board,
+  deadStones: Grid[],
+  matchType: MatchType,
+  blackAgehama: number,
+  whiteAgehama: number,
+): { territoryBoard: TerritoryBoard; result: string } => {
+  const { territoryBoard, blackScore, whiteScore } = scoreTerritory(
+    boardSize,
+    board,
+    deadStones,
+    matchType,
+    blackAgehama,
+    whiteAgehama,
+  );
+
+  if (blackScore === whiteScore) {
     return { territoryBoard, result: `DRAW` };
-  } else if (finalScore.black > finalScore.white) {
+  } else if (blackScore > whiteScore) {
     return {
       territoryBoard,
-      result: `B+${finalScore.black - finalScore.white}`,
+      result: `B+${blackScore - whiteScore}`,
     };
   } else {
     return {
       territoryBoard,
-      result: `W+${finalScore.white - finalScore.black}`,
+      result: `W+${whiteScore - blackScore}`,
     };
   }
 };
@@ -224,7 +256,6 @@ export const isBoardUnfinished = (
   return false;
 };
 
-
 // 2026/09/24 追加
 
 // ownershipから地・死に石を判定してTerritoryBoardを生成する
@@ -268,9 +299,148 @@ export const ownershipToTerritoryBoard = (
 
 // scoreLead(黒視点、+なら黒有利)から "B+X" / "W+X" 形式の文字列を生成する
 // (終局していない盤面ではgoscorerの結果は信用できないので、
-//  KataGoのscoreLeadをそのまま暫定結果として使うためのもの)
+//  scoreLeadをそのまま暫定結果として使うためのもの)
 export const scoreLeadToResult = (scoreLead: number): string => {
   const rounded = Math.round(Math.abs(scoreLead) * 2) / 2; // 0.5刻みに丸める
   if (rounded === 0) return "DRAW";
   return scoreLead > 0 ? `B+${rounded}` : `W+${rounded}`;
+};
+
+// 2026/10/07 追加
+
+// 「直近2手が連続パス(=終局)か？」を判定する唯一の場所。
+export const endsWithDoublePass = (moves: Grid[]): boolean => {
+  const len = moves.length;
+  return (
+    len >= 2 && moves[len - 1] === PASS_GRID && moves[len - 2] === PASS_GRID
+  );
+};
+
+// goscorerの地の盤面(0/1/2/3の2次元)を、ownershipと同じ形(黒=+1 / 白=-1 /
+// どちらでもない=0 の1次元配列。行優先 y*boardSize+x)に直す。
+//  - 空点: 黒地なら+1、白地なら-1、ダメ・セキなら0
+//  - 生きている石: その石の色の符号(黒石=+1、白石=-1)
+//  - 死んでいる石: 反対の符号(黒地の中の死んだ白石=+1、白地の中の死んだ黒石=-1)
+// こうしておけば、ownershipToDeadStonesやownershipToTerritoryBoardが、
+// 小数のownershipと同じようにそのまま読める。
+const territoryBoardToOwnership = (
+  boardSize: BoardSize,
+  board: Board,
+  territoryBoard: TerritoryBoard,
+): number[] => {
+  const ownership: number[] = new Array(boardSize * boardSize).fill(0);
+
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col < boardSize; col++) {
+      const grid = row * boardSize + col;
+      const stone = board[grid];
+      const territory = territoryBoard[row][col];
+
+      if (stone) {
+        const ownSign = stone.color === BLACK ? 1 : -1;
+        ownership[grid] = territory === DEAD_STONE ? -ownSign : ownSign;
+      } else if (territory === BLACK_TERRITORY) {
+        ownership[grid] = 1;
+      } else if (territory === WHITE_TERRITORY) {
+        ownership[grid] = -1;
+      }
+    }
+  }
+
+  return ownership;
+};
+
+type SettledAnalysis = {
+  ownership: ArrayLike<number>;
+  scoreLead: number; // 黒視点、+なら黒有利
+};
+
+// KataGoの生の分析結果(ownership / scoreLead)を「仕上げ」る。
+//
+// 次の2つが両方そろった局面(=確定)だけ、goscorerで数えた正確な結果で上書きする。
+//   1. 手の並びが連続パスで終わっている
+//   2. ownershipから見ても終局している(isBoardUnfinishedがfalse)
+// それ以外(連続パスしていない/連続パスだがアルゴリズムは未終局と判断)は、
+// 受け取った値をそのまま返す(=KataGoの見積もりのまま)。
+//
+// 盤面とアゲハマは、確定のときだけ手の並びから作り直す(普段は計算しない)。
+export const settleAnalysis = (
+  boardSize: BoardSize,
+  matchType: MatchType,
+  movesSoFar: Grid[],
+  ownership: ArrayLike<number>,
+  scoreLead: number,
+): SettledAnalysis => {
+  const raw: SettledAnalysis = { ownership, scoreLead };
+
+  // if (!endsWithDoublePass(movesSoFar)) return raw;
+  if (movesSoFar[movesSoFar.length - 1] !== PASS_GRID) return raw;
+
+  const { boardHistory, agehamaHistory } = movesToBoardHistory(
+    boardSize,
+    matchType,
+    movesSoFar,
+  );
+  const board = boardHistory[boardHistory.length - 1];
+  const agehama = agehamaHistory[agehamaHistory.length - 1];
+  if (!board || !agehama) return raw;
+
+  if (isBoardUnfinished(board, boardSize, ownership, movesSoFar.length)) {
+    return raw;
+  }
+
+  const deadStones = ownershipToDeadStones(board, ownership);
+  const { territoryBoard, blackScore, whiteScore } = scoreTerritory(
+    boardSize,
+    board,
+    deadStones,
+    matchType,
+    agehama.black,
+    agehama.white,
+  );
+
+  return {
+    ownership: territoryBoardToOwnership(boardSize, board, territoryBoard),
+    scoreLead: blackScore - whiteScore,
+  };
+};
+
+// 終局時の「結果の文字列」と「地の盤面」を、仕上げ済みのエントリから作る。
+//  - entryあり: 結果は scoreLead から(確定ならgoscorerの数字、暫定ならKataGoの見積もり)、
+//    地の盤面は ownership から作る。確定の局面ではどちらもgoscorerの結果になっている。
+//  - entryなし(分析が取れなかった): 死に石なしでgoscorerに数えさせる(今までと同じ)。
+// 盤面とアゲハマは、手の並びから作り直す(終局のときしか呼ばないので重くない)。
+export const getFinalResult = (
+  boardSize: BoardSize,
+  matchType: MatchType,
+  movesSoFar: Grid[],
+  entry: MoveAnalysisEntry | null,
+): { territoryBoard: TerritoryBoard; result: string } => {
+  const { boardHistory, agehamaHistory } = movesToBoardHistory(
+    boardSize,
+    matchType,
+    movesSoFar,
+  );
+  const board = boardHistory[boardHistory.length - 1];
+
+  if (entry && entry.ownership.length > 0) {
+    return {
+      territoryBoard: ownershipToTerritoryBoard(
+        boardSize,
+        board,
+        entry.ownership,
+      ),
+      result: scoreLeadToResult(entry.scoreLead),
+    };
+  }
+
+  const agehama = agehamaHistory[agehamaHistory.length - 1];
+  return generateTerritoryBoard(
+    boardSize,
+    board,
+    [],
+    matchType,
+    agehama.black,
+    agehama.white,
+  );
 };

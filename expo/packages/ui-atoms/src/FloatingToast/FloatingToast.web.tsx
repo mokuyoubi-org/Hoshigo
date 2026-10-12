@@ -1,5 +1,6 @@
 // FloatingToast.web.tsx
 
+import { FontAwesome } from "@expo/vector-icons";
 import React from "react";
 import ReactDOM from "react-dom";
 import {
@@ -12,12 +13,11 @@ import {
 import { FloatingToastProps } from "./shared";
 import { useIsHydrated } from "./useIsHydrated";
 
-export function FloatingToast({
+export const FloatingToast = ({
   visible,
   label,
   busy = false,
   onAction,
-  actionLabel = "×",
   bottomOffset = 90,
   fadeAnim,
   slideAnim,
@@ -28,16 +28,14 @@ export function FloatingToast({
   accentColor,
   foregroundColor,
   fontFamily,
-}: FloatingToastProps) {
+}: FloatingToastProps) => {
   const isHydrated = useIsHydrated();
 
   if (!isHydrated || typeof document === "undefined" || !visible) {
     return null;
   }
 
-  const fontStyle = fontFamily
-    ? { fontFamily }
-    : null;
+  const fontStyle = fontFamily ? { fontFamily } : null;
 
   return ReactDOM.createPortal(
     <Animated.View
@@ -104,18 +102,11 @@ export function FloatingToast({
           {busy ? (
             <ActivityIndicator size="small" color={accentColor} />
           ) : (
-            <Text
-              style={[
-                { fontSize: 16,  color: textSubColor },
-                fontStyle,
-              ]}
-            >
-              {actionLabel}
-            </Text>
+            <FontAwesome name="close" size={16} color={textSubColor} />
           )}
         </TouchableOpacity>
       </View>
     </Animated.View>,
     document.body,
   );
-}
+};

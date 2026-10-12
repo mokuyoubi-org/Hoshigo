@@ -210,7 +210,7 @@ export const handicapBonusForWhite = (rules: GameRules, handicapStones: number):
   }
 };
 
-const SGF_ALIASES: Array<{ match: RegExp; rules: GameRules }> = [
+const SGF_ALIASES: { match: RegExp; rules: GameRules }[] = [
   { match: /^(japanese|jp)$/i, rules: 'japanese' },
   { match: /^(korean|kr)$/i, rules: 'korean' },
   { match: /^(chinese|cn|chinese-?(ogs|kgs))$/i, rules: 'chinese' },

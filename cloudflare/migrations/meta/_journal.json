@@ -15,6 +15,20 @@
       "when": 1791719860975,
       "tag": "0001_app_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791762975913,
+      "tag": "0002_record_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791763788543,
+      "tag": "0003_active_games",
+      "breakpoints": true
     }
   ]
 }

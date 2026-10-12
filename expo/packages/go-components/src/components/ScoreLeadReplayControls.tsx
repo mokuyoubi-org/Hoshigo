@@ -1,3 +1,5 @@
+// ScoreLeadReplayControls.tsx
+
 import { Feather } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { RecordAnalysis } from "go-core";
@@ -9,19 +11,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Svg, { Circle, ClipPath, Line, Path, Rect } from "react-native-svg";
+import Svg, { Circle, Line, Path } from "react-native-svg";
+import { Bubble, BUBBLE_TAIL_SIZE } from "ui-atoms";
+
+export type ShowMode = "both" | "graph" | "slider";
 
 type Props = {
-  showScoreLeadGraph?: boolean;
+  showMode?: ShowMode;
   analysis?: RecordAnalysis | null;
   currentIndex: number;
   totalMoves: number;
   onCurrentIndexChange: React.Dispatch<React.SetStateAction<number>>;
-  primary: ColorValue;
   primaryStrong: ColorValue;
   foreground: ColorValue;
-  background: ColorValue;
   backgroundStrong: ColorValue;
+  fontFamily: string;
 };
 
 const CHART_HEIGHT = 64;
@@ -32,14 +36,24 @@ const MIN_RANGE = 5;
 // React Native の Slider は端に少し余白ができるため、グラフの端と合わせる調整幅だ
 const SLIDER_INSET = 8;
 
+// 吹き出しのサイズ設定
+const BUBBLE_WIDTH = 40; // 吹き出し本体の横幅（固定）
+const BUBBLE_HEIGHT = 20; // 吹き出し本体の高さ
+const POINT_OUTER_RADIUS = 6; // 丸の外側の半径（r=4 + 線の太さ4の半分=2）
+const BUBBLE_GAP = 2; // 丸と吹き出しのすき間
+
 // スムースな折れ線パスを作る関数
-function createSmoothPath(points: { x: number; y: number }[]): string {
+const createSmoothPath = (
+  points: { x: number; y: number }[],
+  from = 0,
+  to = points.length - 1,
+): string => {
   if (points.length === 0) return "";
-  if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
+  if (from >= to) return `M ${points[from].x},${points[from].y}`;
 
-  let d = `M ${points[0].x},${points[0].y}`;
+  let d = `M ${points[from].x},${points[from].y}`;
 
-  for (let i = 0; i < points.length - 1; i++) {
+  for (let i = from; i < to; i++) {
     const p0 = points[i === 0 ? i : i - 1];
     const p1 = points[i];
     const p2 = points[i + 1];
@@ -54,20 +68,26 @@ function createSmoothPath(points: { x: number; y: number }[]): string {
   }
 
   return d;
-}
+};
 
-export function ScoreLeadReplayControls({
-  showScoreLeadGraph = true,
+const scoreLeadToResult = (scoreLead: number): string => {
+  const rounded = Math.round(Math.abs(scoreLead) * 2) / 2; // 0.5刻みに丸める。
+  // 具体的にやってることは、2倍して、普通に四捨五入して、もう一度2で割っている。
+  return String(rounded);
+};
+
+export const ScoreLeadReplayControls = ({
+  showMode = "both",
   analysis,
   currentIndex,
   totalMoves,
   onCurrentIndexChange,
-  primary,
-  background,
   backgroundStrong,
   foreground,
   primaryStrong,
-}: Props) {
+  fontFamily,
+}: Props) => {
+  const fontStyle = fontFamily ? { fontFamily } : null;
   const [containerWidth, setContainerWidth] = useState(0);
 
   const onLayout = (e: LayoutChangeEvent) => {
@@ -131,8 +151,57 @@ export function ScoreLeadReplayControls({
       : "";
 
   const currentPointX = SLIDER_INSET + currentIndex * xStep;
+
+  // つまみの位置で、線を「左」と「右」の2本に分ける
+  let splitIdx = 0;
+  validPoints.forEach((p, i) => {
+    if (p.x <= currentPointX) splitIdx = i;
+  });
+  const leftPathD = createSmoothPath(validPoints, 0, splitIdx);
+  const rightPathD = createSmoothPath(
+    validPoints,
+    splitIdx,
+    validPoints.length - 1,
+  );
   const currentScore = scoreLeads[currentIndex];
-  const currentPointY = currentScore != null ? toY(currentScore) : centerY;
+  const currentPointY =
+    currentScore != null && (currentScore <= -0.25 || 0.25 <= currentScore) // -0.25より大きく、0.25未満の数は全部0として扱い、かつ、上側表示。
+      ? toY(currentScore)
+      : centerY;
+  const scoreleadMode =
+    (showMode === "both" || showMode === "graph") && hasAnalysis;
+
+  // ===== 吹き出し（現在のscoreLead）の計算 =====
+  const bubbleText =
+    currentScore != null ? scoreLeadToResult(currentScore) : null;
+  const showBubble = scoreleadMode && bubbleText != null && containerWidth > 0;
+
+  // 吹き出しの色：プラスなら塗りつぶし、マイナスなら枠だけ（Bubbleは色のルールを知らない）
+  const isBubblePositive = (currentScore ?? 0) > -0.25; // -0.25より大きく、0.25未満の数は全部0として扱い、かつ、上側表示。
+  const bubbleBackgroundColor = isBubblePositive ? primaryStrong : foreground;
+  const bubbleTextColor = isBubblePositive ? foreground : primaryStrong;
+
+  // 丸が中心線より上（黒が優勢）なら丸の上に、下（白が優勢）なら丸の下に出す
+  const isBubbleAbove = currentPointY <= centerY;
+
+  // 吹き出し本体は左右の端からはみ出さないように位置を丸める
+  const bubbleLeft = Math.min(
+    Math.max(-10, currentPointX - BUBBLE_WIDTH / 2),
+    Math.max(0, containerWidth - BUBBLE_WIDTH + 20),
+  );
+
+  // しっぽは本体が端に寄っていても、ちゃんと丸の真上（真下）を指すようにする
+  const tailLeft = Math.min(
+    Math.max(currentPointX - bubbleLeft - BUBBLE_TAIL_SIZE, 4),
+    BUBBLE_WIDTH - BUBBLE_TAIL_SIZE * 2 - 4,
+  );
+
+  const bubbleTop = isBubbleAbove
+    ? currentPointY -
+      POINT_OUTER_RADIUS -
+      BUBBLE_GAP -
+      (BUBBLE_HEIGHT + BUBBLE_TAIL_SIZE)
+    : currentPointY + POINT_OUTER_RADIUS + BUBBLE_GAP;
 
   return (
     <View
@@ -163,29 +232,9 @@ export function ScoreLeadReplayControls({
           {containerWidth > 0 && (
             <View style={styles.overlayContainer}>
               {/* 背景のグラフ（データがある時だけ表示） */}
-              {showScoreLeadGraph && hasAnalysis && (
+              {scoreleadMode && (
                 <View style={StyleSheet.absoluteFill}>
                   <Svg width={containerWidth} height={CHART_HEIGHT}>
-                    {/* ✂️ 左側（つまみより左）だけを切り取るハサミ */}
-
-                    {/* ✂️️ 右側（つまみより右）だけを切り取るハサミ */}
-                    <ClipPath id="right-clip">
-                      <Rect
-                        x={currentPointX}
-                        y={0}
-                        width={containerWidth - currentPointX}
-                        height={CHART_HEIGHT}
-                      />
-                    </ClipPath>
-                    <ClipPath id="left-clip">
-                      <Rect
-                        x={0}
-                        y={0}
-                        width={currentPointX}
-                        height={CHART_HEIGHT}
-                      />
-                    </ClipPath>
-
                     {/* 下側の面 */}
                     {bottomPathD.length > 0 && (
                       <Path d={bottomPathD} fill={backgroundStrong} />
@@ -203,27 +252,27 @@ export function ScoreLeadReplayControls({
                       strokeLinecap="round"
                     />
 
-                    {linePathD.length > 0 && (
+                    {/* つまみより左の線（くっきり） */}
+                    {splitIdx > 0 && (
                       <Path
-                        d={linePathD}
+                        d={leftPathD}
                         fill="none"
                         stroke={primaryStrong}
                         strokeWidth={4}
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        clipPath="url(#left-clip)"
                       />
                     )}
 
-                    {linePathD.length > 0 && (
+                    {/* つまみより右の線（うすい） */}
+                    {splitIdx < validPoints.length - 1 && (
                       <Path
-                        d={linePathD}
+                        d={rightPathD}
                         fill="none"
                         stroke={primaryStrong}
                         strokeWidth={4}
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        clipPath="url(#right-clip)"
                         opacity={0.3}
                       />
                     )}
@@ -251,20 +300,33 @@ export function ScoreLeadReplayControls({
                 value={currentIndex}
                 onValueChange={onSliderChange}
                 minimumTrackTintColor={
-                  !(showScoreLeadGraph && hasAnalysis)
-                    ? (primaryStrong as string)
-                    : "transparent"
+                  !scoreleadMode ? (primaryStrong as string) : "transparent" // このtransparentはAndroidでもちゃんと効いてるので大丈夫
                 }
                 maximumTrackTintColor={
-                  !(showScoreLeadGraph && hasAnalysis)
-                    ? (backgroundStrong as string)
-                    : "transparent"
+                  !scoreleadMode ? (backgroundStrong as string) : "transparent" // このtransparentはAndroidでもちゃんと効いてるので大丈夫
                 }
-                thumbTintColor={
-                  !(showScoreLeadGraph && hasAnalysis)
-                    ? (primaryStrong as string)
-                    : (primaryStrong as string)
-                }
+                thumbTintColor={primaryStrong as string}
+              />
+            </View>
+          )}
+
+          {/* 吹き出し（現在のscoreLead）：overflow:hidden の外に置いて見切れ防止。丸が中心より上なら上、下なら下に出す */}
+          {showBubble && (
+            // 置き場所はここで決める（Bubbleは描くだけ）
+            <View
+              pointerEvents="none"
+              style={{ position: "absolute", left: bubbleLeft, top: bubbleTop }}
+            >
+              <Bubble
+                text={bubbleText}
+                backgroundColor={bubbleBackgroundColor}
+                borderColor={primaryStrong}
+                textColor={bubbleTextColor}
+                tailDirection={isBubbleAbove ? "down" : "up"}
+                tailLeft={tailLeft}
+                width={BUBBLE_WIDTH}
+                height={BUBBLE_HEIGHT}
+                fontStyle={fontStyle}
               />
             </View>
           )}
@@ -285,7 +347,7 @@ export function ScoreLeadReplayControls({
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   cardContainer: {

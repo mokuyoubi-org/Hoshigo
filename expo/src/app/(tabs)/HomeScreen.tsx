@@ -1,34 +1,30 @@
-import { MainButton } from "@/src/active/components/buttons/MainButton";
-import { Header } from "@/src/active/components/common/Header";
-import { MainTitle } from "@/src/active/components/mainTitle/MainTitle";
+// HomeScreen.tsx
 
-
-import { useMatching } from "@/src/active/contexts/MatchingContext";
-import { useOverlay } from "@/src/active/contexts/OverlayContext";
-import { useAppFont } from "@/src/active/hooks/useAppFont";
-import { useColors } from "@/src/active/hooks/useTheme";
-import { useTranslation } from "@/src/active/i18n/LangProvider";
-import RankingsModal from "@/src/active/modals/RankingsModal";
-import { RuleModal } from "@/src/active/modals/RuleModal";
-import { boardSizeOptions } from "@/src/stable/logics/boardSizeToText";
+import { MainButton } from "@/src/components/buttons/MainButton";
+import { MainTitle } from "@/src/components/mainTitle/MainTitle";
+import RankingsModal from "@/src/components/modals/home/RankingsModal";
+import { RuleModal } from "@/src/components/modals/home/RuleModal";
+import { useMatching } from "@/src/contexts/MatchingContext";
+import { useOverlay } from "@/src/contexts/OverlayContext";
+import { useAppFont } from "@/src/hooks/common/useAppFont";
+import { useBlurActiveElement } from "@/src/hooks/common/useBlurActiveElement";
+import { useColors } from "@/src/hooks/common/useTheme";
+import { useTranslation } from "@/src/i18n/LangProvider";
+import { boardSizeOptions } from "@/src/logics/format/boardSizeToText";
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { BoardSize } from "go-core";
-import React, { useEffect } from "react";
+import { useKVStorage } from "kv-store";
+import React from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useKVStorage } from "storage-kit";
-import { IconButton, SegmentedControl } from "ui-atoms";
+import { IconButton, ScreenHeader, SegmentedControl } from "ui-atoms";
 
 export default function HomeScreen() {
   const fontFamily = useAppFont();
   const { startMatching, isMatching } = useMatching();
-  const {
-    value: boardSize,
-    setValue: setBoardSize,
-    isLoaded: isBoardSizeLoaded,
-  } = useKVStorage<BoardSize>(
+  const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
     "HomeScreen.boardSize", // ユニークなキーを用意する
     9,
   );
@@ -41,35 +37,25 @@ export default function HomeScreen() {
     startMatching(boardSize);
   };
 
-  useEffect(() => {
-    // ⚠️⚠️⚠️謎のエラーを防ぐための部分なので消さない。これがないとBlocked aria-hidden...とか言われる
-    if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-    ) {
-      document.activeElement.blur();
-    }
-  }, []);
+  useBlurActiveElement();
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
-      <View className="flex-1 w-full max-w-160 mx-auto px-5 pt-3">
-        <Header
+      <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
+        <ScreenHeader
           left={
             <View style={{ pointerEvents: isMatching ? "none" : "auto" }}>
-              {isBoardSizeLoaded && (
-                <SegmentedControl
-                  trackBackgroundColor={colors.backgroundStrong}
-                  activeSegmentBackgroundColor={colors.foreground}
-                  activeTextColor={colors.text}
-                  inactiveTextColor={colors.textSub}
-                  value={boardSize}
-                  options={boardSizeOptions(t)}
-                  onSelect={setBoardSize}
-                  fontFamily={fontFamily}
-                />
-              )}
+              <SegmentedControl
+                trackBackgroundColor={colors.backgroundStrong}
+                activeSegmentBackgroundColor={colors.foreground}
+                activeTextColor={colors.text}
+                inactiveTextColor={colors.textSub}
+                value={boardSize}
+                options={boardSizeOptions(t)}
+                onSelect={setBoardSize}
+                fontFamily={fontFamily}
+              />
             </View>
           }
         >
@@ -91,7 +77,7 @@ export default function HomeScreen() {
             borderColor={colors.backgroundStrong}
             onPress={() => show(<RuleModal visible={true} onClose={hide} />)}
           />
-        </Header>
+        </ScreenHeader>
 
         {/* 🌟 メインコンテンツエリア（ロゴタイトル ＋ ボタン） */}
         <View className="flex-1 items-center py-4">
@@ -114,7 +100,10 @@ export default function HomeScreen() {
             />
             <MainButton
               onPress={() => {
-                router.push("/PracticeGameScreen");
+                router.push({
+                  pathname: "/PracticeGameScreen",
+                  params: { from: "HomeScreen" },
+                });
               }}
               text={t("common.practice")}
             />

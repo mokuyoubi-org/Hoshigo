@@ -12,12 +12,12 @@ type Props = {
 };
 
 // 🐱 React.memo で囲って無駄な再描画を防ぐ
-export const DoubleTapStone = memo(function DoubleTapStone({
+export const DoubleTapStone = memo(({
   stoneSize,
   playerColor,
   blackStoneColor,
   whiteStoneColor,
-}: Props) {
+}: Props) => {
   // ボーダーの色を決定する
   const borderColor = playerColor === BLACK ? blackStoneColor : whiteStoneColor;
 

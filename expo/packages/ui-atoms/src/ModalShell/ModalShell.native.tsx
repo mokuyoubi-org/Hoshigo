@@ -1,4 +1,5 @@
 // ModalShell.native.tsx
+
 import React, { useEffect } from "react";
 import {
   Animated,
@@ -16,7 +17,7 @@ import {
   ModalShellProps,
 } from "./common";
 
-export function ModalShell({
+export const ModalShell = ({
   children,
   onClose,
   size,
@@ -26,7 +27,7 @@ export function ModalShell({
   borderColor,
   overlayColor,
   contentPadding = DEFAULT_CONTENT_PADDING,
-}: ModalShellProps) {
+}: ModalShellProps) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
   const fadeAnim = useAnimatedValue(0);
@@ -97,7 +98,7 @@ export function ModalShell({
       </Animated.View>
     </Animated.View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   overlay: {
@@ -123,7 +124,6 @@ const styles = StyleSheet.create({
     zIndex: 50,
     borderRadius: 20,
     borderWidth: 4,
-    borderColor: "#e1e8ed", // backgroundStrong
   },
   fullWidth: {
     width: "100%",

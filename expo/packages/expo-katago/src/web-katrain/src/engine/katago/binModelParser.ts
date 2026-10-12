@@ -141,7 +141,7 @@ export interface ParsedMatBias {
 
 export type ActivationKind = "identity" | "relu" | "mish";
 
-export function parseBatchNormV8(p: KataGoBinModelParser): ParsedBatchNorm {
+export const parseBatchNormV8 = (p: KataGoBinModelParser) => {
   p.readToken();
   const channels = p.readInt();
   const epsilon = p.readFloatAscii();
@@ -166,12 +166,12 @@ export function parseBatchNormV8(p: KataGoBinModelParser): ParsedBatchNorm {
   }
 
   return { channels, mergedScale, mergedBias };
-}
+};
 
-export function parseActivationKind(
+export const parseActivationKind = (
   p: KataGoBinModelParser,
   modelVersion: number,
-): ActivationKind {
+): ActivationKind => {
   // ActivationLayerDesc: always stores a name token. For modelVersion >= 11, stores an additional "kind" token.
   p.readToken(); // name
   if (modelVersion < 11) return "relu";
@@ -181,9 +181,9 @@ export function parseActivationKind(
   if (kindTok === "ACTIVATION_RELU") return "relu";
   if (kindTok === "ACTIVATION_MISH") return "mish";
   throw new Error(`Unsupported activation kind token: ${kindTok}`);
-}
+};
 
-export function parseConv2d(p: KataGoBinModelParser): ParsedConv2d {
+export const parseConv2d = (p: KataGoBinModelParser) => {
   const name = p.readToken();
   const kernelY = p.readInt();
   const kernelX = p.readInt();
@@ -204,19 +204,19 @@ export function parseConv2d(p: KataGoBinModelParser): ParsedConv2d {
     dilationX,
     weights,
   };
-}
+};
 
-export function parseMatMul(p: KataGoBinModelParser): ParsedMatMul {
+export const parseMatMul = (p: KataGoBinModelParser) => {
   const name = p.readToken();
   const inChannels = p.readInt();
   const outChannels = p.readInt();
   const weights = p.readBinaryFloats(inChannels * outChannels);
   return { name, inChannels, outChannels, weights };
-}
+};
 
-export function parseMatBias(p: KataGoBinModelParser): ParsedMatBias {
+export const parseMatBias = (p: KataGoBinModelParser) => {
   const name = p.readToken();
   const channels = p.readInt();
   const weights = p.readBinaryFloats(channels);
   return { name, channels, weights };
-}
+};

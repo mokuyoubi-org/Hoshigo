@@ -1,4 +1,4 @@
-// expo-goband/src/hooks/useGoGame.ts
+// useGoGame.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
 // 対局中の盤面状態(board / boardHistory / agehamaHistory / moves / lastMove
@@ -8,8 +8,10 @@
 //   - applyLegalMove   : 合法手チェックをした上で着手を反映する(非合法ならfalseを返す)
 //   - applyTrustedMove : 合法性チェック済みの着手を無条件で反映する(ボット/相手/棋譜再生用)
 //   - loadMoves        : 任意のmoves配列から状態を丸ごと再構築する(初期化/巻き戻し/resync兼用)
-//   - computeTerritory : 終局時の地合い計算
 //   - goToLatest       : リプレイ後、最新局面に戻る
+//
+// 地の計算は、このhookの仕事ではない。終局時の地は、分析結果から仕上げた
+// ownershipを元に作り、setTerritoryBoardで渡してもらう。
 //
 // 通信対局固有の概念(サーバー送信失敗時の巻き戻し、resync)は、このhookが
 // loadMovesという汎用プリミティブを提供することで、呼び出し側(useMatchSessionなど)
@@ -17,11 +19,10 @@
 //
 // ─── ref vs state の使い分け ───
 // render(JSXの中)で読まれる値は必ずstateにする(moves / territoryBoard など)。
-// render中に読まれない、内部処理専用の値だけrefにする(boardRef / deadStonesRef)。
+// render中に読まれない、内部処理専用の値だけrefにする(boardRef など)。
 // 外部からrefへの直接代入(goBoard.xxxRef.current = ...)は禁止。更新はhookが公開するsetter経由で行う。
 //
 // ──────────────────────────────────────────────────
-
 import {
   AgehamaCount,
   applyMove,
@@ -30,7 +31,6 @@ import {
   BoardSize,
   cloneBoard,
   Color,
-  generateTerritoryBoard,
   getColorToMove,
   Grid,
   initBoard,
@@ -74,7 +74,7 @@ const buildStateFromMoves = (
   };
 };
 
-export function useGoGame({ boardSize, matchType, movesInt }: Args) {
+export const useGoGame = ({ boardSize, matchType, movesInt }: Args) => {
   // ── 初期状態の計算は1回きりでいい ──────────────────────
   const [initialState] = useState(() =>
     buildStateFromMoves(boardSize, matchType, movesInt),
@@ -106,13 +106,6 @@ export function useGoGame({ boardSize, matchType, movesInt }: Args) {
   const [territoryBoard, setTerritoryBoard] = useState<TerritoryBoard>(
     Array.from({ length: boardSize }, () => Array(boardSize).fill(0)),
   );
-
-  // deadStones(死に石): renderで一切使わない、
-  // computeTerritory内部でのみ参照する値なので純粋なrefのままでよい。
-  const deadStonesRef = useRef<Grid[]>([]);
-  const setDeadStones = (deadStones: Grid[]) => {
-    deadStonesRef.current = deadStones;
-  };
 
   // ── 内部共通処理: 盤面/アゲハマ/手を1手分進める ──────────────
   const pushBoard = (board: Board) => {
@@ -204,22 +197,6 @@ export function useGoGame({ boardSize, matchType, movesInt }: Args) {
     );
   };
 
-  // ── 終局時の地合い計算(territoryBoard生成) ──────────
-  // deadStonesRef(死石)が事前にセットされている前提。
-  const computeTerritory = () => {
-    const last =
-      agehamaHistoryRef.current[agehamaHistoryRef.current.length - 1];
-    const territoryResult = generateTerritoryBoard(
-      boardSize,
-      boardRef.current,
-      deadStonesRef.current,
-      matchType,
-      last.black,
-      last.white,
-    );
-    return { ...territoryResult, deadStones: deadStonesRef.current };
-  };
-
   // ── リプレイ後、最新局面に戻る ─────────────────────────
   const goToLatest = () => {
     const finalIndex = boardHistoryRef.current.length - 1;
@@ -264,12 +241,10 @@ export function useGoGame({ boardSize, matchType, movesInt }: Args) {
     setCurrentIndex,
     territoryBoard,
     setTerritoryBoard,
-    setDeadStones,
     applyLegalMove,
     applyTrustedMove,
-    computeTerritory,
     goToLatest,
     initialTurn: initialState.currentTurn,
     loadMoves,
   };
-}
+};

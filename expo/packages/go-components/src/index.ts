@@ -1,11 +1,12 @@
 // index.ts
 
-// 2. 状態管理 Hook
+// Hook
 export * from "./hooks/useGoGame";
 
-// 3. UIコンポーネント
-export * from "./components/GoBoard";
+// コンポーネント
+export * from "./components/Agehama";
+export * from "./components/goBoard/GoBoard";
+export * from "./components/Pass";
 export * from "./components/ReplayTapOverlay";
 export * from "./components/ScoreLeadReplayControls";
-export * from "./components/sub/Agehama";
-export * from "./components/sub/Pass";
+export * from "./components/WinRateBar";
