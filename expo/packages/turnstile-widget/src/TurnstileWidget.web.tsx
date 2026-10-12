@@ -2,12 +2,7 @@
 // web版のTurnstile実装。目に見えないウィジェット(managed + interaction-only)を
 // 常時マウントしておき、getToken()を呼ぶたびに新しいトークンを取得する。
 
-import React, {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { View } from "react-native";
 
 console.log("TurnstileWidget.web.tsx");
@@ -30,7 +25,8 @@ type Props = {
 };
 
 // スクリプトタグが未挿入なら挿入し、読み込み完了を待つ
-const loadTurnstileScript = (): Promise<void> => new Promise((resolve, reject) => {
+const loadTurnstileScript = (): Promise<void> =>
+  new Promise((resolve, reject) => {
     if (window.turnstile) {
       resolve();
       return;

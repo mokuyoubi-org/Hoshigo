@@ -1,74 +1,32 @@
 // useLoginModal.ts
-import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { isValidEmail } from "@/src/logics/format/validationLogics";
-import { clearAllLocalData } from "@/src/logics/storage/cleanUp";
-import { supabase } from "@/src/services/supabase/supabase";
-import React, { useEffect, useState } from "react";
+import { authClient } from "@/src/services/auth/auth-client";
+import { useState } from "react";
 import { TurnstileHandle } from "turnstile-widget";
 import { useProfileSync } from "../rpc/useProfileSync";
 
-export type Step = "email" | "otp" | "selection";
-type Path = "link" | "signin" | null;
-
-type ExistingPreview = {
-  username: string;
-  rating_9: number;
-  rating_13: number;
-  rating_19: number;
-} | null;
-
-type GuestSnapshot = {
-  username: string;
-  rating9: number;
-  rating13: number;
-  rating19: number;
-};
-
-export type Selection = "guest" | "existing" | null;
+export type Step = "email" | "otp";
 
 type Props = {
   onClose: () => void;
-  turnstileRef?: React.RefObject<TurnstileHandle | null>; // ← | null を追加
+  turnstileRef?: React.RefObject<TurnstileHandle | null>;
 };
 
 export const useLoginModal = ({ onClose, turnstileRef }: Props) => {
   const t = useTranslation();
-  const { username, rating9, rating13, rating19 } = useProfile();
   const { syncProfile } = useProfileSync();
 
   const [step, setStep] = useState<Step>("email");
-  const [path, setPath] = useState<Path>(null);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [guestUid, setGuestUid] = useState<string | undefined>(undefined);
-  const [guestSnapshot] = useState<GuestSnapshot>(() => ({
-    username: username ?? "",
-    rating9: rating9 ?? 0,
-    rating13: rating13 ?? 0,
-    rating19: rating19 ?? 0,
-  }));
-  const [existingPreview, setExistingPreview] = useState<ExistingPreview>(null);
-  const [selection, setSelection] = useState<Selection>(null);
-
   const canSendEmail = isValidEmail(email);
-  const canVerifyOtp = otp.length === 8;
-  const canConfirmSelection = selection !== null;
+  const canVerifyOtp = otp.length === 6;
 
-  useEffect(() => {
-    let cancelled = false;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled) setGuestUid(data.session?.user.id);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // ステップ1: メールを送信する
+  // ステップ1: メールにコードを送る
   const onSendOtp = async () => {
     setError("");
     setLoading(true);
@@ -83,125 +41,45 @@ export const useLoginModal = ({ onClose, turnstileRef }: Props) => {
         return;
       }
 
-      const { error: updateError } = await supabase.auth.updateUser(
-        { email },
-        {
-          emailRedirectTo: `hoshigo://`,
-        },
-      );
-
-      if (!updateError) {
-        setPath("link");
-        setStep("otp");
-        return;
-      }
-
-      if (updateError.code === "email_exists") {
-        const { error: signInError } = await supabase.auth.signInWithOtp({
+      const { error: sendError } =
+        await authClient.emailOtp.sendVerificationOtp({
           email,
-          options: {
-            emailRedirectTo: `hoshigo://`,
-            captchaToken,
+          type: "sign-in",
+          fetchOptions: {
+            // ロボットではない証明書(Turnstile)は、このヘッダーで渡す
+            headers: { "x-captcha-response": captchaToken ?? "" },
           },
         });
 
-        if (signInError) {
-          console.error("OTP送信失敗:", signInError);
-          setError(t("AccountLinking.errorSendFailed"));
-          return;
-        }
-
-        setPath("signin");
-        setStep("otp");
+      if (sendError) {
+        console.error("OTP送信失敗:", sendError);
+        setError(t("AccountLinking.errorSendFailed"));
         return;
       }
 
-      setError(t("AccountLinking.errorSendFailed"));
+      setStep("otp");
     } finally {
       setLoading(false);
     }
   };
 
-  // ステップ2: OTP検証
+  // ステップ2: コードを確かめてログインする
   const onVerifyOtp = async () => {
     setError("");
     setLoading(true);
 
     try {
-      const type = path === "link" ? "email_change" : "email";
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      const { error: verifyError } = await authClient.signIn.emailOtp({
         email,
-        token: otp,
-        type,
+        otp,
       });
 
       if (verifyError) {
-        console.error("verifyOtp失敗:", verifyError);
+        console.error("OTP検証失敗:", verifyError);
         setError(t("AccountLinking.errorVerifyFailed"));
         return;
       }
 
-      if (path === "link") {
-        await syncProfile();
-        onClose();
-        return;
-      }
-
-      const { data: preview, error: previewError } = await supabase.rpc(
-        "get_own_profile_preview",
-      );
-
-      if (previewError || !preview) {
-        console.error("プレビュー取得失敗:", previewError);
-        setError(t("AccountLinking.errorVerifyFailed"));
-        return;
-      }
-
-      setExistingPreview(preview);
-      setStep("selection");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ステップ3: 選択決定(signinパスのみ)
-  const onConfirmSelection = async () => {
-    if (!selection) return;
-
-    setError("");
-    setLoading(true);
-
-    try {
-      if (selection === "guest") {
-        if (!guestUid) {
-          setError(t("AccountLinking.errorVerifyFailed"));
-          return;
-        }
-        const { error: overwriteError } = await supabase.rpc(
-          "overwrite_profile_from_guest",
-          { p_guest_uid: guestUid },
-        );
-
-        if (overwriteError) {
-          console.error("上書き失敗:", overwriteError);
-          setError(t("AccountLinking.errorVerifyFailed"));
-          return;
-        }
-      } else if (selection === "existing") {
-        if (guestUid) {
-          const { error: deleteGuestError } = await supabase.rpc(
-            "delete_guest_after_existing_selected",
-            { p_guest_uid: guestUid },
-          );
-
-          if (deleteGuestError) {
-            // ゲストの後始末に失敗しても、既存アカウントでのログイン自体は続行する
-            console.error("ゲスト削除失敗:", deleteGuestError);
-          }
-        }
-      }
-
-      await clearAllLocalData(); // セッション切れの時
       await syncProfile();
       onClose();
     } finally {
@@ -210,7 +88,7 @@ export const useLoginModal = ({ onClose, turnstileRef }: Props) => {
   };
 
   const handleOtpChange = (text: string) => {
-    setOtp(text.replace(/[^0-9]/g, "").slice(0, 8));
+    setOtp(text.replace(/[^0-9]/g, "").slice(0, 6));
   };
 
   return {
@@ -224,16 +102,10 @@ export const useLoginModal = ({ onClose, turnstileRef }: Props) => {
     error,
     setError,
     loading,
-    guestSnapshot,
-    existingPreview,
-    selection,
-    setSelection,
     canSendEmail,
     canVerifyOtp,
-    canConfirmSelection,
     onSendOtp,
     onVerifyOtp,
-    onConfirmSelection,
     onCancel: onClose,
   };
 };

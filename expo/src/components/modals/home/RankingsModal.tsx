@@ -6,10 +6,10 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 
 import { boardSizeOptions } from "@/src/logics/format/boardSizeToText";
-import { supabase } from "@/src/services/supabase/supabase";
+import { api } from "@/src/services/api/api";
 import { BoardSize } from "go-core";
 import { useKVStorage } from "kv-store";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -48,7 +48,7 @@ export default function RankingsModal({ visible, onClose }: Props) {
     const fetchTopProfiles = async () => {
       setLoading(true);
 
-      const { data } = await supabase.rpc("get_rankings");
+      const { data } = await api.rpc("get_rankings");
       setAllProfiles(data ?? []);
       setLoading(false);
     };

@@ -9,7 +9,7 @@ import {
   MatchType,
   PASS_GRID,
 } from "go-core";
-import React, { memo } from "react";
+import { memo } from "react";
 import { ColorValue, Pressable, StyleSheet, View } from "react-native";
 import { DoubleTapStone } from "./DoubleTapStone";
 import { Marker } from "./Marker";
@@ -46,203 +46,207 @@ type Props = {
   practiceMatchStatus: string;
 };
 
-export const IntersectionContainer = memo(({
-  grid,
-  boardSize,
-  cellSize,
-  stoneSize,
-  goString,
-  territoryValue,
-  isPending,
-  isCurrentMove,
-  showTerritory,
-  isEdited,
-  isBotMove,
-  moveEvaluation,
-  isCandidate,
-  doubleTap,
-  playerColor,
-  disabled,
-  onPressGrid,
-  currentTurn,
-  lastMove,
-  blackStoneColor,
-  whiteStoneColor,
-  humanMoveColor,
-  botMoveColor,
-  goodMoveColor,
-  badMoveColor,
-  matchType,
-  practiceMatchStatus,
-}: Props) => {
-  const row = Math.floor(grid / boardSize);
-  const col = grid % boardSize;
-  const isDead = territoryValue === 3; // 1は黒の陣地、2は白の陣地、3は死に石
+export const IntersectionContainer = memo(
+  ({
+    grid,
+    boardSize,
+    cellSize,
+    stoneSize,
+    goString,
+    territoryValue,
+    isPending,
+    isCurrentMove,
+    showTerritory,
+    isEdited,
+    isBotMove,
+    moveEvaluation,
+    isCandidate,
+    doubleTap,
+    playerColor,
+    disabled,
+    onPressGrid,
+    currentTurn,
+    lastMove,
+    blackStoneColor,
+    whiteStoneColor,
+    humanMoveColor,
+    botMoveColor,
+    goodMoveColor,
+    badMoveColor,
+    matchType,
+    practiceMatchStatus,
+  }: Props) => {
+    const row = Math.floor(grid / boardSize);
+    const col = grid % boardSize;
+    const isDead = territoryValue === 3; // 1は黒の陣地、2は白の陣地、3は死に石
 
-  // 対局モード別に「この石に評価マーク(○/❌)を出してよいか」を判定
-  // - human_human: 双方に見せる
-  // - それ以外(bot参加あり)で bot_bot でなければ、自分の色の石にだけ見せる
-  const isEvaluationEnabledForMode = (color: Color) =>
-    practiceMatchStatus === "human_human" ||
-    (practiceMatchStatus !== "bot_bot" && playerColor === color);
+    // 対局モード別に「この石に評価マーク(○/❌)を出してよいか」を判定
+    // - human_human: 双方に見せる
+    // - それ以外(bot参加あり)で bot_bot でなければ、自分の色の石にだけ見せる
+    const isEvaluationEnabledForMode = (color: Color) =>
+      practiceMatchStatus === "human_human" ||
+      (practiceMatchStatus !== "bot_bot" && playerColor === color);
 
-  // 実際に打たれた石に対する良手（○）・悪手（❌）の評価マークを出すか
-  const isEvaluationMarkVisible =
-    !!goString &&
-    !!moveEvaluation &&
-    isEvaluationEnabledForMode(goString.color);
+    // 実際に打たれた石に対する良手（○）・悪手（❌）の評価マークを出すか
+    const isEvaluationMarkVisible =
+      !!goString &&
+      !!moveEvaluation &&
+      isEvaluationEnabledForMode(goString.color);
 
-  // 最新手マーカーを出すか（⭕️❌が出ているときは重複表示しない）
-  const isLastMoveMarkerVisible =
-    !!goString &&
-    isCurrentMove &&
-    !isEdited &&
-    !isBotMove &&
-    !isEvaluationMarkVisible;
+    // 最新手マーカーを出すか（⭕️❌が出ているときは重複表示しない）
+    const isLastMoveMarkerVisible =
+      !!goString &&
+      isCurrentMove &&
+      !isEdited &&
+      !isBotMove &&
+      !isEvaluationMarkVisible;
 
-  // 候補手（薄い石＋薄い○マーク）を出すか
-  // (currentTurn !== playerColor)がめっちゃ大事！これがないと、白の手番になぜか黒の候補手が出てくる
-  // あと、パスの時に候補手出されるのも嫌なのでそれも防止する
-  const isCandidateMoveVisible =
-    (practiceMatchStatus === "human_human" ||
-      (practiceMatchStatus !== "bot_bot" &&
-        ((matchType <= 1 && currentTurn !== playerColor) ||
-          (matchType >= 2 && currentTurn === playerColor)))) &&
-    !goString &&
-    isCandidate &&
-    lastMove !== PASS_GRID;
+    // 候補手（薄い石＋薄い○マーク）を出すか
+    // (currentTurn !== playerColor)がめっちゃ大事！これがないと、白の手番になぜか黒の候補手が出てくる
+    // あと、パスの時に候補手出されるのも嫌なのでそれも防止する
+    const isCandidateMoveVisible =
+      (practiceMatchStatus === "human_human" ||
+        (practiceMatchStatus !== "bot_bot" &&
+          ((matchType <= 1 && currentTurn !== playerColor) ||
+            (matchType >= 2 && currentTurn === playerColor)))) &&
+      !goString &&
+      isCandidate &&
+      lastMove !== PASS_GRID;
 
-  const pressableStyle = [
-    styles.gridPressable,
-    {
-      left: col * cellSize - cellSize / 2 + 1,
-      top: row * cellSize - cellSize / 2 + 1,
-      width: cellSize,
-      height: cellSize,
-    },
-  ];
+    const pressableStyle = [
+      styles.gridPressable,
+      {
+        left: col * cellSize - cellSize / 2 + 1,
+        top: row * cellSize - cellSize / 2 + 1,
+        width: cellSize,
+        height: cellSize,
+      },
+    ];
 
-  return (
-    <Pressable
-      onPress={() => onPressGrid(grid, goString)}
-      style={pressableStyle}
-      disabled={disabled}
-    >
-      {/* 石 */}
-      {goString && (
-        <Stone
-          color={goString.color}
-          stoneSize={stoneSize}
-          opacity={isDead && showTerritory ? 0.48 : 1}
-          blackStoneColor={blackStoneColor}
-          whiteStoneColor={whiteStoneColor}
-        />
-      )}
-
-      {/* ダブルタップ用のプレビュー石 */}
-      {!goString && isPending && doubleTap && (
-        <DoubleTapStone
-          stoneSize={stoneSize}
-          playerColor={playerColor}
-          blackStoneColor={blackStoneColor}
-          whiteStoneColor={whiteStoneColor}
-        />
-      )}
-
-      {/* 最新手 */}
-      {isLastMoveMarkerVisible && (
-        <Marker
-          size={stoneSize * 0.6}
-          color={
-            goString?.color === BLACK
-              ? (whiteStoneColor as string + "88")
-              : (blackStoneColor as string + "88")
-          }
-          shape="circle"
-          opacity={!(isDead && showTerritory) ? 1 : 0.32}
-          zIndex={5}
-        />
-      )}
-
-      {/* 死んだ石 */}
-      {goString && isDead && showTerritory && (
-        <Marker
-          size={stoneSize / 2}
-          color={goString.color === BLACK ? whiteStoneColor : blackStoneColor}
-          shape="square"
-          opacity={0.32}
-          zIndex={2}
-        />
-      )}
-
-      {/* 陣地 */}
-      {!goString && showTerritory && territoryValue !== 0 && (
-        <Marker
-          size={stoneSize / 2}
-          color={territoryValue === 1 ? blackStoneColor : whiteStoneColor}
-          shape="square"
-          opacity={0.32}
-          zIndex={1}
-        />
-      )}
-
-      {/* 編集石（人間👦＝赤🟥） */}
-      {isEdited && (
-        <Marker
-          size={stoneSize / 2}
-          color={humanMoveColor}
-          shape="square"
-          opacity={!(isDead && showTerritory) ? 1 : 0.4}
-          zIndex={10}
-        />
-      )}
-
-      {/* ボットが打った石🤖=🟩 */}
-      {isBotMove && (
-        <Marker
-          size={stoneSize / 2}
-          color={botMoveColor}
-          shape="square"
-          opacity={!(isDead && showTerritory) ? 1 : 0.4}
-          zIndex={10}
-        />
-      )}
-
-      {/* 候補手 */}
-      {isCandidateMoveVisible && (
-        <View style={styles.candidateContainer}>
-          {/* 薄い石 */}
+    return (
+      <Pressable
+        onPress={() => onPressGrid(grid, goString)}
+        style={pressableStyle}
+        disabled={disabled}
+      >
+        {/* 石 */}
+        {goString && (
           <Stone
-            color={matchType <= 1 ? getOppositeColor(currentTurn) : currentTurn} // ⚠️大事
+            color={goString.color}
             stoneSize={stoneSize}
-            opacity={0.6}
+            opacity={isDead && showTerritory ? 0.48 : 1}
             blackStoneColor={blackStoneColor}
             whiteStoneColor={whiteStoneColor}
           />
-          {/* 薄い良手（○）マーク。候補手に出すのは当然良手のみなので❌はない */}
+        )}
+
+        {/* ダブルタップ用のプレビュー石 */}
+        {!goString && isPending && doubleTap && (
+          <DoubleTapStone
+            stoneSize={stoneSize}
+            playerColor={playerColor}
+            blackStoneColor={blackStoneColor}
+            whiteStoneColor={whiteStoneColor}
+          />
+        )}
+
+        {/* 最新手 */}
+        {isLastMoveMarkerVisible && (
+          <Marker
+            size={stoneSize * 0.6}
+            color={
+              goString?.color === BLACK
+                ? (whiteStoneColor as string) + "88"
+                : (blackStoneColor as string) + "88"
+            }
+            shape="circle"
+            opacity={!(isDead && showTerritory) ? 1 : 0.32}
+            zIndex={5}
+          />
+        )}
+
+        {/* 死んだ石 */}
+        {goString && isDead && showTerritory && (
+          <Marker
+            size={stoneSize / 2}
+            color={goString.color === BLACK ? whiteStoneColor : blackStoneColor}
+            shape="square"
+            opacity={0.32}
+            zIndex={2}
+          />
+        )}
+
+        {/* 陣地 */}
+        {!goString && showTerritory && territoryValue !== 0 && (
+          <Marker
+            size={stoneSize / 2}
+            color={territoryValue === 1 ? blackStoneColor : whiteStoneColor}
+            shape="square"
+            opacity={0.32}
+            zIndex={1}
+          />
+        )}
+
+        {/* 編集石（人間👦＝赤🟥） */}
+        {isEdited && (
+          <Marker
+            size={stoneSize / 2}
+            color={humanMoveColor}
+            shape="square"
+            opacity={!(isDead && showTerritory) ? 1 : 0.4}
+            zIndex={10}
+          />
+        )}
+
+        {/* ボットが打った石🤖=🟩 */}
+        {isBotMove && (
+          <Marker
+            size={stoneSize / 2}
+            color={botMoveColor}
+            shape="square"
+            opacity={!(isDead && showTerritory) ? 1 : 0.4}
+            zIndex={10}
+          />
+        )}
+
+        {/* 候補手 */}
+        {isCandidateMoveVisible && (
+          <View style={styles.candidateContainer}>
+            {/* 薄い石 */}
+            <Stone
+              color={
+                matchType <= 1 ? getOppositeColor(currentTurn) : currentTurn
+              } // ⚠️大事
+              stoneSize={stoneSize}
+              opacity={0.6}
+              blackStoneColor={blackStoneColor}
+              whiteStoneColor={whiteStoneColor}
+            />
+            {/* 薄い良手（○）マーク。候補手に出すのは当然良手のみなので❌はない */}
+            <Marker
+              size={stoneSize * 0.7}
+              color={goodMoveColor}
+              shape="good"
+              opacity={0.3}
+              zIndex={15}
+            />
+          </View>
+        )}
+
+        {/* 実際に打たれた石に対する良手（○）・悪手（❌）の評価マーク */}
+        {isEvaluationMarkVisible && (
           <Marker
             size={stoneSize * 0.7}
-            color={goodMoveColor}
-            shape="good"
-            opacity={0.3}
+            shape={moveEvaluation}
+            color={moveEvaluation === "good" ? goodMoveColor : badMoveColor}
+            opacity={!(isDead && showTerritory) ? 0.6 : 0.3}
             zIndex={15}
           />
-        </View>
-      )}
-
-      {/* 実際に打たれた石に対する良手（○）・悪手（❌）の評価マーク */}
-      {isEvaluationMarkVisible && (
-        <Marker
-          size={stoneSize * 0.7}
-          shape={moveEvaluation}
-          color={moveEvaluation === "good" ? goodMoveColor : badMoveColor}
-          opacity={!(isDead && showTerritory) ? 0.6 : 0.3}
-          zIndex={15}
-        />
-      )}
-    </Pressable>
-  );
-});
+        )}
+      </Pressable>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   gridPressable: {

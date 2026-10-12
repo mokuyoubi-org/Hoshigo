@@ -8,7 +8,7 @@
 // 使えるためには、描画場所はそのProviderより内側にいる必要がある。この2つの要求が
 // 矛盾する場合、OverlayOutletを好きな場所(内側)に置くことで解決する。
 
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 type OverlayContextType = {
   content: ReactNode;

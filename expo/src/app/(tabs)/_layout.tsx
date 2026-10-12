@@ -6,7 +6,7 @@ import { useTranslation } from "@/src/i18n/LangProvider";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { NavigationBar } from "expo-navigation-bar";
 import { Tabs } from "expo-router";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Platform, Pressable, View } from "react-native";
 
 const TabIcon = ({

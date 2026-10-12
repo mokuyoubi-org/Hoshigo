@@ -14,7 +14,7 @@ import {
   MatchType,
   WHITE,
 } from "go-core";
-import React, { useState } from "react";
+import { useState } from "react";
 import { LayoutChangeEvent, TouchableOpacity, View } from "react-native";
 import {
   HeaderPlayerInfo,

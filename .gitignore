@@ -1,53 +1,48 @@
+# .gitignore
+# 「Gitに入れないものリスト」(持ち込み禁止リスト)
+
 # ==========================================
-# 1. ルート（一番上）とサブフォルダ共通で無視するもの
+# ♻️ 再現できるもの(npm install やビルドで作り直せる)
 # ==========================================
-# Expo & VS Code & Node
+# ※ 先頭に / がない書き方は、どの階層でも効く(expo/ の中も対象)。
+# ※ 末尾に / がある書き方は、「フォルダだけ」に効く。
+#    (/ がない書き方は、ファイルにもフォルダにも効く)
 .expo/
-.vscode/
 node_modules/
-dist/
+dist/       
 web-build/
+
+# ts先生用の自動生成メモ(Expoが作り直す)
 expo-env.d.ts
 
-# generated native folders
-/ios
-/android
+# ネイティブ側の外枠(Expo総監督が自動生成する)
+# /expoは、Hoshigo/expoということ
 /expo/ios
 /expo/android
 
-# Native & Build files
-.kotlin/
-*.orig.*
+# ==========================================
+# 🔐 秘密のもの(漏れたら大事故)
+# ==========================================
 *.jks
 *.p8
 *.p12
 *.key
-*.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug logs
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# OS & Environment
-.DS_Store
 *.pem
+*.mobileprovision
 .env
 .env.*
 .env*.local
 
-# typescript
+# ==========================================
+# 🗑️ ゴミ・一時ファイル
+# ==========================================
+.vscode/
+.DS_Store
+.kotlin/
+*.orig.*
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
 *.tsbuildinfo
-
 app-example
-
-# ==========================================
-# 2. expo フォルダの中を直接指定する場合の保険
-# ==========================================
-expo/node_modules/
-expo/.expo/
-expo/dist/
-expo/web-build/

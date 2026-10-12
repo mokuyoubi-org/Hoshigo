@@ -7,7 +7,7 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Animated, Platform, TouchableOpacity, View } from "react-native";
 import { Avatar } from "../avatar/Avatar";
 

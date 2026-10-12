@@ -3,7 +3,7 @@
 import { Feather } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { RecordAnalysis } from "go-core";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ColorValue,
   LayoutChangeEvent,

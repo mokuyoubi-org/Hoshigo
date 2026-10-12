@@ -1,6 +1,6 @@
 // ui-atoms/src/DotAnimation.tsx
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextProps } from "react-native";
 
 type Props = {

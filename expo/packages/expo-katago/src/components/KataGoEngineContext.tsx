@@ -29,13 +29,7 @@
 //
 // ──────────────────────────────────────────────────
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import {
   AnalyzeBoardArgs,
@@ -199,9 +193,7 @@ export const KataGoEngineProvider = ({
     }
   };
 
-  const handleLoadProgress = (event: {
-    stage: ModelLoadStage;
-  }) => {
+  const handleLoadProgress = (event: { stage: ModelLoadStage }) => {
     setLoadProgress(event);
   };
 
@@ -220,7 +212,7 @@ export const KataGoEngineProvider = ({
   };
 
   // ダウンロード失敗など。エラー画面に切り替わる。
-  const handleModelError = ( message: string) => {
+  const handleModelError = (message: string) => {
     console.error(`[KataGoContext] 準備に失敗:`, message);
     setSetupError(message);
   };

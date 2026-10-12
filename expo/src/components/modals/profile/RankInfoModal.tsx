@@ -4,7 +4,7 @@ import { MyText } from "@/src/components/common/MyText";
 import { RankInfo, RANKS } from "@/src/constants/ranks";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import {
   ScrollView,
   TouchableOpacity,

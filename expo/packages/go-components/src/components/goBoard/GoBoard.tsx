@@ -1,12 +1,6 @@
 // GoBoard.tsx
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColorValue, Pressable, StyleSheet, View } from "react-native";
 
 import {
@@ -22,8 +16,8 @@ import {
   WHITE,
 } from "go-core";
 import { useGoSounds } from "../../hooks/useGoSounds";
-import { BoardLines } from "./BoardLines";
 import { IntersectionContainer } from "../stones/IntersectionContainer";
+import { BoardLines } from "./BoardLines";
 const EMPTY_EDIT_MARKERS = new Map<Grid, "human" | "bot">();
 
 type Props = {

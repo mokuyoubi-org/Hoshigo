@@ -20,10 +20,10 @@ import { KataGoGate } from "expo-katago";
 import { SplashScreen, Stack } from "expo-router"; // 🆕 SplashScreenを追加
 import { kvStore } from "kv-store"; // 🆕 パッケージ名は実際のものに合わせてください
 import { useColorScheme } from "nativewind";
-import React, { useEffect, useState } from "react"; // 🆕 useStateを追加
+import { useEffect, useState } from "react"; // 🆕 useStateを追加
 import { Platform, View } from "react-native";
 import { DotAnimation, LoadingScreen } from "ui-atoms";
-import "../../global.css";
+import "@/global.css";
 
 // 🆕 準備ができるまで、スプラッシュ画面を出したままにする
 SplashScreen.preventAutoHideAsync();

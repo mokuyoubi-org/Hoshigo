@@ -1,4 +1,7 @@
-import { supabase } from "@/src/services/supabase/supabase";
+// profileRPC.ts
+
+import { api } from "@/src/services/api/api";
+import { authClient } from "@/src/services/auth/auth-client";
 
 type ProfileData = {
   username: string;
@@ -37,37 +40,29 @@ type SessionUserData = {
 type FetchProfileResult = {
   sessionUser: SessionUserData | null;
   profile: ProfileData | null;
-  // newerRecords9: any[];
-  // newerRecords13: any[];
-  // newerRecords19: any[];
 };
 
 export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
-  // afterId9?: number | null,
-  // afterId13?: number | null,
-  // afterId19?: number | null,
-  const { data: sessionData } = await supabase.auth.getSession();
-  const session = sessionData?.session;
+  const { data: sessionData } = await authClient.getSession();
+  const user = sessionData?.user;
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
-  const { data, error } = await supabase.rpc("get_my_profile", {
-    // p_after_id_9: afterId9 ?? null,
-    // p_after_id_13: afterId13 ?? null,
-    // p_after_id_19: afterId19 ?? null,
-  });
+  const { data, error } = await api.rpc("get_my_profile");
 
   if (error || !data) {
     console.error("fetch profile failed:", error);
     return null;
   }
 
+  const isAnonymous = user.isAnonymous === true;
   const sessionUser: SessionUserData = {
-    id: session.user.id,
-    email: session.user.email ?? null,
-    isAnonymous: session.user.is_anonymous ?? false,
+    id: user.id,
+    // ゲストのメールには、サーバー側で、ダミーのアドレスが入っているので、画面には出さない
+    email: isAnonymous ? null : (user.email ?? null),
+    isAnonymous,
   };
 
   const rawProfile = data.profile;
@@ -93,10 +88,10 @@ export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
         draws19: rawProfile.draws_19 ?? 0,
         rating19: rawProfile.rating_19 ?? 0,
         giantKillingStreak19: rawProfile.giant_killing_streak_19 ?? 0,
-        // other
-        allowBotMatch9: rawProfile.allow_bot_match9 ?? false,
-        allowBotMatch13: rawProfile.allow_bot_match13 ?? false,
-        allowBotMatch19: rawProfile.allow_bot_match19 ?? false,
+        // other(キーは、allow_bot_match_9 のように、アンダースコアつき)
+        allowBotMatch9: rawProfile.allow_bot_match_9 ?? true,
+        allowBotMatch13: rawProfile.allow_bot_match_13 ?? true,
+        allowBotMatch19: rawProfile.allow_bot_match_19 ?? true,
         country: rawProfile.country ?? null,
       }
     : null;
@@ -104,8 +99,5 @@ export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
   return {
     sessionUser,
     profile,
-    // newerRecords9: data.newer_records_9 ?? [],
-    // newerRecords13: data.newer_records_13 ?? [],
-    // newerRecords19: data.newer_records_19 ?? [],
   };
 };

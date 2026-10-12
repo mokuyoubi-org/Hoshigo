@@ -31,7 +31,7 @@ import {
   ScoreLeadReplayControls,
 } from "go-components";
 import { BLACK, TerritoryBoard, WHITE } from "go-core";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   TouchableOpacity,

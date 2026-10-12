@@ -17,7 +17,7 @@ import {
 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { BoardSize, Grid, MatchType, RecordAnalysis } from "go-core";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,

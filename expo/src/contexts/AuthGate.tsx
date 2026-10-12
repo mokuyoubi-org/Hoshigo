@@ -8,13 +8,13 @@ import { clearAllLocalData } from "@/src/logics/storage/cleanUp";
 import {
   setMaintenanceHandler,
   setUpdateNeededHandler,
-  supabase,
-} from "@/src/services/supabase/supabase";
+} from "@/src/services/api/api";
+import { authClient } from "@/src/services/auth/auth-client";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import { useRouter, useSegments } from "expo-router";
 import * as Updates from "expo-updates";
-import React, { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { useApp } from "./AppContexts";
 import { useProfile } from "./ProfileContexts";
@@ -33,6 +33,24 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   const turnstileRef = useRef<TurnstileHandle>(null);
   const { lang } = useLang();
   const colors = useColors();
+
+  // ログイン状態(Better Auth)。変わるたびに、自動で、画面が更新される。
+  // data が null なら、ログインしていない。isPending は、サーバーに確認している途中。
+  const { data: session, isPending } = authClient.useSession();
+  const userId = session?.user.id ?? null;
+
+  // effectの中から、最新のsegmentsを読むため
+  const segmentsRef = useRef(segments);
+  useEffect(() => {
+    segmentsRef.current = segments;
+  });
+
+  // ログインできたら、プロフィールを取って、ホームに行く必要があるか(起動時と、ゲストログインし直したあと)
+  const needsSyncRef = useRef(true);
+  // アプリを開いて、最初の1回か
+  const isFirstRef = useRef(true);
+  // ゲストログイン中の、二重実行ガード
+  const signingInRef = useRef(false);
 
   const clearUserState = () => {
     updateProfile({
@@ -77,7 +95,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     return token;
   };
 
-  // ①メンテナンス/バージョン仕込み + ②initialize + ③見張り猫設置。
+  // ①ビルド情報のログ + ②メンテナンス/バージョン不足の仕込み(最初の1回だけ)。
   useEffect(() => {
     console.log("🔎 実行中のビルド情報:", {
       runtimeVersion: Updates.runtimeVersion, // app.config.tsからruntimeVersion: を読み込んでいるだけ
@@ -87,55 +105,82 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     });
 
     // RPCを呼んだ時にメンテ中だった時にメッセージを表示できる設定を、あらかじめ仕込んでおく
-    // 詳細はsupabase.tsを参照
+    // 詳細はapi.tsを参照
     setMaintenanceHandler((message) => {
       setMaintenance(true);
       setMaintenanceMessage(message);
     });
 
     // RPCを呼んだ時にバージョン不足だった時にモーダルを出せる設定を、あらかじめ仕込んでおく
-    // 詳細はsupabase.tsを参照(メンテと全く同じ仕組み)
+    // 詳細はapi.tsを参照(メンテナンスと全く同じ仕組み)
     setUpdateNeededHandler((reason) => {
       setUpdateReason(reason);
     });
+  }, []);
 
-    // 🛡️ 2重実行ガード(デバッグ用に追加)
-    let didInit = false;
+  // ③ログイン状態の見張り。
+  //  ・ログインしていなければ、ゲストログインする(起動時、ログアウト、アカウント削除のあと)
+  //  ・ログインできたら、プロフィールを取って、ホームに行く(必要なときだけ)
+  useEffect(() => {
+    // サーバーに確認している途中は、何もしない
+    if (isPending) return;
 
-    // 初期化処理。①ログイン(匿名含む) + ②syncProfile + ③セグメント分岐による遷移
-    const initialize = async () => {
-      if (didInit) {
-        return;
-      }
-      didInit = true;
+    // ---- ログインしていない: ゲストログインする ----
+    if (!userId) {
+      if (signingInRef.current) return;
+      signingInRef.current = true;
+      needsSyncRef.current = true;
+      const wasFirst = isFirstRef.current;
 
-      const { data } = await supabase.auth.getSession();
-      let session = data.session ?? null;
-
-      if (!session) {
-        let captchaToken: string;
+      const signInAsGuest = async () => {
         try {
-          captchaToken = await getCaptchaToken();
-        } catch (err) {
-          console.error("匿名ログイン失敗(CAPTCHA)だよ:", err);
-          clearUserState();
-          setIsInitializing(false);
-          return;
-        }
+          // ログアウトなどのあとは、画面を「準備中」にして、ユーザーの表示を空にする
+          if (!wasFirst) {
+            setIsInitializing(true);
+            clearUserState();
+          }
 
-        const { data: anonData, error } = await supabase.auth.signInAnonymously(
-          { options: { captchaToken } },
-        );
-        if (error || !anonData.session) {
-          console.error("匿名ログイン失敗:", error);
-          clearUserState();
-          setIsInitializing(false);
-          return;
-        }
-        await clearAllLocalData(); // 前の人のデータが残ってたりするので消しとく
-        session = anonData.session;
-      }
+          let captchaToken: string;
+          try {
+            captchaToken = await getCaptchaToken();
+          } catch (err) {
+            console.error("ゲストログイン失敗(CAPTCHA)だよ:", err);
+            clearUserState();
+            setIsInitializing(false);
+            return;
+          }
 
+          // 前の人のデータが残ってたりするので、起動時だけ消しとく
+          // (ログインのあとに消すと、新しいログインの情報まで消えるかもしれないので、先に消す)
+          if (wasFirst) await clearAllLocalData();
+
+          const { data, error } = await authClient.signIn.anonymous({
+            fetchOptions: { headers: { "x-captcha-response": captchaToken } },
+          });
+          if (error || !data) {
+            console.error("ゲストログイン失敗:", error);
+            clearUserState();
+            setIsInitializing(false);
+            return;
+          }
+          // ログインできると、useSessionが更新されて、このeffectが、もう一度動く(下の②へ)
+        } finally {
+          signingInRef.current = false;
+        }
+      };
+
+      void signInAsGuest();
+      return;
+    }
+
+    // ---- ログインできている: プロフィールを取って、ホームに行く(必要なときだけ) ----
+    // (メールでログインしたときは、ログインのモーダルが自分でやるので、ここでは何もしない)
+    if (!needsSyncRef.current) return;
+    needsSyncRef.current = false;
+    const wasFirst = isFirstRef.current;
+    isFirstRef.current = false;
+
+    const afterSignedIn = async () => {
       const profile = await syncProfile();
       if (!profile) {
         clearUserState();
@@ -143,9 +188,11 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const isInTabs = segments[0] === "(tabs)";
-      const isDebug = segments[0] === "(debug)";
-      if (!isInTabs && !isDebug) {
+      // 起動時は、すでにタブや開発用の画面にいれば、移動しない。
+      // ログアウトなどのあとは、必ずホームへ。
+      const isInTabs = segmentsRef.current[0] === "(tabs)";
+      const isDebug = segmentsRef.current[0] === "(debug)";
+      if (!wasFirst || (!isInTabs && !isDebug)) {
         setTimeout(() => {
           router.replace({
             pathname: "/HomeScreen",
@@ -156,60 +203,8 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
       setIsInitializing(false);
     };
 
-    console.log("initialize"); // devの時は2回呼ばれちゃうみたい...。
-    initialize();
-
-    // 見張り猫の設置。セッションが切れないかを見張り、切れたら、匿名ログイン。
-    // セッション切れは、ログアウトやデリート含む。
-    // 詳細は、useSettingsScreen.tsxのonLogout(), handleConfirmDelete()を参照。
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("🐱見張り猫 Auth event:", event, "Has session:", !!session);
-        // 🛡️ガード
-        if (session || event === "INITIAL_SESSION") return; // ← これを追加。初回判定はinitialize()の役目
-
-        setIsInitializing(true);
-        clearUserState();
-
-        let captchaToken: string;
-        try {
-          captchaToken = await getCaptchaToken();
-          console.log("🐱見張り猫 取得したトークン:", captchaToken);
-        } catch (err) {
-          console.error("再匿名化失敗(CAPTCHA):", err);
-          setIsInitializing(false);
-          return;
-        }
-
-        const { data, error } = await supabase.auth.signInAnonymously({
-          options: { captchaToken },
-        });
-        if (error || !data.session) {
-          console.error("再匿名化失敗:", error);
-          setIsInitializing(false);
-          return;
-        }
-
-        const profile = await syncProfile();
-        if (!profile) {
-          console.error("再匿名化後のプロフィール取得に失敗");
-          setIsInitializing(false);
-          return;
-        }
-
-        setTimeout(() => {
-          router.replace({
-            pathname: "/HomeScreen",
-          });
-        }, 0);
-        setIsInitializing(false);
-      },
-    );
-
-    return () => {
-      subscription.subscription.unsubscribe();
-    };
-  }, []); // 初回マウント時のみ実行
+    void afterSignedIn();
+  }, [isPending, userId]);
 
   return (
     // ここは<View>にしてはいけない

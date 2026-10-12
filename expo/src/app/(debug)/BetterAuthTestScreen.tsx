@@ -3,7 +3,7 @@
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useLang } from "@/src/i18n/LangProvider";
 import { authClient } from "@/src/services/auth/auth-client";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -15,7 +15,7 @@ import {
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 
 export default function BetterAuthTestScreen() {
-    const gameWsRef = useRef<WebSocket | null>(null);
+  const gameWsRef = useRef<WebSocket | null>(null);
   const matchRef = useRef<{ match_id: string; my_color: string } | null>(null);
   const moveNoRef = useRef(0);
   const [gameLog, setGameLog] = useState<string[]>([]);
@@ -136,7 +136,7 @@ export default function BetterAuthTestScreen() {
       );
       wsRef.current = ws;
       ws.onopen = () => show("待機列", "つながったよ");
-            ws.onmessage = (e) => {
+      ws.onmessage = (e) => {
         show("待機列(受信)", String(e.data));
         // マッチしたら、対局の情報を覚えておく(次の「対局の部屋につなぐ」で使う)
         try {
@@ -159,7 +159,7 @@ export default function BetterAuthTestScreen() {
     wsRef.current?.send(JSON.stringify({ type: "cancel" }));
   };
 
-    // 対局の部屋につなぐ(待機列で、マッチしたあと)
+  // 対局の部屋につなぐ(待機列で、マッチしたあと)
   const onGameJoin = async () => {
     const match = matchRef.current;
     if (!match) {
@@ -169,8 +169,7 @@ export default function BetterAuthTestScreen() {
     try {
       gameWsRef.current?.close();
       const base = process.env.EXPO_PUBLIC_API_URL!.replace(/^http/, "ws");
-      const cookie =
-        Platform.OS === "web" ? "" : await authClient.getCookie();
+      const cookie = Platform.OS === "web" ? "" : await authClient.getCookie();
       const WS = WebSocket as unknown as new (
         url: string,
         protocols?: string | string[] | null,
@@ -280,9 +279,7 @@ export default function BetterAuthTestScreen() {
           <Text style={{ color: colors.text }}>⑦ 待機をやめる</Text>
         </Pressable>
 
-
-
-                <Pressable onPress={onGameJoin}>
+        <Pressable onPress={onGameJoin}>
           <Text style={{ color: colors.text }}>⑧ 対局の部屋につなぐ</Text>
         </Pressable>
         <Pressable onPress={onMove}>

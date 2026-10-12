@@ -8,7 +8,7 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { winsToAcquiredIcons } from "@/src/logics/rank/winsToAcquiredIcons";
 import { MaterialIcons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,

@@ -24,7 +24,7 @@
 
 import { getLocales } from "expo-localization";
 import { useKVStorage } from "kv-store";
-import React, { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import { translate } from ".";
 import { LANGS, type Lang, type TFunction } from "./types";
 

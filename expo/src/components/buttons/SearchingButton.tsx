@@ -5,7 +5,7 @@ import { useAppFont } from "@/src/hooks/common/useAppFont";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { boardSizeToText } from "@/src/logics/format/boardSizeToText";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DotAnimation, FloatingToast, useTransientVisibility } from "ui-atoms";
 
 export const SearchingButton = () => {

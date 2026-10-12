@@ -1,3 +1,28 @@
+/* global.css 
+Tailwindの道具箱を、ドロン！と、呼び出すためのファイル。 
+下の3行は「道具を出してね」という目印。ビルドのときに、実際のCSSに置き換わる。
+なお、後ろに書いたものが優先される。
+*/
+
+/* 土台: 最初のリセット(余計な余白などを消して、まっさらにする) */
 @tailwind base;
+
+/* components: スタイルをまとめる */
+/*
+例:
+<Text className="px-4 py-2 bg-blue-500 text-white rounded-lg" />
+<Text className="px-4 py-2 bg-blue-500 text-white rounded-lg" />
+こうやって書くのが面倒な時に、
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-blue-500 text-white rounded-lg;
+  }
+}
+こうまとめて、使いたいときは
+className="btn-primary"
+こうやって書けるようにするためのもの。  
+*/
 @tailwind components;
+
+/* 小道具: p-4 や bg-red-500 など、className に書く便利クラス */
 @tailwind utilities;

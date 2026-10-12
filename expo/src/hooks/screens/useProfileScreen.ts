@@ -4,7 +4,7 @@ import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { isReservedName } from "@/src/logics/format/validationLogics";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
-import { supabase } from "@/src/services/supabase/supabase";
+import { api } from "@/src/services/api/api";
 import { BoardSize } from "go-core";
 import { useKVStorage } from "kv-store";
 import { useState } from "react";
@@ -40,7 +40,7 @@ export const useProfileScreen = () => {
   const handleSelectIcon = async (selectedIconIndex: number) => {
     setLoading(true);
     try {
-      const { error } = await supabase.rpc("update_icon_index", {
+      const { error } = await api.rpc("update_icon_index", {
         new_icon_index: selectedIconIndex,
       });
       if (error) {
@@ -63,14 +63,14 @@ export const useProfileScreen = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.rpc("update_username", {
+      const { error } = await api.rpc("update_username", {
         new_username: newUsername,
       });
 
       if (error) {
-        console.log("Supabase error:", error.message);
+        console.log("API error:", error.code, error.message);
 
-        if (error.message.includes("already taken")) {
+        if (error.code === "USERNAME_TAKEN") {
           return t("Profile.usernameTaken");
         } else {
           return t("Profile.usernameUpdateFailed");
@@ -83,6 +83,7 @@ export const useProfileScreen = () => {
       setLoading(false);
     }
   };
+
   return {
     t,
     profileData: {

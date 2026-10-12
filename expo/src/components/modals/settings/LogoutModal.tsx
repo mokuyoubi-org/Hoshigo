@@ -3,7 +3,7 @@
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import React, { useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
 

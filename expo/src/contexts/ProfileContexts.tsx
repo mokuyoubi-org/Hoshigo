@@ -1,6 +1,6 @@
 // ProfileContexts.tsx
 
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 // 1. プロフィールの型（素のデータ）
 type Profile = {

@@ -10,7 +10,7 @@ import {
   validateUsername,
 } from "@/src/logics/format/validationLogics";
 import { UsernameValidationError } from "@/src/types/validation";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,

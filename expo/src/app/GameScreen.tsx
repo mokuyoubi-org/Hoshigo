@@ -28,7 +28,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GoBoard } from "go-components";
 import { BLACK, Grid, PASS_GRID } from "go-core";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, ScreenHeader } from "ui-atoms";

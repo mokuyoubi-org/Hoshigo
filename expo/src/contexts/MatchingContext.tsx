@@ -7,7 +7,7 @@
 import { DailyLimitModal } from "@/src/components/modals/game/DailyLimitModal";
 import { useMatchingProvider } from "@/src/hooks/rpc/useMatchingProvider";
 import { BoardSize } from "go-core";
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 import { useOverlay } from "./OverlayContext";
 
 type MatchingContextType = {

@@ -4,8 +4,8 @@ import { MyText } from "@/src/components/common/MyText";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { supabase } from "@/src/services/supabase/supabase";
-import React, { useState } from "react";
+import { api } from "@/src/services/api/api";
+import { useState } from "react";
 import { View } from "react-native";
 import { Divider, ModalShell, ToggleSwitch } from "ui-atoms";
 
@@ -31,7 +31,7 @@ export const AllowBotMatchModal = ({ isMatching, onClose }: Props) => {
     newValue: boolean,
   ) => {
     setLoading(true);
-    const { error } = await supabase.rpc("update_allow_bot_match", {
+    const { error } = await api.rpc("update_allow_bot_match", {
       p_board_size: boardSize,
       new_allow_bot_match: newValue,
     });

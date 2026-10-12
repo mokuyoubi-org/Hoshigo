@@ -3,7 +3,7 @@
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { BoardSize } from "go-core";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Animated, Platform, TouchableOpacity, View } from "react-native";
 
 type Props = {

@@ -1,12 +1,11 @@
 // LoginModal.tsx
 
-import { MixedText } from "@/src/components/common/MixedText";
 import { MixedTextInput } from "@/src/components/common/MixedTextInput";
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useLoginModal } from "@/src/hooks/modals/useLoginModal";
 import { useLang } from "@/src/i18n/LangProvider";
-import React, { useRef } from "react";
+import { useRef } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -36,22 +35,15 @@ export const LoginModal = ({ visible, onClose }: Props) => {
     handleOtpChange,
     error,
     loading,
-    guestSnapshot,
-    existingPreview,
-    selection,
-    setSelection,
     canSendEmail,
     canVerifyOtp,
-    canConfirmSelection,
     onSendOtp,
     onVerifyOtp,
-    onConfirmSelection,
   } = useLoginModal({ onClose, turnstileRef });
 
   const getTitle = () => {
     if (step === "email") return t("AccountLinking.titleEmail");
     if (step === "otp") return t("AccountLinking.titleOtp");
-    if (step === "selection") return t("AccountLinking.selectionTitle");
     return "";
   };
 
@@ -167,7 +159,7 @@ export const LoginModal = ({ visible, onClose }: Props) => {
                 <View className="rounded-xl border bg-foreground border-2 border-primaryStrong">
                   <MixedTextInput
                     className="h-14 px-4 text-xl text-center text-text"
-                    placeholder={"12345678"}
+                    placeholder={"123456"}
                     placeholderTextColor={colors.textOpacity} // 絵文字対策
                     value={otp}
                     onChangeText={handleOtpChange}
@@ -229,106 +221,6 @@ export const LoginModal = ({ visible, onClose }: Props) => {
                   {t("AccountLinking.resend")}
                 </MyText>
               </TouchableOpacity>
-            </View>
-          )}
-
-          {step === "selection" && (
-            <View>
-              <MyText className="text-lg mb-5 leading-5 tracking-wide text-textSub">
-                {t("AccountLinking.selectionMessage")}
-              </MyText>
-
-              {!existingPreview || !guestSnapshot ? (
-                <View className="py-6 items-center">
-                  <ActivityIndicator color={colors.primary} />
-                </View>
-              ) : (
-                <View className="flex-row gap-3 mb-6">
-                  <TouchableOpacity
-                    className={`flex-1 rounded-xl p-4 items-center bg-foreground ${
-                      selection === "guest"
-                        ? "border-2 border-primary"
-                        : "border border-backgroundStrong"
-                    }`}
-                    activeOpacity={0.7}
-                    onPress={() => setSelection("guest")}
-                    disabled={loading}
-                  >
-                    <MyText className="text-lg mb-1 tracking-wide text-textSub">
-                      {t("AccountLinking.thisDevice")}
-                    </MyText>
-                    <MixedText className="text-lg text-text">
-                      {guestSnapshot.username}
-                    </MixedText>
-                    <MyText className="text-lg mt-1 text-textSub">
-                      9x9: {guestSnapshot.rating9}pts 13x13:
-                      {guestSnapshot.rating13}pts 19x19:
-                      {guestSnapshot.rating19}pts
-                    </MyText>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    className={`flex-1 rounded-xl p-4 items-center bg-foreground ${
-                      selection === "existing"
-                        ? "border-2 border-primary"
-                        : "border border-backgroundStrong"
-                    }`}
-                    activeOpacity={0.7}
-                    onPress={() => setSelection("existing")}
-                    disabled={loading}
-                  >
-                    <MyText className="text-lg mb-1 tracking-wide text-primary">
-                      {t("AccountLinking.savedAccount")}
-                    </MyText>
-                    <MixedText className="text-lg text-text">
-                      {existingPreview.username}
-                    </MixedText>
-                    <MyText className="text-lg mt-1 text-textSub">
-                      9x9: {existingPreview.rating_9}pts 13x13:
-                      {existingPreview.rating_13}pts 19x19:
-                      {existingPreview.rating_19}pts
-                    </MyText>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {error ? (
-                <MyText className="text-lg text-center mb-3 text-failure">
-                  {error}
-                </MyText>
-              ) : null}
-
-              <View className="gap-2 mt-2">
-                <TouchableOpacity
-                  className={`h-12 rounded-xl justify-center items-center ${
-                    canConfirmSelection && !loading
-                      ? "bg-blackStone"
-                      : "bg-backgroundStrong"
-                  }`}
-                  activeOpacity={0.8}
-                  onPress={onConfirmSelection}
-                  disabled={loading || !canConfirmSelection}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={colors.foreground} />
-                  ) : (
-                    <MyText className="text-base tracking-wide text-foreground">
-                      {t("AccountLinking.confirmSelection")}
-                    </MyText>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
-                  onPress={onClose}
-                  disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  <MyText className="text-lg tracking-wide text-textSub">
-                    {t("common.cancel")}
-                  </MyText>
-                </TouchableOpacity>
-              </View>
             </View>
           )}
         </ScrollView>

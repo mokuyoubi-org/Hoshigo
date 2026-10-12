@@ -1,6 +1,6 @@
 // KataGoGate.tsx
 
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import { ColorValue, Text, View } from "react-native";
 import { DotAnimation, LoadingScreen } from "ui-atoms";
 import { translate } from "../i18n";

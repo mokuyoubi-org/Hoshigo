@@ -12,7 +12,7 @@ import {
 import { RecordType } from "@/src/types/record";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Color, MatchType } from "go-core";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { View } from "react-native";
 import { AvatarWithPass } from "../avatar/AvatarWithPass";
 

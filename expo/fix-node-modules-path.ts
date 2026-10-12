@@ -9,8 +9,8 @@
  * "npm-modules" にリネームし、バンドルされたJS/CSS内の参照文字列も
  * あわせて書き換える。
  *
- * 使い方: expo export の後に実行する
- *   npx expo export -p web && npx tsx fix-node-modules-path.ts
+ * 使い方: CloudflareのpagesのsettingsのBuild configurationのBuild commandにて: 
+ * npx expo export -p web && node fix-node-modules-path.ts
  */
 
 import * as fs from "node:fs";

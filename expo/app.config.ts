@@ -1,5 +1,9 @@
 // app.config.ts
 // アプリの設計図。
+// Expo総監督に対する指示。
+
+// package.jsonは、このアプリを作るためには、これinstallしといて！という、買い物メモ。
+// package-lock.jsonは、実際にinstallしたものの、詳細なレシート。実際にアプリを再現するときに使われるのはこの厳密なレシートの方だと考えて良い
 
 import { ExpoConfig } from "expo/config";
 

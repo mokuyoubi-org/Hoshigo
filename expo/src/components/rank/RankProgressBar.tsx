@@ -1,7 +1,7 @@
 // RankProgressBar.tsx
 
 import { useColors } from "@/src/hooks/common/useTheme";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, StyleProp, View, ViewStyle } from "react-native";
 
 type AnimationType = "none" | "simple";

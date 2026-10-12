@@ -34,7 +34,7 @@ import {
   PASS_GRID,
   RecordAnalysis,
 } from "go-core";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "ui-atoms";

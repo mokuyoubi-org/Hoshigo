@@ -3,7 +3,7 @@
 "use dom";
 
 import { useDOMImperativeHandle } from "expo/dom";
-import React, { Ref, useEffect, useRef } from "react";
+import { Ref, useEffect, useRef } from "react";
 import { analyzeBoard, loadModel } from "../logics/analyzeBoard";
 import { initTf } from "../logics/initTf";
 import {
@@ -29,14 +29,14 @@ type Props = {
   // モデルの読み込み進捗通知(ダウンロード中/ウォームアップ中の両方を含む)。
   // IndexedDBキャッシュ済みでダウンロードが不要な場合は"downloading"は呼ばれず、
   // いきなり"warming_up"から始まる。
-  onLoadProgress?: (event: {stage: ModelLoadStage }) => void;
+  onLoadProgress?: (event: { stage: ModelLoadStage }) => void;
   // warmupModelが実際に完了した瞬間に呼ばれる。
   // 注意: warmupModel()自体のawaitはbridge越しだと即解決してしまい信用できないため、
   // 「本当に完了したか」はこのコールバック(props経由=本物の往復通信)でのみ判定する。
   onModelReady?: () => void;
   // warmupModelが失敗したとき(ダウンロード失敗など)に呼ばれる。
   // これが無いと、失敗しても画面が「ダウンロード中」のまま止まって見えてしまう。
-  onModelError?: ( message: string) => void;
+  onModelError?: (message: string) => void;
 };
 
 export default function KataGoEngine({
@@ -91,7 +91,7 @@ export default function KataGoEngine({
         },
         warmupModel: async (): Promise<void> => {
           try {
-            await loadModel( (stage) => {
+            await loadModel((stage) => {
               onLoadProgress?.({ stage });
             });
             console.log(`🔥 [KataGoEngine] ウォームアップ完了`);

@@ -3,7 +3,7 @@
 // 動き方は持たず、progress（0〜100）を受け取って表示する
 
 import { useColors } from "@/src/hooks/common/useTheme";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Animated, View } from "react-native";
 import { Bubble } from "ui-atoms";
 import { MyText } from "../common/MyText";

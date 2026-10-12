@@ -12,7 +12,7 @@ import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BLACK, Color, MatchType, WHITE } from "go-core";
 import { useKVStorage } from "kv-store";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { View } from "react-native";
 import { ModalShell } from "ui-atoms";
 import { AvatarWithPass } from "../../avatar/AvatarWithPass";

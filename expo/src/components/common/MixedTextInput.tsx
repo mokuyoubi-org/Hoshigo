@@ -3,7 +3,7 @@
 import { getAppFont } from "@/src/constants/fonts";
 import { useLang } from "@/src/i18n/LangProvider";
 import { resolveUiLang, splitRuns } from "@/src/logics/format/mixedRuns";
-import React, { forwardRef, useMemo, useState } from "react";
+import { forwardRef, useMemo, useState } from "react";
 import {
   Platform,
   StyleSheet,

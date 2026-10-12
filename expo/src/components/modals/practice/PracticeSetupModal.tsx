@@ -11,7 +11,7 @@ import { PlayerType } from "@/src/types/player";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { BLACK, BoardSize, Color, MatchType, WHITE } from "go-core";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
 import { Avatar } from "../../avatar/Avatar";

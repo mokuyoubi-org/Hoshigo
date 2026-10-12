@@ -1,6 +1,6 @@
 // ToggleSwitch.tsx
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Animated, ColorValue, Pressable, StyleSheet } from "react-native";
 
 type Props = {

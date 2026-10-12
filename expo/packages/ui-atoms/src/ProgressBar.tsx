@@ -3,7 +3,7 @@
 // 0-100の実測%を表示するプログレスバー。percentがnullのときは
 // 「不確定バー」として、帯の中を左右にスライドし続けるアニメーションを表示する。
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Animated,
   ColorValue,

@@ -3,7 +3,8 @@
 import { useMatching } from "@/src/contexts/MatchingContext";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useLang } from "@/src/i18n/LangProvider";
-import { supabase } from "@/src/services/supabase/supabase";
+import { api } from "@/src/services/api/api";
+import { authClient } from "@/src/services/auth/auth-client";
 import { useKVStorage } from "kv-store";
 import { useState } from "react";
 
@@ -21,40 +22,45 @@ export const useSettingsScreen = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const {
-    value: isSoundEnabled,
-    setValue: setIsSoundEnabled,
-  } = useKVStorage<boolean>("global.sound", true);
+  const { value: isSoundEnabled, setValue: setIsSoundEnabled } =
+    useKVStorage<boolean>("global.sound", true);
 
   const isDisabled = loading || isMatching;
 
   const onLogout = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    setLoading(false);
+    try {
+      const { error } = await authClient.signOut();
+      if (error) {
+        console.error("ログアウト失敗:", error);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleConfirmDelete = async () => {
     setLoading(true);
 
-    const { error } = await supabase.rpc("delete_user_account");
-    if (error) {
-      console.error("アカウント削除失敗:", error);
+    try {
+      // サーバー側で user を消すと、プロフィール・成績・セッションも芋づる式に消える
+      const { error } = await api.rpc("delete_user_account");
+      if (error) {
+        console.error("アカウント削除失敗:", error);
+        return;
+      }
+
+      // 手元に残っている「入場券(セッション)」も片づける
+      const { error: signOutError } = await authClient.signOut();
+      if (signOutError) {
+        // サーバー側では、もう入場券ごと消えているので、エラーになっても正常なことがある
+        console.log("サインアウト結果:", signOutError.message);
+      } else {
+        console.log("サインアウト成功！");
+      }
+    } finally {
       setLoading(false);
-      return;
     }
-    // サインアウトの結果を受け取る
-    const { error: signOutError } = await supabase.auth.signOut({
-      scope: "local",
-    });
-
-    if (signOutError) {
-      console.error("サインアウト失敗:", signOutError.message);
-    } else {
-      console.log("サインアウト成功！");
-    }
-
-    setLoading(false);
   };
 
   return {

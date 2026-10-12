@@ -3,7 +3,7 @@
 // 【ファイル全体の責務】
 // コンテキストファイル。メンテナンスなどアプリ自体の情報を、アプリ全体で共有している。
 
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 // バージョン不足の種別。null = 不足なし。
 // "app" = ネイティブアプリのバージョンが足りない(ストア誘導)

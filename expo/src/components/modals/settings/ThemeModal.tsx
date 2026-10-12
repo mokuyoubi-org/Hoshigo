@@ -5,7 +5,7 @@ import { useColors, useThemeMode } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { ThemeMode } from "@/src/types/theme";
 import { Feather, FontAwesome } from "@expo/vector-icons";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { Divider, ModalShell } from "ui-atoms";
 

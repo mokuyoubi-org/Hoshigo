@@ -3,7 +3,7 @@
 import { getAppFont } from "@/src/constants/fonts";
 import { useLang } from "@/src/i18n/LangProvider";
 import { resolveUiLang, splitRuns } from "@/src/logics/format/mixedRuns";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { StyleSheet, Text, type TextProps } from "react-native";
 
 // 文字列・数値（とその配列）だけ分割対象にする。それ以外は通常表示

@@ -8,7 +8,7 @@ import { TFunction, TranslationKey } from "@/src/i18n/types";
 import { nameFormatter } from "@/src/logics/bot/botNameLogics";
 import { boardSizeOptions } from "@/src/logics/format/boardSizeToText";
 import { BoardSize } from "go-core/src";
-import React, { useState } from "react";
+import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { SegmentedControl } from "ui-atoms";
 import { MyText } from "../common/MyText";

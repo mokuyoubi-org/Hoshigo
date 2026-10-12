@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { ColorValue, StyleSheet, View } from "react-native";
 
 type Props = {
@@ -9,13 +9,9 @@ type Props = {
   lineColor: ColorValue;
 };
 
-export const BoardLines = memo(({
-  boardSize,
-  innerWidth,
-  cellSize,
-  lineWidth,
-  lineColor,
-}: Props) => <View>
+export const BoardLines = memo(
+  ({ boardSize, innerWidth, cellSize, lineWidth, lineColor }: Props) => (
+    <View>
       {Array.from({ length: boardSize }).map((_, i) => (
         <React.Fragment key={`line-${i}`}>
           <View
@@ -42,7 +38,9 @@ export const BoardLines = memo(({
           />
         </React.Fragment>
       ))}
-    </View>);
+    </View>
+  ),
+);
 
 const styles = StyleSheet.create({
   line: {

@@ -7,7 +7,7 @@ import { RankInfo } from "@/src/constants/ranks";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { MaterialIcons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Animated, TouchableOpacity, View } from "react-native";
 
 type Props = {

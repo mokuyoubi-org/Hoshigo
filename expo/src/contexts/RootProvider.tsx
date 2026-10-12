@@ -1,7 +1,7 @@
 // RootProvider.tsx
 
 import { LangProvider } from "@/src/i18n/LangProvider";
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import { AppProvider } from "./AppContexts";
 import { ProfileProvider } from "./ProfileContexts";
 

@@ -1,21 +1,37 @@
 // tsconfig.json
 // ts先生への指示書。
-// パスで、@が意味するのはここのことだよーとか。
-// ts先生の仕事は、型チェックと、tsxやtsの、jsへの翻訳。
+// ts先生の仕事は、型チェック。
+// 普段はtsやtsxのjsへの翻訳も担当できるが、expoではBabelくんが担当している。
+// なぜなら、速いし、Metroくんとの連携もいいから。
+// ※tsconfig.jsonは、コメントを書けるJSON(JSONC)なので、このままで大丈夫。
 
 {
-  // ts先生がチェックするときに参考にする、基本の教科書。
+  // ts先生が型チェックするときに参考にする、基本の教科書。
   "extends": "expo/tsconfig.base",
+
   // ts先生への、細かい要求。
   "compilerOptions": {
+    // 古い形式のライブラリも、import x from "..." で読めるようにする互換設定。
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+
+    // 型定義(@types)を探す場所。
     "typeRoots": ["./node_modules/@types"],
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
-    "jsx": "react",
+
+    // JSXの書き方の指示。
+    // "react-jsx"なら、各ファイルで import React を書かなくてOK。⚠️⚠️⚠️⚠️⚠️すげええ！！！
+    // Expo(babel-preset-expo)の新しい方式と合っている。
+    "jsx": "react-jsx",
+
+    // 型チェックを厳しめにする。
     "strict": true,
+
+    // foo.native.ts や foo.web.ts のような、プラットフォーム別ファイルも見つけさせる。
     "moduleSuffixes": [".native", ".web", ""],
+
+    // @ は「プロジェクトの一番上のフォルダ」という意味。
+    // import x from "@/components/Button" みたいに書ける。
+    // ts先生だけでなく、Metroくんもこの設定を読んでくれる(Expo SDK 50以降)。⚠️⚠️⚠️⚠️⚠️tsconfig.jsonを、expoのmetroくんが、pathの部分だけは読んでる！ts先生だけじゃなくて。
     "paths": {
       "@/*": ["./*"]
     }
