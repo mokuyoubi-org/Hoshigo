@@ -2,7 +2,7 @@ import { Color } from "go-core";
 
 export type PlayerType = {
   username: string;
-  uid: string;
+  uid?: string;
   rating: number;
   iconIndex: number;
 };

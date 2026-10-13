@@ -11,7 +11,6 @@
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { FontAwesome5 } from "@expo/vector-icons";
-import React from "react";
 import {
   ActivityIndicator,
   StyleSheet,

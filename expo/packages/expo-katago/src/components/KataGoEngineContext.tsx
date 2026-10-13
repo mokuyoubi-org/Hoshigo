@@ -29,7 +29,7 @@
 //
 // ──────────────────────────────────────────────────
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import {
   AnalyzeBoardArgs,
@@ -65,7 +65,7 @@ const KataGoEngineContext = createContext<KataGoEngineContextType | null>(null);
 export const KataGoEngineProvider = ({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) => {
   const engineRef = useRef<KataGoEngineRef | null>(null);
   const [engineReady, setEngineReady] = useState(false);

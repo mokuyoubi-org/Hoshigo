@@ -1,4 +1,5 @@
-import { StyleProp, ViewStyle, ColorValue } from "react-native";
+import { ReactNode } from "react";
+import { ColorValue, StyleProp, ViewStyle } from "react-native";
 
 // shell/modalSizing.ts
 export type ModalSize = "sm" | "md" | "lg";
@@ -34,9 +35,8 @@ export const computeModalBox = (
   return { width, maxHeight };
 };
 
-
 export type ModalShellProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   onClose?: () => void;
   style?: StyleProp<ViewStyle>;
   dismissKeyboardOnPress?: boolean;

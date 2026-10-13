@@ -1,6 +1,5 @@
 // SegmentedControl.tsx
 
-import React from "react";
 import {
   ColorValue,
   StyleSheet,

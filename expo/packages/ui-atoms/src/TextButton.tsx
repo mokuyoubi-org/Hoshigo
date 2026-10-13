@@ -3,7 +3,6 @@
  * テキストボタン。色は呼び出し側（親）から渡す。
  */
 
-import React from "react";
 import {
   StyleSheet,
   Text,

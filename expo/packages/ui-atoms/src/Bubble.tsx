@@ -3,7 +3,7 @@
 // 色・文字・しっぽの向きや位置は全部 props で受け取る。
 // 置き場所（absolute の left/top など）は持たず、呼ぶ側が決める。
 
-import React from "react";
+import { ComponentType } from "react";
 import {
   ColorValue,
   StyleProp,
@@ -42,7 +42,7 @@ type Props = {
   /** 文字のスタイル（fontFamily など） */
   fontStyle?: StyleProp<TextStyle>;
   /** 文字を描くコンポーネント（デフォルトは Text。MyText などに差し替えたいとき用） */
-  TextComponent?: React.ComponentType<TextProps>;
+  TextComponent?: ComponentType<TextProps>;
   /** 文字に渡したい props（numberOfLines など） */
   textProps?: TextProps;
   /** 外側の View のスタイル */

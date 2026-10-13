@@ -1,13 +1,13 @@
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import { ReactNode } from "react";
 import { TouchableOpacity, View } from "react-native";
 
 type SettingsRowProps = {
   label: string;
   onPress?: () => void;
-  rightElement?: React.ReactNode;
+  rightElement?: ReactNode;
 };
 
 export const SettingsRow = ({

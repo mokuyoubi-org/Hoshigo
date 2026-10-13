@@ -1,10 +1,9 @@
 // matchingRPC.ts
 
-import { supabase } from "@/src/services/supabase/supabase";
 import { BoardSize } from "go-core";
 
 type Params = {
-  matchId: number;
+  matchId: string;
   boardSize: BoardSize;
   matchType: string;
   moves: string;
@@ -30,15 +29,3 @@ export const formatPlayingParams = (data: any): Params => ({
   oppSeconds: data.opp_seconds ?? 0,
   botMatch: String(data.bot_match ?? false),
 });
-
-export const joinWaitlistRPC = async (
-  boardSize: BoardSize,
-) => {
-  return await supabase.rpc("join_waitlist", {
-    p_board_size: boardSize,
-  });
-};
-
-export const cancelWaitlistRPC = async () => {
-  return await supabase.rpc("cancel_waitlist");
-};

@@ -4,7 +4,7 @@ import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useLang, useTranslation } from "@/src/i18n/LangProvider";
 import { FontAwesome } from "@expo/vector-icons";
-import React from "react";
+import { Fragment } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Divider, ModalShell } from "ui-atoms";
 
@@ -51,7 +51,7 @@ export const LanguageModal = ({ onClose }: Props) => {
 
       <View className="w-full bg-foreground rounded-xl border-2 border-backgroundStrong overflow-hidden">
         {orderedLanguages.map(({ code, labelKey }, index) => (
-          <React.Fragment key={code}>
+          <Fragment key={code}>
             <TouchableOpacity
               className="flex-row justify-between items-center p-4 min-h-12"
               onPress={() => {
@@ -78,7 +78,7 @@ export const LanguageModal = ({ onClose }: Props) => {
             {index < orderedLanguages.length - 1 && (
               <Divider backgroundColor={colors.backgroundStrong} />
             )}
-          </React.Fragment>
+          </Fragment>
         ))}
       </View>
 

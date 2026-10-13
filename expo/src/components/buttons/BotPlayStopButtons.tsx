@@ -2,7 +2,6 @@
 
 import { useColors } from "@/src/hooks/common/useTheme";
 import { FontAwesome6 } from "@expo/vector-icons";
-import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
 export const BotPlayStopButtons = ({

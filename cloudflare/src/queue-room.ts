@@ -103,7 +103,11 @@ export class QueueRoom extends DurableObject<AppEnv> {
     // ① 対局の途中なら、続きから再開させる(待機列には入れない)
     const resume = await this.findResumableGame(uid);
     if (resume) {
-      return this.replyAndClose({ type: "resume", match: resume }, 1000, "resume");
+      return this.replyAndClose(
+        { type: "resume", match: resume },
+        1000,
+        "resume",
+      );
     }
 
     // この人の、この盤面でのレーティング・今日の対局数と、ボット対戦の許可を調べる
@@ -117,7 +121,9 @@ export class QueueRoom extends DurableObject<AppEnv> {
     const [setting] = await this.db
       .select({ allowBotMatch: userSettings.allowBotMatch })
       .from(userSettings)
-      .where(and(eq(userSettings.uid, uid), eq(userSettings.boardSize, boardSize)));
+      .where(
+        and(eq(userSettings.uid, uid), eq(userSettings.boardSize, boardSize)),
+      );
 
     // ② ゲストは、その盤面の今日の対局数が上限なら、待機列に入れない
     if (isAnonymous && (stats?.dailyPlayCount ?? 0) >= DAILY_LIMIT_FOR_GUESTS) {
@@ -226,7 +232,10 @@ export class QueueRoom extends DurableObject<AppEnv> {
 
       try {
         // 🤖 ボット戦: 4回以上待っていて、ボット対戦を許可している人
-        if (cur.waiter.tryCount >= BOT_AFTER_TRIES && cur.waiter.allowBotMatch) {
+        if (
+          cur.waiter.tryCount >= BOT_AFTER_TRIES &&
+          cur.waiter.allowBotMatch
+        ) {
           const ok = await this.matchWithBot(cur);
           // ボットが見つからなかったら、何もせずに、次の人へ(回数も増やさない)
           if (ok) matched.add(cur.waiter.uid);
@@ -328,7 +337,12 @@ export class QueueRoom extends DurableObject<AppEnv> {
     const [botStats] = await this.db
       .select({ rating: userStats.rating })
       .from(userStats)
-      .where(and(eq(userStats.uid, botProfile.uid), eq(userStats.boardSize, boardSize)));
+      .where(
+        and(
+          eq(userStats.uid, botProfile.uid),
+          eq(userStats.boardSize, boardSize),
+        ),
+      );
 
     const humanProfile = (await this.getProfiles([human.waiter.uid])).get(
       human.waiter.uid,
@@ -372,7 +386,9 @@ export class QueueRoom extends DurableObject<AppEnv> {
   // 対局の部屋を作って、「対局中」の目印を書いて、2人の「今日の対局数」を+1する。
   // humanUids は、人間だけ(ボットには、目印を作らない)。
   private async createGame(init: MatchInit, humanUids: string[]) {
-    await this.env.GAME_ROOM.get(this.env.GAME_ROOM.idFromName(init.gameId)).init(init);
+    await this.env.GAME_ROOM.get(
+      this.env.GAME_ROOM.idFromName(init.gameId),
+    ).init(init);
 
     // 対局中の目印(古い目印が残っていたら、上書きする)
     const now = new Date();
@@ -421,7 +437,13 @@ export class QueueRoom extends DurableObject<AppEnv> {
       me.ws.send(
         JSON.stringify({
           type: "matched",
-          match: buildMatchedPayload(init, myColor, [], init.seconds, init.seconds),
+          match: buildMatchedPayload(
+            init,
+            myColor,
+            [],
+            init.seconds,
+            init.seconds,
+          ),
         }),
       );
       me.ws.close(1000, "matched");

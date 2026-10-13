@@ -1,6 +1,5 @@
 // Pass.tsx
 
-import React from "react";
 import { ColorValue, StyleSheet } from "react-native";
 import { Bubble } from "ui-atoms";
 

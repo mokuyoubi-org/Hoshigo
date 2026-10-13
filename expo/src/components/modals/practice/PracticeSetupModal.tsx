@@ -11,7 +11,6 @@ import { PlayerType } from "@/src/types/player";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { BLACK, BoardSize, Color, MatchType, WHITE } from "go-core";
-import { useEffect } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
 import { Avatar } from "../../avatar/Avatar";
@@ -74,15 +73,6 @@ export const PracticeSetupModal = ({
     myIconIndex,
     myUid,
   });
-
-  useEffect(() => {
-    if (
-      typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-    ) {
-      document.activeElement.blur();
-    }
-  }, []);
 
   // 指定された色（BLACK または WHITE）の行（左右選択コンポーネント）を描画する関数
   const renderPlayerSelector = (color: Color) => {

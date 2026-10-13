@@ -3,7 +3,7 @@
 import { Feather } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { RecordAnalysis } from "go-core";
-import { useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import {
   ColorValue,
   LayoutChangeEvent,
@@ -21,7 +21,7 @@ type Props = {
   analysis?: RecordAnalysis | null;
   currentIndex: number;
   totalMoves: number;
-  onCurrentIndexChange: React.Dispatch<React.SetStateAction<number>>;
+  onCurrentIndexChange: Dispatch<SetStateAction<number>>;
   primaryStrong: ColorValue;
   foreground: ColorValue;
   backgroundStrong: ColorValue;
@@ -33,7 +33,7 @@ const PADDING_Y = 8;
 const MIN_RANGE = 5;
 
 // スライダーのつまみの端（パディング）補正用
-// React Native の Slider は端に少し余白ができるため、グラフの端と合わせる調整幅だ
+// ReactNative の Slider は端に少し余白ができるため、グラフの端と合わせる調整幅だ
 const SLIDER_INSET = 8;
 
 // 吹き出しのサイズ設定

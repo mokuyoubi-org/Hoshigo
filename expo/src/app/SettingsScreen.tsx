@@ -5,7 +5,6 @@ import { VersionModal } from "@/src/components/modals/common/VersionModal";
 import { AllowBotMatchModal } from "@/src/components/modals/settings/AllowBotMatchModal";
 import { DeleteModal } from "@/src/components/modals/settings/DeleteModal";
 import { DoubleTapModal } from "@/src/components/modals/settings/DoubleTapModal";
-import { EmailChangeModal } from "@/src/components/modals/settings/EmailChangeModal";
 import { LanguageModal } from "@/src/components/modals/settings/LanguageModal";
 import { LoginModal } from "@/src/components/modals/settings/LoginModal";
 import { LogoutModal } from "@/src/components/modals/settings/LogoutModal";
@@ -20,7 +19,6 @@ import { useTranslation } from "@/src/i18n/LangProvider";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
 import { Linking, ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader, ToggleSwitch } from "ui-atoms";
@@ -80,13 +78,7 @@ export default function SettingsScreen() {
             <SettingsRow
               label={t("common.email")}
               onPress={() =>
-                show(
-                  email ? (
-                    <EmailChangeModal visible={true} onClose={hide} />
-                  ) : (
-                    <LoginModal visible={true} onClose={hide} />
-                  ),
-                )
+                show(!email && <LoginModal visible={true} onClose={hide} />)
               }
               rightElement={
                 <MyText className="text-lg text-textSub tracking-wide">

@@ -1,6 +1,5 @@
 // Divider.tsx
 
-import React from "react";
 import { ColorValue, StyleSheet, View, ViewProps } from "react-native";
 
 // ViewPropsを継承しつつ、backgroundColorを必ず渡す形にする

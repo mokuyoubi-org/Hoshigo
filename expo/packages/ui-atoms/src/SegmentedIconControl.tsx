@@ -1,11 +1,10 @@
 // SegmentedIconControl.tsx
-
-import React from "react";
+import { cloneElement, ReactElement } from "react";
 import { ColorValue, StyleSheet, TouchableOpacity, View } from "react-native";
 
 type Option<T extends string | boolean> = {
   value: T;
-  icon: React.ReactElement<{ size?: number; color?: ColorValue }>;
+  icon: ReactElement<{ size?: number; color?: ColorValue }>;
   color?: ColorValue; // 各アイコン固有の色をオプションで指定
 };
 
@@ -46,7 +45,7 @@ export const SegmentedIconControl = <T extends string | boolean>({
             onPress={() => onSelect(option.value)}
             activeOpacity={0.8}
           >
-            {React.cloneElement(option.icon, {
+            {cloneElement(option.icon, {
               size: 20,
               color: iconColor,
             })}

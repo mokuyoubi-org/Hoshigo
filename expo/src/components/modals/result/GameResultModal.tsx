@@ -3,7 +3,6 @@
 import { useColors } from "@/src/hooks/common/useTheme";
 import { FromType } from "@/src/types/from";
 import { BoardSize, Grid, MatchType, RecordAnalysis } from "go-core";
-import React from "react";
 import { View } from "react-native";
 import { ModalShell } from "ui-atoms";
 import { MyText } from "../../common/MyText";

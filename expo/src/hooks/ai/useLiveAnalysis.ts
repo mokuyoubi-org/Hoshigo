@@ -47,6 +47,13 @@ type UseLiveAnalysisArgs = {
   boardSize: BoardSize;
   // 🌟 途中から始める時の、これまでの分析結果(再開する局面までの分)
   initialAnalysis?: RecordAnalysis;
+  // 🌟 1局面を記録した直後に呼ばれる(対局中、サーバーへ送るために使う)。
+  //    pos = その局面までに打たれた手数(0 = まだ1手も打たれていない局面)
+  onRecorded?: (
+    pos: number,
+    entry: MoveAnalysisEntry,
+    result: AnalyzeResult,
+  ) => void;
 };
 
 type AnalyzeAndRecordArgs = {
@@ -59,7 +66,13 @@ export const useLiveAnalysis = ({
   matchType,
   boardSize,
   initialAnalysis,
+  onRecorded,
 }: UseLiveAnalysisArgs) => {
+  // 毎回の描画で最新の関数に差し替える(古い関数を呼んでしまわないように)
+  const onRecordedRef = useRef(onRecorded);
+  useEffect(() => {
+    onRecordedRef.current = onRecorded;
+  }, []);
   const kataGoTask = useKataGoTask();
 
   const perMoveRef = useRef<(MoveAnalysisEntry | null)[]>(
@@ -106,9 +119,14 @@ export const useLiveAnalysis = ({
     const arr = perMoveRef.current;
     while (arr.length <= moveIndex) arr.push(null);
     arr[moveIndex] = entry;
+    // 🌟記録できたことを知らせる(サーバーへ送るため)。失敗しても記録自体は守る
+    try {
+      onRecordedRef.current?.(moveIndex, entry, result);
+    } catch (e) {
+      console.error("分析の送信で例外発生:", e);
+    }
     return entry;
   };
-
   // 局面を分析して、記録(と付箋の更新)まで済ませる。
   // 呼び出し側はawaitしなくてよい(投げっぱなしの背景分析に使う)。
   // awaitすれば、記録が終わるまで待てる(⏹の最新局面分析に使う)。

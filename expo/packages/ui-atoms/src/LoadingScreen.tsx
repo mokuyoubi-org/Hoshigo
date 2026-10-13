@@ -1,11 +1,11 @@
 // LoadingScreen.tsx
 
-import React from "react";
 import { ColorValue, Text, View } from "react-native";
 import { ProgressBar } from "./ProgressBar";
+import { ReactNode } from "react";
 
 type LoadingScreenProps = {
-  label: React.ReactNode; // ⚠️2026/10/01: stringではないのはDotAnimationを受け入れるため
+  label: ReactNode; // ⚠️2026/10/01: stringではないのはDotAnimationを受け入れるため
   percent: number | null; // null = 不確定バー
   backgroundColor: ColorValue;
   textColor: ColorValue;

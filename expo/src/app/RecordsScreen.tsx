@@ -13,7 +13,6 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { BLACK, WHITE } from "go-core";
-import React from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader, SegmentedControl } from "ui-atoms";

@@ -7,7 +7,6 @@ import { useTranslation } from "@/src/i18n/LangProvider";
 import { FontAwesome, FontAwesome6, Octicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { BoardSize, Grid, MatchType, RecordAnalysis } from "go-core";
-import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { MyText } from "../../common/MyText";
 

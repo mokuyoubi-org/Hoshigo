@@ -13,7 +13,6 @@
     "@formatjs/intl-getcanonicallocales": "^3.2.12",
     "@formatjs/intl-locale": "^5.3.11",
     "@react-native-community/slider": "5.2.0",
-    "@supabase/supabase-js": "^2.93.3",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "babel-preset-expo": "~57.0.0",

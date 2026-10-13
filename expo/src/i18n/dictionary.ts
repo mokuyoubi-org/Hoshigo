@@ -300,59 +300,6 @@ export const dictionary = {
       doubleTap: "더블 탭",
     },
   },
-  EmailChange: {
-    en: {
-      titleEmail: "Change Email",
-      titleOtp: "Enter Code",
-      subtitleEmail: "Enter your new email address.",
-      newEmail: "New Email",
-      sendCode: "Send Code",
-      subtitleOtp: "Enter the code sent to {{email}}.",
-      otpLabel: "Verification Code",
-      verify: "Verify",
-      errorSendFailed: "Failed to send the code. Please try again.",
-      errorVerifyFailed:
-        "Verification failed. Please check the code and try again.",
-    },
-    ja: {
-      titleEmail: "メールアドレス変更",
-      titleOtp: "認証コードを入力",
-      subtitleEmail: "新しいメールアドレスをご入力ください。",
-      newEmail: "新しいメールアドレス",
-      sendCode: "コードを送信",
-      subtitleOtp: "{{email}} に送信されたコードを入力してください。",
-      otpLabel: "認証コード",
-      verify: "認証する",
-      errorSendFailed: "コードの送信に失敗しました。もう一度お試しください。",
-      errorVerifyFailed:
-        "認証に失敗しました。コードをご確認の上、もう一度お試しください。",
-    },
-    zh: {
-      titleEmail: "更改邮箱",
-      titleOtp: "输入验证码",
-      subtitleEmail: "请输入您的新邮箱地址。",
-      newEmail: "新邮箱地址",
-      sendCode: "发送验证码",
-      subtitleOtp: "请输入发送至 {{email}} 的验证码。",
-      otpLabel: "验证码",
-      verify: "验证",
-      errorSendFailed: "验证码发送失败，请重试。",
-      errorVerifyFailed: "验证失败，请检查验证码后重试。",
-    },
-    ko: {
-      titleEmail: "이메일 변경",
-      titleOtp: "인증 코드 입력",
-      subtitleEmail: "새 이메일 주소를 입력해 주세요.",
-      newEmail: "새 이메일 주소",
-      sendCode: "코드 전송",
-      subtitleOtp: "{{email}} 로 전송된 코드를 입력해 주세요.",
-      otpLabel: "인증 코드",
-      verify: "인증하기",
-      errorSendFailed: "코드 전송에 실패했습니다. 다시 시도해 주세요.",
-      errorVerifyFailed:
-        "인증에 실패했습니다. 코드를 확인한 후 다시 시도해 주세요.",
-    },
-  },
   AccountLinking: {
     en: {
       // email step

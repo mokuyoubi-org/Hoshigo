@@ -52,11 +52,11 @@ app.on(["GET", "POST"], "/api/auth/*", (c) => {
   return createAuth(c.env, locale).handler(c.req.raw);
 });
 
-// RPC(いまのSupabaseのRPCに相当)は、/rpc/ 以下に置く。
+// RPCは、/rpc/ 以下に置く。
 // 入り口に、見張り番(バージョンとメンテナンスの確認)を立てる。
 app.use("/rpc/*", guard);
 
-// 本物のRPC。名前は、いまのSupabaseのRPC名のまま。
+// 本物のRPC。
 app.route("/rpc", profileRoutes);
 app.route("/rpc", accountRoutes);
 app.route("/rpc", recordsRoutes);

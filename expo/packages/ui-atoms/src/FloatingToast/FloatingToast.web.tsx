@@ -1,7 +1,6 @@
 // FloatingToast.web.tsx
 
 import { FontAwesome } from "@expo/vector-icons";
-import React from "react";
 import ReactDOM from "react-dom";
 import {
   ActivityIndicator,

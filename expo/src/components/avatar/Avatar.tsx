@@ -8,7 +8,6 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { AntDesign } from "@expo/vector-icons";
 import { Agehama } from "go-components";
 import { BLACK, Color, WHITE } from "go-core";
-import React from "react";
 import { View } from "react-native";
 
 type Props = {

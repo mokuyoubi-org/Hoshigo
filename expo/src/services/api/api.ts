@@ -1,7 +1,6 @@
 // api.ts
 //
 // 自分たちのサーバー(Cloudflareの hoshigo-api)と、通信するための電話機☎️
-// 旧 supabase.ts + supabase-kit の「3つの上乗せ」を、そのまま引き継いでいる:
 //  1. エラーの code(MAINTENANCE_MODE など)を検知して、アプリに知らせる
 //  2. 通信自体の失敗(codeなし)だけ、自動で再送する(最大3回、指数バックオフ)
 //  3. アプリのバージョンを、全リクエストのヘッダーに付ける
@@ -44,7 +43,7 @@ export type ApiError = {
   status?: number;
 };
 
-// supabase.rpc() と同じ形: 成功なら data、失敗なら error
+// 成功なら data、失敗なら error
 export type ApiResult<T> = { data: T | null; error: ApiError | null };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -58,7 +57,7 @@ const isRetryableError = (error: ApiError): boolean => {
 };
 
 // メンテナンス・バージョン不足を検知して、アプリに知らせる
-const notifyIfSpecialError = (error: ApiError) => {
+export const notifyIfSpecialError = (error: ApiError) => {
   switch (error.code) {
     case "MAINTENANCE_MODE":
       onMaintenanceTriggered?.(error.message);

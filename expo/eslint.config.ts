@@ -35,7 +35,7 @@ export default defineConfig([
       // function foo() {} ではなく、const foo = () => {} で書かないとエラー。
       "prefer-arrow-functions/prefer-arrow-functions": "error",
 
-      // React Hooks まわりの、新しめの厳しいチェック。警告止まりで有効にしている。
+      // hooksまわりの、新しめの厳しいチェック。警告止まりで有効にしている。
       "react-hooks/refs": "warn",
       "react-hooks/purity": "warn",
       "react-hooks/set-state-in-effect": "warn",

@@ -5,7 +5,6 @@
  */
 
 import { MyText } from "@/src/components/common/MyText";
-import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
 type Props = {

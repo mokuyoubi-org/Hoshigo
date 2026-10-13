@@ -54,7 +54,7 @@ export type MatchInit = {
   botColor: "black" | "white" | null; // ボット戦なら、ボットの色
 };
 
-// 「マッチしたよ」の中身(いまのSupabaseの notify_match / build_match_json と、同じ形)。
+// 「マッチしたよ」の中身。
 // 新しくマッチしたとき(手は空)と、途中から再開するとき(手が入っている)の、両方で使う。
 export function buildMatchedPayload(
   init: MatchInit,

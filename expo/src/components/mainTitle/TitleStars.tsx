@@ -1,6 +1,5 @@
 import { useColors } from "@/src/hooks/common/useTheme";
 import { AntDesign } from "@expo/vector-icons";
-import React from "react";
 import { View } from "react-native";
 import { STARS_CONFIG } from "./constants";
 

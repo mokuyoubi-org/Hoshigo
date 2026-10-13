@@ -9,7 +9,7 @@ import { nameFormatter } from "@/src/logics/bot/botNameLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { WinRateBar } from "go-components";
 import { BLACK, Color, RecordAnalysis } from "go-core";
-import React from "react";
+import { memo } from "react";
 import { View } from "react-native";
 import { AvatarWithPass } from "../avatar/AvatarWithPass";
 
@@ -34,7 +34,7 @@ type Props = {
   showWinRateBar?: boolean;
 };
 
-export const BoardEditScreenHeader = React.memo(
+export const BoardEditScreenHeader = memo(
   ({
     analysis,
     leftPlayer,

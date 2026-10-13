@@ -4,7 +4,6 @@ import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { useKVStorage } from "kv-store";
-import React from "react";
 import { View } from "react-native";
 import { Divider, ModalShell, ToggleSwitch } from "ui-atoms";
 

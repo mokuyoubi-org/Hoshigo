@@ -3,11 +3,11 @@
 import { getAppFont } from "@/src/constants/fonts";
 import { useLang } from "@/src/i18n/LangProvider";
 import { resolveUiLang, splitRuns } from "@/src/logics/format/mixedRuns";
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { StyleSheet, Text, type TextProps } from "react-native";
 
 // 文字列・数値（とその配列）だけ分割対象にする。それ以外は通常表示
-const toStr = (c: React.ReactNode): string | null =>
+const toStr = (c: ReactNode): string | null =>
   typeof c === "string" || typeof c === "number"
     ? String(c)
     : Array.isArray(c) &&

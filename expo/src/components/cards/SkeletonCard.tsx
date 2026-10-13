@@ -3,7 +3,6 @@
 import { MyImage } from "@/src/components/common/MyImage";
 import { ICONS } from "@/src/constants/icons";
 import { useThemeMode } from "@/src/hooks/common/useTheme";
-import React from "react";
 import { View } from "react-native";
 
 export const SkeletonCard = ({ height }: { height: number }) => {

@@ -2,9 +2,7 @@
 //
 // ─── このファイルの責務 ───────────────────────────────
 // bot1/bot2/bot3の「対局相手としてのプロフィール」を固定値として持つ。
-// icon_indexとratingはdev/prod間で完全に一致しているため共通データとして
-// 持ち、uidだけがSupabaseプロジェクトごとに異なるので別テーブルに分離。
-// getBotProfile()がその2つを合成して1つのプロフィールを返す。
+// 2026/10/13: Cloudflare版。uid は、サーバー(D1)が持つのでアプリでは持たない。
 // ──────────────────────────────────────────────────
 
 import { BoardSize } from "go-core";
@@ -17,7 +15,6 @@ type BotStats = {
   ratingByBoardSize: Partial<Record<BoardSize, number>>;
 };
 
-// 🐱 env非依存: icon_index・ratingはdev/prodで完全に一致している
 export const BOT_STATS: Record<BotUsername, BotStats> = {
   bot1: {
     iconIndex: 100,
@@ -33,36 +30,8 @@ export const BOT_STATS: Record<BotUsername, BotStats> = {
   },
 };
 
-// 🐱 env依存: uidだけがプロジェクトごとに異なる
-const BOT_UIDS: Record<"dev" | "prod", Record<BotUsername, string>> = {
-  dev: {
-    bot1: "f370ad48-afa8-4fe1-bfd4-cf101858fb23",
-    bot2: "7edcfa8d-1e5d-4d3e-9e1b-ade131471b25",
-    bot3: "e74a87e8-7734-4c9a-a8d6-7ee0a95c6958",
-  },
-  prod: {
-    bot1: "db78694c-b15f-4ce4-ab81-0a75076d0d22",
-    bot2: "81448165-d42e-4a2b-bbdf-7fdf10d15361",
-    bot3: "aace3bb0-e959-4f9c-aecd-842443c62b46",
-  },
-};
-
-const DEV_PROJECT_REF = "ybj";
-const PROD_PROJECT_REF = "dwl";
-
-const getEnv = (): "dev" | "prod" => {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-  if (url.includes(PROD_PROJECT_REF)) return "prod";
-  if (url.includes(DEV_PROJECT_REF)) return "dev";
-  console.warn(
-    `[botProfiles] EXPO_PUBLIC_SUPABASE_URLが既知のprojectと一致しません(devとして扱います): ${url}`,
-  );
-  return "dev";
-};
-
 export type BotProfile = {
   username: BotUsername;
-  uid: string;
   iconIndex: number;
   rating: number;
 };
@@ -74,7 +43,6 @@ export const getBotProfile = (
   const stats = BOT_STATS[username];
   return {
     username,
-    uid: BOT_UIDS[getEnv()][username],
     iconIndex: stats.iconIndex,
     rating: stats.ratingByBoardSize[boardSize] ?? 0,
   };

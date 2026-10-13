@@ -32,7 +32,7 @@ export type MatchResultUpdate = {
 
 export const computeMatchResultUpdate = (
   boardSize: BoardSize,
-  myData: MyData, // supabaseから届いた
+  myData: MyData, // サーバから届いた
   t: TFunction,
 ): MatchResultUpdate | null => {
   const maybeRating = myData.new_rating;

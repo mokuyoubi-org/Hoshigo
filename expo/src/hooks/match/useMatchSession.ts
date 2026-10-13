@@ -11,13 +11,13 @@ import { useGameChannel } from "@/src/hooks/match/useGameChannel";
 import { useMatchClock } from "@/src/hooks/match/useMatchClock";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { resultToSubjectiveComment } from "@/src/logics/format/textFormatter";
+import { toServerAnalysis } from "@/src/logics/game/analysis";
 import { endsWithDoublePass } from "@/src/logics/game/endsWithDoublePass";
 import {
   computeMatchResultUpdate,
   MatchResultUpdate,
 } from "@/src/logics/game/resultLogics";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
-import { supabase } from "@/src/services/supabase/supabase";
 import { useGoGame } from "go-components";
 import {
   BLACK,
@@ -35,7 +35,7 @@ import { useKVStorage } from "kv-store";
 import { useEffect, useRef, useState } from "react";
 
 type Args = {
-  matchId: number;
+  matchId: string;
   myColor: Color;
   oppColor: Color;
   boardSize: BoardSize;
@@ -59,10 +59,10 @@ export const useMatchSession = ({
   initialMySeconds,
   initialOppSeconds,
 }: Args) => {
-  // 🌟 サーバのturnカラムはtext('black'/'white')、アプリ内のColorは数値。
-  //    realtimeのpayloadを受け取るたびにここで変換する。
-  const stringToColor = (turn: "black" | "white"): Color =>
-    turn === "black" ? BLACK : WHITE;
+  // 🌟サーバの turn は 'black'/'white' の文字列のはず(未確認)。アプリ内のColorは数値。
+  //    数値で届いても動くようにしてある。
+  const toColor = (turn: unknown): Color =>
+    turn === "black" || turn === BLACK ? BLACK : WHITE;
 
   const { value: doubleTap9 } = useKVStorage<boolean>(
     "global.doubleTap9",
@@ -101,7 +101,19 @@ export const useMatchSession = ({
     oppUsername as BotUsername,
   );
   const endgame = useFinalPositionAnalysis();
-  const liveAnalysis = useLiveAnalysis({ matchType, boardSize });
+    const liveAnalysis = useLiveAnalysis({
+    matchType,
+    boardSize,
+    // 🌟分析が1局面ぶん記録されるたびに、サーバーへも送る(漏れ防止のため、両方の対局者が送る。
+    //    先に届いた方だけが保存される)。つながっていなければ、送れないだけで、対局は止まらない。
+    onRecorded: (pos, entry, result) => {
+      send({
+        type: "analysis",
+        pos,
+        ...toServerAnalysis(entry, result.winRate),
+      });
+    },
+  });
   const { rating9, rating13, rating19, updateProfile } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
   const isGameEndedRef = useRef(false);
@@ -131,7 +143,9 @@ export const useMatchSession = ({
     streak: number;
     bonus: boolean;
   }>({ streak: 0, bonus: false });
-  const isResyncingRef = useRef(false);
+  // 🐱 終局の処理(結果表示など)を、1回だけにするための目印。
+  //    rating_updated と、閉じるときの保険(onFinished)の、どちらが先に来ても、1回だけ動く
+  const endHandledRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const isBotThinkingRef = useRef(false);
   // 🌟終局の地の盤面。ダブルパス処理で、仕上げ済みのエントリから作っておく。
@@ -142,47 +156,39 @@ export const useMatchSession = ({
   // 🌟 ===================================== 関数 =====================================
   // =========================================================================================
 
-  // 通信トラブルで相手の手を受けとり損ねたときに、自動で最新の状態に追いつかせる処理
-  const handleServerSync = async (moves: Grid[]) => {
+  // サーバーの盤面(つないだ直後に届く "state")と、手元の盤面を合わせる
+  const handleServerSync = (moves: Grid[], serverTurn: Color) => {
     // 🛡️ガード
     if (isGameEnded) return;
 
     const localCount = goBoard.movesRef.current.length;
     const serverCount = moves.length;
-    console.log("[handleServerSync] localCount: ", localCount);
-    console.log("[handleServerSync] serverCount: ", serverCount);
-    console.log("[handleServerSync] moves: ", moves);
+    console.log("[handleServerSync] local / server:", localCount, serverCount);
 
-    if (serverCount > localCount && !isResyncingRef.current) {
-      isResyncingRef.current = true;
+    let turn = serverTurn;
+    if (serverCount !== localCount) {
+      // 取りこぼし(local < server)も、送った手が届いていなかった場合(local > server)も、
+      // サーバーが正解。サーバーの手の並びに差し替える
       console.warn(
-        `[handleServerSync] moves取りこぼし検出: local=${localCount} → server=${serverCount}、resyncします`,
+        `[handleServerSync] ずれを検出: local=${localCount} → server=${serverCount}、合わせます`,
       );
-
-      reconnect();
-
-      const serverTurn = goBoard.loadMoves(moves);
+      turn = goBoard.loadMoves(moves);
       // 🐱 moves差し替えに合わせて分析データも整合させる。
-      //    「直近の局面の付箋」も、どの局面のものか保証できなくなるので、
-      //    truncateの中で一緒に破棄される(誤って使い回さないため)。
+      //    「直近の局面の付箋」も、truncateの中で一緒に破棄される。
       liveAnalysis.truncate(moves.length);
-      clock.unfreeze(serverTurn);
-      isResyncingRef.current = false;
     }
+    clock.unfreeze(turn);
   };
 
   // =========================================================================================
   // 🌟 ===================================== 時計の用意 =====================================
   // =========================================================================================
-  // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
   const clock = useMatchClock({
-    matchId,
     myColor,
     initialTurn: goBoard.initialTurn,
     initialMySeconds,
     initialOppSeconds,
     isGameEnded,
-    handleServerSync,
   });
 
   // =========================================================================================
@@ -190,11 +196,10 @@ export const useMatchSession = ({
   // =========================================================================================
   // 🌟ボットのターンになったら、useEffectによって自動的に行われる処理。
   const handleRunBotTurn = async () => {
-    // 🐱 botの手がこの後何手目として記録されるか。add_move呼び出し前(まだ
+    // 🐱 botの手がこの後何手目として記録されるか。送る前(まだ
     //    ローカルに反映されていない)時点のmovesRef長がそのままインデックス。
     const botMoveIndex = movesRef.current.length;
-    // 🐱 分析した局面までの手の並び。手の配列は更新のたびに新しく作り直される
-    //    ので、ここで握っておけば、あとから変わっても影響されない。
+    // 🐱 分析した局面までの手の並び。
     const movesSoFar = movesRef.current;
 
     await botMove.runBotTurn(
@@ -203,26 +208,16 @@ export const useMatchSession = ({
       matchType,
       async (grid: Grid, analysis) => {
         // 💡ここでrunBotTurnのanalysisつまりresultを受け取っている
-        // 🐱 着手決定のついでに手に入った分析結果は、まだ記録しない。
-        //    supabaseへの送信が成功して初めて「この手は本当に打たれた」と
-        //    確定するので、記録もそのタイミングまで待つ。
-        const { error } = await supabase.rpc("add_move", {
-          p_match_id: matchId,
-          p_move: grid,
-          p_is_bot: true,
-        });
-
-        if (error) {
-          console.error("ボットの着手送信失敗:", error);
+        // 🐱 ボットの手は、人間のクライアントが、代わりにサーバーへ送る(bot: true)。
+        //    送れて初めて「この手は本当に打たれた」と確定するので、記録もそのあと。
+        const sent = send({ type: "move", move: grid, bot: true });
+        if (!sent) {
+          console.error("ボットの着手送信失敗: 接続が切れている");
           return;
         }
 
-        // 🌟recordは「直近の局面の付箋」の更新も兼ねる。このgridがpassで、
-        //   かつこれがダブルパス成立の手だった場合、gameCh_double_pass側で
-        //   再推論せずこの付箋を使い回す。
+        // 🌟recordは「直近の局面の付箋」の更新も兼ねる。
         liveAnalysis.record(botMoveIndex, analysis, movesSoFar);
-        // ボットの着手成功時にハートビートタイマーをリセット
-        clock.resetHeartbeat();
       },
     );
   };
@@ -242,43 +237,25 @@ export const useMatchSession = ({
       return;
     }
 
-    // 🥶 RPC送信をtry/catch/finallyで保護する。失敗・例外どちらでも
-    // 必ず「石を戻す→自分の番に戻す→送信フラグを解放する」という
-    // 後始末に辿り着けるようにするための一本化。
     // 🐱 この手の分析(perMove記録)は、この局面になった瞬間に盤面変化
     //    監視用のuseEffectが既に済ませているので、ここでは計算しない。
-    try {
-      // supabase送信
-      const { error } = await supabase.rpc("add_move", {
-        p_match_id: matchId,
-        p_move: grid,
-      });
+    const sent = send({ type: "move", move: grid });
 
-      // 失敗した場合、なかったことにしてまたやり直し
-      if (error) {
-        console.error("着手送信失敗:", error);
-        goBoard.loadMoves(goBoard.movesRef.current.slice(0, -1));
-        clock.unfreeze(myColor); // 失敗したら自分の番へ戻す
-        return;
-      }
-
-      // 着手送信成功時にハートビートタイマーをリセット
-      clock.resetHeartbeat();
-
-      // 🥶 自分の手がダブルパスだった場合、そのままfrozenを維持
-      const moves = goBoard.movesRef.current;
-      const isDoublePass = endsWithDoublePass(moves);
-      if (!isDoublePass) {
-        clock.unfreeze(oppColor);
-      }
-    } catch (e) {
-      // RPC通信の例外をここで拾う
-      console.error("着手処理で例外発生:", e);
+    // 送れなかった場合、なかったことにしてまたやり直し
+    if (!sent) {
+      console.error("着手送信失敗: 接続が切れている");
       goBoard.loadMoves(goBoard.movesRef.current.slice(0, -1));
-      clock.unfreeze(myColor); // 例外でも自分の番へ戻す
-    } finally {
+      clock.unfreeze(myColor);
       isSubmittingRef.current = false;
+      return;
     }
+
+    // 🥶 自分の手がダブルパスだった場合、そのままfrozenを維持
+    const isDoublePass = endsWithDoublePass(goBoard.movesRef.current);
+    if (!isDoublePass) {
+      clock.unfreeze(oppColor);
+    }
+    isSubmittingRef.current = false;
   };
 
   // 🌟人間が投了した時の処理
@@ -287,22 +264,12 @@ export const useMatchSession = ({
 
     clock.freeze(); // 🥶 投了確定までボットの自動着手・自分のタップを止める
 
-    // 🐱 「今、自分の番である」ということは、この局面(=投了する直前の
-    //    局面)の分析は、盤面変化監視用のuseEffectが自分の番になった
+    // 🐱 この局面の分析は、盤面変化監視用のuseEffectが自分の番になった
     //    瞬間に既に計算・記録済みのはず。ここで改めて計算する必要はない。
-
-    try {
-      const { error } = await supabase.rpc("resign", {
-        p_match_id: matchId,
-      });
-
-      if (error) {
-        console.error("投了送信失敗:", error);
-        clock.unfreeze(myColor); // 失敗したら自分の番に戻す
-      }
-    } catch (e) {
-      console.error("投了送信で例外発生:", e);
-      clock.unfreeze(myColor); // 例外でも自分の番に戻す
+    const sent = send({ type: "resign" });
+    if (!sent) {
+      console.error("投了送信失敗: 接続が切れている");
+      clock.unfreeze(myColor); // 失敗したら自分の番に戻す
     }
   };
 
@@ -320,19 +287,41 @@ export const useMatchSession = ({
   // 🌟 ===================================== チャンネル系 =====================================
   // =========================================================================================
 
-  // gameチャンネルからmoveイベントが来た時に行われる処理
-  const gameCh_move = async (payload: any) => {
+  // つないだ直後に届く「最新の盤面と時計」
+  const gameCh_state = (msg: any) => {
     if (isGameEnded) return;
-    const data = payload.payload ?? payload;
+
+    const serverMoves: Grid[] = msg.moves ?? [];
+    const serverTurn = toColor(msg.turn);
+
+    // 🕐 時計:サーバーの残り時間は「最後の手を打った時点」のもの。
+    //    つなぎ直した場合に備えて、いま手番の人の分は、経過時間を引く。
+    //    (status の文字列 "playing" は未確認。違っていても、引かないだけで壊れない)
+    let blackSeconds = Number(msg.black_seconds);
+    let whiteSeconds = Number(msg.white_seconds);
+    if (msg.status === "playing") {
+      const elapsed = Math.floor(Number(msg.turn_elapsed_ms ?? 0) / 1000);
+      if (serverTurn === BLACK) {
+        blackSeconds = Math.max(0, blackSeconds - elapsed);
+      } else {
+        whiteSeconds = Math.max(0, whiteSeconds - elapsed);
+      }
+    }
+    clock.syncSecondsFromServer(blackSeconds, whiteSeconds);
+
+    // 🥶 ダブルパス後の集計待ち(pending)なら、止めたまま。サーバーが30秒で決めてくれる
+    if (msg.status === "pending") return;
+
+    handleServerSync(serverMoves, serverTurn);
+  };
+
+  // 手が届いたとき
+  const gameCh_move = async (data: any) => {
+    if (isGameEnded) return;
     const move: number = data.move;
     const moveCount: number = data.move_count;
     // 🌟サーバが教えてくれる「この手の後、誰の番か」を絶対の正とする。
-    //   複数端末で同じアカウントを開いていても、これさえ信じれば
-    //   「今受け取った手は誰の手か」「次は誰の番か」を自分視点の
-    //   思い込み(常に相手の手のはず)なしに正しく判定できる。
-    //   data.turnはDB由来の文字列('black'/'white')なので、
-    //   アプリ内部の数値Colorに変換してから使う。
-    const nextTurn: Color = stringToColor(data.turn);
+    const nextTurn: Color = toColor(data.turn);
     const moverColor: Color = getOppositeColor(nextTurn);
 
     clock.syncSecondsFromServer(
@@ -340,40 +329,38 @@ export const useMatchSession = ({
       Number(data.white_seconds),
     );
 
-    const isNewMove = moveCount === goBoard.movesRef.current.length + 1;
+    const localCount = goBoard.movesRef.current.length;
+    const isNewMove = moveCount === localCount + 1;
 
     if (isNewMove) {
       goBoard.applyTrustedMove(move, moverColor);
       isSubmittingRef.current = false;
 
-      // 相手の手を受信(相手のadd_move)したタイミングでハートビートタイマーをリセット
-      clock.resetHeartbeat();
-
       // 🐱 この手を受けて自分の番になった局面の分析は、盤面変化監視用の
       //    useEffectが自動的に発火して記録してくれるので、ここでは呼ばない。
 
-      const moves = goBoard.movesRef.current;
-      const isDoublePass = endsWithDoublePass(moves);
+      const isDoublePass = endsWithDoublePass(goBoard.movesRef.current);
 
       if (isDoublePass) {
         clock.freeze(); // 🥶 集計待ちの間、誰の番でもない
       } else {
-        // 🌟myColor決め打ちではなく、サーバが返した次の手番をそのまま採用する。
         clock.unfreeze(nextTurn);
       }
+    } else if (moveCount > localCount + 1) {
+      // 🐱 2手以上先の手が来た = どこかで取りこぼした。つなぎ直して、最新の盤面をもらう
+      console.warn("[gameCh_move] 手の取りこぼしを検出。つなぎ直します");
+      reconnect();
     }
   };
 
-  // gameチャンネルからdouble_passイベントが来た時に行われる処理
-  const gameCh_double_pass = async (payload: any) => {
+  // ダブルパスになったとき
+  const gameCh_double_pass = async (_msg: any) => {
     if (isGameEnded) return;
     setLoading(true);
 
     try {
-      // 🌟直前の付箋が、ちょうど「このダブルパス直前の局面」を指して
-      //   いれば(=間に取りこぼしや余計な手が挟まっていなければ)、
-      //   パスは盤面を変えないので、使い回し候補として渡す。
-      //   ズレていればundefinedになり、新規に推論される。
+      // 🌟直前の付箋が、ちょうど「このダブルパス直前の局面」を指していれば、
+      //   使い回し候補として渡す。ズレていればundefinedになり、新規に推論される。
       const precomputedAnalysis = liveAnalysis.getCachedAnalysis(
         goBoard.movesRef.current.length - 1,
       );
@@ -386,10 +373,7 @@ export const useMatchSession = ({
         precomputedAnalysis,
       );
 
-      // 🐱 これが「最後の1手を打った後の局面」の解析結果そのものなので、
-      //    perMove[totalMoves]として記録する。これで最後の1手も評価できる。
-      //    手の並びは連続パスで終わっているので、ここで確定した局面として
-      //    仕上げられ、仕上げ済みのエントリが返ってくる。
+      // 🐱 これが「最後の1手を打った後の局面」の解析結果そのもの。
       const entry = liveAnalysis.record(
         goBoard.movesRef.current.length,
         analysis,
@@ -405,31 +389,23 @@ export const useMatchSession = ({
       );
       finalTerritoryBoardRef.current = territoryBoard;
 
-      // 🌟死に石(p_dead_stones)はもう送らない。サーバー側は引数の既定値('{}')で動く。
-      const { data, error } = await supabase.rpc("submit_match_result", {
-        p_match_id: matchId,
-        p_result: result,
-      });
-
-      if (error) {
-        console.error("result提出失敗:", error);
-        setLoading(false); // 🥶 失敗時は「読み込み中」表示のまま固まらないよう解除
+      const sent = send({ type: "submit_result", result });
+      if (!sent) {
+        console.error("result提出失敗: 接続が切れている");
+        setLoading(false); // 🥶 固まらないよう解除
         return;
       }
-
-      if (data) console.log("result提出成功:", data);
       // 🥶 成功時はここでloadingを解除しない。実際の終局処理は
-      // gameCh_rating_updated の data.result 受信時に setLoading(false) される想定のため。
+      // gameCh_rating_updated(または保険のonFinished)で setLoading(false) される。
     } catch (e) {
       console.error("ダブルパス処理で例外発生:", e);
       setLoading(false); // 🥶 例外時も同様に固まらないよう解除
     }
   };
 
-  // gameチャンネルからrating_updatedイベントが来た時に行われる処理
-  const gameCh_rating_updated = async (payload: any) => {
-    const data = payload.payload ?? payload;
-    if (!data) return;
+  // 成績が更新されたとき(終局の知らせ。onFinished の保険も、ここに合流する)
+  const gameCh_rating_updated = async (data: any) => {
+    if (!data || endHandledRef.current) return;
 
     const myData = myColor === BLACK ? data.black : data.white;
 
@@ -451,8 +427,10 @@ export const useMatchSession = ({
         updateProfile(profilePatch);
       }
     }
-    // 2026/09/23
+
     if (data.result) {
+      endHandledRef.current = true; // 🏁 終局の処理は、1回だけ
+
       // 🐱 終局の地の盤面は、ダブルパス処理で仕上げ済みのエントリから作ってある。
       //    (投了など、ダブルパス処理を通っていない終局では、地は出さない)
       if (finalTerritoryBoardRef.current) {
@@ -466,8 +444,6 @@ export const useMatchSession = ({
       );
 
       // 🐱 裏で溜め続けた分析結果を、この時点で確定させてstateに移す。
-      //    浮いてる背景分析(投了時は特に、間に合ってない可能性がある)が
-      //    あれば、それが終わるまで待ってからスナップショットを取る。
       await liveAnalysis.waitForPending();
       setLiveAnalysisResult(liveAnalysis.getRecordAnalysis());
 
@@ -479,16 +455,25 @@ export const useMatchSession = ({
     }
   };
 
-  // 🌟🌟🌟ここでチャンネルに登録し、そして万が一の時のreconnect関数も受け取っている。
-  // ここでuseGameChannelを呼ぶと、useGameChannelはチャンネル名とかイベント名を用意して内部でuseRealtimeChannelを呼ぶ。
-  // そしてuseRealtimeChannelが実際にsupabaseとリアルタイム通信する。
-  // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
-  const { reconnect } = useGameChannel(
+  // 部屋からのエラー
+  const gameCh_error = (msg: any, fatal: boolean) => {
+    console.error("対局の部屋のエラー:", msg.error);
+    setLoading(false);
+    if (fatal || isGameEnded) return;
+    // 🐱 理由のわからないエラーは、つなぎ直して、サーバーの最新の盤面に合わせる
+    reconnect();
+  };
+
+  // 🌟🌟🌟ここで対局の部屋につなぐ。send(送る)と、reconnect(つなぎ直す)を受け取る。
+  const { send, reconnect } = useGameChannel(
     matchId,
     {
+      onState: gameCh_state,
       onMove: gameCh_move,
       onDoublePass: gameCh_double_pass,
       onRatingUpdated: gameCh_rating_updated,
+      onFinished: (result) => gameCh_rating_updated({ result }),
+      onError: gameCh_error,
     },
     !isGameEnded,
   );

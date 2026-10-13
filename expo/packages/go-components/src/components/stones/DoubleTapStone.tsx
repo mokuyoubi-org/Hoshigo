@@ -11,7 +11,7 @@ type Props = {
   whiteStoneColor: ColorValue;
 };
 
-// 🐱 React.memo で囲って無駄な再描画を防ぐ
+// memo で囲って無駄な再描画を防ぐ
 export const DoubleTapStone = memo(
   ({ stoneSize, playerColor, blackStoneColor, whiteStoneColor }: Props) => {
     // ボーダーの色を決定する

@@ -97,7 +97,7 @@ export class KataGoBinModelParser {
     if (absEnd > this.data.buffer.byteLength)
       throw new Error("Unexpected EOF while reading binary floats");
 
-    // React Native では ArrayBuffer.slice が動かないため、コピーで対処
+    // ReactNative では ArrayBuffer.slice が動かないため、コピーで対処
     const result = new Float32Array(count);
     const view = new DataView(this.data.buffer, absStart, byteLen);
     for (let i = 0; i < count; i++) {

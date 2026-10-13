@@ -2,7 +2,7 @@
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { isValidEmail } from "@/src/logics/format/validationLogics";
 import { authClient } from "@/src/services/auth/auth-client";
-import { useState } from "react";
+import { useState, RefObject } from "react";
 import { TurnstileHandle } from "turnstile-widget";
 import { useProfileSync } from "../rpc/useProfileSync";
 
@@ -10,7 +10,7 @@ export type Step = "email" | "otp";
 
 type Props = {
   onClose: () => void;
-  turnstileRef?: React.RefObject<TurnstileHandle | null>;
+  turnstileRef?: RefObject<TurnstileHandle | null>;
 };
 
 export const useLoginModal = ({ onClose, turnstileRef }: Props) => {

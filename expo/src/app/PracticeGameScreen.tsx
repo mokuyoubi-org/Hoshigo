@@ -369,17 +369,17 @@ const PracticeGameScreenContent = ({
     if (!isGameEnded) return;
 
     const record = buildRecordFromMatch({
-      matchId: 0, // 適当
+      matchId: "", // 適当
       boardSize,
       matchType,
       moves: movesRef.current,
       result: resultRaw,
-      blackUid: blackPlayer.uid,
+      blackUid: blackPlayer.uid ?? "",
       blackUsername: blackPlayer.username,
       blackIconIndex: blackPlayer.iconIndex,
       blackRankIndex: ratingToRankIndex(blackPlayer.rating),
       blackRating: blackPlayer.rating,
-      whiteUid: whitePlayer.uid,
+      whiteUid: whitePlayer.uid ?? "",
       whiteUsername: whitePlayer.username,
       whiteIconIndex: whitePlayer.iconIndex,
       whiteRankIndex: ratingToRankIndex(whitePlayer.rating),

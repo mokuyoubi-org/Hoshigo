@@ -1,7 +1,7 @@
 // RuleItem.tsx
 
 import { MyText } from "@/src/components/common/MyText";
-import React from "react";
+import { ReactNode } from "react";
 import { TouchableOpacity, View } from "react-native";
 
 export type RuleSection = {
@@ -15,7 +15,7 @@ type Props = {
   description?: string;
   // サブタイトルと説明のセットを配列で渡せるようにする
   sections?: RuleSection[];
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export const RuleItem = ({ title, description, sections, children }: Props) => {

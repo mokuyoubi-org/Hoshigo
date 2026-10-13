@@ -1,13 +1,13 @@
 // ScreenHeader.tsx
 
-import React from "react";
+import { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 
 type Props = {
-  left?: React.ReactNode;
-  right?: React.ReactNode;
+  left?: ReactNode;
+  right?: ReactNode;
   // children でも right でもどちらでも受け取れるようにしておくと便利
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 /**

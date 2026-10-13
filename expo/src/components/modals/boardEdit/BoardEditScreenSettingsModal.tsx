@@ -7,7 +7,6 @@ import { useTranslation } from "@/src/i18n/LangProvider";
 import { Feather } from "@expo/vector-icons";
 import { BoardSize } from "go-core";
 import { useKVStorage } from "kv-store";
-import React from "react";
 import { ScrollView, useWindowDimensions, View } from "react-native";
 import { Divider, IconButton, ModalShell, ToggleSwitch } from "ui-atoms";
 

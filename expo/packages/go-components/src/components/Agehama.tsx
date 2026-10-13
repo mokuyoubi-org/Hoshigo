@@ -1,6 +1,5 @@
 // Agehama.tsx
 
-import React from "react";
 import { ColorValue, StyleSheet, Text } from "react-native";
 
 type Props = {

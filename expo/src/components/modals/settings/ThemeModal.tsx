@@ -5,7 +5,7 @@ import { useColors, useThemeMode } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { ThemeMode } from "@/src/types/theme";
 import { Feather, FontAwesome } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { Divider, ModalShell } from "ui-atoms";
 
@@ -86,7 +86,7 @@ export const ThemeModal = ({ onClose }: Props) => {
           const isPending = pendingMode === option.mode;
 
           return (
-            <React.Fragment key={option.mode}>
+            <Fragment key={option.mode}>
               {index > 0 && (
                 <Divider backgroundColor={colors.backgroundStrong} />
               )}
@@ -125,7 +125,7 @@ export const ThemeModal = ({ onClose }: Props) => {
                   </View>
                 )}
               </TouchableOpacity>
-            </React.Fragment>
+            </Fragment>
           );
         })}
       </View>

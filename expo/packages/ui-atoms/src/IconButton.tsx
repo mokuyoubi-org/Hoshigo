@@ -1,6 +1,6 @@
 // IconButton.tsx
 
-import React from "react";
+import { cloneElement, ReactElement } from "react";
 import {
   StyleSheet,
   TouchableOpacity,
@@ -8,7 +8,7 @@ import {
 } from "react-native";
 
 type Props = TouchableOpacityProps & {
-  icon: React.ReactElement<{ size?: number; color?: string }>;
+  icon: ReactElement<{ size?: number; color?: string }>;
   iconColor: string;
   borderColor: string;
   backgroundColor: string;
@@ -38,7 +38,7 @@ export const IconButton = ({
       activeOpacity={activeOpacity}
       {...props}
     >
-      {React.cloneElement(icon, {
+      {cloneElement(icon, {
         size: 28,
         color: iconColor,
       })}

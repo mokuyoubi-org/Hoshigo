@@ -36,9 +36,12 @@ export const parseGameParams = (params: Partial<GameScreenParams>) => {
   }
 
   // 2. 数値変換も undefined の時は 0 に落とし込む
-  const matchId = Number(params.matchId ?? 0);
+  const matchId = params.matchId ?? "";
   const matchType = Number(params.matchType ?? 0) as MatchType;
-  const myColor: Color = params.myColor === "black" ? BLACK : WHITE;
+  const myColor: Color =
+    params.myColor === "black" || params.myColor === String(BLACK)
+      ? BLACK
+      : WHITE;
   const oppColor: Color = myColor === WHITE ? BLACK : WHITE;
   const boardSize = Number(params.boardSize ?? 9) as BoardSize;
   const botMatch = params.botMatch === "true";

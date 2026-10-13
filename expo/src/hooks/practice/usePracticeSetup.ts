@@ -9,7 +9,6 @@ import {
   BOT_STATS,
   BOT_USERNAMES,
   BotUsername,
-  getBotProfile,
 } from "@/src/constants/botProfiles";
 import { PlayerType } from "@/src/types/player";
 import { BoardSize, MatchType } from "go-core";
@@ -118,7 +117,6 @@ export const usePracticeSetup = ({
       setBlackPlayer({
         ...blackPlayer,
         rating: BOT_STATS[botUsername]?.ratingByBoardSize[size] ?? 0,
-        uid: getBotProfile(botUsername, size).uid,
       });
     }
 
@@ -128,7 +126,6 @@ export const usePracticeSetup = ({
       setWhitePlayer({
         ...whitePlayer,
         rating: BOT_STATS[botUsername]?.ratingByBoardSize[size] ?? 0,
-        uid: getBotProfile(botUsername, size).uid,
       });
     }
   };
@@ -158,7 +155,6 @@ export const usePracticeSetup = ({
         username: botUsername,
         rating: BOT_STATS[botUsername]?.ratingByBoardSize[boardSize] ?? 0,
         iconIndex: BOT_STATS[botUsername]?.iconIndex ?? 0,
-        uid: getBotProfile(botUsername, boardSize).uid,
       };
       return {
         player,

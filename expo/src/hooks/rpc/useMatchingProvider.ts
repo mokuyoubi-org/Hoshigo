@@ -1,25 +1,21 @@
 // useMatchingProvider.ts
-// 2026/10/03: 対局数上限検知追加
+// 2026/10/12: Cloudflare版(WebSocketの待機列)へ付け替え
 // マッチングの状態管理と、開始/キャンセル処理のロジック本体。
 // MatchingContext.tsx から呼ばれる想定。
+//
+// 流れ:待機列のトランシーバー(/ws/queue/:boardSize)をつなぐ
+//   → サーバーが組んでくれたら "matched" が届く → 対局画面へ
+//   → すでに対局中なら "resume" が届く → 対局画面へ復帰
 import { useProfile } from "@/src/contexts/ProfileContexts";
-import {
-  cancelWaitlistRPC,
-  formatPlayingParams,
-  joinWaitlistRPC,
-} from "@/src/logics/rpc/matchingRPC";
-import { supabase } from "@/src/services/supabase/supabase";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { formatPlayingParams } from "@/src/logics/rpc/matchingRPC";
+import { connectWs, WsConnection } from "@/src/services/api/ws";
 import { router } from "expo-router";
 import { BoardSize } from "go-core";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const useMatchingProvider = (
-  // モーダル表示などのUI関心事はこの呼び出し元(コンポーネント層)の責務にする。
-  // phaseを渡すことで、「未DL」なのか「DL中/ウォームアップ中」なのかを
-  // 呼び出し元が区別して表示を出し分けられるようにする(readyのときは呼ばれない)。
   // 匿名ユーザが、その盤面の1日の対局数の上限に達していて、
-  // サーバ(join_waitlist)に待機列への追加を断られた瞬間に呼ばれる。
+  // サーバに待機列への追加を断られた瞬間に呼ばれる。
   // 「ログインしてください」モーダルなどのUI関心事は、呼び出し元の責務にする。
   onDailyLimitReached: () => void,
 ) => {
@@ -28,131 +24,134 @@ export const useMatchingProvider = (
     null,
   );
   const { uid } = useProfile();
-  const userChannelRef = useRef<RealtimeChannel | null>(null);
+  const connectionRef = useRef<WsConnection | null>(null);
+
+  // 「何回目の挑戦か」の番号札。つなぐ途中でキャンセルされたり、
+  // 終わったあとに遅れて届いたメッセージを、無視するために使う。
+  const attemptRef = useRef(0);
 
   // 🔒公開しない
-  const unsubscribeUserChannel = useCallback(() => {
-    if (userChannelRef.current) {
-      console.log("🐱 userChannel を切断した");
-      supabase.removeChannel(userChannelRef.current);
-      userChannelRef.current = null;
+  const closeConnection = useCallback(() => {
+    if (connectionRef.current) {
+      console.log("🐱 待機列の接続を切断した");
+      connectionRef.current.close();
+      connectionRef.current = null;
     }
   }, []);
+
+  // 🔒公開しない:マッチングを終わらせて、元の状態に戻す
+  const finish = useCallback(() => {
+    attemptRef.current += 1; // これ以降に届くものは、全部無視
+    closeConnection();
+    setIsMatching(false);
+    setMatchingBoardSize(null);
+  }, [closeConnection]);
+
+  // 画面ごと消えるときは、トランシーバーを切っておく
+  useEffect(() => {
+    return () => {
+      attemptRef.current += 1;
+      closeConnection();
+    };
+  }, [closeConnection]);
 
   // マッチング開始！
   const startMatching = async (boardSize: BoardSize) => {
     // 🛡️ガード
     if (isMatching || !uid) return;
 
-    // 🐱 連打対策も兼ねて、フェッチより先にフラグを立てておく
+    // 🐱 連打対策も兼ねて、つなぐより先にフラグを立てておく
     setIsMatching(true);
     setMatchingBoardSize(boardSize);
 
-    unsubscribeUserChannel(); // 開始前に古い接続があれば切る
+    closeConnection(); // 開始前に古い接続があれば切る
+    const myAttempt = ++attemptRef.current;
 
     console.log("🐱 マッチング開始！");
 
-    const userChannel = supabase.channel(`user:${uid}`);
-    userChannelRef.current = userChannel;
+    try {
+      const conn = await connectWs(`/ws/queue/${boardSize}`, {
+        onMessage: (msg) => {
+          if (attemptRef.current !== myAttempt) return;
 
-    // 🐱 1. まずイベントを受け取る準備を書く
-    userChannel.on("broadcast", { event: "matched" }, (payload) => {
-      // サブスク通知が届いた時の処理
-      const data = payload.payload ?? payload;
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
+          switch (msg.type) {
+            case "queued":
+              // 順番待ちの列に入れた。あとは、待つだけ
+              console.log("🐱 待機列に入った");
+              break;
 
-      console.log("[MatchingContext]data: ", data);
+            case "matched":
+            case "resume": {
+              // matched = 新しい対局が決まった / resume = すでに対局中なので復帰
+              console.log(`🐱 ${msg.type}:`, msg.match);
+              finish();
+              setTimeout(() => {
+                router.replace({
+                  pathname: "/GameScreen",
+                  params: formatPlayingParams(msg.match),
+                });
+              }, 0);
+              break;
+            }
 
-      setTimeout(() => {
-        // 通常の対局開始
-        router.replace({
-          pathname: "/GameScreen",
-          params: formatPlayingParams(data),
-        });
-      }, 0);
-    });
+            case "canceled":
+              console.log("🐱 キャンセルできた");
+              finish();
+              break;
 
-    // 🐱 2. サブスクの接続完了を待って、状態を受け取る
-    const status = await new Promise<string>((resolve) => {
-      userChannel.subscribe((status) => {
-        resolve(status);
+            case "error":
+              finish();
+              // 🎫 1日の対局数の上限に達していた場合は、エラーログではなくUIに知らせる
+              if (msg.error?.code === "DAILY_PLAY_LIMIT_REACHED") {
+                console.log("🐱 1日の対局数の上限に達している");
+                onDailyLimitReached();
+              } else {
+                // メンテナンス・バージョン不足は、ws.ts がもう知らせている
+                console.error("待機列のエラー:", msg.error);
+              }
+              break;
+          }
+        },
+
+        onClose: () => {
+          // 自分で閉じたとき・終わったあとは、番号札が変わっているので無視される。
+          // ここに来るのは、「待っている途中で、回線が切れた」ときだけ
+          if (attemptRef.current !== myAttempt) return;
+          console.log("🐱 待機列の接続が、途中で切れた");
+          finish();
+        },
       });
-    });
 
-    // 🐱 3. もしサブスクが失敗したら、安全にキャンセルして終わる
-    if (status !== "SUBSCRIBED") {
-      if (status !== "CLOSED") {
-        console.error("🐱 サブスクの接続に失敗… status:", status);
-      } else {
-        console.log("🐱 接続中にキャンセルされた");
-      }
-
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
-      return;
-    }
-
-    console.log("userチャンネル接続OK!join_waitlistを呼びます");
-
-    const { data, error } = await joinWaitlistRPC(boardSize);
-
-    // エラーだった場合全部取りやめ
-    if (error) {
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
-
-      // 🎫 1日の対局数の上限に達していた場合は、エラーログではなくUIに知らせる
-      if (error.message?.includes("daily_play_limit_reached")) {
-        console.log("🐱 1日の対局数の上限に達している");
-        onDailyLimitReached();
+      // つなぐ途中でキャンセルされていたら、つながった接続は、すぐ切る
+      if (attemptRef.current !== myAttempt) {
+        conn.close();
         return;
       }
 
-      console.error("join_waitlist error:", error);
-      return;
-    }
-
-    // 🐱 返ってきたレスポンスを整理（合体対応）
-    // dataが古い形式(直接matchオブジェクト)の場合と新しい形式(オブジェクト包み)の両方に対応
-    const matchData = data?.match ?? (data?.match_id ? data : null);
-
-    // 🐱 すでに対局中でデータが返ってきたら、即座に対局画面へ復帰！
-    if (matchData) {
-      unsubscribeUserChannel();
-      setIsMatching(false);
-      setMatchingBoardSize(null);
-
-      setTimeout(() => {
-        // 接続復帰
-        router.replace({
-          pathname: "/GameScreen",
-          params: formatPlayingParams(matchData),
-        });
-      }, 0);
+      connectionRef.current = conn;
+    } catch (e) {
+      // つなげなかった。キャンセル済みなら、何もしない
+      if (attemptRef.current !== myAttempt) return;
+      console.error("待機列につなげなかった:", e);
+      finish();
     }
   };
 
   // キャンセルボタン押した
-  const cancelMatching = async () => {
-    const { data } = await cancelWaitlistRPC();
+  const cancelMatching = () => {
+    const conn = connectionRef.current;
 
-    unsubscribeUserChannel();
+    if (conn) {
+      // 🐱 サーバーに「やめます」と伝える。返事("canceled")が届いたら、finish() される。
+      //    もし、ちょうど対局が決まっていたら、"matched" のほうが届いて、そのまま対局画面へ行く
+      conn.send({ type: "cancel" });
+      return;
+    }
+
+    // まだつなぎ中だった場合:番号札を変えて、つながった瞬間に切られるようにする
+    attemptRef.current += 1;
     setIsMatching(false);
     setMatchingBoardSize(null);
-
-    if (data) {
-      // キャンセルボタン効かなかった
-      setTimeout(() => {
-        router.replace({
-          pathname: "/GameScreen",
-          params: formatPlayingParams(data),
-        });
-      }, 0);
-    }
   };
 
   return {

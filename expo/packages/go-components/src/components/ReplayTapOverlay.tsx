@@ -1,4 +1,3 @@
-import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 // 🐱 ② 左右タップ用オーバーレイのコンポーネント（GoBoardの中に閉じ込める）

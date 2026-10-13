@@ -77,3 +77,20 @@ export const getEntryForIndex = (
   if (moveIndex < 0) return null;
   return analysis.perMove[moveIndex] ?? null;
 };
+
+
+// サーバーへ送る形(整数だけ・黒視点)に直す。
+// ownership は ×100(-100〜100)、score_lead は ×10、win_rate は ×1000。
+// 仕上げ済みのエントリ(終局局面はgoscorerの値)から作る。
+// win_rate だけは、エントリだと整数%に丸められて粗いので、KataGoの生の値から作る。
+const clampInt = (n: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, Math.round(n)));
+
+export const toServerAnalysis = (
+  entry: MoveAnalysisEntry,
+  rawWinRate: number,
+) => ({
+  ownership: entry.ownership.map((v) => clampInt(v * 100, -100, 100)),
+  score_lead: Math.round(entry.scoreLead * 10),
+  win_rate: clampInt(rawWinRate * 1000, 0, 1000),
+});

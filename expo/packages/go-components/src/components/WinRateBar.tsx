@@ -1,6 +1,6 @@
 // WinRateBar.tsx
 
-import React from "react";
+import { memo } from "react";
 import { ColorValue, StyleSheet, Text, View } from "react-native";
 
 type Props = {
@@ -13,44 +13,46 @@ type Props = {
   fontFamily: string;
 };
 
-export const WinRateBar = React.memo(({
-  leftPct,
-  rightPct,
-  leftBarColor,
-  rightBarColor,
-  leftNumberColor,
-  rightNumberColor,
-  fontFamily,
-}: Props) => {
-  const fontStyle = fontFamily ? { fontFamily } : null;
-  return (
-    <View style={styles.container}>
-      {/* 左のバー */}
-      <View
-        style={{
-          width: `${leftPct}%`,
-          backgroundColor: leftBarColor,
-        }}
-      />
-      {/* 右のバー */}
-      <View
-        style={{
-          width: `${rightPct}%`,
-          backgroundColor: rightBarColor,
-        }}
-      />
-      {/* 数字のレイヤー（バーの上に重ねる） */}
-      <View style={styles.overlay}>
-        <Text style={[styles.text, { color: leftNumberColor }, fontStyle]}>
-          {leftPct}%
-        </Text>
-        <Text style={[styles.text, { color: rightNumberColor }, fontStyle]}>
-          {rightPct}%
-        </Text>
+export const WinRateBar = memo(
+  ({
+    leftPct,
+    rightPct,
+    leftBarColor,
+    rightBarColor,
+    leftNumberColor,
+    rightNumberColor,
+    fontFamily,
+  }: Props) => {
+    const fontStyle = fontFamily ? { fontFamily } : null;
+    return (
+      <View style={styles.container}>
+        {/* 左のバー */}
+        <View
+          style={{
+            width: `${leftPct}%`,
+            backgroundColor: leftBarColor,
+          }}
+        />
+        {/* 右のバー */}
+        <View
+          style={{
+            width: `${rightPct}%`,
+            backgroundColor: rightBarColor,
+          }}
+        />
+        {/* 数字のレイヤー（バーの上に重ねる） */}
+        <View style={styles.overlay}>
+          <Text style={[styles.text, { color: leftNumberColor }, fontStyle]}>
+            {leftPct}%
+          </Text>
+          <Text style={[styles.text, { color: rightNumberColor }, fontStyle]}>
+            {rightPct}%
+          </Text>
+        </View>
       </View>
-    </View>
-  );
-});
+    );
+  },
+);
 
 WinRateBar.displayName = "WinRateBar";
 

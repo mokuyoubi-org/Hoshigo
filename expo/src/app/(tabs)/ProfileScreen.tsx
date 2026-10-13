@@ -7,8 +7,8 @@ import { MixedText } from "@/src/components/common/MixedText";
 import { MyText } from "@/src/components/common/MyText";
 import IconSelectModal from "@/src/components/modals/profile/IconSelectModal";
 import RankInfoModal from "@/src/components/modals/profile/RankInfoModal";
-import { LoginModal } from "@/src/components/modals/settings/LoginModal";
 import UsernameEditModal from "@/src/components/modals/profile/UsernameEditModal";
+import { LoginModal } from "@/src/components/modals/settings/LoginModal";
 import { useMatching } from "@/src/contexts/MatchingContext";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useAppFont } from "@/src/hooks/common/useAppFont";
@@ -26,7 +26,6 @@ import {
 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {

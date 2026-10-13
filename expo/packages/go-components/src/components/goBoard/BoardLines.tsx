@@ -1,3 +1,5 @@
+// BoardLines.tsx
+
 import { memo } from "react";
 import { ColorValue, StyleSheet, View } from "react-native";
 
@@ -12,32 +14,32 @@ type Props = {
 export const BoardLines = memo(
   ({ boardSize, innerWidth, cellSize, lineWidth, lineColor }: Props) => (
     <View>
-      {Array.from({ length: boardSize }).map((_, i) => (
-        <React.Fragment key={`line-${i}`}>
-          <View
-            style={[
-              styles.line,
-              {
-                left: i * cellSize,
-                height: innerWidth,
-                width: lineWidth,
-                backgroundColor: lineColor,
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.line,
-              {
-                top: i * cellSize,
-                width: innerWidth,
-                height: lineWidth,
-                backgroundColor: lineColor,
-              },
-            ]}
-          />
-        </React.Fragment>
-      ))}
+      {Array.from({ length: boardSize }).flatMap((_, i) => [
+        <View
+          key={`v-line-${i}`}
+          style={[
+            styles.line,
+            {
+              left: i * cellSize,
+              height: innerWidth,
+              width: lineWidth,
+              backgroundColor: lineColor,
+            },
+          ]}
+        />,
+        <View
+          key={`h-line-${i}`}
+          style={[
+            styles.line,
+            {
+              top: i * cellSize,
+              width: innerWidth,
+              height: lineWidth,
+              backgroundColor: lineColor,
+            },
+          ]}
+        />,
+      ])}
     </View>
   ),
 );

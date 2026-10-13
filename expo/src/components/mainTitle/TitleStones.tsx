@@ -1,5 +1,4 @@
 import { useColors } from "@/src/hooks/common/useTheme";
-import React from "react";
 import { View } from "react-native";
 
 // ⚪️⚫️ 背景の重なる黒石と白石

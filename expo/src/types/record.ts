@@ -3,7 +3,7 @@
 import { BoardSize, MatchType, RecordAnalysis } from "go-core";
 
 export type RecordType = {
-  id: number;
+  id: string;
   black_uid: string;
   white_uid: string;
   created_at: string;

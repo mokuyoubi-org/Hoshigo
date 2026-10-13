@@ -15,7 +15,7 @@ const MAX_LIMIT = 50;
 
 export const recordsRoutes = new Hono<{ Bindings: AppEnv }>();
 
-// 棋譜の一覧(新しい順)。いまのSupabaseの get_records_older と、ほぼ同じ形で返す。
+// 棋譜の一覧(新しい順)rpc
 // 引数: p_uid(誰の棋譜か)、p_board_size、p_limit、p_before_id(前のページの、最後の棋譜のid)
 recordsRoutes.post("/get_records_older", async (c) => {
   // ログインしている人だけ(他の人の棋譜も、見られる)

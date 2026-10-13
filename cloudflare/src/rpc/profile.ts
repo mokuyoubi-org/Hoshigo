@@ -12,7 +12,7 @@ const BOARD_SIZES = [9, 13, 19] as const;
 
 type Db = ReturnType<typeof drizzle<typeof appSchema>>;
 
-// 6文字のランダムな名前(16進数)。いまのSupabaseの md5(random()) の6文字と同じ形。
+// 6文字のランダムな名前(16進数)
 function randomUsername(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(3));
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
@@ -60,7 +60,7 @@ export async function ensureProfile(db: Db, uid: string) {
 
 export const profileRoutes = new Hono<{ Bindings: AuthEnv }>();
 
-// いまのSupabaseの get_my_profile と、同じ名前・同じ形のJSONを返す。
+// rpc
 profileRoutes.post("/get_my_profile", async (c) => {
   const session = await createAuth(c.env).api.getSession({
     headers: c.req.raw.headers,

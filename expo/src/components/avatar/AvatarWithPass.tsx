@@ -5,7 +5,6 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { Pass } from "go-components";
 import { Color } from "go-core";
-import React from "react";
 import { View } from "react-native";
 import { Avatar } from "./Avatar";
 

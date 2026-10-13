@@ -2,7 +2,6 @@
 
 import { getAppFont } from "@/src/constants/fonts";
 import { useLang } from "@/src/i18n/LangProvider";
-import React from "react";
 import { Text, type TextProps } from "react-native";
 
 // 🅰️ アプリ標準の Text。言語に合わせたフォントが自動で入ります。

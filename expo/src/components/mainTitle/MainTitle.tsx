@@ -5,7 +5,6 @@ import { FONTS } from "@/src/constants/fonts";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useLang, useTranslation } from "@/src/i18n/LangProvider";
 import { useFonts } from "expo-font";
-import React from "react";
 import { useWindowDimensions, View } from "react-native";
 import { TITLE_BOX_WIDTH } from "./constants";
 import { resolveTitleConfig, toLangKey } from "./titleConfig";

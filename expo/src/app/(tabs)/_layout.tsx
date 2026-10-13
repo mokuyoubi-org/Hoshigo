@@ -6,16 +6,10 @@ import { useTranslation } from "@/src/i18n/LangProvider";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import { NavigationBar } from "expo-navigation-bar";
 import { Tabs } from "expo-router";
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
 import { Platform, Pressable, View } from "react-native";
 
-const TabIcon = ({
-  icon,
-  focused,
-}: {
-  icon: React.ReactNode;
-  focused: boolean;
-}) => {
+const TabIcon = ({ icon, focused }: { icon: ReactNode; focused: boolean }) => {
   return (
     <View className="items-center justify-center">
       {focused && (

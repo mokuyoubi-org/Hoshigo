@@ -7,23 +7,19 @@
 import { DailyLimitModal } from "@/src/components/modals/game/DailyLimitModal";
 import { useMatchingProvider } from "@/src/hooks/rpc/useMatchingProvider";
 import { BoardSize } from "go-core";
-import { createContext, useContext } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import { useOverlay } from "./OverlayContext";
 
 type MatchingContextType = {
   isMatching: boolean;
   matchingBoardSize: BoardSize | null;
   startMatching: (boardSize: BoardSize) => Promise<void>;
-  cancelMatching: () => Promise<void>;
+  cancelMatching: () => void;
 };
 
 export const MatchingContext = createContext<MatchingContextType | null>(null);
 
-export const MatchingProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const MatchingProvider = ({ children }: { children: ReactNode }) => {
   const { show } = useOverlay();
   const value = useMatchingProvider(() => show(<DailyLimitModal />));
 

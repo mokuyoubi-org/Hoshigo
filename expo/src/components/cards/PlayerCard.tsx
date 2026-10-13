@@ -10,7 +10,6 @@ import { secondsToMinutes } from "@/src/logics/format/timeFormatter";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
 import { Color } from "go-core";
-import React from "react";
 import { View } from "react-native";
 import { AvatarWithPass } from "../avatar/AvatarWithPass";
 

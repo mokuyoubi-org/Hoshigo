@@ -1,17 +1,17 @@
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
-import React from "react";
+import { Children, Fragment, ReactNode } from "react";
 import { View } from "react-native";
 import { Divider } from "ui-atoms";
 
 type Props = {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export const SettingsSection = ({ title, children }: Props) => {
   const colors = useColors();
-  const items = React.Children.toArray(children);
+  const items = Children.toArray(children);
 
   return (
     <View className="mb-6">
@@ -20,12 +20,12 @@ export const SettingsSection = ({ title, children }: Props) => {
       </MyText>
       <View className="bg-foreground rounded-xl border-2 border-backgroundStrong w-full overflow-hidden">
         {items.map((child, index) => (
-          <React.Fragment key={index}>
+          <Fragment key={index}>
             {child}
             {index < items.length - 1 && (
               <Divider backgroundColor={colors.backgroundStrong} />
             )}
-          </React.Fragment>
+          </Fragment>
         ))}
       </View>
     </View>

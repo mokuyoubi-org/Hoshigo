@@ -8,7 +8,6 @@
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ModalShell } from "ui-atoms";
 

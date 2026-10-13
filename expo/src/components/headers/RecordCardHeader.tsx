@@ -12,7 +12,7 @@ import {
 import { RecordType } from "@/src/types/record";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Color, MatchType } from "go-core";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { View } from "react-native";
 import { AvatarWithPass } from "../avatar/AvatarWithPass";
 
@@ -36,7 +36,7 @@ type Props = {
   currentIndex: number;
 };
 
-export const RecordCardHeader = React.memo(
+export const RecordCardHeader = memo(
   ({
     record,
     leftPlayer,

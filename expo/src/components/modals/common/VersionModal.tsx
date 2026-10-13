@@ -6,7 +6,6 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
-import React from "react";
 import { View } from "react-native";
 import { Divider, ModalShell } from "ui-atoms";
 

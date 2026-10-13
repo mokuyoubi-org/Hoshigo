@@ -4,7 +4,7 @@ import { RecordType } from "@/src/types/record";
 import { BoardSize, MatchType, RecordAnalysis } from "go-core";
 
 type BuildRecordArgs = {
-  matchId: number;
+  matchId: string;
   boardSize: BoardSize;
   matchType: MatchType;
   moves: number[];

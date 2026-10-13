@@ -2,7 +2,7 @@
 
 import { ratingToRankIndex } from "./rating";
 
-// ボットの対戦表(いまのSupabaseの bot_config を、そのまま写した)。
+// ボットの対戦表。
 // 盤面ごとに、ランク(0 = 10k 〜 17 = 8D)の行があって、
 // [bot1, bot2, bot3] の match_type が入っている。null は、そのランクには出ないボット。
 // match_type: 0 = 互先(白黒ランダム)、1 = コミ落ち、2以上 = 置き石の数(25 は 25子)
