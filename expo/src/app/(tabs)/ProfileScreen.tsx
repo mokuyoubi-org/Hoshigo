@@ -83,7 +83,7 @@ export default function ProfileScreen() {
             backgroundColor={colors.foreground}
             borderColor={colors.backgroundStrong}
             onPress={() => {
-              router.push({ pathname: "/DebugScreen" });
+              router.push({ pathname: "/SettingsScreen" });
             }}
           />
         </ScreenHeader>

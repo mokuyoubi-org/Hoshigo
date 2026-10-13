@@ -11,7 +11,7 @@ import LoadingModal from "@/src/components/modals/common/LoadingModal";
 import { GameScreenSettingsModal } from "@/src/components/modals/game/GameScreenSettingsModal";
 import { GameStartModal } from "@/src/components/modals/game/GameStartModal";
 import { PassConfirmModal } from "@/src/components/modals/game/PassConfirmModal";
-import { PracticeSetupModal } from "@/src/components/modals/practice/PracticeSetupModal";
+import { PracticeSetupModal } from "@/src/components/modals/game/PracticeSetupModal";
 import { GameResultModal } from "@/src/components/modals/result/GameResultModal";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useProfile } from "@/src/contexts/ProfileContexts";
@@ -38,7 +38,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScreenHeader } from "ui-atoms";
-import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
 import { getOwnershipTerritoryBoard } from "../logics/game/ownershipTerritory";
 import {
   parseAnalysisParam,
@@ -341,8 +340,6 @@ const PracticeGameScreenContent = ({
     : isPlayerBlack
       ? blackWins
       : !blackWins;
-
-  useBlurActiveElement();
 
   // 🐱 対局開始時の挨拶モーダル
   useEffect(() => {

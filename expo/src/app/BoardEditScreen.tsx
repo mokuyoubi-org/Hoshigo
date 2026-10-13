@@ -31,7 +31,7 @@ import {
   ScoreLeadReplayControls,
 } from "go-components";
 import { BLACK, TerritoryBoard, WHITE } from "go-core";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   ActivityIndicator,
   TouchableOpacity,
@@ -59,7 +59,6 @@ const LAYOUT_CONFIG = {
 export default function BoardEditScreen() {
   // 🐱 matchId と initialRecord の両方を受け取れるようにする
   const {
-    matchId,
     recordParam,
     from,
     resultComment,
@@ -72,7 +71,6 @@ export default function BoardEditScreen() {
     giantKillingBonus,
     whiteRotation,
   } = useLocalSearchParams<{
-    matchId?: string;
     recordParam?: string;
     from: FromType;
     resultComment?: string;
@@ -86,69 +84,23 @@ export default function BoardEditScreen() {
     whiteRotation?: string;
   }>();
 
-  const [record, setRecord] = useState<RecordType | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // 棋譜の本体(JSON文字列)をパラメータでもらって、パースして使う。
+  // 持っている値から作れるので、stateではなくuseMemoにする
+  const record = useMemo<RecordType | null>(() => {
+    if (!recordParam) return null;
+    try {
+      return JSON.parse(recordParam) as RecordType;
+    } catch (e) {
+      console.error("Failed to parse record:", e);
+      return null;
+    }
+  }, [recordParam]);
 
   useBlurActiveElement();
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadRecord = async () => {
-      try {
-        setIsLoading(true);
-
-        // 1. 本体（JSON文字列）が渡されていればパースしてそのまま使う
-        if (recordParam) {
-          const parsed = JSON.parse(recordParam) as RecordType;
-          if (isMounted) {
-            setRecord(parsed);
-            setIsLoading(false);
-          }
-          return;
-        }
-
-        // 2. 本体がなくて matchId だけあるなら DB から取ってくる
-        // if (matchId) {
-        //   const targetId = Number(matchId);
-        //   if (!isNaN(targetId)) {
-        //     const data = await recordsRepo.getById(targetId);
-        //     if (isMounted) setRecord(data);
-        //   }
-        // }
-      } catch (e) {
-        console.error("Failed to load record:", e);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    loadRecord();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [matchId, recordParam]);
-
-  // 🔔 matchId経由(DB由来)のときだけ、他の場所での書き込みに気づいて取り直す
-  // useEffect(() => {
-  //   if (!matchId) return;
-  //   const targetId = Number(matchId);
-  //   if (isNaN(targetId)) return;
-
-  //   return subscribeToRecordsChange(() => {
-  //     recordsRepo.getById(targetId).then((data) => {
-  //       if (data) setRecord(data);
-  //     });
-  //   });
-  // }, [matchId]);
-
-  if (isLoading || !record) {
+  if (!record) {
     return (
-      <SafeAreaView className="flex-1 bg-background justify-center items-center">
-        {/* <ActivityIndicator size="large" color={colors.primary} />
-        <MyText className="text-text mt-2">{t("common.loading")}...</MyText> */}
-      </SafeAreaView>
+      <SafeAreaView className="flex-1 bg-background justify-center items-center" />
     );
   }
 

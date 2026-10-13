@@ -32,6 +32,7 @@ import { useEffect, useRef } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, ScreenHeader } from "ui-atoms";
+import { buildRecordFromMatch } from "../logics/record/recordBuilder";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
@@ -62,7 +63,7 @@ export default function GameScreen() {
     height * BOARD_HEIGHT_RATIO,
   );
   // 対局する人の情報
-  const { iconIndex, username, rating9, rating13, rating19 } = useProfile();
+  const { uid, iconIndex, username, rating9, rating13, rating19 } = useProfile();
   const [rank9, rank13, rank19] = [
     getRankInfo(rating9, t),
     getRankInfo(rating13, t),
@@ -80,7 +81,7 @@ export default function GameScreen() {
     oppUsername,
     oppRating,
     oppIconIndex,
-    // oppUid,
+    oppUid,
   } = parseGameParams(params);
   const myRankIndex =
     (boardSize === 9
@@ -113,7 +114,7 @@ export default function GameScreen() {
     rankIndexBefore,
     rankIndexAfter,
     resultRaw,
-    // analysis,
+    analysis,
     giantKillingStreak,
     giantKillingBonus,
     doubleTap,
@@ -274,54 +275,49 @@ export default function GameScreen() {
   // isGameEndedは対局が終了しているか否か。
   useEffect(() => {
     if (isGameEnded) {
-      // const isMyBlack = myColor === BLACK;
-      // const oppRankIndex = getRankInfo(oppRating, t).index;
+      const isMyBlack = myColor === BLACK;
+      const oppRankIndex = getRankInfo(oppRating, t).index;
 
-      // const record = buildRecordFromMatch({
-      //   matchId,
-      //   boardSize,
-      //   matchType,
-      //   moves: moves ?? [],
-      //   result: resultRaw,
-      //   blackUid: isMyBlack ? (uid ?? "") : oppUid,
-      //   blackUsername: isMyBlack ? (username ?? "") : (oppUsername ?? ""),
-      //   blackIconIndex: isMyBlack ? (iconIndex ?? 0) : (oppIconIndex ?? 0),
-      //   blackRankIndex: isMyBlack ? rankIndexAfter : oppRankIndex,
-      //   blackRating: isMyBlack ? ratingAfter : (oppRating ?? 0),
-      //   whiteUid: isMyBlack ? oppUid : (uid ?? ""),
-      //   whiteUsername: isMyBlack ? (oppUsername ?? "") : (username ?? ""),
-      //   whiteIconIndex: isMyBlack ? (oppIconIndex ?? 0) : (iconIndex ?? 0),
-      //   whiteRankIndex: isMyBlack ? oppRankIndex : rankIndexAfter,
-      //   whiteRating: isMyBlack ? (oppRating ?? 0) : ratingAfter,
-      //   analysis,
-      // });
+      // 🐱 棋譜は、アプリの中で組み立てて、パラメータで棋譜画面に渡す
+      const record = buildRecordFromMatch({
+        matchId,
+        boardSize,
+        matchType,
+        moves: moves ?? [],
+        result: resultRaw,
+        blackUid: isMyBlack ? (uid ?? "") : oppUid,
+        blackUsername: isMyBlack ? (username ?? "") : (oppUsername ?? ""),
+        blackIconIndex: isMyBlack ? (iconIndex ?? 0) : (oppIconIndex ?? 0),
+        blackRankIndex: isMyBlack ? rankIndexAfter : oppRankIndex,
+        blackRating: isMyBlack ? ratingAfter : (oppRating ?? 0),
+        whiteUid: isMyBlack ? oppUid : (uid ?? ""),
+        whiteUsername: isMyBlack ? (oppUsername ?? "") : (username ?? ""),
+        whiteIconIndex: isMyBlack ? (oppIconIndex ?? 0) : (iconIndex ?? 0),
+        whiteRankIndex: isMyBlack ? oppRankIndex : rankIndexAfter,
+        whiteRating: isMyBlack ? (oppRating ?? 0) : ratingAfter,
+        analysis,
+      });
 
-      // 🐱 分析結果込みでローカルにも保存しておく。INSERT OR IGNOREなので、
-      //    後からsyncNewerがサーバー版(analysisを持たない)を取ってきても
-      //    上書きされず、この時点のanalysisがそのまま残り続ける。
-      const saveAndNavigate = async () => {
-        router.replace({
-          // 2026/10/05: ⚠️ここはreplaceでなければならない
-          pathname: "/BoardEditScreen",
-          params: {
-            matchId: matchId,
-            from: "GameScreen",
-            resultComment: resultComment,
-            rankIndexBefore: rankIndexBefore,
-            rankIndexAfter: rankIndexAfter,
-            ratingBefore: ratingBefore,
-            ratingAfter: ratingAfter,
-            giantKillingStreak: giantKillingStreak,
-            // booleanはrouterのparamsを通ると文字列になり、"false"も真と判定されてしまう。
-            // なので、whiteRotationと同じく「あれば印の文字列、なければ空文字」で渡す。
-            giantKillingBonus: giantKillingBonus ? "giantKillingBonus" : "",
-            whiteRotation: isPlayerBlack ? "" : "whiteRotation",
-          },
-        });
+      router.replace({
+        // 2026/10/05: ⚠️ここはreplaceでなければならない
+        pathname: "/BoardEditScreen",
+        params: {
+          recordParam: JSON.stringify(record),
+          from: "GameScreen",
+          resultComment: resultComment,
+          rankIndexBefore: rankIndexBefore,
+          rankIndexAfter: rankIndexAfter,
+          ratingBefore: ratingBefore,
+          ratingAfter: ratingAfter,
+          giantKillingStreak: giantKillingStreak,
+          // booleanはrouterのparamsを通ると文字列になり、"false"も真と判定されてしまう。
+          // なので、whiteRotationと同じく「あれば印の文字列、なければ空文字」で渡す。
+          giantKillingBonus: giantKillingBonus ? "giantKillingBonus" : "",
+          whiteRotation: isPlayerBlack ? "" : "whiteRotation",
+        },
+      });
 
-        showResultModal();
-      };
-      saveAndNavigate();
+      showResultModal();
     }
   }, [isGameEnded]);
 

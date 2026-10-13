@@ -9,7 +9,6 @@ import {
   scoreLeadToResult,
 } from "go-core";
 import { useMemo, useState } from "react";
-import { useBlurActiveElement } from "../common/useBlurActiveElement";
 import { useEditableGoBoard } from "./useEditableGoBoard";
 
 type EditableGoBoard = ReturnType<typeof useEditableGoBoard>;
@@ -30,8 +29,6 @@ export const useBoardEditActions = (
   // 🐱 今どちらの処理が動いているかを保持する
   const [activeProcessing, setActiveProcessing] =
     useState<ProcessingType>(null);
-
-  useBlurActiveElement();
 
   // 🐱 バッジをタップして「盤面に地を表示中」かどうか。
   //    覚えている局面・モードと今が違えば、自動的に false(= 局面やモードが変わったら消える)

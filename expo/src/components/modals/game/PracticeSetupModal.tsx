@@ -2,6 +2,7 @@
 // overlaycontextの枠は使っていない。
 
 import { MyText } from "@/src/components/common/MyText";
+import { useBlurActiveElement } from "@/src/hooks/common/useBlurActiveElement";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { usePracticeSetup } from "@/src/hooks/practice/usePracticeSetup";
 import { useTranslation } from "@/src/i18n/LangProvider";
@@ -48,6 +49,7 @@ export const PracticeSetupModal = ({
   myIconIndex,
   myUid,
 }: Props) => {
+  useBlurActiveElement();
   const t = useTranslation();
   const colors = useColors();
 

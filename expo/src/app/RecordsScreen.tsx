@@ -75,7 +75,7 @@ export default function RecordsScreen() {
             // 2026/10/05: ⚠️ここはpushでいい
             pathname: "/BoardEditScreen",
             params: {
-              matchId: item.id,
+              recordParam: JSON.stringify(item),
               from: "RecordScreen",
               resultComment:
                 resultToSubjectiveComment(

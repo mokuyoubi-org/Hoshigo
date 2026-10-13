@@ -6,6 +6,7 @@ import {
   isSkeletonCard,
   makeSkeletonCard,
 } from "@/src/logics/record/recordCardLogics";
+import { fetchRecordsPage } from "@/src/logics/rpc/recordsRPC";
 import { RecordOrSkeleton, RecordType } from "@/src/types/record";
 import {
   AgehamaCount,
@@ -174,26 +175,23 @@ export const useRecordsScreen = () => {
       setIsLoading(true);
 
       try {
+        const page = await fetchRecordsPage(
+          uid,
+          targetBoardSize,
+          null,
+          FETCH_NUM,
+        );
         if (!isMounted) return;
 
-        // const page = await fetchOlderPage(
-        //   uid,
-        //   targetBoardSize,
-        //   null,
-        //   FETCH_NUM,
-        // );
-        // if (!isMounted) return;
-
-        // if (page.length === 0) {
-        //   updateCache(targetBoardSize, { records: [] });
-        // } else {
-        //   processRecords(page, targetBoardSize);
-        //   if (!isMounted) return;
-        //   updateCache(targetBoardSize, { records: page });
-        // }
-        // updateCache(targetBoardSize, {
-        //   hasMore: page.length === FETCH_NUM,
-        // });
+        if (page.length === 0) {
+          updateCache(targetBoardSize, { records: [] });
+        } else {
+          processRecords(page, targetBoardSize);
+          updateCache(targetBoardSize, { records: page });
+        }
+        updateCache(targetBoardSize, {
+          hasMore: page.length === FETCH_NUM,
+        });
       } catch (e) {
         console.error(e);
       } finally {
@@ -216,38 +214,36 @@ export const useRecordsScreen = () => {
   const loadMore = () => {
     const targetBoardSize = boardSizeRef.current;
     if (!hasMore || isFetchingMoreRef.current[targetBoardSize] || !uid) return;
+
+    // 本物の棋譜のうち、いちばん古いもののid(次のページの目印)
+    const realRecords = records.filter(
+      (r): r is RecordType => !isSkeletonCard(r),
+    );
+    const oldestId = realRecords[realRecords.length - 1]?.id;
+    if (!oldestId) return;
+
     isFetchingMoreRef.current[targetBoardSize] = true;
 
     updateCache(targetBoardSize, {
-      records: [
-        ...records.filter((r) => !isSkeletonCard(r)),
-        ...makeSkeletonCard(FETCH_NUM),
-      ],
+      records: [...realRecords, ...makeSkeletonCard(FETCH_NUM)],
     });
 
-    // fetchOlderPage(uid, targetBoardSize, oldestId, FETCH_NUM)
-    //   .then((fetched) => {
-    //     processRecords(fetched, targetBoardSize);
-
-    //     setCaches((prev) => {
-    //       const prevCache = prev[targetBoardSize] ?? makeInitialCache();
-    //       const real = prevCache.records.filter(
-    //         (r): r is RecordType => !isSkeletonCard(r),
-    //       );
-    //       return {
-    //         ...prev,
-    //         [targetBoardSize]: {
-    //           ...prevCache,
-    //           records: [...real, ...fetched],
-    //           hasMore: fetched.length === FETCH_NUM,
-    //         },
-    //       };
-    //     });
-    //   })
-    //   .catch((e) => console.error(e))
-    //   .finally(() => {
-    //     isFetchingMoreRef.current[targetBoardSize] = false;
-    //   });
+    fetchRecordsPage(uid, targetBoardSize, oldestId, FETCH_NUM)
+      .then((fetched) => {
+        processRecords(fetched, targetBoardSize);
+        updateCache(targetBoardSize, {
+          records: [...realRecords, ...fetched],
+          hasMore: fetched.length === FETCH_NUM,
+        });
+      })
+      .catch((e) => {
+        console.error(e);
+        // 失敗したら、スケルトンを外して、もとの一覧に戻す
+        updateCache(targetBoardSize, { records: realRecords });
+      })
+      .finally(() => {
+        isFetchingMoreRef.current[targetBoardSize] = false;
+      });
   };
 
   // スクロール
