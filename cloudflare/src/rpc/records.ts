@@ -133,3 +133,32 @@ recordsRoutes.post("/get_records_older", async (c) => {
 
   return c.json(rows);
 });
+
+// 1局ぶんの分析(R2の analysis/{gameId}.json の中身の analysis 部分)を返す。
+// 有料化するときは、ここに「有料の人だけ」の確認を足す。
+recordsRoutes.post("/get_record_analysis", async (c) => {
+  const session = await createAuth(c.env).api.getSession({
+    headers: c.req.raw.headers,
+  });
+  if (!session) {
+    return c.json(
+      { error: { code: "NOT_AUTHENTICATED", message: "Not authenticated" } },
+      401,
+    );
+  }
+
+  const body = await c.req.json().catch(() => ({}));
+  const gameId = body.p_game_id;
+  if (typeof gameId !== "string" || gameId.length === 0) {
+    return c.json(
+      { error: { code: "INVALID_ARGUMENT", message: "Invalid argument" } },
+      400,
+    );
+  }
+
+  const object = await c.env.RECORDS.get(`analysis/${gameId}.json`);
+  if (!object) return c.json({ analysis: null });
+
+  const file = (await object.json()) as { analysis?: unknown };
+  return c.json({ analysis: file.analysis ?? null });
+});

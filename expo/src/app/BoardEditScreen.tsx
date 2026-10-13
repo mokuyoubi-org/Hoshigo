@@ -30,8 +30,8 @@ import {
   ReplayTapOverlay,
   ScoreLeadReplayControls,
 } from "go-components";
-import { BLACK, TerritoryBoard, WHITE } from "go-core";
-import { useMemo } from "react";
+import { BLACK, RecordAnalysis, TerritoryBoard, WHITE } from "go-core";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   TouchableOpacity,
@@ -41,6 +41,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconButton, ScreenHeader, SegmentedIconControl } from "ui-atoms";
 import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
+import { fetchRecordAnalysis } from "../logics/rpc/recordsRPC";
 import { FromType } from "../types/from";
 
 // ─── レイアウト定数 ───
@@ -96,9 +97,39 @@ export default function BoardEditScreen() {
     }
   }, [recordParam]);
 
+  // 一覧から開いた棋譜は分析を持っていないので、サーバーから取ってくる。
+  // (対局直後の棋譜は、アプリの中で分析を持っているので、取らない)
+  const recordId = record?.id;
+  const needsFetch =
+    !!record && record.analysis === null && from === "RecordScreen";
+  const [fetched, setFetched] = useState<{
+    id: string;
+    analysis: RecordAnalysis | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!recordId || !needsFetch) return;
+    let cancelled = false;
+    fetchRecordAnalysis(recordId).then((analysis) => {
+      if (!cancelled) setFetched({ id: recordId, analysis });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [recordId, needsFetch]);
+
+  // 分析をくっつけた棋譜。持っている値から作れるので useMemo
+  const recordWithAnalysis = useMemo<RecordType | null>(() => {
+    if (!record) return null;
+    if (!needsFetch) return record;
+    return { ...record, analysis: fetched?.analysis ?? null };
+  }, [record, needsFetch, fetched]);
+
   useBlurActiveElement();
 
-  if (!record) {
+  // 棋譜がない、または、分析の取得待ちの間は、空っぽの画面
+  const waiting = needsFetch && fetched?.id !== recordId;
+  if (!recordWithAnalysis || waiting) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center" />
     );
@@ -106,7 +137,7 @@ export default function BoardEditScreen() {
 
   return (
     <BoardEditScreenContent
-      record={record}
+      record={recordWithAnalysis}
       from={from}
       resultComment={resultComment}
       rankIndexBefore={Number(rankIndexBefore)}

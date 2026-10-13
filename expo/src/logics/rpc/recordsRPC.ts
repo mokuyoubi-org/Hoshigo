@@ -3,7 +3,7 @@
 
 import { api } from "@/src/services/api/api";
 import { RecordType } from "@/src/types/record";
-import { BoardSize, MatchType } from "go-core";
+import { BoardSize, MatchType, RecordAnalysis } from "go-core";
 
 type ServerRecordRow = {
   id: string;
@@ -64,4 +64,42 @@ export const fetchRecordsPage = async (
     throw new Error(error?.message ?? "get_records_older failed");
   }
   return data.map(toRecordType);
+};
+
+type ServerAnalysis = {
+  ownership: (number[] | null)[]; // 各局面: -100〜100
+  score_lead: (number | null)[]; // 10倍
+  win_rate: (number | null)[]; // 1000倍
+};
+
+// サーバーの整数の形を、アプリの RecordAnalysis(小数・%)に戻す。
+// 失敗しても例外は投げず、null を返す(分析なしで開く)。
+// 候補手(candidates)はサーバーに保存していないので、空にする。
+export const fetchRecordAnalysis = async (
+  gameId: string,
+): Promise<RecordAnalysis | null> => {
+  try {
+    const { data, error } = await api.rpc<{ analysis: ServerAnalysis | null }>(
+      "get_record_analysis",
+      { p_game_id: gameId },
+    );
+    const a = data?.analysis;
+    if (error || !a) return null;
+
+    const perMove = a.ownership.map((own, i) => {
+      const lead = a.score_lead[i];
+      const win = a.win_rate[i];
+      if (!own || lead == null || win == null) return null;
+      return {
+        winRate: Math.round(win / 10),
+        scoreLead: lead / 10,
+        ownership: own.map((v) => v / 100),
+        candidates: [],
+      };
+    });
+    return { perMove };
+  } catch (e) {
+    console.error("分析の取得に失敗:", e);
+    return null;
+  }
 };
