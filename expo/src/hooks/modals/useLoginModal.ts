@@ -1,4 +1,4 @@
-// useLoginModal.ts
+// src/hooks/modals/useLoginModal.ts
 
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { authClient } from "@/src/services/auth/auth-client";
@@ -8,6 +8,20 @@ import { useProfileSync } from "../rpc/useProfileSync";
 
 type Props = {
   onClose: () => void;
+};
+
+// 調査用(あとで消す): cookieの中身は出さず、「あるか」と「長さ」だけ見る
+// getCookie は Promise を返すので、await して中身を取り出す
+const logCookieState = async (label: string) => {
+  try {
+    const cookie = await authClient.getCookie();
+    console.log(`🔐 ${label}`, {
+      hasCookie: cookie.length > 0,
+      length: cookie.length,
+    });
+  } catch (err) {
+    console.log(`🔐 ${label}: cookieの取得に失敗`, err);
+  }
 };
 
 export const useLoginModal = ({ onClose }: Props) => {
@@ -27,10 +41,16 @@ export const useLoginModal = ({ onClose }: Props) => {
       const callbackURL =
         Platform.OS === "web" ? window.location.origin + "/" : "hoshigo://"; // スマホアプリのカスタムスキーム
 
+      await logCookieState("Googleログイン前");
+
       const { error: signInError } = await authClient.signIn.social({
         provider: "google",
         callbackURL: callbackURL,
       });
+
+      // ここに到達しなかった場合は、Promiseが消えている(アプリが作り直された)
+      console.log("🔐 signIn.social が戻ってきた", { hasError: !!signInError });
+      await logCookieState("Googleログイン後");
 
       if (signInError) {
         console.error("Googleログイン失敗:", signInError);

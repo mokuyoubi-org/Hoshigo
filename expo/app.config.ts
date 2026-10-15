@@ -21,7 +21,7 @@ dotenv.config({
 const config: ExpoConfig = {
   name: "Hoshigo",
   slug: "Hoshigo",
-  // 2026/10/02: 1.0.4 ▶︎ 1.0,5
+  // 2026/10/02: 1.0.4 ▶︎ 1.0.5
   version: "1.0.5", // アプリのバージョン。必ずruntimeVersionと揃える。なお、Webでは-cでstartし直す必要あり
   orientation: "portrait",
   icon: "./assets/icons/icon.png", // 使われない

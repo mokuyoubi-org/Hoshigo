@@ -1,0 +1,14 @@
+// expo/wrangler.jsonc
+
+{
+  "name": "hoshigo",
+  "compatibility_date": "2026-10-10",
+  "assets": {
+    "directory": "./dist",
+    // どのURLを開いても index.html を返す(Pagesが自動でやってくれていた部分)
+    "not_found_handling": "single-page-application"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

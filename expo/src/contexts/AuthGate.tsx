@@ -36,8 +36,18 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
 
   // ログイン状態(Better Auth)。変わるたびに、自動で、画面が更新される。
   // data が null なら、ログインしていない。isPending は、サーバーに確認している途中。
-  const { data: session, isPending } = authClient.useSession();
+  // refetch は、サーバーに「いまのセッションは?」と、もう一度聞き直す関数。
+  const { data: session, isPending, refetch } = authClient.useSession();
   const userId = session?.user.id ?? null;
+
+  // 調査用: セッションの変化を、すべて記録する(あとで消す)
+  useEffect(() => {
+    console.log("🔐 session変化", {
+      isPending,
+      userId,
+      isAnonymous: session?.user?.isAnonymous ?? null,
+    });
+  }, [isPending, userId]);
 
   // effectの中から、最新のsegmentsを読むため
   const segmentsRef = useRef(segments);
@@ -45,8 +55,10 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     segmentsRef.current = segments;
   });
 
-  // ログインできたら、プロフィールを取って、ホームに行く必要があるか(起動時と、ゲストログインし直したあと)
-  const needsSyncRef = useRef(true);
+  // Ref4兄弟
+  // 最後にプロフィールを同期した userId。userId が変わったときだけ同期するための目印
+  // (起動時・ゲストログイン・Googleログインのどれで変わっても、自動で同期される)
+  const syncedUserIdRef = useRef<string | null>(null);
   // アプリを開いて、最初の1回か
   const isFirstRef = useRef(true);
   // ゲストログイン中の、二重実行ガード
@@ -121,9 +133,9 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // ③ログイン状態の見張り。
-  //  ・ログインしていなければ、ゲストログインする(起動時、ログアウト、アカウント削除のあと)
-  //  ・ログインできたら、プロフィールを取って、ホームに行く(必要なときだけ)
-  
+  //  ・ログインしていなければ、(本当にログアウトか確かめてから)ゲストログインする
+  //  ・userId が変わったら、プロフィールを取って、ホームに行く(Googleログインのあとも、ここで拾う)
+
   useEffect(() => {
     // サーバーに確認している途中は、何もしない
     if (isPending) return;
@@ -133,11 +145,27 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
       // ゲストログイン中、または、前に失敗していたら、やり直さない
       if (signingInRef.current || guestFailedRef.current) return;
       signingInRef.current = true;
-      needsSyncRef.current = true;
+      syncedUserIdRef.current = null;
       const wasFirst = isFirstRef.current;
 
       const signInAsGuest = async () => {
         try {
+          // 🛟 一瞬だけ null に見えた、という可能性があるので、
+          // ゲストを作る前に、サーバーに「本当にセッションが無いか」を聞き直す。
+          // (ここでゲストを作ると、有効なGoogleのcookieを上書きして失ってしまう)
+          const { data: current } = await authClient.getSession({
+            query: { disableCookieCache: true },
+          });
+          if (current?.user) {
+            console.log("🛟 一瞬nullに見えただけ。サーバーにはセッションがある", {
+              userId: current.user.id,
+              isAnonymous: current.user.isAnonymous ?? null,
+            });
+            // 画面側の状態を、正しい内容に直す(直ると userId が変わり、このeffectがもう一度動く)
+            void refetch();
+            return;
+          }
+
           // ログアウトなどのあとは、画面を「準備中」にして、ユーザーの表示を空にする
           if (!wasFirst) {
             setIsInitializing(true);
@@ -169,7 +197,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
             setIsInitializing(false);
             return;
           }
-          // ログインできると、useSessionが更新されて、このeffectが、もう一度動く(下の②へ)
+          // ログインできると、useSessionが更新されて、このeffectが、もう一度動く(下へ)
         } catch (err) {
           // 通信できないときなどは、signIn が例外を投げることがある
           console.error("ゲストログイン失敗(通信エラー)だよ:", err);
@@ -185,11 +213,11 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // ---- ログインできている: プロフィールを取って、ホームに行く(必要なときだけ) ----
-    // (メールでログインしたときは、ログインのモーダルが自分でやるので、ここでは何もしない)
+    // ---- ログインできている: userId が変わったときだけ、プロフィールを取って、ホームに行く ----
     guestFailedRef.current = false;
-    if (!needsSyncRef.current) return;
-    needsSyncRef.current = false;
+    // このuserIdで同期済みなら、何もしない
+    if (syncedUserIdRef.current === userId) return;
+    syncedUserIdRef.current = userId;
     const wasFirst = isFirstRef.current;
     isFirstRef.current = false;
 
@@ -202,7 +230,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
       }
 
       // 起動時は、すでにタブや開発用の画面にいれば、移動しない。
-      // ログアウトなどのあとは、必ずホームへ。
+      // ログアウトやGoogleログインのあとは、必ずホームへ。
       const isInTabs = segmentsRef.current[0] === "(tabs)";
       const isDebug = segmentsRef.current[0] === "(debug)";
       if (!wasFirst || (!isInTabs && !isDebug)) {
@@ -218,6 +246,9 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
 
     void afterSignedIn();
   }, [isPending, userId]);
+
+
+
 
   return (
     // ここは<View>にしてはいけない
