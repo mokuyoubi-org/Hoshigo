@@ -20,6 +20,7 @@ export type RecordType = {
   moves: number[];
   match_type: MatchType;
   analysis: RecordAnalysis | null;
+  final_ownership?: number[] | null; // 一覧のカードで地を出すための、最終局面だけの予想(-1〜1)
 };
 export type RecordOrSkeleton = SkeletonOr<RecordType>;
 

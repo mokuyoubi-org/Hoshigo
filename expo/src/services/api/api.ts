@@ -32,7 +32,6 @@ export const appVersion =
     ? (Constants.expoConfig?.version ?? "unknown")
     : (Application.nativeApplicationVersion ?? "unknown");
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL!; // サーバーの場所
 const MAX_RETRIES = 3; // 再送の最大回数(初回を除く)
 const RETRY_BASE_DELAY_MS = 500; // 再送の待ち時間のもと(指数バックオフ)
 
@@ -81,7 +80,7 @@ const callOnce = async <T>(
     // Webでは、ブラウザが自動で持ち歩く(credentials: "include")ので、不要。
     const cookie = Platform.OS === "web" ? "" : await authClient.getCookie();
 
-    const res = await fetch(`${API_URL}/rpc/${name}`, {
+    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL!}/rpc/${name}`, {
       method: "POST",
       credentials: "include",
       headers: {

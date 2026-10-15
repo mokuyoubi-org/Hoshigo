@@ -51,6 +51,8 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   const isFirstRef = useRef(true);
   // ゲストログイン中の、二重実行ガード
   const signingInRef = useRef(false);
+  // ゲストログインに失敗したら true。true の間は、自動でやり直さない(ブラウザが何度も開くのを防ぐ)
+  const guestFailedRef = useRef(false);
 
   const clearUserState = () => {
     updateProfile({
@@ -121,13 +123,15 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   // ③ログイン状態の見張り。
   //  ・ログインしていなければ、ゲストログインする(起動時、ログアウト、アカウント削除のあと)
   //  ・ログインできたら、プロフィールを取って、ホームに行く(必要なときだけ)
+  
   useEffect(() => {
     // サーバーに確認している途中は、何もしない
     if (isPending) return;
 
     // ---- ログインしていない: ゲストログインする ----
     if (!userId) {
-      if (signingInRef.current) return;
+      // ゲストログイン中、または、前に失敗していたら、やり直さない
+      if (signingInRef.current || guestFailedRef.current) return;
       signingInRef.current = true;
       needsSyncRef.current = true;
       const wasFirst = isFirstRef.current;
@@ -145,6 +149,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
             captchaToken = await getCaptchaToken();
           } catch (err) {
             console.error("ゲストログイン失敗(CAPTCHA)だよ:", err);
+            guestFailedRef.current = true;
             clearUserState();
             setIsInitializing(false);
             return;
@@ -159,11 +164,18 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
           });
           if (error || !data) {
             console.error("ゲストログイン失敗:", error);
+            guestFailedRef.current = true;
             clearUserState();
             setIsInitializing(false);
             return;
           }
           // ログインできると、useSessionが更新されて、このeffectが、もう一度動く(下の②へ)
+        } catch (err) {
+          // 通信できないときなどは、signIn が例外を投げることがある
+          console.error("ゲストログイン失敗(通信エラー)だよ:", err);
+          guestFailedRef.current = true;
+          clearUserState();
+          setIsInitializing(false);
         } finally {
           signingInRef.current = false;
         }
@@ -175,6 +187,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
 
     // ---- ログインできている: プロフィールを取って、ホームに行く(必要なときだけ) ----
     // (メールでログインしたときは、ログインのモーダルが自分でやるので、ここでは何もしない)
+    guestFailedRef.current = false;
     if (!needsSyncRef.current) return;
     needsSyncRef.current = false;
     const wasFirst = isFirstRef.current;

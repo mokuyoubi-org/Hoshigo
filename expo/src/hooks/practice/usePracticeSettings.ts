@@ -37,35 +37,31 @@ export const usePracticeSettings = () => {
     true,
   );
 
-  const {
-    value: boardSize,
-    setValue: setBoardSize,
-  } = useKVStorage<BoardSize>("PracticeGameScreen.boardSize", 9);
+  const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
+    "PracticeGameScreen.boardSize",
+    9,
+  );
 
-  const {
-    value: matchType,
-    setValue: setMatchType,
-  } = useKVStorage<MatchType>("PracticeGameScreen.matchType", 0);
+  const { value: matchType, setValue: setMatchType } = useKVStorage<MatchType>(
+    "PracticeGameScreen.matchType",
+    0,
+  );
 
-  const {
-    value: blackPlayer,
-    setValue: setBlackPlayer,
-  } = useKVStorage<PlayerType>("PracticeGameScreen.blackPlayer", {
-    username: "",
-    rating: 0,
-    iconIndex: 0,
-    uid: "",
-  });
+  const { value: blackPlayer, setValue: setBlackPlayer } =
+    useKVStorage<PlayerType>("PracticeGameScreen.blackPlayer", {
+      username: "you",
+      rating: 0,
+      iconIndex: 0,
+      uid: "",
+    });
 
-  const {
-    value: whitePlayer,
-    setValue: setWhitePlayer,
-  } = useKVStorage<PlayerType>("PracticeGameScreen.whitePlayer", {
-    username: "",
-    rating: 0,
-    iconIndex: 0,
-    uid: "",
-  });
+  const { value: whitePlayer, setValue: setWhitePlayer } =
+    useKVStorage<PlayerType>("PracticeGameScreen.whitePlayer", {
+      username: "you",
+      rating: 0,
+      iconIndex: 0,
+      uid: "",
+    });
 
   const doubleTap: boolean =
     boardSize === 9

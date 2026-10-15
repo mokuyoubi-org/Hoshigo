@@ -1,6 +1,6 @@
+// fix-node-modules-path.mjs // tsに変えてはいけない。
+
 /**
- * fix-node-modules-path.ts
- *
  * Cloudflare Pages は "node_modules" という名前を含むパスを
  * デプロイ時に無視してしまう。
  * Expo の web export では一部のアセット(vector-icons のフォント等)が
@@ -9,23 +9,27 @@
  * "npm-modules" にリネームし、バンドルされたJS/CSS内の参照文字列も
  * あわせて書き換える。
  *
- * 使い方: CloudflareのpagesのsettingsのBuild configurationのBuild commandにて: 
- * npx expo export -p web && node fix-node-modules-path.ts
+ * 使い方: CloudflareのpagesのsettingsのBuild configurationのBuild commandにて:
+ * npx expo export -p web && node fix-node-modules-path.mjs
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// ESMでは __dirname が存在しないので、自前で作る
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DIST_DIR = path.join(__dirname, "dist");
 const OLD_SEGMENT = "node_modules";
 const NEW_SEGMENT = "npm-modules";
 
 // dist フォルダ内から "node_modules" という名前のディレクトリを再帰的に探す
-const findDirsByName = (rootDir: string, targetName: string): string[] => {
-  const results: string[] = [];
+const findDirsByName = (rootDir, targetName) => {
+  const results = [];
 
-  const walk = (currentDir: string) => {
-    let entries: fs.Dirent[];
+  const walk = (currentDir) => {
+    let entries;
     try {
       entries = fs.readdirSync(currentDir, { withFileTypes: true });
     } catch {
@@ -47,7 +51,7 @@ const findDirsByName = (rootDir: string, targetName: string): string[] => {
 };
 
 // ディレクトリを再帰コピーしてから元を削除(=リネーム相当)
-const moveDirRecursive = (src: string, dest: string) => {
+const moveDirRecursive = (src, dest) => {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.cpSync(src, dest, { recursive: true });
   fs.rmSync(src, { recursive: true, force: true });
@@ -56,14 +60,10 @@ const moveDirRecursive = (src: string, dest: string) => {
 // テキストファイル(js, css, html, json, map)内の文字列を置換
 const TEXT_EXTENSIONS = new Set([".js", ".css", ".html", ".json", ".map"]);
 
-const replaceInAllTextFiles = (
-  rootDir: string,
-  searchStr: string,
-  replaceStr: string,
-): number => {
+const replaceInAllTextFiles = (rootDir, searchStr, replaceStr) => {
   let filesChanged = 0;
 
-  const walk = (currentDir: string) => {
+  const walk = (currentDir) => {
     const entries = fs.readdirSync(currentDir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name);
@@ -133,9 +133,7 @@ const main = () => {
   const changedCount = replaceInAllTextFiles(DIST_DIR, searchStr, replaceStr);
 
   console.log(`✅ ${changedCount} 件のファイル内の参照パスを書き換えました。`);
-  console.log(
-    "🎉 完了!Cloudflare Pages にデプロイしても node_modules が原因で無視されなくなるはずです。",
-  );
+  console.log("🎉 完了!");
 };
 
 main();

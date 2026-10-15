@@ -101,6 +101,20 @@ recordsRoutes.post("/get_records_older", async (c) => {
     }),
   );
 
+  // 最終局面(= 手数番目)の ownership だけを、分析ファイルから取り出す
+  const finalOwnerships = await Promise.all(
+    cards.map(async (card, i) => {
+      const moves = movesList[i];
+      if (!moves) return null;
+      const object = await c.env.RECORDS.get(`analysis/${card.gameId}.json`);
+      if (!object) return null;
+      const file = (await object.json()) as {
+        analysis?: { ownership?: (number[] | null)[] };
+      };
+      return file.analysis?.ownership?.[moves.length] ?? null;
+    }),
+  );
+
   const rows = cards.map((card, i) => {
     // カードは「自分から見た」形なので、黒・白に直す
     const isBlack = card.color === "black";
@@ -117,6 +131,7 @@ recordsRoutes.post("/get_records_older", async (c) => {
       result: card.result,
       match_type: card.matchType,
       moves: movesList[i],
+      final_ownership: finalOwnerships[i],
       black_points: blackRating,
       white_points: whiteRating,
       board_size: card.boardSize,

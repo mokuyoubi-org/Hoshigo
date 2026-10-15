@@ -3,7 +3,6 @@
 // 色・文字・しっぽの向きや位置は全部 props で受け取る。
 // 置き場所（absolute の left/top など）は持たず、呼ぶ側が決める。
 
-import { ComponentType } from "react";
 import {
   ColorValue,
   StyleProp,
@@ -41,8 +40,6 @@ type Props = {
   height?: number;
   /** 文字のスタイル（fontFamily など） */
   fontStyle?: StyleProp<TextStyle>;
-  /** 文字を描くコンポーネント（デフォルトは Text。MyText などに差し替えたいとき用） */
-  TextComponent?: ComponentType<TextProps>;
   /** 文字に渡したい props（numberOfLines など） */
   textProps?: TextProps;
   /** 外側の View のスタイル */
@@ -60,7 +57,6 @@ export const Bubble = ({
   width,
   height,
   fontStyle,
-  TextComponent = Text,
   textProps,
   style,
 }: Props) => {
@@ -90,12 +86,12 @@ export const Bubble = ({
         },
       ]}
     >
-      <TextComponent
+      <Text
         {...textProps}
         style={[styles.text, { color: textColor }, fontStyle]}
       >
         {text}
-      </TextComponent>
+      </Text>
     </View>
   );
 
@@ -147,7 +143,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
-    includeFontPadding: false, // ⚠️Androidでテキストの高さ周りがおかしい時はほぼほぼこの子を入れたら直る
+    includeFontPadding: false, // ⚠️Android用。大事
   },
   // しっぽを入れる箱（本体より手前に描く）
   tail: {

@@ -79,7 +79,6 @@ export const RankGauge = ({
               borderColor={color}
               textColor={colors.foreground}
               tailDirection="down"
-              TextComponent={MyText}
             />
           </Animated.View>
         </View>

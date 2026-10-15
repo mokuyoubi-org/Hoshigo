@@ -22,6 +22,7 @@ type ServerRecordRow = {
   white_username: string | null;
   white_icon_index: number | null;
   white_rank_index: number;
+    final_ownership?: number[] | null; // 一覧のカードで地を出すための、最終局面だけの予想(-1〜1)
 };
 
 const toRecordType = (row: ServerRecordRow): RecordType => ({
@@ -42,6 +43,9 @@ const toRecordType = (row: ServerRecordRow): RecordType => ({
   moves: row.moves ?? [], // R2に棋譜が無い場合は空(盤面が空で開く)
   match_type: row.match_type as MatchType,
   analysis: null, // 分析は一覧には入っていない。開いてから分析ボタンで作る
+    final_ownership: row.final_ownership
+    ? row.final_ownership.map((v) => v / 100)
+    : null,
 });
 
 // 1ページ分(新しい順)。beforeId = 前のページの、いちばん古い棋譜のid(最初は null)

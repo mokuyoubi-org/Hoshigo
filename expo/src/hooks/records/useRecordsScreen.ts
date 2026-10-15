@@ -14,6 +14,7 @@ import {
   BoardSize,
   MatchType,
   movesToFinalBoard,
+  RecordAnalysis,
   TerritoryBoard,
 } from "go-core";
 import { useKVStorage } from "kv-store";
@@ -61,10 +62,10 @@ export const useRecordsScreen = () => {
   const SNAP_INTERVAL = CARD_HEIGHT + 18;
 
   const [isLoading, setIsLoading] = useState(true);
-  const {
-    value: boardSize,
-    setValue: setBoardSize,
-  } = useKVStorage<BoardSize>("RecordScreen.boardSize", 9);
+  const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
+    "RecordScreen.boardSize",
+    9,
+  );
   const boardSizeRef = useRef<BoardSize>(9);
   // 🐱 useKVStorageから非同期でロードされた値をrefにも反映する
   useEffect(() => {
@@ -126,12 +127,28 @@ export const useRecordsScreen = () => {
         );
 
         // 🌟地は、最終局面(perMove[手数])の分析のownershipから作る。
+        //    一覧では、分析の全部ではなく、最終局面だけがサーバーから届く(final_ownership)。
         //    分析が無い棋譜は、地を出さない(全部0の盤面)。
+        const analysisForTerritory: RecordAnalysis | null =
+          record.final_ownership
+            ? {
+                perMove: [
+                  ...Array(moves.length).fill(null),
+                  {
+                    winRate: 50,
+                    scoreLead: 0,
+                    ownership: record.final_ownership,
+                    candidates: [],
+                  },
+                ],
+              }
+            : record.analysis;
+
         const territoryBoard =
           getOwnershipTerritoryBoard(
             targetBoardSize,
             finalBoard,
-            record.analysis,
+            analysisForTerritory,
             moves.length,
           ) ??
           Array.from({ length: targetBoardSize }, () =>

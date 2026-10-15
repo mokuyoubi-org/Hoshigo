@@ -4,7 +4,6 @@ import { Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { createAuth } from "./auth";
 import { runScheduled } from "./cron";
-import { pickLocale } from "./email";
 import type { AppEnv } from "./env";
 import { checkGate, guard } from "./middleware/guard";
 import { accountRoutes } from "./rpc/account";
@@ -17,8 +16,13 @@ export { QueueRoom } from "./queue-room";
 
 const app = new Hono<{ Bindings: AppEnv }>();
 
-// 許可するアドレス:Web版の本番(hoshigo.app)と、手元のExpo(localhost:8081)。
-const ALLOWED_ORIGINS = ["https://hoshigo.app", "http://localhost:8081"];
+// 許可するアドレス:Web版の本番(hoshigo.app)と、手元のExpo(dev.hoshigo.app / localhost:8081)。
+const ALLOWED_ORIGINS = [
+  "https://hoshigo.app",
+  "https://api.hoshigo.app",
+  "https://dev.hoshigo.app",
+  "http://localhost:8081",
+];
 
 app.get("/", (c) => c.text("Hello Hono!"));
 
@@ -29,7 +33,6 @@ const corsMiddleware = cors({
   allowHeaders: [
     "Content-Type",
     "Authorization",
-    "x-app-language",
     "x-app-version",
     "x-ota-version",
     "x-captcha-response",
@@ -44,12 +47,8 @@ app.use("/api/auth/*", corsMiddleware);
 app.use("/rpc/*", corsMiddleware);
 
 // ログイン関係(Better Auth)は、/api/auth/ 以下を、全部おまかせする。
-// アプリが送ってくる言語(x-app-language)を読んで、メールの言語を決める。
 app.on(["GET", "POST"], "/api/auth/*", (c) => {
-  const locale = pickLocale(
-    c.req.header("x-app-language") ?? c.req.header("accept-language"),
-  );
-  return createAuth(c.env, locale).handler(c.req.raw);
+  return createAuth(c.env).handler(c.req.raw);
 });
 
 // RPCは、/rpc/ 以下に置く。
@@ -81,7 +80,15 @@ async function checkWebSocketEntry(
   // 許可していないアドレスのWebページから、勝手につながれないように
   const origin = c.req.header("origin");
   if (origin && !ALLOWED_ORIGINS.includes(origin)) {
-    return { response: c.text("Forbidden", 403) };
+    // 手元の開発(wrangler dev)のときだけ、実機のスマホが付ける
+    // 「自分のMacのアドレス」のOriginも通す。本番(https)では通さない。
+    const isLocalDev =
+      new URL(c.req.url).hostname !== "api.hoshigo.app" &&
+      c.req.url.startsWith("http://") &&
+      origin === new URL(c.req.url).origin;
+    if (!isLocalDev) {
+      return { response: c.text("Forbidden", 403) };
+    }
   }
   if (c.req.header("upgrade") !== "websocket") {
     return { response: c.text("Expected WebSocket", 426) };

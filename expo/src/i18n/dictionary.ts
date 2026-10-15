@@ -300,97 +300,26 @@ export const dictionary = {
       doubleTap: "더블 탭",
     },
   },
-  AccountLinking: {
+  LoginModal: {
     en: {
-      // email step
       titleEmail: "Register / Log In",
-      subtitleEmail:
-        "Please enter your email address. We will send you a verification code.",
-      sendCode: "Send Code",
-      // otp step
-      titleOtp: "Enter verification code",
-      subtitleOtp: "Check your email inbox.",
-      otpLabel: "Verification Code",
-      verify: "Verify",
-      resend: "Resend Code",
-      // selection step
-      selectionTitle: "Account Already Exists",
-      selectionMessage:
-        "This email is already linked to another account. Which one would you like to keep using?",
-      thisDevice: "Continue as Guest",
-      savedAccount: "Use Existing Account",
-      confirmSelection: "Confirm Selection",
-      // errors
-      errorSendFailed:
-        "Failed to send code. Please wait a moment and try again.",
       errorVerifyFailed: "Failed to verify code.",
+      googleSignIn: "Sign in with Google",
     },
     ja: {
-      // email step
       titleEmail: "登録・ログイン",
-      subtitleEmail:
-        "メールアドレスをご入力ください。認証コードをお送りします。",
-      sendCode: "コードを送信",
-      // otp step
-      titleOtp: "認証コードを入力",
-      subtitleOtp: "メールの受信箱をご確認ください。",
-      otpLabel: "認証コード",
-      verify: "認証する",
-      resend: "コードを再送信",
-      // selection step
-      selectionTitle: "既にアカウントが存在します",
-      selectionMessage:
-        "このメールアドレスは既に別のアカウントに登録されています。どちらのアカウントを使用しますか？",
-      thisDevice: "ゲストのまま続ける",
-      savedAccount: "既存のアカウントを使う",
-      confirmSelection: "決定", // 🌟
-      // errors
-      errorSendFailed:
-        "コードの送信に失敗しました。少し時間をおいて再度お試しください。",
       errorVerifyFailed: "コードの認証に失敗しました。",
+      googleSignIn: "Googleでログイン",
     },
     zh: {
-      // email step
       titleEmail: "注册 / 登录",
-      subtitleEmail: "请输入您的电子邮箱，我们将向您发送验证码。",
-      sendCode: "发送验证码",
-      // otp step
-      titleOtp: "输入验证码",
-      subtitleOtp: "请查看您的邮箱收件箱。",
-      otpLabel: "验证码",
-      verify: "验证",
-      resend: "重新发送验证码",
-      // selection step
-      selectionTitle: "该账号已存在",
-      selectionMessage: "此邮箱已绑定其他账号。您想使用哪一个账号？",
-      thisDevice: "继续使用访客账号",
-      savedAccount: "使用已有账号",
-      confirmSelection: "确认选择",
-      // errors
-      errorSendFailed: "验证码发送失败，请稍后重试。",
       errorVerifyFailed: "验证码验证失败。",
+      googleSignIn: "使用 Google 登录",
     },
     ko: {
-      // email step
       titleEmail: "회원가입 / 로그인",
-      subtitleEmail: "이메일 주소를 입력해 주세요. 인증 코드를 보내드립니다.",
-      sendCode: "코드 전송",
-      // otp step
-      titleOtp: "인증 코드 입력",
-      subtitleOtp: "이메일 수신함을 확인해 주세요.",
-      otpLabel: "인증 코드",
-      verify: "인증하기",
-      resend: "코드 재전송",
-      // selection step
-      selectionTitle: "이미 존재하는 계정입니다",
-      selectionMessage:
-        "이 이메일은 이미 다른 계정에 연결되어 있습니다. 어느 계정을 사용하시겠어요?",
-      thisDevice: "게스트로 계속하기",
-      savedAccount: "기존 계정 사용하기",
-      confirmSelection: "선택 확정",
-      // errors
-      errorSendFailed: "코드 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.",
       errorVerifyFailed: "코드 인증에 실패했습니다.",
+      googleSignIn: "Google로 로그인",
     },
   },
   Profile: {
@@ -1037,42 +966,6 @@ export const dictionary = {
     },
     ko: {
       boardSize: "바둑판 크기",
-    },
-  },
-  AI: {
-    en: {
-      downloading: "Downloading AI",
-      warming_up: "Starting AI",
-      errorTitle: "Failed to prepare AI",
-      download_required_match:
-        "Downloading the AI is required to play a match at this rank. (About 100MB)",
-      download_required_practice:
-        "Downloading the AI is required to use this bot. (About 100MB)",
-    },
-    ja: {
-      downloading: "AIをダウンロード中",
-      warming_up: "AIを起動中",
-      errorTitle: "AIの準備に失敗しました",
-      download_required_match:
-        "この段級位で対局するにはAIのダウンロードが必要です。(約100MB)",
-      download_required_practice:
-        "このボットを使用するにはAIのダウンロードが必要です。(約100MB)",
-    },
-    zh: {
-      downloading: "正在下载AI",
-      warming_up: "正在启动AI",
-      errorTitle: "AI准备失败",
-      download_required_match: "在此棋力下进行对局需要下载AI。(大约100MB)",
-      download_required_practice: "使用此机器人需要下载AI。(大约100MB)",
-    },
-    ko: {
-      downloading: "AI 다운로드 중",
-      warming_up: "AI 시작 중",
-      errorTitle: "AI 준비 실패",
-      download_required_match:
-        "이 단급에서 대국하려면 AI 다운로드가 필요합니다.(약 100MB)",
-      download_required_practice:
-        "이 봇을 사용하려면 AI 다운로드가 필요합니다.(약 100MB)",
     },
   },
   Analysis: {

@@ -4,9 +4,8 @@
 //   WebView経由で読み込む方式から、隠れたWebViewの分岐を撤廃し、
 //   最初から expo-web-browser(Custom Tabs / SFSafariViewController、
 //   本物のブラウザエンジン)を開く方式に変更した。
-//   理由: このコンポーネントが呼ばれるのは anonymous_signin と
-//   メールOTP用のactionのみで、どちらも「その場限りの真っ新な
-//   リクエスト」であり、既存セッションのCookieに乗っかるような
+//   理由: このコンポーネントが呼ばれるのは anonymous_signinのみで、
+//   その場限りの真っ新なリクエスト」であり、既存セッションのCookieに乗っかるような
 //   ケースが無いため、隠れたWebViewが静かに合格する見込みが
 //   実質無かった(=毎回ブラウザに飛んでいた)。
 // 本物のブラウザでTurnstileチャレンジを実行し、

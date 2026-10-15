@@ -1,0 +1,252 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - preflight # このブランチ名にpushすると、準備(リハーサル)だけが走る
+
+# 続けてpushしても、順番に1つずつ処理する(途中で止めない)
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  # ================= 準備フェーズ(本番には何も触らない) =================
+  build-web:
+    name: "準備: Webをビルド"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo
+    env:
+      EXPO_PUBLIC_TURNSTILE_SITEKEY: ${{ vars.EXPO_PUBLIC_TURNSTILE_SITEKEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: expo/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build web
+        run: npx expo export -p web && node fix-node-modules-path.mjs
+      - name: Save web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: expo/dist
+          include-hidden-files: true
+          if-no-files-found: error
+
+  check-cloudflare:
+    name: "準備: Cloudflareの鍵・権限・Workerを確認"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Check API token is active
+        run: |
+          curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            https://api.cloudflare.com/client/v4/user/tokens/verify \
+            | jq -e '.result.status == "active"'
+      - name: Check Pages access and current production deployment
+        run: |
+          curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/hoshigo" \
+            | jq -e '.success == true and (.result.canonical_deployment.id != null)'
+      - name: Check D1 access (read only)
+        run: npx wrangler d1 migrations list DB --remote
+      - name: Rehearse all migrations on an empty local D1
+        run: npx wrangler d1 migrations apply DB --local
+      - name: Dry run Worker deploy
+        run: npx wrangler deploy --dry-run
+
+
+
+  check-native:
+    name: "準備: アプリのバンドルとEASの鍵を確認"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_UPDATE_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: expo/package-lock.json
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_UPDATE_TOKEN }}
+          packager: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Check EAS login
+        run: npx eas-cli whoami
+      - name: Pull EAS environment variables
+        run: npx eas-cli env:pull production --non-interactive
+      - name: Check native bundle
+        run: npx expo export --platform ios --platform android --output-dir dist-native-check
+
+  # ================= 出すフェーズ(mainのときだけ。ここから本番) =================
+  release-api:
+    name: "出す①: D1の棚の工事 → Workerのdeploy"
+    if: github.ref == 'refs/heads/main'
+    needs: [build-web, check-cloudflare, check-native]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      # 記録に失敗しても、本番のdeployは止めない
+      - name: Record D1 restore point (Time Travel)
+        continue-on-error: true
+        run: |
+          {
+            echo "### D1 restore point (before migration)"
+            echo '```'
+            npx wrangler d1 time-travel info hoshigo-db
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Apply D1 migrations
+        run: npx wrangler d1 migrations apply DB --remote
+      - name: Deploy Worker
+        run: npx wrangler deploy
+
+  release-web:
+    name: "出す②: Pagesにdeploy"
+    needs: release-api
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    outputs:
+      prev_id: ${{ steps.prev.outputs.id }}
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Get web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist
+      - name: Remember current production deployment (for rollback)
+        id: prev
+        run: |
+          PREV_ID=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/hoshigo" \
+            | jq -r '.result.canonical_deployment.id // empty')
+          echo "id=$PREV_ID" >> "$GITHUB_OUTPUT"
+      - name: Deploy to Cloudflare Pages
+        run: npx --yes wrangler@4 pages deploy dist --project-name=hoshigo --branch=main --commit-dirty=true
+
+  release-ota:
+    name: "出す③: EAS OTA"
+    needs: release-web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_UPDATE_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: expo/package-lock.json
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_UPDATE_TOKEN }}
+          packager: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Pull EAS environment variables
+        run: npx eas-cli env:pull production --non-interactive
+      - name: Run EAS Update
+        run: npx eas-cli update --channel default --auto --non-interactive --clear-cache
+
+  # ================= 戻すフェーズ(②か③が失敗したときだけ) =================
+  rollback:
+    name: "戻す: 成功済みの分を前の状態に"
+    needs: [release-api, release-web, release-ota]
+    if: ${{ always() && (needs.release-web.result == 'failure' || needs.release-ota.result == 'failure') }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PREV_PAGES_ID: ${{ needs.release-web.outputs.prev_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      # ③(OTA)が失敗したときだけ: ②(Web)を前に戻す
+      - name: Roll back Pages
+        if: ${{ needs.release-ota.result == 'failure' }}
+        run: |
+          if [ -z "$PREV_PAGES_ID" ]; then
+            echo "::error::前のPagesのdeploy IDが分からないので、Webを戻せませんでした"
+            exit 1
+          fi
+          curl -fsS -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/hoshigo/deployments/$PREV_PAGES_ID/rollback" \
+            | jq -e '.success == true'
+      # ②か③が失敗したとき: ①(Worker)を前に戻す(Pagesの結果にかかわらず実行)
+      - name: Roll back Worker
+        if: ${{ always() }}
+        run: npx wrangler rollback --message "auto rollback after failed release ${{ github.sha }}" --yes

@@ -1,11 +1,8 @@
 // LoginModal.tsx
 
-import { MixedTextInput } from "@/src/components/common/MixedTextInput";
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useLoginModal } from "@/src/hooks/modals/useLoginModal";
-import { useLang } from "@/src/i18n/LangProvider";
-import { useRef } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -14,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
 import { ModalShell } from "ui-atoms";
 
 type Props = {
@@ -23,29 +19,10 @@ type Props = {
 };
 
 export const LoginModal = ({ visible, onClose }: Props) => {
-  const turnstileRef = useRef<TurnstileHandle>(null);
-  const { lang } = useLang();
   const colors = useColors();
-  const {
-    t,
-    step,
-    email,
-    setEmail,
-    otp,
-    handleOtpChange,
-    error,
-    loading,
-    canSendEmail,
-    canVerifyOtp,
-    onSendOtp,
-    onVerifyOtp,
-  } = useLoginModal({ onClose, turnstileRef });
-
-  const getTitle = () => {
-    if (step === "email") return t("AccountLinking.titleEmail");
-    if (step === "otp") return t("AccountLinking.titleOtp");
-    return "";
-  };
+  const { t, error, loading, onSignInWithGoogle, onCancel } = useLoginModal({
+    onClose,
+  });
 
   if (!visible) return null;
 
@@ -56,22 +33,13 @@ export const LoginModal = ({ visible, onClose }: Props) => {
       overlayColor={colors.overlay}
       borderColor={colors.backgroundStrong}
     >
-      <TurnstileWidget
-        ref={turnstileRef}
-        sitekey={process.env.EXPO_PUBLIC_TURNSTILE_SITEKEY!}
-        bgColor={colors.background}
-        textColor={colors.text}
-        spinnerColor={colors.primary}
-        spinnerTrackColor={colors.backgroundStrong}
-        lang={lang}
-      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="w-full"
       >
         <View className="flex-row justify-between items-center mb-4">
           <MyText className="text-2xl tracking-wider flex-1 text-text">
-            {getTitle()}
+            {t("LoginModal.titleEmail")}
           </MyText>
         </View>
 
@@ -79,150 +47,42 @@ export const LoginModal = ({ visible, onClose }: Props) => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {step === "email" && (
-            <View>
-              <View className="mb-6">
-                <MyText className="text-lg tracking-wide text-textSub">
-                  {t("AccountLinking.subtitleEmail")}
-                </MyText>
-              </View>
+          <View>
+            {error ? (
+              <MyText className="text-lg text-center mb-3 text-failure">
+                {error}
+              </MyText>
+            ) : null}
 
-              <View className="mb-4">
-                <View className="rounded-xl border bg-foreground border-2 border-primaryStrong">
-                  <MixedTextInput
-                    className="h-14 px-4 text-xl text-text"
-                    placeholder={"example@email.com"}
-                    placeholderTextColor={colors.textOpacity} // 絵文字対策
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoFocus
-                    editable={!loading}
-                    style={{ includeFontPadding: false }} // ⚠️Android用。大事
-                  />
-                </View>
-              </View>
-
-              {error ? (
-                <MyText className="text-lg text-center mb-3 text-failure">
-                  {error}
-                </MyText>
-              ) : null}
-
-              <View className="gap-2 mt-2">
-                <TouchableOpacity
-                  className={`h-14 rounded-xl justify-center items-center ${
-                    !canSendEmail || loading
-                      ? "bg-primaryStrong"
-                      : "bg-blackStone"
-                  }`}
-                  activeOpacity={0.8}
-                  onPress={onSendOtp}
-                  disabled={loading || !canSendEmail}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={colors.foreground} />
-                  ) : (
-                    <MyText className="text-lg tracking-wide text-foreground">
-                      {t("AccountLinking.sendCode")}
-                    </MyText>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  className="h-14 rounded-xl justify-center items-center bg-backgroundStrong"
-                  onPress={onClose}
-                  disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  <MyText className="text-lg tracking-wide text-textSub">
-                    {t("common.cancel")}
-                  </MyText>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
-          {step === "otp" && (
-            <View>
-              <View className="mb-6">
-                <MyText className="text-lg tracking-wide text-textSub">
-                  {t("AccountLinking.subtitleOtp", { email })}
-                </MyText>
-              </View>
-
-              <View className="mb-4">
-                <MyText className="text-lg mb-1.5 tracking-wide text-text">
-                  {t("AccountLinking.otpLabel")}
-                </MyText>
-                <View className="rounded-xl border bg-foreground border-2 border-primaryStrong">
-                  <MixedTextInput
-                    className="h-14 px-4 text-xl text-center text-text"
-                    placeholder={"123456"}
-                    placeholderTextColor={colors.textOpacity} // 絵文字対策
-                    value={otp}
-                    onChangeText={handleOtpChange}
-                    keyboardType="number-pad"
-                    autoFocus
-                    editable={!loading}
-                    style={{ includeFontPadding: false }} // ⚠️Android用。大事
-                  />
-                </View>
-              </View>
-
-              {error ? (
-                <MyText className="text-lg text-center mb-3 text-failure">
-                  {error}
-                </MyText>
-              ) : null}
-
-              <View className="gap-2 mt-2">
-                <TouchableOpacity
-                  className={`h-12 rounded-xl justify-center items-center ${
-                    !canVerifyOtp || loading
-                      ? "bg-primaryStrong"
-                      : "bg-blackStone"
-                  }`}
-                  activeOpacity={0.8}
-                  onPress={onVerifyOtp}
-                  disabled={loading || !canVerifyOtp}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={colors.foreground} />
-                  ) : (
-                    <MyText
-                      numberOfLines={1}
-                      className="text-lg tracking-wide text-foreground"
-                    >
-                      {t("AccountLinking.verify")}
-                    </MyText>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  className="h-12 rounded-xl justify-center items-center bg-backgroundStrong"
-                  onPress={onClose}
-                  disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  <MyText className="text-lg tracking-wide text-textSub">
-                    {t("common.cancel")}
-                  </MyText>
-                </TouchableOpacity>
-              </View>
-
+            <View className="gap-3 mt-2">
+              {/* Googleでログインボタン */}
               <TouchableOpacity
-                className="items-center mt-4"
-                onPress={onSendOtp}
+                className="h-14 rounded-xl justify-center items-center bg-blackStone"
+                activeOpacity={0.8}
+                onPress={onSignInWithGoogle}
                 disabled={loading}
               >
-                <MyText className="text-lg text-green">
-                  {t("AccountLinking.resend")}
+                {loading ? (
+                  <ActivityIndicator color={colors.foreground} />
+                ) : (
+                  <MyText className="text-lg tracking-wide text-foreground font-bold">
+                    {t("LoginModal.googleSignIn")}
+                  </MyText>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="h-14 rounded-xl justify-center items-center bg-backgroundStrong"
+                onPress={onCancel}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <MyText className="text-lg tracking-wide text-textSub">
+                  {t("common.cancel")}
                 </MyText>
               </TouchableOpacity>
             </View>
-          )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </ModalShell>

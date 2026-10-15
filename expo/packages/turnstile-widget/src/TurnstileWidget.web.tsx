@@ -59,12 +59,15 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     } | null>(null);
 
     // ウィジェットの準備が整うまでgetToken()を待たせるためのPromise
+    // ⚠️ useRef(new Promise(...)) と書くと、描画のたびにPromiseが作り直されて
+    // resolveがずれてしまうので、最初の1回だけ作る。
     const readyResolveRef = useRef<(() => void) | null>(null);
-    const readyPromiseRef = useRef<Promise<void>>(
-      new Promise((resolve) => {
+    const readyPromiseRef = useRef<Promise<void> | null>(null);
+    if (readyPromiseRef.current === null) {
+      readyPromiseRef.current = new Promise<void>((resolve) => {
         readyResolveRef.current = resolve;
-      }),
-    );
+      });
+    }
 
     useEffect(() => {
       let cancelled = false;

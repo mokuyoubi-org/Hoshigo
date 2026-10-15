@@ -74,5 +74,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 14,
+    includeFontPadding: false, // ⚠️Android用。大事
   },
 });
