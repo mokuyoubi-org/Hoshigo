@@ -20,7 +20,7 @@ jobs:
       run:
         working-directory: expo
     env:
-      EXPO_PUBLIC_TURNSTILE_SITEKEY: ${{ vars.EXPO_PUBLIC_TURNSTILE_SITEKEY }}
+      EXPO_TOKEN: ${{ secrets.EXPO_UPDATE_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,8 +30,18 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: expo/package-lock.json
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_UPDATE_TOKEN }}
+          packager: npm
       - name: Install dependencies
         run: npm ci
+      - name: Pull EAS environment variables
+        run: npx eas-cli env:pull production --non-interactive
+      - name: Check the API URL is the production one
+        run: grep -Eq '^EXPO_PUBLIC_API_URL="?https://api\.hoshigo\.app"?$' .env.local
       - name: Build web
         run: npx expo export -p web && node fix-node-modules-path.mjs
       - name: Save web build
@@ -42,6 +52,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
 
+          
   check-cloudflare:
     name: "準備: Cloudflareの鍵・権限・Workerを確認"
     runs-on: ubuntu-latest
