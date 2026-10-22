@@ -33,11 +33,10 @@ module.exports = (api) => {
     env: {
       // 本番ビルドのときだけ適用される。
       production: {
-        // plugins = 書き換えルールを1つずつ指定するもの。
-        // transform-remove-console は、コード中のconsole.log等を全部消す。
-        // 開発中はログが見えて、製品版ではログが消える。
-        // ※console.errorやconsole.warnも消える点に注意。
-        plugins: ["transform-remove-console"],
+        // transform-remove-console は、コード中のconsole.log等を消す。
+        // exclude に書いた error と warn は、消さずに残す。
+        // (本番でトラブルが起きたとき、adb logcat で原因を読めるようにするため)
+        plugins: [["transform-remove-console", { exclude: ["error", "warn"] }]],
       },
     },
   };
