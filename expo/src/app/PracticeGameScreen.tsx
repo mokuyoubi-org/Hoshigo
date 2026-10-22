@@ -1,6 +1,5 @@
 // PracticeGameScreen.tsx
 
-import { IconButton } from "@/packages/ui-atoms/src";
 import { BotPlayStopButtons } from "@/src/components/buttons/BotPlayStopButtons";
 import { MyText } from "@/src/components/common/MyText";
 import {
@@ -8,11 +7,11 @@ import {
   HeaderPlayerInfo,
 } from "@/src/components/headers/BoardEditScreenHeader";
 import LoadingModal from "@/src/components/modals/common/LoadingModal";
-import { GameScreenSettingsModal } from "@/src/components/modals/game/GameScreenSettingsModal";
+// import { AutoPassModal } from "@/src/components/modals/game/AutoPassModal";
 import { GameStartModal } from "@/src/components/modals/game/GameStartModal";
 import { PassConfirmModal } from "@/src/components/modals/game/PassConfirmModal";
 import { PracticeSetupModal } from "@/src/components/modals/game/PracticeSetupModal";
-import { GameResultModal } from "@/src/components/modals/result/GameResultModal";
+import { GameResultModal } from "@/src/components/modals/game/result/GameResultModal";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useAppFont } from "@/src/hooks/common/useAppFont";
@@ -25,9 +24,9 @@ import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GoBoard, ScoreLeadReplayControls } from "go-components";
 import {
-  BLACK,
   BoardSize,
   endsWithDoublePass,
+  getDisplayOwnership,
   Grid,
   MatchType,
   movesToBoardHistory,
@@ -37,8 +36,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ScreenHeader } from "ui-atoms";
-import { getOwnershipTerritoryBoard } from "../logics/game/ownershipTerritory";
+import { IconButton, MyHeader } from "ui-atoms";
+import { PracticeScreenSettingsModal } from "../components/modals/game/settings/PracticeScreenSettingsModal";
 import {
   parseAnalysisParam,
   parseMovesParam,
@@ -84,8 +83,6 @@ export default function PracticeGameScreen() {
     setBlackPlayer,
     whitePlayer,
     setWhitePlayer,
-    isSoundEnabled,
-    doubleTap,
     myRatingForBoardSize,
     myIconIndex,
     uid,
@@ -117,10 +114,14 @@ export default function PracticeGameScreen() {
     ? (paramMatchType as MatchType)
     : undefined;
 
-  // 🌟 盤サイズは、再開の時はURLの値で作り直した後のものを使う
+  // 🌟 再開の時は、URLの値を使う(読めなかった時は、設定の値)
   const effectiveBoardSize = resumed
     ? (resumeBoardSize ?? boardSize)
     : boardSize;
+  const effectiveMatchType = resumed
+    ? (resumeMatchType ?? matchType)
+    : matchType;
+
   const parsedMoves: Grid[] = parseMovesParam(movesP, effectiveBoardSize);
 
   // 🌟 連続パスで終わっている手の列は、再開しても対局が続けられないので、
@@ -132,15 +133,14 @@ export default function PracticeGameScreen() {
   const initialAnalysis = resumed
     ? parseAnalysisParam(analysisP, movesParam.length)
     : undefined;
+
   if (hasStarted) {
     return (
       <PracticeGameScreenContent
-        boardSize={resumed ? (resumeBoardSize ?? boardSize) : boardSize}
-        matchType={resumed ? (resumeMatchType ?? matchType) : matchType}
+        boardSize={effectiveBoardSize}
+        matchType={effectiveMatchType}
         blackPlayer={blackPlayer}
         whitePlayer={whitePlayer}
-        isSoundEnabled={isSoundEnabled}
-        doubleTap={doubleTap}
         movesParam={resumed ? movesParam : []}
         initialAnalysis={initialAnalysis}
       />
@@ -151,26 +151,15 @@ export default function PracticeGameScreen() {
     <SafeAreaView className="flex-1 bg-background items-center">
       <StatusBar style="dark" />
       <View className="flex-1 justify-center items-center w-full max-w-160 mx-auto">
+        {/* 対局開始前のプレビュー。石は置けない(disabled) */}
         <GoBoard
-          // 対局開始前プレビュー用。ただのプレビューなので値は適当
           boardSize={boardSize}
           matchType={matchType}
-          playerColor={BLACK} // 適当
           board={previewBoard}
-          currentIndex={0} // 適当
-          territoryBoard={[]} // 適当
-          moveHistory={[]} // 適当
+          currentIndex={0}
           boardHistory={[previewBoard]}
-          agehamaHistory={[{ black: 0, white: 0 }]} // 適当
-          onPutStone={() => {}} // 適当
+          onPutStone={() => {}}
           disabled={true}
-          isGameEnded={false} // 適当
-          doubleTap={false} // 適当
-          forceShowTerritory={false} // 適当
-          editMarkers={new Map()} // 適当
-          candidatePoints={[]} // 適当
-          moveEvaluationPoint={0} // 適当
-          moveEvaluation={undefined} // 適当
           boardWidth={boardWidth}
           boardColor={colors.primary}
           lineColor={colors.background}
@@ -180,8 +169,7 @@ export default function PracticeGameScreen() {
           botMoveColor={colors.botMoveColor}
           goodMoveColor={colors.success}
           badMoveColor={colors.failure}
-          sound={false} // 適当
-          practiceMatchStatus={""} // 適当
+          practiceMatchStatus={""}
         />
       </View>
 
@@ -218,8 +206,6 @@ const PracticeGameScreenContent = ({
   matchType,
   blackPlayer,
   whitePlayer,
-  isSoundEnabled,
-  doubleTap,
   movesParam,
   initialAnalysis,
 }: {
@@ -227,8 +213,6 @@ const PracticeGameScreenContent = ({
   matchType: MatchType;
   blackPlayer: PlayerType;
   whitePlayer: PlayerType;
-  isSoundEnabled: boolean;
-  doubleTap: boolean;
   movesParam: Grid[];
   initialAnalysis: RecordAnalysis | undefined;
 }) => {
@@ -242,18 +226,19 @@ const PracticeGameScreenContent = ({
 
   const {
     boardHistory,
-    agehamaHistory,
     moves,
     movesRef,
     currentIndex,
     maxViewIndex,
     setCurrentIndex,
-    territoryBoard,
+    ownership,
     isGameEnded,
     isBotThinking,
     handlePutStone,
     handleResign,
     shouldConfirmPass,
+    isPassReady,
+
     handleTogglePause,
     handleStop,
     isPaused,
@@ -267,6 +252,11 @@ const PracticeGameScreenContent = ({
     isDoublePass,
     isCalculating,
     isHumanBotMatch,
+    showOwnership,
+    showWinRateBar,
+    showMode,
+    isSoundEnabled,
+    doubleTap,
   } = usePracticeSession({
     boardSize,
     matchType,
@@ -275,6 +265,11 @@ const PracticeGameScreenContent = ({
     initialMoves: movesParam,
     initialAnalysis,
   });
+
+  // 🌟 パスボタンを押せないか。botが考え中の時、または
+  //   今の局面の判断(パスの確認が要るか)がまだ終わっていない時。
+  const isPassDisabled = isBotThinking || !isPassReady;
+
   // 🌟最新のhandlePutStoneを指すref。確認モーダルの「はい」から呼ぶ時に、
   //   モーダルを出した時点の古い関数を使ってしまわないため。
   const handlePutStoneRef = useRef(handlePutStone);
@@ -303,30 +298,20 @@ const PracticeGameScreenContent = ({
     );
   };
 
-  // 🌟 練習対局での、地の表示。棋譜画面の showOwnershipTerritoryBoard にあたるもの。
-  // 一旦、常にtrue。あとで設定(KVStorageなど)につなぐ時は、この1行を差し替えればいい。
-  const showOwnershipTerritoryBoard = true;
-
   // いま見ている局面の ownership(予想)から作った地。
   // 見せる局面は「分析が届いた局面」までなので、ライブ中でも通常は null にならない。
   // ownership が無い局面(分析の失敗など)は null(=何も出さない)。
   const ownershipTerritoryBoard = useMemo(
     () =>
-      showOwnershipTerritoryBoard
-        ? getOwnershipTerritoryBoard(
+      showOwnership
+        ? getDisplayOwnership(
             boardSize,
             boardHistory[currentIndex],
             liveAnalysisResult,
             currentIndex,
           )
         : null,
-    [
-      showOwnershipTerritoryBoard,
-      boardSize,
-      boardHistory,
-      currentIndex,
-      liveAnalysisResult,
-    ],
+    [showOwnership, boardSize, boardHistory, currentIndex, liveAnalysisResult],
   );
 
   const isPlayerBlack = blackPlayer.uid === uid;
@@ -365,6 +350,11 @@ const PracticeGameScreenContent = ({
   useEffect(() => {
     if (!isGameEnded) return;
 
+    // 🌟 棋譜に入れるアイコン・レートは、この対局の盤サイズでの値(再開で設定と
+    //   盤サイズが違っても、ずれないように)。対局開始モーダルと同じ窓口から取る。
+    const blackInfo = getPlayerGameStartInfo(blackPlayer);
+    const whiteInfo = getPlayerGameStartInfo(whitePlayer);
+
     const record = buildRecordFromMatch({
       matchId: "", // 適当
       boardSize,
@@ -373,14 +363,14 @@ const PracticeGameScreenContent = ({
       result: resultRaw,
       blackUid: blackPlayer.uid ?? "",
       blackUsername: blackPlayer.username,
-      blackIconIndex: blackPlayer.iconIndex,
-      blackRankIndex: ratingToRankIndex(blackPlayer.rating),
-      blackRating: blackPlayer.rating,
+      blackIconIndex: blackInfo.iconIndex,
+      blackRankIndex: ratingToRankIndex(blackInfo.ratingOrRank),
+      blackRating: blackInfo.ratingOrRank,
       whiteUid: whitePlayer.uid ?? "",
       whiteUsername: whitePlayer.username,
-      whiteIconIndex: whitePlayer.iconIndex,
-      whiteRankIndex: ratingToRankIndex(whitePlayer.rating),
-      whiteRating: whitePlayer.rating,
+      whiteIconIndex: whiteInfo.iconIndex,
+      whiteRankIndex: ratingToRankIndex(whiteInfo.ratingOrRank),
+      whiteRating: whiteInfo.ratingOrRank,
       analysis: liveAnalysisResult,
     });
 
@@ -401,7 +391,7 @@ const PracticeGameScreenContent = ({
         matchType={matchType}
         moves={moves.slice(0, currentIndex)} // 今の盤面までちょん切る
         analysis={{
-          perMove: liveAnalysisResult.perMove.slice(0, currentIndex + 1),
+          pos: liveAnalysisResult.pos.slice(0, currentIndex + 1),
         }}
         visible={true}
         resultComment={resultComment}
@@ -424,12 +414,21 @@ const PracticeGameScreenContent = ({
 
       <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
         {/* ─── ヘッダー ─── */}
-        <ScreenHeader
+        <MyHeader
           left={
             <TouchableOpacity
               onPress={() => {
                 if (router.canGoBack()) {
-                  router.back();
+                  // 2026/10/17: ⚠️ここはreplaceでなければならない
+                  router.replace({
+                    pathname: "/PracticeGameScreen",
+                    params: {
+                      matchTypeParam: matchType,
+                      boardSizeParam: boardSize,
+                      movesP: moves,
+                      analysisP: JSON.stringify(liveAnalysisResult),
+                    },
+                  });
                 } else {
                   router.replace({ pathname: "/HomeScreen" });
                 }
@@ -447,9 +446,10 @@ const PracticeGameScreenContent = ({
               borderColor={colors.backgroundStrong}
               onPress={() => {
                 show(
-                  <GameScreenSettingsModal
+                  <PracticeScreenSettingsModal
                     onClose={hide}
                     boardSize={boardSize}
+                    isBotBot={practiceMatchStatus === "bot_bot"}
                   />,
                 );
               }}
@@ -460,34 +460,40 @@ const PracticeGameScreenContent = ({
         {/* コンテンツ領域 */}
         {/* ─── 余白 A ─── */}
         <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_A }} />
-        {/* ─── 三兄弟 ─── */}
+        {/* ─── [2]兄弟 ─── */}
         <View className="items-center gap-2">
-          <BoardEditScreenHeader
-            analysis={liveAnalysisResult}
-            leftPlayer={toHeaderPlayer(bottomPlayer)}
-            rightPlayer={toHeaderPlayer(topPlayer)}
-            currentIndex={currentIndex}
-            showWinRateBar={true}
-          />
+          <View
+            style={{
+              width: boardWidth,
+            }}
+          >
+            <BoardEditScreenHeader
+              analysis={liveAnalysisResult}
+              leftPlayer={toHeaderPlayer(bottomPlayer)}
+              rightPlayer={toHeaderPlayer(topPlayer)}
+              currentIndex={currentIndex}
+              showWinRateBar={
+                practiceMatchStatus === "bot_bot" && showWinRateBar
+              }
+            />
+          </View>
           <GoBoard
             boardSize={boardSize}
             matchType={matchType}
             playerColor={bottomPlayer.color}
             board={boardHistory[currentIndex] ?? {}}
             currentIndex={currentIndex}
-            territoryBoard={ownershipTerritoryBoard ?? territoryBoard}
+            ownership={ownershipTerritoryBoard ?? ownership}
             moveHistory={moves.slice(0, currentIndex + 1)}
             boardHistory={boardHistory}
-            agehamaHistory={agehamaHistory}
             onPutStone={handlePutStone}
             disabled={isGameEnded || isBotThinking}
             isGameEnded={isGameEnded}
             doubleTap={doubleTap}
-            forceShowTerritory={ownershipTerritoryBoard !== null}
-            editMarkers={new Map()}
-            candidatePoints={[]}
-            moveEvaluationPoint={0}
-            moveEvaluation={undefined}
+            forceShowTerritory={
+              practiceMatchStatus === "bot_bot" &&
+              ownershipTerritoryBoard !== null
+            }
             boardWidth={boardWidth}
             boardColor={colors.primary}
             lineColor={colors.background}
@@ -514,18 +520,18 @@ const PracticeGameScreenContent = ({
             {/* パスボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
-                isBotThinking
+                isPassDisabled
                   ? "border-backgroundStrong"
                   : "border-primaryStrong"
               }`}
               onPress={handlePassPress}
-              disabled={isBotThinking}
+              disabled={isPassDisabled}
               activeOpacity={0.7}
             >
               <MyText
                 className="text-lg"
                 style={{
-                  color: isBotThinking
+                  color: isPassDisabled
                     ? colors.backgroundStrong
                     : colors.primaryStrong,
                 }}
@@ -536,16 +542,16 @@ const PracticeGameScreenContent = ({
             {/* 投了ボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
-                isBotThinking ? "border-failureLight" : "border-failure"
+                isPassDisabled ? "border-failureLight" : "border-failure" // 元はisBotThinking。だがUI的にパスに合わせる
               }`}
               onPress={handleResign}
-              disabled={isBotThinking}
+              disabled={isPassDisabled} // 元はisBotThinking。だがUI的にパスに合わせる
               activeOpacity={0.7}
             >
               <MyText
                 className="text-lg"
                 style={{
-                  color: isBotThinking ? colors.failureLight : colors.failure,
+                  color: isPassDisabled ? colors.failureLight : colors.failure, // 元はisBotThinking。だがUI的にパスに合わせる
                 }}
               >
                 {t("common.resign")}
@@ -558,7 +564,7 @@ const PracticeGameScreenContent = ({
         {!isGameEnded && !isDoublePass && practiceMatchStatus === "bot_bot" && (
           <View className="gap-2">
             <ScoreLeadReplayControls
-              showMode={"both"} // 一旦
+              showMode={showMode} // 一旦
               analysis={liveAnalysisResult}
               currentIndex={currentIndex}
               totalMoves={maxViewIndex}

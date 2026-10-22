@@ -8,4 +8,6 @@ export type AppEnv = AuthEnv & {
   QUEUE_ROOM: DurableObjectNamespace;
   GAME_ROOM: DurableObjectNamespace<GameRoom>;
   RECORDS: R2Bucket;
+  // RevenueCatからの通知が、本物かを見分ける合言葉
+  REVENUECAT_WEBHOOK_AUTH: string;
 };

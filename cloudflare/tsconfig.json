@@ -1,3 +1,6 @@
+// tsconfig.json
+// ts先生への指示書
+
 {
   "compilerOptions": {
     "target": "ESNext",

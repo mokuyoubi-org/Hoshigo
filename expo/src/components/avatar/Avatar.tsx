@@ -1,13 +1,13 @@
 // Avatar.tsx
 
+import { Agehama } from "@/packages/go-components/src";
 import { MyImage } from "@/src/components/common/MyImage";
 import { ICONS } from "@/src/constants/icons";
 import { RANKS } from "@/src/constants/ranks";
 import { useAppFont } from "@/src/hooks/common/useAppFont";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { AntDesign } from "@expo/vector-icons";
-import { Agehama } from "go-components";
-import { BLACK, Color, WHITE } from "go-core";
+import { BLACK, Color } from "go-core";
 import { View } from "react-native";
 
 type Props = {
@@ -15,7 +15,6 @@ type Props = {
   iconIndex: number;
   size: number;
   playerColor?: Color;
-  /** あげはま（取った石の数）。渡すと石の中に表示される */
   agehama?: number;
 };
 
@@ -33,15 +32,15 @@ export const Avatar = ({
 
   const starCount = rankIndex >= 0 && rankIndex <= 17 ? (rankIndex % 3) + 1 : 0;
 
-  const radius = (size / 2) * 1.05; // 円の半径
-  const center = size / 2; // 中心座標
-  const starOuterSize = size * 0.35;
+  const radius = size * 0.54; // 円の半径
+  const center = size * 0.5; // 中心座標
+  const starOuterSize = size * 0.36;
   const starInnerSize = size * 0.3;
-  const starOffset = starOuterSize / 2;
+  const starOffset = size * 0.2;
 
   // 数字を入れるので石を少し大きめにする（元は 0.45）
-  const stoneSize = size * 0.5;
-  const stoneRadius = stoneSize / 2;
+  const stoneSize = size * 0.4;
+  const stoneRadius = size * 0.2;
 
   // 9時方向（左）を中心に、上・中・下へ広がる角度
   const angles = [40, 0, -40]; // 度数法（9時方向 = 180°を基準）
@@ -49,41 +48,42 @@ export const Avatar = ({
   return (
     <View>
       <View
-        className="border-4 justify-center items-center relative"
+        className="justify-center items-center relative"
         style={{
           width: size,
           height: size,
           borderRadius: radius,
-          borderColor: iconIndex !== 6 ? rankColor : colors.foreground, // うさぎか否か
-          backgroundColor: iconIndex === 6 ? rankColor : colors.foreground, // うさぎか否か
+          borderColor: rankColor,
+          borderWidth: Math.max(size * 0.08, 4),
+          backgroundColor:
+            playerColor === BLACK ? colors.blackStone : colors.whiteStone, // うさぎか否か
         }}
       >
         <MyImage
           source={ICONS[iconIndex]}
-          style={{ width: size - 4, height: size - 4 }}
+          style={{ width: size * 0.8, height: size * 0.8 }}
           contentFit="contain"
         />
 
-        {playerColor && (
+        {playerColor && agehama !== undefined && agehama !== 0 && (
           <View
-            className={`absolute -bottom-1 -right-1 justify-center items-center ${
-              playerColor === WHITE ? "border-2 border-primary" : ""
-            }`}
+            className={`absolute -bottom-1 -right-1 justify-center items-center border-2`}
             style={{
               width: stoneSize,
               height: stoneSize,
               borderRadius: stoneRadius,
+              borderColor: colors.blackStone + "aa",
               backgroundColor:
-                playerColor === BLACK ? colors.blackStone : colors.whiteStone,
+                playerColor === BLACK ? colors.whiteStone : colors.blackStone,
             }}
           >
             {agehama !== undefined && agehama !== 0 && (
               <Agehama
                 count={agehama}
                 color={
-                  (playerColor === WHITE
+                  (playerColor === BLACK
                     ? colors.blackStone
-                    : colors.whiteStone) + "88"
+                    : colors.whiteStone) + "aa"
                 }
                 size={stoneSize}
                 fontFamily={fontFamily}

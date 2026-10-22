@@ -30,10 +30,9 @@ export const toLangKey = (lang: string): string =>
 const getBaseConfig = (lang: string, width: number): TitleConfig => {
   const configs: Record<string, TitleConfig> = {
     ja: {
-      topFont: "ResourceHanRoundedJA",
+      topFont: "HanRoundedJA",
       titleFont: "TitleJA" /** メインタイトルのフォント */,
-      subFont:
-        "ResourceHanRoundedJA" /** 「オンライン対局」やサブタイトルのフォント */,
+      subFont: "HanRoundedJA" /** 「オンライン対局」やサブタイトルのフォント */,
       fontSize: Math.min(
         120,
         width * 0.3,
@@ -44,9 +43,9 @@ const getBaseConfig = (lang: string, width: number): TitleConfig => {
       showSubtitle: true /** サブタイトル(Hoshigoなど)を表示するか */,
     },
     en: {
-      topFont: "ResourceHanRoundedJA",
+      topFont: "HanRoundedJA",
       titleFont: "TitleEN", // せいぜい39KBなのでOK
-      subFont: "ResourceHanRoundedJA", // 適当
+      subFont: "HanRoundedJA", // 適当
       fontSize: Math.min(96, width * 0.2),
       letterSpacing: 0,
       titleOffsetY: 0,
@@ -54,9 +53,9 @@ const getBaseConfig = (lang: string, width: number): TitleConfig => {
       showSubtitle: false,
     },
     zh: {
-      topFont: "ResourceHanRoundedSC",
+      topFont: "HanRoundedSC",
       titleFont: "TitleSC",
-      subFont: "ResourceHanRoundedSC",
+      subFont: "HanRoundedSC",
       fontSize: Math.min(108, width * 0.28),
       letterSpacing: 0,
       titleOffsetY: 0,
@@ -64,9 +63,9 @@ const getBaseConfig = (lang: string, width: number): TitleConfig => {
       showSubtitle: true,
     },
     ko: {
-      topFont: "ResourceHanRoundedKO",
+      topFont: "HanRoundedKO",
       titleFont: "TitleKO",
-      subFont: "ResourceHanRoundedKO",
+      subFont: "HanRoundedKO",
       fontSize: Math.min(108, width * 0.3),
       letterSpacing: 6,
       titleOffsetY: 0,

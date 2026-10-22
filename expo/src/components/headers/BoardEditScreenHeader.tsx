@@ -4,8 +4,7 @@ import { MixedText } from "@/src/components/common/MixedText";
 import { useAppFont } from "@/src/hooks/common/useAppFont";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { isBot } from "@/src/logics/bot/botLogics";
-import { nameFormatter } from "@/src/logics/bot/botNameLogics";
+import { isBot, nameFormatter } from "@/src/logics/format/nameFormatter";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { WinRateBar } from "go-components";
 import { BLACK, Color, RecordAnalysis } from "go-core";
@@ -47,13 +46,10 @@ export const BoardEditScreenHeader = memo(
     const fontFamily = useAppFont();
 
     // 勝率データ
-    const currentWinRate = analysis?.perMove?.[currentIndex]?.winRate ?? null;
+    const currentWinRate = analysis?.pos?.[currentIndex]?.winRate ?? null;
     const hasAnalysis = analysis != null && currentWinRate != null;
 
-    const blackPct =
-      currentWinRate != null
-        ? Math.round(Math.min(Math.max(currentWinRate, 0), 100))
-        : 50;
+    const blackPct = currentWinRate ?? 50;
     const leftPct = leftPlayer.color === BLACK ? blackPct : 100 - blackPct;
     const rightPct = 100 - leftPct;
 

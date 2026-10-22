@@ -19,6 +19,7 @@ export const useProfileScreen = () => {
     rating9,
     rating13,
     rating19,
+    isPremium
   } = useProfile();
   const [rank9, rank13, rank19] = [
     getRankInfo(rating9, t),
@@ -93,6 +94,7 @@ export const useProfileScreen = () => {
       boardSize,
       rankInfo: currentRankInfo,
       loading,
+      isPremium
     },
     handlers: {
       setBoardSize,

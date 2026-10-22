@@ -1,98 +1,117 @@
-// useKataGoTask.ts
+// expo/src/hooks/ai/useKataGoTask.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
-// kataGo.run() を実際に呼び出す唯一の入口。
-//
-// 「次に打つ人の色」(currentPlayer)も呼び出し側は渡さなくていい。
-// matchTypeとmovesSoFar.lengthから、ここでgetColorToMoveを使って決める。
-// (movesSoFarと食い違う色を渡してしまう事故が、原理的に起きなくなる)
+// expo-katagoとやり取りする窓口。
+//  - run: 局面を分析して、仕上げ済みの結果を返す。
+//  - isFinalAfterPass: 「パスした後の局面」を分析して、終局と判定されるかを返す。
+//    終局の2段階確認の2段階目。bot側も人間側もここを使う。
 // ──────────────────────────────────────────────────
 
-import { printCustomKataGoResult } from "@/src/logics/debug/debugLogics";
-import { AnalyzeResult, useKataGo } from "expo-katago";
-import { Board, BoardSize, getColorToMove, Grid, MatchType } from "go-core";
+// import { printCustomKataGoResult } from "@/src/logics/debug/debugLogics";
+// srcの世界では、
+// ownership: "BBBWWBB...W.BBBWB"みたいな、BとWと.のみからなる、長さboardSize*boardSizeのstring。
+import { useKataGo } from "expo-katago";
+import {
+  Board,
+  BoardSize,
+  finalizeAnalysis,
+  getColorToMove,
+  Grid,
+  MatchType,
+  movesToBoardHistory,
+  Ownership,
+  PASS_GRID,
+  rawMovesToCandidates,
+  toPercent,
+} from "go-core";
+import { enqueueKataGo } from "./kataGoQueue";
 
-type Params = {
-  board: Board;
-  movesSoFar: Grid[];
-  boardSize: BoardSize;
-  matchType: MatchType;
-};
-
-// ⚠️👍このuseKataGoTaskの存在意義はこのフィールドにあると言って良い。
+// 🌟analyzeBoardに送り返してきて欲しい情報だけ書く
 const fields = {
-  scoreSelfplay: false,
-  scoreStdev: false,
-  visits: false,
-  ownershipStdev: false,
-  policy: false,
-  moveDetails: false,
-};
+  winRate: true,
+  ownership: true,
+  moves: { winRate: true },
+} as const;
+
+export interface KataGoTaskResult {
+  winRate: number;
+  candidates: Grid[];
+  ownership: Ownership;
+  scoreLead: number;
+  isFinal: boolean; // 終局と判定された局面か
+  dames: Grid[]; // ダメの空点。なので日本ルールでは打っても仕方のないところ
+}
 
 export const useKataGoTask = () => {
   const kataGo = useKataGo();
 
   const run = async (
-    params: Params,
-  ): Promise<AnalyzeResult | null> => {
+    board: Board,
+    movesSoFar: Grid[],
+    boardSize: BoardSize,
+    matchType: MatchType,
+  ): Promise<KataGoTaskResult | null> => {
+    const currentPlayer = getColorToMove(matchType, movesSoFar.length);
 
-    const currentPlayer = getColorToMove(
-      params.matchType,
-      params.movesSoFar.length,
+    // 🌟 受付係を通す(前の分析が終わるまで、ここで順番待ちになる)
+    const result = await enqueueKataGo(() =>
+      kataGo.run({
+        board,
+        movesSoFar,
+        boardSize,
+        matchType,
+        currentPlayer,
+        fields,
+      }),
     );
+    if (!result) return null;
 
-    const result = await kataGo.run({
-      ...params,
-      currentPlayer,
-      fields,
-    });
+    // x, y 形式から grid 形式へ変換する
+    const candidateMoves = rawMovesToCandidates(result.moves ?? [], boardSize);
 
-    printCustomKataGoResult(
-      params.board,
-      params.movesSoFar,
-      currentPlayer,
-      result,
-      params.boardSize,
-    );
+    const { ownership, scoreLead, winRate, candidates, isFinal, dames } =
+      finalizeAnalysis(
+        board,
+        boardSize,
+        matchType,
+        movesSoFar,
+        result.ownership as ArrayLike<number>,
+        toPercent(result.winRate ?? 0.5),
+        candidateMoves,
+      );
 
-    return result ? { ...result} : null;
+    return { winRate, candidates, ownership, scoreLead, isFinal, dames };
   };
 
-  // 🌟kataGo.run→analyzeBoard内のloadModelが
-  //   キャッシュに無ければその場でDL・ウォームアップを待ってから
-  //   解析するので、単に時間がかかるだけで結果は必ず要求モデル基準になる。
-  //   終局の地計算のように「精度が絶対、待ち時間は許容できる」用途専用。
-  //   requestIdを渡すと、まだキューに積まれてる間だけcancelQueuedAnalysis
-  //   で取り消せるようになる(連打で不要になった編集モードの解析の後始末用)。
-  const runExact = async (
-    params: Params,
-    requestId?: string,
-  ): Promise<(AnalyzeResult) | null> => {
-    const currentPlayer = getColorToMove(
-      params.matchType,
-      params.movesSoFar.length,
-    );
+  // 「今の局面でパスした後の局面」を分析して、終局と判定されるかを返す。
+  // 盤面が作れない時、分析に失敗した時、例外が出た時は false。
+  // (=「終局を確定させない」側に倒す。パスせず、普通に手を打つ)
+  const isFinalAfterPass = async (
+    movesSoFar: Grid[],
+    boardSize: BoardSize,
+    matchType: MatchType,
+  ): Promise<boolean> => {
+    try {
+      const movesAfter = [...movesSoFar, PASS_GRID];
+      const { boardHistory } = movesToBoardHistory(
+        boardSize,
+        matchType,
+        movesAfter,
+      );
+      const boardAfter = boardHistory[boardHistory.length - 1];
+      if (!boardAfter) return false;
 
-    const result = await kataGo.run(
-      { ...params, currentPlayer, fields },
-      requestId,
-    );
-
-    printCustomKataGoResult(
-      params.board,
-      params.movesSoFar,
-      currentPlayer,
-      result,
-      params.boardSize,
-    );
-
-    return result ? { ...result } : null;
+      const after = await run(boardAfter, movesAfter, boardSize, matchType);
+      return after?.isFinal ?? false;
+    } catch (e) {
+      console.warn("[useKataGoTask] パス後の局面の分析で例外が出ました", e);
+      return false;
+    }
   };
 
   return {
     run,
-    runExact,
+    isFinalAfterPass,
     engineReady: kataGo.engineReady,
-    cancelQueuedAnalysis: kataGo.cancelQueuedAnalysis,
   };
 };

@@ -1,21 +1,17 @@
 // packages/expo-katago/src/components/KataGoEngineContext.tsx
 //
 // ─── このContextの責務 ───────────────────────────────
-// KataGo(WebView内)への解析リクエストの、唯一かつ直列化された入口を提供する。
+// KataGo(WebView内)への解析リクエストの入口を提供する。
 //
-// 解析の依頼(job)は1列のキュー(queueRef)に積まれ、1件ずつ順番に処理される
-// (isProcessingRefが「今まさに1件処理中か」を示す唯一のフラグ)。
-//
-// 待ち行列に積まれた「まだ実行されていない」仕事は、requestIdを指定して
-// いれば cancelQueuedAnalysis(requestId) で後から取り消せる。取り消された
-// 仕事は列から静かに取り除かれ、resolve(null)ですぐ終わる。
-// ⚠️ 重要: キャンセルは「isProcessingRef(実行権)には一切触れない」設計に
-// している。「今まさに実行中」の1件はキャンセル対象に含まれない(KataGo本体に
-// 計算を中断させる手段が無いため)。
+// 行列(キュー)は管理しない。1件ずつしか受け付けず、推論中に依頼が来たら
+// 何もせず null を返して断る。「今、推論中か」は isAnalyzing で外から見える。
+// 行列の整理は、使う側(expo/src)の責務。
 //
 // ⚠️ ブリッジ越しの呼び出しは「戻り値のPromiseは信用しない」が鉄則。
-// warmupModelは「呼びっぱなし＋onModelReady/onModelErrorのコールバックで
-// 完了・失敗を待つ」形にしている。
+// 解析の結果も、warmupModelの完了・失敗も、
+// コールバック(onAnalyzeComplete / onModelReady / onModelError)で受け取る。
+// WebView側は、成功でも失敗でも必ずonAnalyzeCompleteを呼ぶ
+// (失敗時はnull)ので、結果待ちがいつまでも終わらないことはない。
 //
 // 起動シーケンス:
 // 1. WebView内でinitTf(TensorFlow.jsのバックエンド選び)が終わると onReady が呼ばれる
@@ -29,11 +25,19 @@
 //
 // ──────────────────────────────────────────────────
 
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { View } from "react-native";
 import {
   AnalyzeBoardArgs,
-  AnalyzeResult,
+  AnalyzeResultFields,
+  AnalyzeResultFor,
   KataGoEngineRef,
   LoadProgressState,
   ModelLoadStage,
@@ -48,25 +52,17 @@ type KataGoEngineContextType = {
   engineReady: boolean;
   setupError: string | null;
   loadProgress: LoadProgressState;
-  // requestIdを指定すると、まだ実行されていない(待ち行列に積まれた)間だけ
-  // cancelQueuedAnalysisで取り消せるようになる。省略した場合は取り消し不可。
-  // 実行が始まった後は取り消せない(結果を最後まで待つことになる)。
-  runAnalysis: (
-    args: AnalyzeBoardArgs,
-    requestId?: string,
-  ) => Promise<AnalyzeResult | null>;
-  // 待ち行列(まだ実行されていない分)の中から、指定したrequestIdに一致する
-  // ものを取り消す。該当エントリはnullで即resolveされる。実行中の1件は
-  // 対象外(中断できない)。何件消したかを返す。
-  cancelQueuedAnalysis: (requestId: string) => number;
+  // 今、推論中か(true=作業中 / false=暇)
+  isAnalyzing: boolean;
+  // 推論中に呼ぶと、何もせず null を返す(断る)。
+  runAnalysis: <const F extends AnalyzeResultFields>(
+    args: AnalyzeBoardArgs & { fields: F },
+  ) => Promise<AnalyzeResultFor<F> | null>;
 };
+
 const KataGoEngineContext = createContext<KataGoEngineContextType | null>(null);
 
-export const KataGoEngineProvider = ({
-  children,
-}: {
-  children: ReactNode;
-}) => {
+export const KataGoEngineProvider = ({ children }: { children: ReactNode }) => {
   const engineRef = useRef<KataGoEngineRef | null>(null);
   const [engineReady, setEngineReady] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
@@ -88,105 +84,54 @@ export const KataGoEngineProvider = ({
   }, [instanceId]);
 
   // WebViewから結果が届いたら呼ばれる、たった1つの受信箱。
-  const resultCallbackRef = useRef<
-    ((result: AnalyzeResult | null) => void) | null
-  >(null);
+  const resultCallbackRef = useRef<((result: unknown) => void) | null>(null);
 
-  // ── 解析キュー ──────────────────────────────────
-  // isProcessingRef が「今まさに1件処理中か」を示す唯一のフラグ。
-  // キャンセルはこのフラグに一切触れず、queueRef(まだ手をつけていない
-  // 仕事の配列)から該当エントリを取り除くだけで完結する。
-  type QueuedJob = {
-    requestId: string | undefined;
-    args: AnalyzeBoardArgs;
-    resolve: (result: AnalyzeResult | null) => void;
-  };
-  const queueRef = useRef<QueuedJob[]>([]);
+  // ── 解析(1件だけ受け付ける) ──────────────────────
+  // isProcessingRef: 「今まさに1件処理中か」を判定する、即座に読める旗(ref)。
+  // isAnalyzing: 同じ内容を、画面などの外の世界に見せるためのstate。
   const isProcessingRef = useRef(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // 実際にKataGoへ1件投げて結果を待つ処理。
-  const runJob = async (job: QueuedJob): Promise<void> => {
-    const isReady = await waitForEngineReady();
-    if (!isReady || !engineRef.current) {
-      console.warn(
-        "[KataGoContext] エンジンが利用可能になりませんでした(Skip)",
-      );
-      job.resolve(null);
-      return;
+  // eslint-disable-next-line prefer-arrow-functions/prefer-arrow-functions
+  async function runAnalysis<const F extends AnalyzeResultFields>(
+    args: AnalyzeBoardArgs & { fields: F },
+  ): Promise<AnalyzeResultFor<F> | null> {
+    if (isProcessingRef.current) {
+      console.warn("[KataGoContext] 推論中のため、依頼を無視しました");
+      return null;
     }
-
-    const result = await new Promise<AnalyzeResult | null>((resolve) => {
-      let timeoutId: ReturnType<typeof setTimeout>;
-
-      resultCallbackRef.current = (result) => {
-        clearTimeout(timeoutId);
-        resolve(result);
-      };
-
-      timeoutId = setTimeout(() => {
-        console.warn("[KataGoContext] 推論結果の受信がタイムアウトした…");
-        resultCallbackRef.current = null;
-        resolve(null);
-      }, 600000);
-
-      try {
-        engineRef.current!.analyzeBoard(job.args);
-      } catch (e) {
-        console.error("[KataGoContext] analyzeBoard 呼び出しエラー:", e);
-        clearTimeout(timeoutId);
-        resolve(null);
-      }
-    });
-
-    job.resolve(result);
-  };
-
-  // キューの先頭を1件取り出して処理する。処理中なら何もしない
-  // (今処理してる分がfinallyで自分自身を再度呼ぶことで、自然と
-  // 次の1件に進む「リレー」方式)。
-  const processQueue = () => {
-    if (isProcessingRef.current) return;
-    const job = queueRef.current.shift();
-    if (!job) return;
     isProcessingRef.current = true;
-    runJob(job).finally(() => {
-      isProcessingRef.current = false;
-      processQueue();
-    });
-  };
+    setIsAnalyzing(true);
 
-  // ── 唯一の解析入口 ─────────────────────────
-  const runAnalysis = (
-    args: AnalyzeBoardArgs,
-    requestId?: string,
-  ): Promise<AnalyzeResult | null> => {
-    return new Promise((resolve) => {
-      queueRef.current.push({ requestId, args, resolve });
-      processQueue();
-    });
-  };
-
-  // まだ手をつけていない(＝queueRef内に残ってる)仕事だけを対象に取り消す。
-  // isProcessingRefには一切触れないので、実行中の仕事には影響しない。
-  const cancelQueuedAnalysis = (requestId: string): number => {
-    const remaining: QueuedJob[] = [];
-    let removedCount = 0;
-    for (const job of queueRef.current) {
-      if (job.requestId === requestId) {
-        removedCount++;
-        job.resolve(null);
-      } else {
-        remaining.push(job);
+    try {
+      const isReady = await waitForEngineReady();
+      if (!isReady || !engineRef.current) {
+        console.warn(
+          "[KataGoContext] エンジンが利用可能になりませんでした(Skip)",
+        );
+        return null;
       }
-    }
-    queueRef.current = remaining;
-    console.log(
-      `[KataGoContext] cancelQueuedAnalysis(${requestId}): ${removedCount}件取り消し`,
-    );
-    return removedCount;
-  };
 
-  const handleAnalyzeComplete = (result: AnalyzeResult) => {
+      const result = await new Promise<unknown>((resolve) => {
+        resultCallbackRef.current = resolve;
+
+        try {
+          engineRef.current!.analyzeBoard(args); // 🌟要はここ。
+        } catch (e) {
+          console.error("[KataGoContext] analyzeBoard 呼び出しエラー:", e);
+          resultCallbackRef.current = null;
+          resolve(null);
+        }
+      });
+
+      return result as AnalyzeResultFor<F> | null;
+    } finally {
+      isProcessingRef.current = false;
+      setIsAnalyzing(false);
+    }
+  }
+
+  const handleAnalyzeComplete = (result: unknown) => {
     if (resultCallbackRef.current) {
       resultCallbackRef.current(result);
       resultCallbackRef.current = null;
@@ -288,8 +233,8 @@ export const KataGoEngineProvider = ({
         engineReady,
         setupError,
         loadProgress,
+        isAnalyzing,
         runAnalysis,
-        cancelQueuedAnalysis,
       }}
     >
       <View

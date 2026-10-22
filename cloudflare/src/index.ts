@@ -9,6 +9,7 @@ import { checkGate, guard } from "./middleware/guard";
 import { accountRoutes } from "./rpc/account";
 import { profileRoutes } from "./rpc/profile";
 import { recordsRoutes } from "./rpc/records";
+import { revenuecatWebhookRoutes } from "./webhooks/revenuecat";
 
 // Durable Objectsの部屋のクラスは、ここから export する(Cloudflareが見つけるため)
 export { GameRoom } from "./game-room";
@@ -16,15 +17,12 @@ export { QueueRoom } from "./queue-room";
 
 const app = new Hono<{ Bindings: AppEnv }>();
 
-// 許可するアドレス:Web版の本番(hoshigo.app)と、手元のExpo(dev.hoshigo.app / localhost:8081)。
-const ALLOWED_ORIGINS = [
-  "https://hoshigo.app",
-  "https://api.hoshigo.app",
-  "https://dev.hoshigo.app",
-  "http://localhost:8081",
-];
+// 許可するアドレス:Web版の本番(hoshigo.app)と、手元のExpo(localhost:8081)。
+// api.hoshigo.app(玄関)には誰でも入れるけど、その先に進めるのは以下のurlからのアクセスのみ。
+const ALLOWED_ORIGINS = ["https://hoshigo.app", "http://localhost:8081"];
 
-app.get("/", (c) => c.text("Hello Hono!"));
+// api.hoshigo.appにアクセスしたときに表示される文章。
+app.get("/", (c) => c.text("Hoshigo API Server is running"));
 
 // ブラウザ(Web版)からのリクエストを許可する「どうぞ」。
 // credentials: true にするので、origin は「*」にせず、アドレスを1つずつ書く。
@@ -59,6 +57,10 @@ app.use("/rpc/*", guard);
 app.route("/rpc", profileRoutes);
 app.route("/rpc", accountRoutes);
 app.route("/rpc", recordsRoutes);
+
+// RevenueCatからの通知。アプリやブラウザからではなく、RevenueCatのサーバーから届く。
+// (見張り番 guard は /rpc/* にだけ立っているので、ここには関係ない)
+app.route("/webhooks", revenuecatWebhookRoutes);
 
 // WebSocketで「エラーです」と伝えて、閉じる。
 // (WebSocketの失敗は、HTTPのエラーだと、アプリに中身が届かないため)

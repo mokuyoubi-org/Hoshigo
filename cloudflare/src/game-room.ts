@@ -1,35 +1,15 @@
 // game-room.ts
+
 import { DurableObject } from "cloudflare:workers";
-import { and, eq, inArray, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
 import * as appSchema from "./db/app-schema";
 import type { AppEnv } from "./env";
+import { isValidOwnership } from "./logic/analysis";
 import { calculateDrawDelta, calculateMatchDelta } from "./logic/rating";
+import { user } from "./db/auth-schema";
 
 const { userStats, recordCards, activeGames } = appSchema;
-
-// 局面ごとの分析(アプリのKataGoが出した結果)。数字は、全部、整数。黒から見た値。
-type StoredAnalysis = {
-  ownership: number[]; // 各マスの地の見込み(-100〜100)
-  scoreLead: number; // 目数の差(10倍)
-  winRate: number; // 勝率(1000倍)
-};
-
-const BOARD_CELLS: Record<number, number> = { 9: 81, 13: 169, 19: 361 };
-const ANALYSIS_KEY_PREFIX = "a:"; // 部屋の中の、分析の置き場の名前の頭
-
-// 整数で、範囲の中に入っているか
-function isIntInRange(
-  value: unknown,
-  min: number,
-  max: number,
-): value is number {
-  return (
-    Number.isInteger(value) &&
-    (value as number) >= min &&
-    (value as number) <= max
-  );
-}
 
 // 対局に参加する人の情報(「マッチしたよ」で、相手の情報として、アプリに送る)
 export type PlayerInfo = {
@@ -94,6 +74,9 @@ type GameState = {
   whiteSeconds: number;
   turnSwitchedAt: number; // 手番が替わった時刻(ms)
   result: string | null;
+  // 最終局面の地(1点1文字の "BBW.." の文字列)。resultと同じ人が、同じタイミングで送ったもの。
+  // 投了・時間切れなど、地を数えない終局では null。
+  ownership: string | null;
   resultBy: Color | null; // 最後に結果を送った人の色
   // 一度でも、つながったことのある色(つながったことのない人の、切断判定はしない)
   seen: { black: boolean; white: boolean };
@@ -106,7 +89,6 @@ type GameState = {
   // 成績を更新する前の、2人のレーティング(棋譜とカードに書く)
   oldRatings: { black: number; white: number } | null;
 };
-
 // 終局のあとに送る、レーティングの更新の知らせ
 type SideUpdate = {
   old_rating: number;
@@ -176,6 +158,7 @@ export class GameRoom extends DurableObject<AppEnv> {
       whiteSeconds: match.seconds,
       turnSwitchedAt: Date.now(),
       result: null,
+      ownership: null,
       resultBy: null,
       seen: { black: false, white: false },
       disconnectedAt: { black: null, white: null },
@@ -305,10 +288,7 @@ export class GameRoom extends DurableObject<AppEnv> {
       move?: unknown;
       bot?: unknown;
       result?: unknown;
-      pos?: unknown;
       ownership?: unknown;
-      score_lead?: unknown;
-      win_rate?: unknown;
     };
     try {
       data = JSON.parse(message);
@@ -328,10 +308,13 @@ export class GameRoom extends DurableObject<AppEnv> {
         await this.handleResign(ws, state, att);
         break;
       case "submit_result":
-        await this.handleSubmitResult(ws, state, att, data.result);
-        break;
-      case "analysis":
-        await this.handleAnalysis(ws, state, data);
+        await this.handleSubmitResult(
+          ws,
+          state,
+          att,
+          data.result,
+          data.ownership,
+        );
         break;
     }
   }
@@ -432,12 +415,15 @@ export class GameRoom extends DurableObject<AppEnv> {
     await this.finish(state, att.color === "black" ? "W+R" : "B+R");
   }
 
-  // 結果を送る(いまの submit_match_result)
+  // 結果を送る(いまの submit_match_result)。
+  // 最終局面の地(ownership)も、結果と一緒に受け取る。
+  // 形が正しくないときは、エラーにせず null として扱う(結果のほうが大事なので、対局を止めない)。
   private async handleSubmitResult(
     ws: WebSocket,
     state: GameState,
     att: Attachment,
     result: unknown,
+    ownership: unknown,
   ) {
     if (state.status !== "pending") {
       return this.sendError(ws, "NOT_PENDING", "結果の確認待ちではありません");
@@ -446,106 +432,26 @@ export class GameRoom extends DurableObject<AppEnv> {
       return this.sendError(ws, "INVALID_RESULT", "結果が正しくありません");
     }
 
+    const finalOwnership = isValidOwnership(ownership, state.init.boardSize)
+      ? ownership
+      : null;
+
     // ボット戦は、最初の1通で確定
     if (state.init.botMatch) {
-      await this.finish(state, result);
+      await this.finish(state, result, finalOwnership);
       return;
     }
 
-    // 人間同士: 1人目なら、結果を覚えておく。2人目(別の人)なら、後着優先で確定。
-    // (同じ人が、もう1回送ってきたときは、結果を上書きするだけ)
+    // 人間同士: 1人目なら、結果と地を、セットで覚えておく。2人目(別の人)なら、後着優先で確定。
+    // (同じ人が、もう1回送ってきたときは、セットで上書きするだけ)
     if (state.result === null || state.resultBy === att.color) {
       state.result = result;
+      state.ownership = finalOwnership;
       state.resultBy = att.color;
       await this.save(state);
       return;
     }
-    await this.finish(state, result);
-  }
-
-  // ===== 分析 =====
-
-  // 分析を受け取る(いまの match_analysis への書き込み)。
-  // 局面 pos(0 = まだ1手も打たれていない局面)ごとに1つ。
-  // 両方の対局者が、同じ局面を送ってくるので、先に届いた方だけを保存する。
-  private async handleAnalysis(
-    ws: WebSocket,
-    state: GameState,
-    data: {
-      pos?: unknown;
-      ownership?: unknown;
-      score_lead?: unknown;
-      win_rate?: unknown;
-    },
-  ) {
-    if (state.status === "finished") return;
-
-    const { pos, ownership, score_lead: scoreLead, win_rate: winRate } = data;
-    const cells = BOARD_CELLS[state.init.boardSize];
-
-    // 中身が正しいか確認(変なデータが、R2に入らないように)
-    if (
-      !isIntInRange(pos, 0, state.moves.length) ||
-      !Array.isArray(ownership) ||
-      ownership.length !== cells ||
-      !ownership.every((v) => isIntInRange(v, -100, 100)) ||
-      !isIntInRange(scoreLead, -10000, 10000) ||
-      !isIntInRange(winRate, 0, 1000)
-    ) {
-      return this.sendError(
-        ws,
-        "INVALID_ANALYSIS",
-        "分析のデータが正しくありません",
-      );
-    }
-
-    const key = ANALYSIS_KEY_PREFIX + String(pos).padStart(4, "0");
-    // もう届いていたら、何もしない(先に届いた方を使う)
-    if ((await this.ctx.storage.get(key)) !== undefined) return;
-
-    await this.ctx.storage.put(key, {
-      ownership: ownership as number[],
-      scoreLead,
-      winRate,
-    } satisfies StoredAnalysis);
-  }
-
-  // 局面ごとにためた分析を、項目ごとの配列(位置 = 局面の番号、無い局面は null)にして、
-  // R2の analysis/{id}.json に書く。1つも届いていなければ、何もしない。
-  private async saveAnalysis(state: GameState) {
-    const entries = await this.ctx.storage.list<StoredAnalysis>({
-      prefix: ANALYSIS_KEY_PREFIX,
-    });
-    if (entries.size === 0) return;
-
-    const length = state.moves.length + 1;
-    const ownership: (number[] | null)[] = new Array(length).fill(null);
-    const scoreLead: (number | null)[] = new Array(length).fill(null);
-    const winRate: (number | null)[] = new Array(length).fill(null);
-
-    for (const [key, value] of entries) {
-      const pos = Number(key.slice(ANALYSIS_KEY_PREFIX.length));
-      if (pos >= length) continue;
-      ownership[pos] = value.ownership;
-      scoreLead[pos] = value.scoreLead;
-      winRate[pos] = value.winRate;
-    }
-
-    await this.env.RECORDS.put(
-      `analysis/${state.init.gameId}.json`,
-      JSON.stringify({
-        v: 1,
-        id: state.init.gameId,
-        // model は、b18だけになったので、18で固定
-        analysis: {
-          model: 18,
-          ownership,
-          score_lead: scoreLead,
-          win_rate: winRate,
-        },
-      }),
-      { httpMetadata: { contentType: "application/json" } },
-    );
+    await this.finish(state, result, finalOwnership);
   }
 
   // ===== 切断 =====
@@ -572,12 +478,17 @@ export class GameRoom extends DurableObject<AppEnv> {
 
   // ===== 終局 =====
 
-  private async finish(state: GameState, result: string) {
+  private async finish(
+    state: GameState,
+    result: string,
+    ownership: string | null = null,
+  ) {
     // すでに終わっていたら、何もしない(成績を、2回更新しないため)
     if (state.status === "finished") return;
 
     state.status = "finished";
     state.result = result;
+    state.ownership = ownership;
     state.statsApplied = false;
     state.recordSaved = false;
     state.statsTries = 0;
@@ -600,7 +511,7 @@ export class GameRoom extends DurableObject<AppEnv> {
     }
   }
 
-  // 終局後の仕事: ①成績の更新(D1)②分析と棋譜の保存(R2)③貸出カード(D1)④部屋の掃除。
+  // 終局後の仕事: ①成績の更新(D1)②棋譜の保存(R2)③貸出カード(D1)④部屋の掃除。
   // 失敗したら、5秒後に、最大5回やり直す。済んだ仕事は、やり直さない。
   private async finalize(state: GameState): Promise<RatingUpdate | null> {
     let update: RatingUpdate | null = null;
@@ -615,13 +526,12 @@ export class GameRoom extends DurableObject<AppEnv> {
         await this.save(state);
       }
       if (!state.recordSaved) {
-        await this.saveAnalysis(state);
         await this.saveRecord(state);
         state.recordSaved = true;
         await this.save(state);
       }
 
-      // 全部済んだら、部屋の中身を、きれいに片付ける(分析の一時データなど)。
+      // 全部済んだら、部屋の中身を、きれいに片付ける。
       // 残しておくと、対局のたびに、保管料金がじわじわ増えるため。
       if (state.statsApplied && state.recordSaved) {
         await this.ctx.storage.deleteAlarm();
@@ -639,8 +549,8 @@ export class GameRoom extends DurableObject<AppEnv> {
     return update;
   }
 
-  // 棋譜の本体をR2に書いて、そのあとで、貸出カードをD1に書く。
-  // (順番が逆だと、中身のないカードができてしまうことがある)
+  // 棋譜の本体(手・最終局面の地)も、貸出カードに入れて、D1に書く。
+  // そのあと、保存数の上限を超えた古いカードを消す。
   // 最後に、「対局中」の目印を消す。
   private async saveRecord(state: GameState) {
     const { gameId, blackUid, whiteUid, boardSize, matchType, botColor } =
@@ -649,27 +559,9 @@ export class GameRoom extends DurableObject<AppEnv> {
     const result = state.result ?? "VOID";
     const createdAt = new Date(state.createdAt);
 
-    // 棋譜の本体(いまの hoshigo-records-worker と、同じ形)
-    const record = {
-      v: 1,
-      id: gameId,
-      black_uid: blackUid,
-      white_uid: whiteUid,
-      moves: state.moves,
-      result,
-      black_rating: old.black,
-      white_rating: old.white,
-      match_type: matchType,
-      board_size: boardSize,
-      created_at: createdAt.toISOString(),
-    };
-    await this.env.RECORDS.put(
-      `records/${gameId}.json`,
-      JSON.stringify(record),
-      {
-        httpMetadata: { contentType: "application/json" },
-      },
-    );
+    // 最終局面の地(無ければ null)。
+    // (デプロイ前に作られた対局は ownership を持っていないので、?? null で守る)
+    const finalOwnership = state.ownership ?? null;
 
     const db = drizzle(this.env.DB, { schema: appSchema });
 
@@ -687,6 +579,8 @@ export class GameRoom extends DurableObject<AppEnv> {
         rating: old.black,
         oppRating: old.white,
         matchType,
+        moves: state.moves,
+        finalOwnership,
       });
     }
     if (botColor !== "white") {
@@ -701,17 +595,66 @@ export class GameRoom extends DurableObject<AppEnv> {
         rating: old.white,
         oppRating: old.black,
         matchType,
+        moves: state.moves,
+        finalOwnership,
       });
     }
     if (cards.length > 0) {
       // やり直しで、同じカードを2回書いても、エラーにならないように
       await db.insert(recordCards).values(cards).onConflictDoNothing();
+
+      // 保存数の上限を超えた分の、古いカードを消す(2人それぞれ)
+      for (const card of cards) {
+        await this.trimRecords(db, card.uid, boardSize);
+      }
     }
 
     // 「対局中」の目印を消す(これで、2人とも、また待機列に入れる)
     await db.delete(activeGames).where(eq(activeGames.gameId, gameId));
   }
 
+  // 棋譜の保存数の上限(盤面ごと)を超えていたら、古いカードから消す。
+  // Premium(期限内)は無制限。ゲスト(匿名)は10件、Start(ログイン済みの無料)は100件まで。
+  private async trimRecords(
+    db: DrizzleD1Database<typeof appSchema>,
+    uid: string,
+    boardSize: number,
+  ) {
+    const [row] = await db
+      .select({
+        premiumUntil: appSchema.profiles.premiumUntil,
+        isAnonymous: user.isAnonymous,
+      })
+      .from(appSchema.profiles)
+      .innerJoin(user, eq(user.id, appSchema.profiles.uid))
+      .where(eq(appSchema.profiles.uid, uid));
+    if (!row) return;
+
+    // Premium(期限内)は、無制限
+    if (row.premiumUntil && row.premiumUntil.getTime() > Date.now()) return;
+
+    const limit = row.isAnonymous ? 10 : 100;
+
+    // 新しい順に並べて、上限より後ろにあるカード(=あふれた分)を探す
+    const excess = await db
+      .select({ gameId: recordCards.gameId })
+      .from(recordCards)
+      .where(and(eq(recordCards.uid, uid), eq(recordCards.boardSize, boardSize)))
+      .orderBy(desc(recordCards.createdAt), desc(recordCards.gameId))
+      .limit(100)
+      .offset(limit);
+    if (excess.length === 0) return;
+
+    await db.delete(recordCards).where(
+      and(
+        eq(recordCards.uid, uid),
+        inArray(
+          recordCards.gameId,
+          excess.map((e) => e.gameId),
+        ),
+      ),
+    );
+  }
   // レーティングなどを計算して、D1に書く(いまの archive_matches の翻訳)
   private async computeAndApplyStats(state: GameState): Promise<RatingUpdate> {
     const { blackUid, whiteUid, boardSize, botMatch, botColor } = state.init;
@@ -948,9 +891,13 @@ export class GameRoom extends DurableObject<AppEnv> {
       }
     } else if (state.status === "pending") {
       // 結果の確認待ちのまま放置されたら、強制的に確定。
-      // 片方だけ結果が届いていればそれを、誰も届いていなければ無効(VOID)。
+      // 片方だけ結果が届いていればそれを(地も一緒に)、誰も届いていなければ無効(VOID)。
       if (now - state.turnSwitchedAt > PENDING_LIMIT_MS) {
-        await this.finish(state, state.result ?? "VOID");
+        await this.finish(
+          state,
+          state.result ?? "VOID",
+          state.ownership ?? null,
+        );
         return;
       }
     }

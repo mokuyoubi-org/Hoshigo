@@ -2,10 +2,8 @@
 
 import {
   BLACK,
-  Board,
   BoardSize,
   Color,
-  GoString,
   Grid,
   isNoOkiishi,
   MatchType,
@@ -15,44 +13,6 @@ import {
 } from "../types/go";
 import { getOppositeColor } from "./goLogics";
 import { generateOkigoBoard } from "./okigoLogics";
-
-// Board からユニークな GoString 一覧を取得する
-const getGoStrings = (board: Board): GoString[] => {
-  const seen = new Set<GoString>();
-  for (const goString of Object.values(board)) {
-    if (goString !== null) seen.add(goString);
-  }
-  return Array.from(seen);
-};
-
-// 死に石と判定するownership平均の閾値（超えたら「相手に取られている」とみなす）
-const DEAD_STONE_OWNERSHIP_THRESHOLD = 0.5;
-
-// 盤面とownershipから死に石を判定する
-export const ownershipToDeadStones = (
-  board: Board,
-  ownership: ArrayLike<number>,
-): Grid[] => {
-  const deadStones: Grid[] = [];
-  for (const goString of getGoStrings(board)) {
-    const stoneIndexes = [...goString.stones];
-    let ownershipSum = 0;
-    for (const idx of stoneIndexes) {
-      ownershipSum += ownership[idx];
-    }
-    const ownershipAvg = ownershipSum / stoneIndexes.length;
-
-    if (
-      (goString.color === BLACK &&
-        ownershipAvg < -DEAD_STONE_OWNERSHIP_THRESHOLD) ||
-      (goString.color === WHITE &&
-        ownershipAvg > DEAD_STONE_OWNERSHIP_THRESHOLD)
-    ) {
-      deadStones.push(...stoneIndexes);
-    }
-  }
-  return deadStones;
-};
 
 // Grid[] ▶︎ MoveObject[]
 export const movesToMoveObjects = (
@@ -101,7 +61,7 @@ const generateMoveObjects = (
 };
 
 // Grid ▶︎ MoveObject
-export const gridToMoveObject = (
+const gridToMoveObject = (
   grid: Grid,
   boardSize: BoardSize,
   currentPlayer: Color,

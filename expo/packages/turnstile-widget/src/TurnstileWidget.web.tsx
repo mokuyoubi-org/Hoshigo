@@ -1,14 +1,25 @@
 // TurnstileWidget.web.tsx
-// web版のTurnstile実装。目に見えないウィジェット(managed + interaction-only)を
+// web版のTurnstile実装。通常は目に見えないウィジェット(managed + interaction-only)を
 // 常時マウントしておき、getToken()を呼ぶたびに新しいトークンを取得する。
+// Cloudflareが「追加チェックが必要」と判断したときだけ、画面中央にチェックボックスを出す。
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import { View } from "react-native";
-
-console.log("TurnstileWidget.web.tsx");
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js";
 const SCRIPT_ID = "cf-turnstile-script";
+
+// 通常のトークン取得を待つ時間
+const TOKEN_TIMEOUT_MS = 15000;
+// 人間がチェックボックスを押す時間も含めて待つ時間
+const INTERACTIVE_TIMEOUT_MS = 60000;
+// ウィジェットの準備を待つ時間(それ以上はネットワーク不調などとみなす)
+const READY_TIMEOUT_MS = 10000;
 
 export type TurnstileHandle = {
   getToken: () => Promise<string>;
@@ -31,12 +42,11 @@ const loadTurnstileScript = (): Promise<void> =>
       resolve();
       return;
     }
+    const onError = () => reject(new Error("Turnstile script failed to load"));
     const existing = document.getElementById(SCRIPT_ID);
     if (existing) {
       existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () =>
-        reject(new Error("Turnstile script failed to load")),
-      );
+      existing.addEventListener("error", onError);
       return;
     }
     const script = document.createElement("script");
@@ -45,7 +55,7 @@ const loadTurnstileScript = (): Promise<void> =>
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Turnstile script failed to load"));
+    script.onerror = onError;
     document.head.appendChild(script);
   });
 
@@ -57,6 +67,10 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
       resolve: (token: string) => void;
       reject: (err: Error) => void;
     } | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // true の間だけ、チェックボックスを画面中央に出す
+    const [needsInteraction, setNeedsInteraction] = useState(false);
 
     // ウィジェットの準備が整うまでgetToken()を待たせるためのPromise
     // ⚠️ useRef(new Promise(...)) と書くと、描画のたびにPromiseが作り直されて
@@ -68,6 +82,37 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
         readyResolveRef.current = resolve;
       });
     }
+
+    // タイムアウトタイマーを止める
+    const clearPendingTimeout = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+
+    // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
+    // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
+    const startPendingTimeout = (ms: number) => {
+      clearPendingTimeout();
+      timeoutRef.current = setTimeout(() => {
+        timeoutRef.current = null;
+        // 待っている人がいなくても、チェックボックスの表示は必ず消す
+        setNeedsInteraction(false);
+        pendingRef.current?.reject(
+          new Error("Turnstile token request timed out"),
+        );
+        pendingRef.current = null;
+      }, ms);
+    };
+
+    // 待っている getToken() を失敗で終わらせる(タイマーも、表示も、片づける)
+    const rejectPending = (message: string) => {
+      clearPendingTimeout();
+      setNeedsInteraction(false);
+      pendingRef.current?.reject(new Error(message));
+      pendingRef.current = null;
+    };
 
     useEffect(() => {
       let cancelled = false;
@@ -81,15 +126,36 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
             sitekey,
             appearance: "interaction-only", // 通常は完全に非表示
             execution: "execute", // renderしただけでは走らせない
+            // 期限切れのトークンを勝手に作り直さない(作り直されると、誰も待っていないのに
+            // チェックボックスが出てしまうことがあるため)
+            "refresh-expired": "manual",
             callback: (token: string) => {
+              clearPendingTimeout();
+              setNeedsInteraction(false);
               pendingRef.current?.resolve(token);
               pendingRef.current = null;
             },
-            "error-callback": () => {
-              pendingRef.current?.reject(
-                new Error("Turnstile challenge failed"),
-              );
-              pendingRef.current = null;
+            "error-callback": (errorCode?: string) => {
+              console.error("Turnstile error-callback:", errorCode);
+              rejectPending(`Turnstile challenge failed: ${errorCode ?? ""}`);
+            },
+            // 追加チェック(人間確認)が始まる直前。ここで入れ物を見える状態にする
+            "before-interactive-callback": () => {
+              setNeedsInteraction(true);
+              startPendingTimeout(INTERACTIVE_TIMEOUT_MS);
+            },
+            // 追加チェックが終わった直後
+            "after-interactive-callback": () => {
+              setNeedsInteraction(false);
+              startPendingTimeout(TOKEN_TIMEOUT_MS);
+            },
+            // 追加チェックの途中で、時間切れになった
+            "timeout-callback": () => {
+              rejectPending("Turnstile interactive challenge timed out");
+            },
+            // トークンの有効期限が切れた
+            "expired-callback": () => {
+              rejectPending("Turnstile token expired");
             },
           });
 
@@ -101,6 +167,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
 
       return () => {
         cancelled = true;
+        clearPendingTimeout();
         if (widgetIdRef.current && window.turnstile) {
           window.turnstile.remove(widgetIdRef.current);
         }
@@ -111,36 +178,19 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     // 無反応(ハング)にならないよう、直列化する。
     const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-    const getTokenInternal = (): Promise<string> => {
-      return new Promise<string>((resolve, reject) => {
+    const getTokenInternal = (): Promise<string> =>
+      new Promise<string>((resolve, reject) => {
         if (!widgetIdRef.current || !window.turnstile) {
           reject(new Error("Turnstile widget not ready"));
           return;
         }
 
-        // callback/error-callbackが何らかの理由で一切飛んでこなかった場合の保険。
-        // これが無いと、pendingRefが永遠にresolve/rejectされずPromiseがハングする。
-        const timeoutId = setTimeout(() => {
-          if (pendingRef.current) {
-            pendingRef.current = null;
-            reject(new Error("Turnstile token request timed out"));
-          }
-        }, 15000);
+        pendingRef.current = { resolve, reject };
+        startPendingTimeout(TOKEN_TIMEOUT_MS);
 
-        pendingRef.current = {
-          resolve: (token: string) => {
-            clearTimeout(timeoutId);
-            resolve(token);
-          },
-          reject: (err: Error) => {
-            clearTimeout(timeoutId);
-            reject(err);
-          },
-        };
         window.turnstile.reset(widgetIdRef.current);
         window.turnstile.execute(widgetIdRef.current);
       });
-    };
 
     useImperativeHandle(ref, () => ({
       getToken: () => {
@@ -149,7 +199,6 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
             // 前の呼び出しが失敗していても、キューは止めない
           })
           .then(async () => {
-            // 準備が整うまで最大10秒待つ(それ以上はネットワーク不調などとみなす)
             await Promise.race([
               readyPromiseRef.current,
               new Promise<void>((_, reject) =>
@@ -160,7 +209,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
                         "Turnstile widget did not become ready in time",
                       ),
                     ),
-                  10000,
+                  READY_TIMEOUT_MS,
                 ),
               ),
             ]);
@@ -173,11 +222,29 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
       },
     }));
 
-    // 完全に見えないので、サイズ0のViewでOK
+    // 普段はサイズ0で見えない。追加チェックが必要なときだけ、画面中央に出す。
+    // ⚠️ 同じ<div ref={containerRef}>のまま、外側のstyleだけ切り替える(ウィジェットを作り直さないため)
     return (
-      <View style={{ width: 0, height: 0, overflow: "hidden" }}>
+      <div
+        style={
+          needsInteraction
+            ? {
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 99999,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+              }
+            : { width: 0, height: 0, overflow: "hidden" }
+        }
+      >
         <div ref={containerRef} />
-      </View>
+      </div>
     );
   },
 );

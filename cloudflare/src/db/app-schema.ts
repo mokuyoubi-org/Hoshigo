@@ -19,8 +19,10 @@ export const profiles = sqliteTable("profiles", {
   // 同じ名前の人が2人いないように、重複を禁止する
   username: text("username").notNull().unique(),
   iconIndex: integer("icon_index").notNull().default(0),
-  country: text("country"),
   isBot: integer("is_bot", { mode: "boolean" }).notNull().default(false),
+  // プレミアムの期限。空(null)なら、プレミアムではない。
+  // 期限が過ぎれば、自動でプレミアムが切れる(通知を取りこぼしても安心)
+  premiumUntil: integer("premium_until", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),
@@ -77,7 +79,6 @@ export const appStatus = sqliteTable("app_status", {
   otaVersion: text("ota_version"),
 });
 
-
 // 棋譜の「貸出カード」(持ち主ごとの、棋譜の一覧)。
 // 棋譜の本体は、R2の records/{gameId}.json にある。ボットには作らない。
 // プロフィールが消えたら、いっしょに消える。
@@ -88,14 +89,21 @@ export const recordCards = sqliteTable(
       .notNull()
       .references(() => profiles.uid, { onDelete: "cascade" }),
     gameId: text("game_id").notNull(),
+    oppUid: text("opp_uid").notNull(), // 相手(相手が退会しても、そのまま残る)
     boardSize: integer("board_size").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     color: text("color").notNull(), // 自分の色: "black" か "white"
-    oppUid: text("opp_uid").notNull(), // 相手(相手が退会しても、そのまま残る)
     result: text("result").notNull(),
     rating: integer("rating").notNull(), // 対局前の、自分のレーティング
     oppRating: integer("opp_rating").notNull(), // 対局前の、相手のレーティング
     matchType: integer("match_type").notNull(),
+    // 手(例: [72, 40, ...])。JSONの文字として入れる
+    moves: text("moves", { mode: "json" })
+      .$type<number[]>()
+      .notNull()
+      .default(sql`'[]'`),
+    // 最終局面の地(無ければ null)
+    finalOwnership: text("final_ownership"),
   },
   (table) => [
     primaryKey({ columns: [table.uid, table.gameId] }),
@@ -105,6 +113,8 @@ export const recordCards = sqliteTable(
       table.boardSize,
       table.createdAt,
     ),
+    // 1局(gameId)から、カードを速く引くための索引
+    index("record_cards_game_idx").on(table.gameId),
   ],
 );
 

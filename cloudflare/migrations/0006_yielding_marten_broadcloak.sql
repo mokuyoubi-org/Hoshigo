@@ -1,0 +1,1 @@
+CREATE INDEX `record_cards_game_idx` ON `record_cards` (`game_id`);

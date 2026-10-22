@@ -12,6 +12,7 @@ import {
   BoardSize,
   Grid,
   MatchType,
+  Ownership,
   WHITE,
 } from "go-core";
 import { useState } from "react";
@@ -22,10 +23,10 @@ import {
 } from "../headers/RecordCardHeader";
 import { SkeletonCard } from "./SkeletonCard";
 
-export type Props = {
+type Props = {
   record: RecordOrSkeleton;
   board: Board;
-  territoryBoard: number[][] | undefined;
+  ownership: Ownership | undefined;
   matchType: MatchType;
   cardHeight: number;
   playerWin?: boolean;
@@ -41,7 +42,7 @@ const BOTTOM_PADDING = 16;
 export const RecordCard = ({
   record,
   board,
-  territoryBoard,
+  ownership,
   matchType,
   cardHeight,
   playerWin,
@@ -66,7 +67,7 @@ export const RecordCard = ({
     setHeaderHeight((prev) => (prev === height ? prev : height));
   };
 
-  if (isSkeletonCard(record) || !territoryBoard || !board) {
+  if (isSkeletonCard(record) || !ownership || !board) {
     return <SkeletonCard height={cardHeight} />;
   }
 
@@ -138,7 +139,7 @@ export const RecordCard = ({
             playerColor={BLACK} // ダミー
             // 現在の盤面、インデックス、テリトリーボード: 3
             board={board}
-            territoryBoard={territoryBoard}
+            ownership={ownership}
             currentIndex={0} // ダミー
             // history系: 3
             moveHistory={[]} // ダミー

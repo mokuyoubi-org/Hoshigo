@@ -95,8 +95,8 @@ accountRoutes.post("/update_username", async (c) => {
   if (username === "") {
     return rpcError(c, 400, "INVALID_USERNAME_FORMAT", "Invalid username format");
   }
-  // 長さ: 6文字まで(絵文字なども、1文字として数える)
-  if ([...username].length > 6) {
+  // 長さ: 12文字まで(絵文字なども、1文字として数える)
+  if ([...username].length > 12) {
     return rpcError(c, 400, "USERNAME_TOO_LONG", "Username too long");
   }
   // 危険な文字が入っていたら、拒否
@@ -134,6 +134,7 @@ accountRoutes.post("/get_rankings", async (c) => {
     icon_index: number;
     board_size: number;
     is_authenticated: boolean;
+    is_premium: boolean;
   }[] = [];
 
   // 盤面の小さい順(9 → 13 → 19)、各盤面の中は、レーティングの高い順
@@ -144,13 +145,14 @@ accountRoutes.post("/get_rankings", async (c) => {
         rating: userStats.rating,
         iconIndex: profiles.iconIndex,
         isAnonymous: user.isAnonymous,
+        premiumUntil: profiles.premiumUntil,
       })
       .from(userStats)
       .innerJoin(profiles, eq(profiles.uid, userStats.uid))
       .innerJoin(user, eq(user.id, profiles.uid))
       .where(and(eq(userStats.boardSize, boardSize), eq(profiles.isBot, false)))
       .orderBy(desc(userStats.rating))
-      .limit(30);
+      .limit(100);
 
     for (const r of rows) {
       result.push({
@@ -160,6 +162,8 @@ accountRoutes.post("/get_rankings", async (c) => {
         board_size: boardSize,
         // メールで登録している人は true(ゲストは false)
         is_authenticated: !r.isAnonymous,
+        // 期限が今より先ならプレミアム(期限なし=null は false)
+        is_premium: !!r.premiumUntil && r.premiumUntil.getTime() > Date.now(),
       });
     }
   }

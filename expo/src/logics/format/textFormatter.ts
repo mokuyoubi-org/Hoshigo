@@ -121,3 +121,13 @@ export const resultToCommentSimple = (result: string, t: TFunction): string => {
 export const matchTypeToText = (matchType: MatchType, t: TFunction): string => {
   return t(`MatchType.matchType_${matchType}`);
 };
+
+
+// scoreLead(黒視点、+なら黒有利)から "B+X" / "W+X" 形式の文字列を生成する
+// (終局していない盤面ではgoscorerの結果は信用できないので、
+//  scoreLeadをそのまま暫定結果として使うためのもの)
+export const scoreLeadToResult = (scoreLead: number): string => {
+  const absScoreLead = Math.abs(scoreLead);
+  if (scoreLead === 0) return "DRAW";
+  return scoreLead > 0 ? `B+${absScoreLead}` : `W+${absScoreLead}`;
+};

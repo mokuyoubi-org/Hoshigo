@@ -1,4 +1,4 @@
-// usePracticeSession.ts
+// expo/src/hooks/practice/usePracticeSession.ts
 //
 // 実際の対局（1局分）の状態とロジックを管理するフック。
 // 🌟「対局開始」が確定した後（PracticeGameScreenContentが
@@ -6,7 +6,6 @@
 // 呼び出し側から固定値として受け取り、このフック自身はKVStorageを
 // 読まない。
 
-import { AnalyzeResult } from "@/packages/expo-katago/src";
 import {
   BotProfile,
   BotUsername,
@@ -14,37 +13,33 @@ import {
 } from "@/src/constants/botProfiles";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useBotMove } from "@/src/hooks/ai/useBotMove";
-import { useFinalPositionAnalysis } from "@/src/hooks/ai/useFinalPositionAnalysis";
 import { useLiveAnalysis } from "@/src/hooks/ai/useLiveAnalysis";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { isBot } from "@/src/logics/bot/botLogics";
+import { isBot } from "@/src/logics/format/nameFormatter";
 import {
   resultToObjectiveComment,
   resultToSubjectiveComment,
+  scoreLeadToResult,
 } from "@/src/logics/format/textFormatter";
-import { endsWithDoublePass } from "@/src/logics/game/endsWithDoublePass";
 import { getPassState } from "@/src/logics/game/gameScreenLogics";
+import { getMyRating } from "@/src/logics/rank/myRating";
 import { PlayerCardView, PlayerType } from "@/src/types/player";
-import { useGoGame } from "go-components";
+import { ShowMode, useGoGame } from "go-components";
 import {
   BLACK,
   BoardSize,
   Color,
+  endsWithDoublePass,
   getColorToMove,
-  getFinalResult,
   Grid,
+  hasKoPoint,
   MatchType,
+  PASS_GRID,
   RecordAnalysis,
   WHITE,
 } from "go-core";
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useKVStorage } from "kv-store";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
 type UsePracticeSessionArgs = {
   boardSize: BoardSize;
@@ -61,6 +56,11 @@ type UsePracticeSessionArgs = {
 // 観戦している人がパスを見られるように待つ時間(ミリ秒)。
 const BOTBOT_FINAL_PASS_VIEW_MS = 1000;
 
+// 🌟 botの着手分析に失敗した時のやり直し。
+// 待ち時間は1回目1秒、2回目2秒…と増やす。最大回数を超えたら、結果なしで対局を終える。
+const BOT_RETRY_MAX = 3;
+const BOT_RETRY_WAIT_MS = 1000;
+
 export const usePracticeSession = ({
   boardSize,
   matchType,
@@ -69,11 +69,36 @@ export const usePracticeSession = ({
   initialMoves,
   initialAnalysis,
 }: UsePracticeSessionArgs) => {
+  // 画面の表示設定(PracticeScreenSettingsModal と同じキーを見ている)
+  const { value: showOwnership } = useKVStorage<boolean>(
+    "PracticeScreen.showOwnership",
+    true,
+  );
+
+  const { value: showWinRateBar } = useKVStorage<boolean>(
+    "PracticeScreen.showWinRateBar",
+    true,
+  );
+
+  const { value: showMode } = useKVStorage<ShowMode>(
+    "PracticeScreen.showMode",
+    "both",
+  );
+
+  const { value: isSoundEnabled } = useKVStorage<boolean>("global.sound", true);
+
+  const { value: doubleTap } = useKVStorage<boolean>(
+    `global.doubleTap${boardSize}`,
+    false,
+  );
+
   const { rating9, rating13, rating19, iconIndex } = useProfile();
   const t = useTranslation();
 
-  const myRatingForBoardSize =
-    (boardSize === 9 ? rating9 : boardSize === 13 ? rating13 : rating19) ?? 0;
+  const myRatingForBoardSize = getMyRating(
+    { rating9, rating13, rating19 },
+    boardSize,
+  );
   const myIconIndex = iconIndex ?? 0;
 
   const isBotBotMatch: boolean =
@@ -147,11 +172,13 @@ export const usePracticeSession = ({
     whitePlayer.username as BotUsername,
   );
 
-  const endgame = useFinalPositionAnalysis({ strict: false });
   const liveAnalysis = useLiveAnalysis({
     matchType,
     boardSize,
     initialAnalysis,
+    // 🌟 分析が1局面記録されるたびに、画面用のstateへ流し込む。
+    //   syncLiveAnalysis は少し下で定義しているが、呼ばれるのは描画のあとなので順番は問題ない。
+    onRecorded: () => syncLiveAnalysis(),
   });
   const [isGameEnded, setIsGameEnded] = useState(false);
   const isGameEndedRef = useRef(false);
@@ -184,6 +211,8 @@ export const usePracticeSession = ({
   const isMountedRef = useRef(true);
   const botTurnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasTriggeredInitialBotTurnRef = useRef(false);
+  // 🌟 botの着手分析が、続けて何回失敗したか(成功したら0に戻す)
+  const botFailureCountRef = useRef(0);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -238,101 +267,96 @@ export const usePracticeSession = ({
     return color === BLACK ? blackPlayer : whitePlayer;
   };
 
-  const endGame = async (
-    reason?: "resign" | "stop",
-    precomputedAnalysis?: AnalyzeResult | null,
-  ) => {
+  const endGame = async (reason?: "resign" | "stop") => {
     if (isGameEndedRef.current) return;
     isGameEndedRef.current = true;
     setIsCalculating(true);
 
-    // 🌟⏹: bot vs bot を途中で切り上げる。
-    // 勝敗なし(result=null)で、地計算もしない(まだ終局していないため)。
-    if (reason === "stop") {
-      // 考え中のbotがいれば終わるのを待つ。
-      // ⏹は先に isPausedRef を true にしているので、その手は「保留」になり、
-      // 盤面には適用されない(分析結果だけが記録される)。
-      await waitForBotIdle();
-      if (!isMountedRef.current) return;
+    try {
+      if (reason === "stop") {
+        // 🌟⏹: bot vs bot を途中で切り上げる。
+        // 勝敗なし(result=null)で、地計算もしない(まだ終局していないため)。
 
-      // 保留されていた手は使わないので捨てる
-      pendingBotMoveRef.current = null;
+        // 考え中のbotがいれば終わるのを待つ。
+        // ⏹は先に isPausedRef を true にしているので、その手は「保留」になり、
+        // 盤面には適用されない(分析結果だけが記録される)。
+        await waitForBotIdle();
+        if (!isMountedRef.current) return;
 
-      // 最新局面の分析がまだ無ければ、ここで分析して記録する(盤面には適用しない)
-      const latestIndex = movesRef.current.length;
-      if (liveAnalysis.getRecordAnalysis().perMove[latestIndex] == null) {
-        try {
-          await liveAnalysis.analyzeAndRecord({
-            moveIndex: latestIndex,
-            board: boardRef.current,
-            movesSoFar: movesRef.current,
-          });
+        // 保留されていた手は使わないので捨てる
+        pendingBotMoveRef.current = null;
+
+        // 最新局面の分析がまだ無ければ、ここで分析して記録する(盤面には適用しない)
+        const latestIndex = movesRef.current.length;
+        if (liveAnalysis.getRecordAnalysis().pos[latestIndex] == null) {
+          try {
+            await liveAnalysis.analyzeAndRecord({
+              moveIndex: latestIndex,
+              board: boardRef.current,
+              movesSoFar: movesRef.current,
+            });
+          } catch (e) {
+            // 分析に失敗しても、途中終了そのものは続ける
+            console.warn(
+              "[usePracticeSession] 停止時の最新局面の分析に失敗",
+              e,
+            );
+          }
           if (!isMountedRef.current) return;
-        } catch (e) {
-          // 分析に失敗しても、途中終了そのものは続ける
-          console.warn("[usePracticeSession] 停止時の最新局面の分析に失敗", e);
         }
-      }
 
+        setResultRaw(null);
+        setResultComment(t("common.matchComplete"));
+      } else if (reason === "resign") {
+        const currentColor = getCurrentColor();
+        const winnerColor = currentColor === BLACK ? WHITE : BLACK;
+        const result = `${winnerColor === BLACK ? "B" : "W"}+R`;
+
+        setResultRaw(result);
+        setResultComment(
+          (isHumanBotMatch
+            ? resultToSubjectiveComment(result, myColor ?? BLACK, t)
+            : resultToObjectiveComment(result, t)) ?? t("common.matchComplete"),
+        );
+
+        await liveAnalysis.waitForPending();
+      } else {
+        // 最終局面を分析して記録する。手の並びは連続パスで終わっているので、確定した
+        // 局面として仕上げられ、仕上げ済みのエントリが返ってくる。
+        const entry = await liveAnalysis.analyzeAndRecord({
+          moveIndex: movesRef.current.length,
+          board: boardRef.current,
+          movesSoFar: movesRef.current,
+        });
+        if (!isMountedRef.current) return;
+
+        // 🌟結果の文字列と地の盤面は、仕上げ済みのエントリから作る。
+        // 分析が取れなかった時は、結果なし(⏹で中断した時と同じ扱い)。
+        const result = entry ? scoreLeadToResult(entry.scoreLead) : null;
+        if (entry) goBoard.setOwnership(entry.ownership);
+        setResultRaw(result);
+        setResultComment(
+          (result === null
+            ? null
+            : isHumanBotMatch
+              ? resultToSubjectiveComment(result, myColor ?? BLACK, t)
+              : resultToObjectiveComment(result, t)) ??
+            t("common.matchComplete"),
+        );
+      }
+    } catch (e) {
+      // 🛡️ 途中で例外が出ても、画面(LoadingModal)が固まらないように、
+      //   結果なしの「対局終了」として締める。
+      console.warn(
+        "[usePracticeSession] 終局処理に失敗。結果なしで終了します",
+        e,
+      );
       setResultRaw(null);
       setResultComment(t("common.matchComplete"));
-      setLiveAnalysisResult(liveAnalysis.getRecordAnalysis());
-      setIsCalculating(false);
-      setIsGameEnded(true);
-      return;
     }
 
-    if (reason === "resign") {
-      const currentColor = getCurrentColor();
-      const winnerColor = currentColor === BLACK ? WHITE : BLACK;
-      const result = `${winnerColor === BLACK ? "B" : "W"}+R`;
-
-      setResultRaw(result);
-      setResultComment(
-        (isHumanBotMatch
-          ? resultToSubjectiveComment(result, myColor ?? BLACK, t)
-          : resultToObjectiveComment(result, t)) ?? t("common.matchComplete"),
-      );
-
-      await liveAnalysis.waitForPending();
-      setLiveAnalysisResult(liveAnalysis.getRecordAnalysis());
-      setIsCalculating(false);
-      setIsGameEnded(true);
-      return;
-    }
-
-    const analysis = await endgame.analyzeFinalPosition(
-      boardRef.current,
-      movesRef.current,
-      matchType,
-      boardSize,
-      precomputedAnalysis,
-    );
+    // どの終わり方でも共通の後始末
     if (!isMountedRef.current) return;
-
-    // 最終局面の分析を記録する。手の並びは連続パスで終わっているので、確定した
-    // 局面として仕上げられ、仕上げ済みのエントリが返ってくる。
-    const entry = liveAnalysis.record(
-      movesRef.current.length,
-      analysis,
-      movesRef.current,
-    );
-
-    // 🌟結果の文字列と地の盤面は、仕上げ済みのエントリから作る。
-    const { result, territoryBoard } = getFinalResult(
-      boardSize,
-      matchType,
-      movesRef.current,
-      entry,
-    );
-    goBoard.setTerritoryBoard(territoryBoard);
-    setResultRaw(result);
-    setResultComment(
-      (isHumanBotMatch
-        ? resultToSubjectiveComment(result, myColor ?? BLACK, t)
-        : resultToObjectiveComment(result, t)) ?? t("common.matchComplete"),
-    );
-
     setLiveAnalysisResult(liveAnalysis.getRecordAnalysis());
     setIsCalculating(false);
     setIsGameEnded(true);
@@ -353,11 +377,7 @@ export const usePracticeSession = ({
         );
         if (!isMountedRef.current) return;
       }
-
-      const precomputedAnalysis = liveAnalysis.getCachedAnalysis(
-        moves.length - 1,
-      );
-      await endGame(undefined, precomputedAnalysis);
+      await endGame();
     } else {
       const nextPlayer = getCurrentPlayer();
       // ⏸中は、次の手のタイマーも仕掛けない
@@ -386,13 +406,16 @@ export const usePracticeSession = ({
     isBotRunningRef.current = true;
     setIsBotThinking(true);
 
+    // 🌟 やり直しを使い切った時だけ true。botの「考え中」を解いた後で、対局を締める。
+    let shouldGiveUp = false;
+
     try {
       const botMoveIndex = movesRef.current.length;
       // 分析した局面までの手の並び。手の配列は更新のたびに新しく作り直されるので、
       // ここで握っておけば、あとから変わっても影響されない。
       const movesSoFar = movesRef.current;
       const botMove = colorToMove === BLACK ? blackBotMove : whiteBotMove;
-      await botMove.runBotTurn(
+      const succeeded = await botMove.runBotTurn(
         boardRef.current,
         movesRef.current,
         matchType,
@@ -400,10 +423,8 @@ export const usePracticeSession = ({
           if (!isMountedRef.current) return;
 
           // 分析結果は、⏸/⏹中でも常に記録する(KataGoは止めないので無駄にしない)。
-          // recordは「直近の局面の付箋」の更新も兼ねる。
+          // 記録すると onRecorded 経由で画面のstateにも流れる。
           liveAnalysis.record(botMoveIndex, analysis, movesSoFar);
-          // bot vs bot のときだけ、グラフ用にstateへ流す
-          if (isBotBotMatch) syncLiveAnalysis();
 
           // ⏸/⏹中なら、この手は盤面に適用せず預かっておく
           if (isPausedRef.current) {
@@ -417,10 +438,27 @@ export const usePracticeSession = ({
 
       if (!isMountedRef.current) return;
 
-      // 手を預かっている(=⏸/⏹中に決まった)なら、続きは▶で再開した時に
-      if (pendingBotMoveRef.current) return;
+      if (!succeeded) {
+        // 🌟 分析に失敗した。待ち時間を増やしながらやり直し、回数を超えたら諦める。
+        botFailureCountRef.current += 1;
+        if (botFailureCountRef.current > BOT_RETRY_MAX) {
+          shouldGiveUp = true;
+        } else {
+          botTurnTimeoutRef.current = setTimeout(() => {
+            botTurnTimeoutRef.current = null;
+            if (isMountedRef.current && !isPausedRef.current) {
+              runBotTurnIfNeeded();
+            }
+          }, BOT_RETRY_WAIT_MS * botFailureCountRef.current);
+        }
+      } else {
+        botFailureCountRef.current = 0;
 
-      await continueAfterBotMove();
+        // 手を預かっている(=⏸/⏹中に決まった)なら、続きは▶で再開した時に
+        if (pendingBotMoveRef.current) return;
+
+        await continueAfterBotMove();
+      }
     } finally {
       if (isMountedRef.current) {
         setIsBotThinking(false);
@@ -428,6 +466,14 @@ export const usePracticeSession = ({
       isBotRunningRef.current = false;
       // ⏹で待っている人がいれば起こす
       notifyBotIdle();
+    }
+
+    // 🌟 やり直しを使い切った。結果なしの「対局終了」にする(⏹で中断した時と同じ扱い)。
+    if (shouldGiveUp) {
+      console.warn(
+        "[usePracticeSession] botの分析に失敗し続けたので対局を終了します",
+      );
+      await endGame("stop");
     }
   };
 
@@ -445,15 +491,19 @@ export const usePracticeSession = ({
     const reachedDoublePass = endsWithDoublePass(moves);
 
     if (reachedDoublePass) {
-      const precomputedAnalysis = liveAnalysis.getCachedAnalysis(
-        moves.length - 1,
-      );
-      await endGame(undefined, precomputedAnalysis);
+      await endGame();
       return;
     }
 
     await runBotTurnIfNeeded();
   };
+
+  // 🌟最新のhandlePutStoneを指すref。強制パスは、分析を待った後に呼ぶので、
+  //   古い関数(古いisBotThinkingを握っている)を使ってしまわないため。
+  const handlePutStoneRef = useRef(handlePutStone);
+  useEffect(() => {
+    handlePutStoneRef.current = handlePutStone;
+  });
 
   const handleResign = () => {
     if (isGameEndedRef.current || isBotThinking) return;
@@ -464,10 +514,26 @@ export const usePracticeSession = ({
   //   今の局面が、分析のownershipから「未終局」と判定された時だけtrue。
   //   分析がまだ届いていない/取れなかった時は、判定できないのでfalse
   //   (=確認なしでパスできる。操作をじゃましない)。
-  const shouldConfirmPass = (): boolean =>
-    liveAnalysis.isPositionUnfinished(boardRef.current, movesRef.current) ===
-    true;
+  const shouldConfirmPass = (): boolean => {
+    const moves = movesRef.current;
+    const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
+    const lastBoard = goBoard.boardHistoryRef.current[moves.length - 1];
 
+    return (
+      liveAnalysis.isPositionUnfinished(boardRef.current, movesRef.current) ===
+        true && // && コウがない。一見終局していなさそうだが、コウのため打てず、パスするしかないことがある。そういうときにパスモーダルを出すのは不適なため、回避する
+      !(
+        lastBoard &&
+        hasKoPoint(
+          boardSize,
+          getCurrentColor(),
+          lastMove,
+          boardRef.current,
+          lastBoard,
+        )
+      )
+    );
+  };
   // 🌟 ⏸ / ▶ の切り替え。
   // ⏸: 考え中のKataGoは止めない。分析結果は記録するが、そこで決まった手は
   //     盤面に適用せず預かっておく(runBotTurnIfNeeded のコールバック側)。
@@ -511,18 +577,18 @@ export const usePracticeSession = ({
   // ScoreLeadReplayControls は setState と同じ形(値 or 関数)で呼んでくるので、
   // Dispatch<SetStateAction<number>> の形で受ける。
   // 見せられる最新の手(followIndex)まで来たら null に戻して、ライブ追従を再開する。
-  const handleViewIndexChange: Dispatch<SetStateAction<number>> = useCallback(
-    (action: SetStateAction<number>) => {
-      setViewIndex((prev) => {
-        const max = followIndexRef.current;
-        const base = prev ?? max;
-        const next = typeof action === "function" ? action(base) : action;
-        const clamped = Math.max(0, Math.min(next, max));
-        return clamped >= max ? null : clamped;
-      });
-    },
-    [],
-  );
+  // (メモ化はReact Compilerが自動でやってくれるので、useCallbackは使わない)
+  const handleViewIndexChange: Dispatch<SetStateAction<number>> = (
+    action: SetStateAction<number>,
+  ) => {
+    setViewIndex((prev) => {
+      const max = followIndexRef.current;
+      const base = prev ?? max;
+      const next = typeof action === "function" ? action(base) : action;
+      const clamped = Math.max(0, Math.min(next, max));
+      return clamped >= max ? null : clamped;
+    });
+  };
   // 🌟このフック自身がマウントされた時点で「対局開始」が確定している
   // (呼び出し元のPracticeGameScreenContentは「対局開始」ボタンが
   // 押された時にだけマウントされるため)。黒番がbotならマウント直後に
@@ -553,11 +619,26 @@ export const usePracticeSession = ({
 
     // 投げっぱなしでよい(記録・付箋の更新・件数管理は中でやってくれる。
     // 画面離脱後の記録スキップもhook側でやっている)。
-    liveAnalysis.analyzeAndRecord({
-      moveIndex: nextMoveIndex,
-      board,
-      movesSoFar: moves,
-    });
+    // 2026/10/19
+    // 人間 対 bot の時は、相手がパスした局面で終局の2段階確認をして、
+    // 確定したら自動でパスする。
+    liveAnalysis
+      .analyzeForTurn({
+        moveIndex: nextMoveIndex,
+        board,
+        movesSoFar: moves,
+        checkAutoPass: isHumanBotMatch,
+      })
+      .then((shouldPass) => {
+        if (!shouldPass) return;
+        // 待っている間に、画面を離れた/終局した/局面が進んだ時は、何もしない
+        if (!isMountedRef.current || isGameEndedRef.current) return;
+        if (movesRef.current.length !== nextMoveIndex) return;
+        console.log("🏳️ 終局が確定したので、自動でパスします");
+        // パスを決めた瞬間に、画面側にモーダルを出してもらう(出す・消すは画面の仕事)
+        // setHasAutoPassed(true);
+        handlePutStoneRef.current(PASS_GRID);
+      });
   }, [goBoard.moves]);
 
   // ================================================
@@ -569,7 +650,7 @@ export const usePracticeSession = ({
   // 通常は実際の対局より1手だけ遅れる(⏸中は、考え中だった局面の分析が先に届くので最新まで見える)。
   // 人間が入る対局は今までどおり、常に最新。
   const latestIndex = goBoard.moves.length;
-  const hasLatestAnalysis = liveAnalysisResult.perMove[latestIndex] != null;
+  const hasLatestAnalysis = liveAnalysisResult.pos[latestIndex] != null;
   const followIndex =
     isBotBotMatch && !hasLatestAnalysis
       ? Math.max(0, latestIndex - 1)
@@ -645,6 +726,10 @@ export const usePracticeSession = ({
     };
   };
 
+  // 🌟 今の局面の「パスしていいか」の判断が終わったか。
+  //   終わるまでは、画面のパスボタンを押せないようにする。
+  const isPassReady = liveAnalysis.isPositionJudged(goBoard.moves.length);
+
   return {
     boardHistory: goBoard.boardHistory,
     agehamaHistory: goBoard.agehamaHistory,
@@ -653,12 +738,13 @@ export const usePracticeSession = ({
     currentIndex,
     maxViewIndex: followIndex,
     setCurrentIndex: handleViewIndexChange,
-    territoryBoard: goBoard.territoryBoard,
+    ownership: goBoard.ownership,
     isGameEnded,
     isBotThinking,
     handlePutStone,
     handleResign,
     shouldConfirmPass,
+    isPassReady,
     handleTogglePause,
     handleStop,
     isPaused,
@@ -676,5 +762,10 @@ export const usePracticeSession = ({
     isDoublePass,
     isCalculating,
     isHumanBotMatch,
+    showOwnership,
+    showWinRateBar,
+    showMode,
+    isSoundEnabled,
+    doubleTap,
   };
 };

@@ -1,7 +1,6 @@
 // useRecordsScreen.ts
 
 import { useProfile } from "@/src/contexts/ProfileContexts";
-import { getOwnershipTerritoryBoard } from "@/src/logics/game/ownershipTerritory";
 import {
   isSkeletonCard,
   makeSkeletonCard,
@@ -14,8 +13,7 @@ import {
   BoardSize,
   MatchType,
   movesToFinalBoard,
-  RecordAnalysis,
-  TerritoryBoard,
+  Ownership,
 } from "go-core";
 import { useKVStorage } from "kv-store";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,7 +27,7 @@ import {
 
 export type ProcessedRecord = {
   finalBoard: Board;
-  territoryBoard: TerritoryBoard;
+  ownership: Ownership; // 最終局面の地の見込み(黒="B" / 白="W" / どちらでもない=".")。分析が無い棋譜は全部0(=地を出さない)
   matchType: MatchType;
   agehama: AgehamaCount;
 };
@@ -126,38 +124,23 @@ export const useRecordsScreen = () => {
           moves,
         );
 
-        // 🌟地は、最終局面(perMove[手数])の分析のownershipから作る。
-        //    一覧では、分析の全部ではなく、最終局面だけがサーバーから届く(final_ownership)。
-        //    分析が無い棋譜は、地を出さない(全部0の盤面)。
-        const analysisForTerritory: RecordAnalysis | null =
-          record.final_ownership
-            ? {
-                perMove: [
-                  ...Array(moves.length).fill(null),
-                  {
-                    winRate: 50,
-                    scoreLead: 0,
-                    ownership: record.final_ownership,
-                    candidates: [],
-                  },
-                ],
-              }
-            : record.analysis;
+        // 🌟地は、最終局面の ownership から出す。
+        //    型安全に、any を経由して配列でも文字列でも受け取れるようにするよ♪
+        const rawOwnership = record.final_ownership as unknown;
+        let ownership: Ownership;
 
-        const territoryBoard =
-          getOwnershipTerritoryBoard(
-            targetBoardSize,
-            finalBoard,
-            analysisForTerritory,
-            moves.length,
-          ) ??
-          Array.from({ length: targetBoardSize }, () =>
-            Array(targetBoardSize).fill(0),
-          );
+        if (typeof rawOwnership === "string") {
+          ownership = rawOwnership as Ownership;
+        } else {
+          // 分析が無い棋譜は、ぜんぶ空点(".")の文字列にするよ
+          ownership = ".".repeat(
+            targetBoardSize * targetBoardSize,
+          ) as Ownership;
+        }
 
         merged[record.id] = {
           finalBoard,
-          territoryBoard,
+          ownership,
           matchType: record.match_type,
           agehama,
         };

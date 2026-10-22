@@ -32,7 +32,7 @@ const config = getDefaultConfig(__dirname);
 // 「素材(asset)」として扱う拡張子を追加する。
 // 追加しないと、Metroくんが「知らない形式だ」と止まってしまう。
 // ※新しい形式の素材を使いたくなったら、ここに足す(時々触る場所)。
-config.resolver.assetExts.push("gz", "mp3", "woff2");
+config.resolver.assetExts.push("gz", "mp3", "ttf");
 
 // NativeWindの設定を上乗せする。
 // input は、Tailwindの道具箱(global.css)の場所を教えている。

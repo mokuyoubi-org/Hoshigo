@@ -3,7 +3,7 @@
 import { createContext, ReactNode, useContext, useState } from "react";
 
 // 1. プロフィールの型（素のデータ）
-type Profile = {
+export type Profile = {
   uid: string | null;
   email: string | null;
   username: string | null;
@@ -30,8 +30,9 @@ type Profile = {
   allowBotMatch9: boolean | null;
   allowBotMatch13: boolean | null;
   allowBotMatch19: boolean | null;
-  isAnonymous: boolean;
-  country: string | null;
+  isAnonymous: boolean | null;
+  premiumUntil: number | null; // ⚠️numberであることに注意
+  isPremium: boolean | null;
 };
 
 // Hookから返す全体の型
@@ -40,35 +41,36 @@ type ProfileContextValue = Profile & {
 };
 
 // 2. 初期値
-const initialProfile: Profile = {
+export const initialProfile: Profile = {
   uid: null,
   email: null,
   username: null,
-  iconIndex: 0,
+  iconIndex: null,
   // 9
-  rating9: 0,
-  wins9: 0,
-  losses9: 0,
-  draws9: 0,
-  giantKillingStreak9: 0,
+  rating9: null,
+  wins9: null,
+  losses9: null,
+  draws9: null,
+  giantKillingStreak9: null,
   // 13
-  rating13: 0,
-  wins13: 0,
-  losses13: 0,
-  draws13: 0,
-  giantKillingStreak13: 0,
+  rating13: null,
+  wins13: null,
+  losses13: null,
+  draws13: null,
+  giantKillingStreak13: null,
   // 19
-  rating19: 0,
-  wins19: 0,
-  losses19: 0,
-  draws19: 0,
-  giantKillingStreak19: 0,
+  rating19: null,
+  wins19: null,
+  losses19: null,
+  draws19: null,
+  giantKillingStreak19: null,
   // others
-  allowBotMatch9: true,
-  allowBotMatch13: true,
-  allowBotMatch19: true,
-  isAnonymous: true,
-  country: null,
+  allowBotMatch9: null,
+  allowBotMatch13: null,
+  allowBotMatch19: null,
+  isAnonymous: null,
+  premiumUntil: null,
+  isPremium: null,
 };
 
 type ProfileContextType = {

@@ -1,4 +1,4 @@
-// useLiveAnalysis.ts
+// expo/src/hooks/ai/useLiveAnalysis.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
 // 対局中、画面には一切出さずに、手ごとのKataGo解析結果を裏側で溜めて
@@ -8,9 +8,7 @@
 // 次の3つも、ここで一手に引き受ける(対局セッション側はKataGoに直接
 // 触らず、ここに頼むだけにするため)。
 //  1. 局面を分析して記録する(analyzeAndRecord)。
-//  2. 「直近どの局面をどのanalysisで評価したか」の付箋(キャッシュ)。
-//     連続パスで終局する時、パスは盤面を変えないので、直前の局面の
-//     analysisをそのまま地計算に使い回せる(getCachedAnalysis)。
+//  2. 人間の手番の局面を分析して記録し、「自動でパスすべきか」も返す(analyzeForTurn)。
 //  3. 「まだ終わっていない分析が何件あるか」の数え係(waitForPending)。
 //     投了時など、浮いている分析が全部終わるまで待ちたい時に使う。
 //
@@ -18,48 +16,41 @@
 // useRecordAnalysisLoopと同じ入れ物)にして返す。BoardEditScreenに渡すのはこの形。
 // ──────────────────────────────────────────────────
 
-import { AnalyzeResult } from "@/packages/expo-katago/src";
-import { useKataGoTask } from "@/src/hooks/ai/useKataGoTask";
+import { KataGoTaskResult, useKataGoTask } from "@/src/hooks/ai/useKataGoTask";
 import { buildMoveAnalysisEntry } from "@/src/logics/game/analysis";
 import {
   Board,
   BoardSize,
+  endsWithDoublePass,
   Grid,
   isBoardUnfinished,
   MatchType,
   MoveAnalysisEntry,
+  PASS_GRID,
   RecordAnalysis,
 } from "go-core";
-import { useEffect, useRef } from "react";
-
-// 「直近に分析した局面」の付箋。moveCountは「その解析時点でのmovesSoFar.length
-// (=これから打たれる手のインデックス)」。地計算が
-// 「このモデルなら使い回してよいか」を判断するために、そのまま渡す。
-type LastPositionAnalysis = {
-  moveCount: number;
-  analysis: AnalyzeResult | null;
-};
-
-const NO_CACHE: LastPositionAnalysis = { moveCount: -1, analysis: null };
+import { useEffect, useRef, useState } from "react";
 
 type UseLiveAnalysisArgs = {
   matchType: MatchType;
   boardSize: BoardSize;
   // 🌟 途中から始める時の、これまでの分析結果(再開する局面までの分)
   initialAnalysis?: RecordAnalysis;
-  // 🌟 1局面を記録した直後に呼ばれる(対局中、サーバーへ送るために使う)。
+  // 🌟 1局面を記録した直後に呼ばれる。
   //    pos = その局面までに打たれた手数(0 = まだ1手も打たれていない局面)
-  onRecorded?: (
-    pos: number,
-    entry: MoveAnalysisEntry,
-    result: AnalyzeResult,
-  ) => void;
+  onRecorded?: (pos: number, entry: MoveAnalysisEntry) => void;
 };
 
 type AnalyzeAndRecordArgs = {
-  moveIndex: number; // この局面で打たれる手のインデックス(=movesSoFar.length)
+  moveIndex: number; // この局面までに打たれた手数(=movesSoFar.length)
   board: Board;
   movesSoFar: Grid[];
+};
+
+type AnalyzeForTurnArgs = AnalyzeAndRecordArgs & {
+  // 🌟 true の時だけ、終局の2段階確認をして、強制パスすべきかを調べる。
+  //    「今が自分(人間)の手番」の時にだけ true にする。
+  checkAutoPass: boolean;
 };
 
 export const useLiveAnalysis = ({
@@ -72,13 +63,12 @@ export const useLiveAnalysis = ({
   const onRecordedRef = useRef(onRecorded);
   useEffect(() => {
     onRecordedRef.current = onRecorded;
-  }, []);
+  });
   const kataGoTask = useKataGoTask();
 
   const perMoveRef = useRef<(MoveAnalysisEntry | null)[]>(
-    initialAnalysis ? [...initialAnalysis.perMove] : [],
+    initialAnalysis ? [...initialAnalysis.pos] : [],
   );
-  const lastPositionRef = useRef<LastPositionAnalysis>(NO_CACHE);
 
   // 🌟画面離脱後に、遅れて届いた分析結果を記録してしまわないためのガード
   const isMountedRef = useRef(true);
@@ -93,85 +83,166 @@ export const useLiveAnalysis = ({
   const pendingCountRef = useRef(0);
   const pendingResolversRef = useRef<(() => void)[]>([]);
 
-  // moveIndex(0-indexed、その手が打たれた直後の局面)にAnalyzeResultを記録する。
-  // movesSoFarは、この分析をした局面までの手の並び。確定した終局局面かどうかを
-  // 判断して、確定ならgoscorerの結果で仕上げてから保存するために使う。
-  // 同じmoveIndexに対して2回呼ばれた場合は、後から呼ばれた方で上書きされる
-  // (再送信でやり直した場合の後始末を兼ねる)。
-  // 🌟「直近に分析した局面」の付箋も、ここで一緒に更新する。付箋には、仕上げ前の
-  // 生のresultを残す(地計算が、KataGoの生のownershipを使い回すため)。
-  // resultがnull(二重パス等で分析が取れなかった)の場合は、記録はしないが
-  // 付箋にはnullを残す(「この局面は分析できなかった」という事実を、古い付箋と
-  // 取り違えないため)。
-  // 戻り値は、保存した(仕上げ済みの)エントリ。記録しなかった場合はnull。
-  const record = (
-    moveIndex: number,
-    result: AnalyzeResult | null,
-    movesSoFar: Grid[],
-  ): MoveAnalysisEntry | null => {
-    lastPositionRef.current = { moveCount: moveIndex, analysis: result };
-    if (!result) return null;
-    const entry = buildMoveAnalysisEntry(result, {
-      boardSize,
-      matchType,
-      movesSoFar,
+  // 🌟「判断が終わった局面」の一覧。局面 = その局面までに打たれた手数。
+  //   分析が成功した局面も、失敗した局面も、どちらも「終わった」として入れる。
+  //   (失敗した時にパスボタンが押せないままにならないように)
+  //   画面の再描画のきっかけにしたいので、refではなくstateで持つ。
+  //   再開の時は、引き継いだ分析がある局面から始める。
+  const [judgedPositions, setJudgedPositions] = useState<Set<number>>(
+    () =>
+      new Set(
+        (initialAnalysis?.pos ?? []).flatMap((entry, index) =>
+          entry ? [index] : [],
+        ),
+      ),
+  );
+
+  const markJudged = (moveIndex: number) => {
+    if (!isMountedRef.current) return;
+    setJudgedPositions((prev) => {
+      if (prev.has(moveIndex)) return prev;
+      const next = new Set(prev);
+      next.add(moveIndex);
+      return next;
     });
+  };
+
+  // 実行中の分析が1件終わった時の後始末。0件になったら、待っている人たちを起こす。
+  const finishPending = () => {
+    pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);
+    if (pendingCountRef.current === 0) {
+      const resolvers = pendingResolversRef.current;
+      pendingResolversRef.current = [];
+      resolvers.forEach((resolve) => resolve());
+    }
+  };
+
+  // 分析結果を保存して、記録できたことを知らせるだけ。
+  // 「判断が終わった」印は付けない(付けるタイミングは呼び出し側が決める)。
+  // resultがnullの場合は、記録しない。
+  const storeEntry = (
+    moveIndex: number,
+    result: KataGoTaskResult | null,
+  ): MoveAnalysisEntry | null => {
+    if (!result) return null;
+    const entry = buildMoveAnalysisEntry(result);
     const arr = perMoveRef.current;
     while (arr.length <= moveIndex) arr.push(null);
     arr[moveIndex] = entry;
     // 🌟記録できたことを知らせる(サーバーへ送るため)。失敗しても記録自体は守る
     try {
-      onRecordedRef.current?.(moveIndex, entry, result);
+      onRecordedRef.current?.(moveIndex, entry);
     } catch (e) {
       console.error("分析の送信で例外発生:", e);
     }
     return entry;
   };
-  // 局面を分析して、記録(と付箋の更新)まで済ませる。
+
+  // 局面の分析結果を記録する。moveIndex = その局面までに打たれた手数
+  // (=movesSoFar.length。0 = まだ1手も打たれていない局面)。
+  // movesSoFarは、この分析をした局面までの手の並び。
+  // 同じmoveIndexに対して2回呼ばれた場合は、後から呼ばれた方で上書きされる
+  // (再送信でやり直した場合の後始末を兼ねる)。
+  // resultがnull(二重パス等で分析が取れなかった)の場合は、記録しない。
+  // 戻り値は、保存した(仕上げ済みの)エントリ。記録しなかった場合はnull。
+  const record = (
+    moveIndex: number,
+    result: KataGoTaskResult | null,
+    movesSoFar: Grid[],
+  ): MoveAnalysisEntry | null => {
+    const entry = storeEntry(moveIndex, result);
+    // 🌟 判断が終わった局面として覚える
+    if (entry) markJudged(moveIndex);
+    return entry;
+  };
+
+  // 局面を分析して、記録まで済ませる。
   // 呼び出し側はawaitしなくてよい(投げっぱなしの背景分析に使う)。
-  // awaitすれば、記録が終わるまで待てる(⏹の最新局面分析に使う)。
+  // awaitすれば、記録が終わるまで待てる(⏹の最新局面分析や、終局の分析に使う)。
+  // 戻り値は、保存した(仕上げ済みの)エントリ。分析が取れなかった時や、
+  // 画面を離れた後だった時は null。
   // 実行中の件数は数えているので、waitForPendingで全部の完了を待てる。
   const analyzeAndRecord = async ({
     moveIndex,
     board,
     movesSoFar,
-  }: AnalyzeAndRecordArgs): Promise<void> => {
+  }: AnalyzeAndRecordArgs): Promise<MoveAnalysisEntry | null> => {
     pendingCountRef.current += 1;
     try {
-      const analysis = await kataGoTask.run({
+      const analysis = await kataGoTask.run(
         board,
         movesSoFar,
-        matchType,
         boardSize,
-      });
+        matchType,
+      );
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) return null;
 
-      record(moveIndex, analysis, movesSoFar);
+      return record(moveIndex, analysis, movesSoFar);
     } finally {
-      pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);
-      if (pendingCountRef.current === 0) {
-        const resolvers = pendingResolversRef.current;
-        pendingResolversRef.current = [];
-        resolvers.forEach((resolve) => resolve());
-      }
+      // 🌟 成功でも失敗(null・例外)でも、この局面の判断は「終わった」
+      markJudged(moveIndex);
+      finishPending();
     }
   };
 
-  // 「moveIndex手目を打つ前の局面」の付箋が貼ってあれば、そのanalysisを返す。
-  // 貼ってなければ(別の局面の付箋、または付箋なし)undefinedを返す。
-  // 分析に失敗していた場合はnullを返す。
-  // ※使い回してよいモデルかどうかは、ここでは見ない。
-  //   地計算側(useFinalPositionAnalysisのanalyzeTerritory)が判断する。
-  const getCachedAnalysis = (
-    moveIndex: number,
-  ): AnalyzeResult | null | undefined =>
-    lastPositionRef.current.moveCount === moveIndex
-      ? lastPositionRef.current.analysis
-      : undefined;
+  // 人間の手番になった局面を分析して記録し、「ここで自動でパスすべきか」を返す。
+  // 自動でパスする(true)のは、次の3つがすべて当てはまる時だけ。
+  //   1. checkAutoPass が true で、直前の相手の手がパス
+  //   2. この局面が終局と判定された(1段階目)
+  //   3. パスした後の局面も終局と判定された(2段階目)
+  // 2段階目の分析が終わるまで、「判断が終わった」印は付けない
+  // (=パスボタンも押せないまま。確認中に人間が操作してしまわないように)。
+  // 分析の失敗や例外は、すべて false(強制パスしない)。
+  const analyzeForTurn = async ({
+    moveIndex,
+    board,
+    movesSoFar,
+    checkAutoPass,
+  }: AnalyzeForTurnArgs): Promise<boolean> => {
+    pendingCountRef.current += 1;
+    try {
+      const result = await kataGoTask.run(
+        board,
+        movesSoFar,
+        boardSize,
+        matchType,
+      );
+      if (!isMountedRef.current || !result) return false;
+
+      // 分析は保存する(判断が終わった印は、下のfinallyで付ける)
+      storeEntry(moveIndex, result);
+
+      const opponentPassed =
+        movesSoFar[movesSoFar.length - 1] === PASS_GRID &&
+        !endsWithDoublePass(movesSoFar);
+      // 🌟 相手が、自分の番ごとに2回連続でパスしている時だけ、強制パスする
+      //    (間に自分の手が1手ずつ入るので、2手おきに見る)
+      const opponentPassedThreeTimes =
+        opponentPassed &&
+        movesSoFar.length >= 3 &&
+        movesSoFar[movesSoFar.length - 3] === PASS_GRID;
+      if (!checkAutoPass || !opponentPassedThreeTimes || !result.isFinal) {
+        return false;
+      }
+
+      const confirmed = await kataGoTask.isFinalAfterPass(
+        movesSoFar,
+        boardSize,
+        matchType,
+      );
+      return isMountedRef.current && confirmed;
+    } catch (e) {
+      console.warn("[useLiveAnalysis] 手番局面の分析で例外が出ました", e);
+      return false;
+    } finally {
+      markJudged(moveIndex);
+      finishPending();
+    }
+  };
 
   // 「今の局面は、まだ終局していないか」を、保存済みの分析のownershipから判定する。
-  // movesSoFarは今の局面までの手の並び(=その局面の分析は perMove[movesSoFar.length])。
+  // movesSoFarは今の局面までの手の並び(=その局面の分析は pos[movesSoFar.length])。
   //  - true : 未終局と判定された
   //  - false: 終局していると判定された
   //  - null : 判定できない(分析がまだ届いていない/取れなかった)
@@ -189,6 +260,11 @@ export const useLiveAnalysis = ({
     );
   };
 
+  // 🌟 この局面(=打たれた手数)の判断が終わったか。パスボタンを押せるかどうかに使う。
+  //   stateを読んでいるので、判断が終わると画面が再描画される。
+  const isPositionJudged = (movesLength: number): boolean =>
+    judgedPositions.has(movesLength);
+
   // 浮いている分析が全部終わるまで待つ。0件ならすぐ解決する。
   const waitForPending = (): Promise<void> => {
     if (pendingCountRef.current === 0) return Promise.resolve();
@@ -198,23 +274,29 @@ export const useLiveAnalysis = ({
   };
 
   // サーバーとのresync等でmoves配列自体が短縮された場合に、それより後ろの
-  // ゴミを掃除する。付箋も「どの局面のものか保証できなくなる」ので一緒に捨てる。
+  // ゴミを掃除する。
   const truncate = (length: number) => {
     perMoveRef.current = perMoveRef.current.slice(0, length);
-    lastPositionRef.current = NO_CACHE;
+    // 🌟 「判断が終わった」印も掃除する。
+    //   今の局面(=length)の印は残す。分析が消えていても、
+    //   「判断できない=確認なしでパス」になるだけで、ボタンが固まることはない。
+    setJudgedPositions(
+      (prev) => new Set(Array.from(prev).filter((i) => i <= length)),
+    );
   };
 
   const getRecordAnalysis = (): RecordAnalysis => ({
-    perMove: [...perMoveRef.current],
+    pos: [...perMoveRef.current],
   });
 
   return {
     record,
     analyzeAndRecord,
-    getCachedAnalysis,
+    analyzeForTurn,
     waitForPending,
     truncate,
     getRecordAnalysis,
     isPositionUnfinished,
+    isPositionJudged,
   };
 };

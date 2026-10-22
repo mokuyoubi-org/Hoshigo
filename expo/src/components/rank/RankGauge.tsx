@@ -2,6 +2,7 @@
 // ランクのゲージ（吹き出し + ゲージ + あと◯）を描くだけの部品
 // 動き方は持たず、progress（0〜100）を受け取って表示する
 
+import { useAppFont } from "@/src/hooks/common/useAppFont";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useMemo } from "react";
 import { Animated, View } from "react-native";
@@ -41,6 +42,7 @@ export const RankGauge = ({
   reserveFooterSpace = false,
 }: Props) => {
   const colors = useColors();
+  const fontFamily = useAppFont();
 
   // 🐱 ゲージの幅と吹き出しの位置は、同じ1つの progress から作る（ズレようがない）
   const percent = useMemo<
@@ -79,6 +81,7 @@ export const RankGauge = ({
               borderColor={color}
               textColor={colors.foreground}
               tailDirection="down"
+              fontStyle={{fontFamily}}
             />
           </Animated.View>
         </View>

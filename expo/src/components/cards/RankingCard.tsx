@@ -12,11 +12,12 @@ import { Animated, Platform, TouchableOpacity, View } from "react-native";
 import { Avatar } from "../avatar/Avatar";
 
 // ─── 型定義 ───────────────────────────────
-export type Profile = {
+export type RankingsProfile = {
   username: string;
   rating: number;
   icon_index: number;
   is_authenticated?: boolean; // 🐱 認証済みフラグを追加！
+  is_premium?: boolean;
 };
 
 // ─── RankingCard ──────────────────────
@@ -24,7 +25,7 @@ export const RankingCard = ({
   item,
   index,
 }: {
-  item: Profile;
+  item: RankingsProfile;
   index: number;
 }) => {
   const colors = useColors();
@@ -102,7 +103,7 @@ export const RankingCard = ({
               <MaterialCommunityIcons
                 name="check-decagram"
                 size={16}
-                color={colors.primary}
+                color={item.is_premium ? colors.gold : colors.primary}
               />
             )}
           </View>

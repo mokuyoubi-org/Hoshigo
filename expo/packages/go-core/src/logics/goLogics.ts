@@ -35,22 +35,26 @@ const isEmptyGrid = (grid: Grid, board: Board): boolean => board[grid] === null;
 // コウ判定
 const isKoViolation = (
   boardSize: BoardSize,
-  grid: Grid,
-  board: Board,
-  lastMove: Grid,
   currentColor: Color,
+  grid: Grid,
+  lastMove: Grid,
+  board: Board,
   lastBoard: Board,
 ): boolean => {
+  // 打とうとしているマスの隣にある相手の「連（石グループ）」を収集するセット
   const oppStrings = new Set<GoString>();
 
+  // 上下左右の隣接マスを順番にチェック
   for (const neighbor of getNeighbors(grid, boardSize)) {
     const neighborString = board[neighbor];
+    // 空点や自分の石がある場合は、コウ（1石だけ取る形）になり得ないのでコウ違反ではない
     if (neighborString === null) return false;
     if (neighborString.color === currentColor) return false;
 
     oppStrings.add(neighborString);
   }
 
+  // 隣接する相手の連のうち、「石が1個」かつ「呼吸点が残り1個（アタリ状態）」のものを抽出
   const oneStoneOneLiberty: GoString[] = [];
   for (const oppString of oppStrings) {
     if (oppString.stones.size === 1 && oppString.liberties.size === 1) {
@@ -58,14 +62,41 @@ const isKoViolation = (
     }
   }
 
+  // 対象となる相手の1個石の座標を取得
   const lastStone = [...(oneStoneOneLiberty[0]?.stones ?? [])][0];
 
+  // 以下の条件をすべて満たす場合は「コウ違反」と判定
+  // 1. 取り返せる相手の石(構成石・呼吸点がともに1のもの)がちょうど1個だけ存在する
+  // 2. その相手の石の位置が、1手前に相手が打った位置（lastMove）と一致する
+  // 3. 1手前の盤面（lastBoard）で、現在打とうとしている位置に自分の石が存在していた（＝さっき取られた石の位置）
   if (
     oneStoneOneLiberty.length === 1 &&
     lastStone === lastMove &&
     lastBoard[grid]?.color === currentColor
   ) {
-    return true;
+    return true; // コウ違反（同形反復のため着手不可）
+  }
+  return false;
+};
+
+/**  コウで打てない場所が、盤上にあるかどうか */
+export const hasKoPoint = (
+  boardSize: BoardSize,
+  currentColor: Color,
+  lastMove: Grid | null,
+  board: Board,
+  lastBoard: Board,
+): boolean => {
+  // 1手前がない・パスだった場合は、コウになりようがない
+  if (lastMove === null || lastMove === PASS_GRID) return false;
+
+  for (let grid = 0; grid < board.length; grid++) {
+    if (!isEmptyGrid(grid, board)) continue;
+    if (
+      isKoViolation(boardSize, currentColor, grid, lastMove, board, lastBoard)
+    ) {
+      return true;
+    }
   }
   return false;
 };
@@ -243,7 +274,7 @@ export const isLegalMove = (
   if (
     lastMove !== null &&
     lastMove !== PASS_GRID &&
-    isKoViolation(boardSize, grid, board, lastMove, currentColor, lastBoard)
+    isKoViolation(boardSize, currentColor, grid, lastMove, board, lastBoard)
   ) {
     return false;
   }

@@ -28,17 +28,19 @@ export const useSoundPlayer = <T extends string>(
 
   // 🔊プレイヤーは共有・使い回すため、アンマウント時のremove()は行わない。
   // (他の画面が同じ音を使い回している可能性があるため)
-
   const playSound = useCallback(async (name: T, volume: number = 1.0) => {
     try {
       const player = getPlayer(soundsRef.current[name]);
+      // console.log("🔊 play:", name, "isLoaded:", player.isLoaded);
       player.volume = volume;
-      await player.seekTo(0);
-      await player.play();
+      // しおりを戻すだけ戻して、待たずにすぐ再生する
+      player.seekTo(0).catch((error) => {
+        console.warn(`Failed to seek ${name} sound:`, error);
+      });
+      player.play();
     } catch (error) {
       console.warn(`Failed to play ${name} sound:`, error);
     }
   }, []);
-
   return { playSound };
 };

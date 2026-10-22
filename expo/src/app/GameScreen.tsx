@@ -8,10 +8,11 @@
 import { PlayerCard } from "@/src/components/cards/PlayerCard";
 import { MyText } from "@/src/components/common/MyText";
 import LoadingModal from "@/src/components/modals/common/LoadingModal";
-import { GameScreenSettingsModal } from "@/src/components/modals/game/GameScreenSettingsModal";
+// import { AutoPassModal } from "@/src/components/modals/game/AutoPassModal";
 import { GameStartModal } from "@/src/components/modals/game/GameStartModal";
 import { PassConfirmModal } from "@/src/components/modals/game/PassConfirmModal";
-import { GameResultModal } from "@/src/components/modals/result/GameResultModal";
+import { GameResultModal } from "@/src/components/modals/game/result/GameResultModal";
+import { GameScreenSettingsModal } from "@/src/components/modals/game/settings/GameScreenSettingsModal";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useColors } from "@/src/hooks/common/useTheme";
@@ -31,7 +32,7 @@ import { BLACK, Grid, PASS_GRID } from "go-core";
 import { useEffect, useRef } from "react";
 import { TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconButton, ScreenHeader } from "ui-atoms";
+import { IconButton, MyHeader } from "ui-atoms";
 import { buildRecordFromMatch } from "../logics/record/recordBuilder";
 
 // ─── レイアウト定数 ───
@@ -63,7 +64,8 @@ export default function GameScreen() {
     height * BOARD_HEIGHT_RATIO,
   );
   // 対局する人の情報
-  const { uid, iconIndex, username, rating9, rating13, rating19 } = useProfile();
+  const { uid, iconIndex, username, rating9, rating13, rating19 } =
+    useProfile();
   const [rank9, rank13, rank19] = [
     getRankInfo(rating9, t),
     getRankInfo(rating13, t),
@@ -92,13 +94,13 @@ export default function GameScreen() {
   const myRating =
     (boardSize === 9 ? rating9 : boardSize === 13 ? rating13 : rating19) ?? 0;
 
-  // 🌟useMatchSession呼び出し！
+  // 🌟useMatchSession呼び出し!
   const {
     boardHistory,
     agehamaHistory,
     moves,
     currentIndex,
-    territoryBoard,
+    ownership,
     isMyTurn,
     mySeconds,
     oppSeconds,
@@ -108,6 +110,7 @@ export default function GameScreen() {
     handlePutStone,
     handleResign,
     shouldConfirmPass,
+    isPassReady,
     turnState,
     ratingBefore,
     ratingAfter,
@@ -132,6 +135,9 @@ export default function GameScreen() {
     initialOppSeconds: Number(params.oppSeconds),
   });
 
+  // 🌟 パスボタンを押せないか。自分の番じゃない時、または
+  //   今の局面の判断(パスの確認が要るか)がまだ終わっていない時。
+  const isPassDisabled = !isMyTurn || !isPassReady;
   const isPlayerBlack = myColor === BLACK;
   const blackWins = resultRaw?.startsWith("B")
     ? true
@@ -331,7 +337,7 @@ export default function GameScreen() {
 
       <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
         {/* ─── ヘッダー ─── */}
-        <ScreenHeader
+        <MyHeader
           left={
             <IconButton
               icon={<FontAwesome6 name="info" />}
@@ -401,7 +407,7 @@ export default function GameScreen() {
               // 現在の盤面、インデックス、テリトリーボード: 3
               board={boardHistory[currentIndex] ?? {}}
               currentIndex={currentIndex}
-              territoryBoard={territoryBoard}
+              ownership={ownership}
               // history系: 3
               moveHistory={moves}
               boardHistory={boardHistory}
@@ -467,16 +473,18 @@ export default function GameScreen() {
             {/* パスボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
-                !isMyTurn ? "border-backgroundStrong" : "border-primaryStrong"
+                isPassDisabled
+                  ? "border-backgroundStrong"
+                  : "border-primaryStrong"
               }`}
               onPress={handlePassPress}
-              disabled={!isMyTurn}
+              disabled={isPassDisabled}
               activeOpacity={0.7}
             >
               <MyText
                 className={"text-lg"}
                 style={{
-                  color: !isMyTurn
+                  color: isPassDisabled
                     ? colors.backgroundStrong
                     : colors.primaryStrong,
                 }}
@@ -487,16 +495,16 @@ export default function GameScreen() {
             {/* 投了ボタン */}
             <TouchableOpacity
               className={`flex-1 h-14 border-2 rounded-2xl justify-center items-center bg-foreground ${
-                !isMyTurn ? "border-failureLight" : "border-failure"
+                isPassDisabled ? "border-failureLight" : "border-failure" // 元は!isMyTurn。だがUI的にパスに合わせる
               }`}
               onPress={handleResign}
-              disabled={!isMyTurn}
+              disabled={isPassDisabled} // 元は!isMyTurn。だがUI的にパスに合わせる
               activeOpacity={0.7}
             >
               <MyText
                 className={"text-lg"}
                 style={{
-                  color: !isMyTurn ? colors.failureLight : colors.failure,
+                  color: isPassDisabled ? colors.failureLight : colors.failure, // 元は!isMyTurn。だがUI的にパスに合わせる
                 }}
               >
                 {t("common.resign")}

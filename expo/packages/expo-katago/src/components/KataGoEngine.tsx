@@ -8,7 +8,8 @@ import { analyzeBoard, loadModel } from "../logics/analyzeBoard";
 import { initTf } from "../logics/initTf";
 import {
   AnalyzeBoardArgs,
-  AnalyzeResult,
+  AnalyzeResultFields,
+  AnalyzeResultFor,
   KataGoEngineRef,
   ModelLoadStage,
 } from "../types/types";
@@ -25,7 +26,7 @@ type Props = {
   dom?: DOMProps;
   onReady: () => void;
   onError: (message: string) => void;
-  onAnalyzeComplete?: (result: AnalyzeResult) => void;
+  onAnalyzeComplete?: (result: unknown) => void;
   // モデルの読み込み進捗通知(ダウンロード中/ウォームアップ中の両方を含む)。
   // IndexedDBキャッシュ済みでダウンロードが不要な場合は"downloading"は呼ばれず、
   // いきなり"warming_up"から始まる。
@@ -37,6 +38,15 @@ type Props = {
   // warmupModelが失敗したとき(ダウンロード失敗など)に呼ばれる。
   // これが無いと、失敗しても画面が「ダウンロード中」のまま止まって見えてしまう。
   onModelError?: (message: string) => void;
+};
+
+const toPlainArrays = <T extends object>(result: T): T => {
+  const plain = { ...result } as Record<string, unknown>;
+  for (const key of ["ownership", "ownershipStdev", "policy"]) {
+    const value = plain[key];
+    if (value) plain[key] = Array.from(value as ArrayLike<number>);
+  }
+  return plain as T;
 };
 
 export default function KataGoEngine({
@@ -64,28 +74,21 @@ export default function KataGoEngine({
     ref as any,
     () =>
       ({
-        analyzeBoard: async (
-          args: AnalyzeBoardArgs,
-        ): Promise<AnalyzeResult | null> => {
+        analyzeBoard: async <const F extends AnalyzeResultFields>(
+          args: AnalyzeBoardArgs & { fields: F },
+        ): Promise<AnalyzeResultFor<F> | null> => {
           try {
             const result = await analyzeBoard(args);
-            if (!result) return null;
-            const formattedResult: AnalyzeResult = {
-              ...result,
-              ownership: result.ownership
-                ? (Array.from(result.ownership) as any)
-                : result.ownership,
-              ownershipStdev: result.ownershipStdev
-                ? (Array.from(result.ownershipStdev) as any)
-                : result.ownershipStdev,
-              policy: result.policy
-                ? (Array.from(result.policy) as any)
-                : result.policy,
-            };
+            if (!result) {
+              onAnalyzeComplete?.(null);
+              return null;
+            }
+            const formattedResult = toPlainArrays(result);
             if (onAnalyzeComplete) onAnalyzeComplete(formattedResult);
             return formattedResult;
           } catch (e) {
             console.error("🌐 [WebView内] analyzeBoard 実行エラー:", e);
+            onAnalyzeComplete?.(null);
             return null;
           }
         },

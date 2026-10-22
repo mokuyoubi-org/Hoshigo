@@ -3,12 +3,13 @@
 import { Avatar } from "@/src/components/avatar/Avatar";
 import { GuestNoticeCard } from "@/src/components/cards/GuestNoticeCard";
 import { RankCard } from "@/src/components/cards/RankCard";
+import { StatsBadges } from "@/src/components/cards/stats/StatsBadges";
 import { MixedText } from "@/src/components/common/MixedText";
 import { MyText } from "@/src/components/common/MyText";
-import IconSelectModal from "@/src/components/modals/profile/IconSelectModal";
-import RankInfoModal from "@/src/components/modals/profile/RankInfoModal";
-import UsernameEditModal from "@/src/components/modals/profile/UsernameEditModal";
-import { LoginModal } from "@/src/components/modals/settings/LoginModal";
+import IconSelectModal from "@/src/components/modals/profileScreen/IconSelectModal";
+import RankInfoModal from "@/src/components/modals/profileScreen/RankInfoModal";
+import UsernameEditModal from "@/src/components/modals/profileScreen/UsernameEditModal";
+import { LoginModal } from "@/src/components/modals/settingsScreen/LoginModal";
 import { useMatching } from "@/src/contexts/MatchingContext";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useAppFont } from "@/src/hooks/common/useAppFont";
@@ -28,12 +29,7 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  IconButton,
-  ScreenHeader,
-  SegmentedControl,
-  TextButton,
-} from "ui-atoms";
+import { IconButton, MyHeader, SegmentedControl, TextButton } from "ui-atoms";
 
 export default function ProfileScreen() {
   const fontFamily = useAppFont();
@@ -50,7 +46,7 @@ export default function ProfileScreen() {
       <StatusBar style="dark" />
 
       <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
-        <ScreenHeader
+        <MyHeader
           left={
             <SegmentedControl
               trackBackgroundColor={colors.backgroundStrong}
@@ -86,7 +82,7 @@ export default function ProfileScreen() {
               router.push({ pathname: "/SettingsScreen" });
             }}
           />
-        </ScreenHeader>
+        </MyHeader>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -165,7 +161,7 @@ export default function ProfileScreen() {
                   <MaterialCommunityIcons
                     name="check-decagram"
                     size={22}
-                    color={colors.primary} // ブランドカラー（青など）で統一
+                    color={profileData.isPremium?colors.gold: colors.primary} // ブランドカラー（青など）で統一
                   />
                 )}
                 {/* ペンアイコン(ただの飾り) */}
@@ -196,7 +192,7 @@ export default function ProfileScreen() {
             />
 
             {/* 戦績カード */}
-            {/* <StatsCard /> */}
+            <StatsBadges boardSize={profileData.boardSize} />
 
             {/* 棋譜 */}
             <TouchableOpacity

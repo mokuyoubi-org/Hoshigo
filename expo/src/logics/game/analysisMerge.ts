@@ -11,7 +11,7 @@ import { MoveAnalysisEntry, RecordAnalysis } from "go-core";
 export const EMPTY_ENTRY: MoveAnalysisEntry = {
   winRate: 50,
   scoreLead: 0,
-  ownership: [],
+  ownership: "", // 🔥 "........" とかじゃなくていいのかな
   candidates: [],
 };
 
@@ -21,15 +21,19 @@ export const mergeAnalysis = (
   branchIndex: number | null,
   totalMoves: number,
 ): RecordAnalysis => {
-  const perMove: (MoveAnalysisEntry | null)[] = [];
+  const pos: (MoveAnalysisEntry | null)[] = [];
+  // データがない手は、ひとつ前の手の値を引き継ぐ(先頭だけ EMPTY_ENTRY)
+  let prevEntry: MoveAnalysisEntry = EMPTY_ENTRY;
 
   for (let moveIndex = 0; moveIndex <= totalMoves; moveIndex++) {
     const isAtOrBeforeBranch = branchIndex === null || moveIndex <= branchIndex;
     const entry = isAtOrBeforeBranch
-      ? (recordAnalysis?.perMove[moveIndex] ?? null)
+      ? (recordAnalysis?.pos[moveIndex] ?? null)
       : (editableAnalysis[moveIndex] ?? null);
-    perMove.push(entry ?? EMPTY_ENTRY);
+    const resolved = entry ?? prevEntry;
+    pos.push(resolved);
+    prevEntry = resolved;
   }
 
-  return { perMove };
+  return { pos };
 };

@@ -83,7 +83,7 @@
       var rawLang = params.get("lang") || navigator.language;
       var lang = rawLang.split("-")[0]; // "ja-JP" などを "ja" に正規化
 
-      // 色とテーマの設定
+      // 色の設定
       var bgColor = params.get("bgColor");
       var textColor = params.get("textColor");
       var spinnerColor = params.get("spinnerColor");
@@ -119,7 +119,8 @@
           subtitle: "이 화면을 닫지 말고 잠시만 기다려 주세요.",
         },
       };
-      var msg = messages[lang];
+      // 未対応の言語でも落ちないよう、英語にフォールバック
+      var msg = messages[lang] || messages.en;
       document.getElementById("cf-title").textContent = msg.title;
       subtitleEl.textContent = msg.subtitle;
 
@@ -130,7 +131,8 @@
         }
         window.turnstile.render("#cf-container", {
           sitekey: sitekey,
-          language: lang,
+          // Turnstile側の中国語(簡体字)の指定は "zh-cn"
+          language: lang === "zh" ? "zh-cn" : lang,
           appearance: "interaction-only",
           execution: "render",
           callback: function (token) {

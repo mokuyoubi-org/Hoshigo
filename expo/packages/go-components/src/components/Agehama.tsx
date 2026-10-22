@@ -14,16 +14,27 @@ type Props = {
 export const Agehama = ({ count, color, size, fontFamily }: Props) => {
   const digits = String(count).length;
 
-  // 1桁: 大きめ / 桁が増えるほど小さく。
-  // 数字全体の横幅が size の約5割に収まるように計算している
-  const fontSize = size * Math.min(0.55, 0.9 / digits);
+  // 💡 桁数に応じて、石のサイズに対する割合を調整するにゃ！
+  // 1桁なら石のサイズの約55%、2桁なら約45%、3桁なら約35%くらいにするにゃ
+  let scale = 0.64;
+  if (digits === 2) {
+    scale = 0.48;
+  } else if (digits >= 3) {
+    scale = 0.36; // 3桁以上になってもこれ以上小さくなりすぎないようにストップするにゃ！
+  }
+
+  const fontSize = size * scale;
 
   return (
     <Text
       numberOfLines={1}
       style={[
         styles.text,
-        { fontSize, color },
+        {
+          fontSize,
+          color,
+          transform: [{ translateY: -fontSize * 0.1 }],
+        },
         fontFamily ? { fontFamily } : null,
       ]}
     >
@@ -31,11 +42,10 @@ export const Agehama = ({ count, color, size, fontFamily }: Props) => {
     </Text>
   );
 };
-
 const styles = StyleSheet.create({
   text: {
     fontWeight: "600",
-    includeFontPadding: false,
     textAlign: "center",
+    includeFontPadding: false, // ⚠️Android用。大事
   },
 });

@@ -18,11 +18,11 @@ type BotStats = {
 export const BOT_STATS: Record<BotUsername, BotStats> = {
   bot1: {
     iconIndex: 100,
-    ratingByBoardSize: { 9: 2100, 13: 2100, 19: 1500 },
+    ratingByBoardSize: { 9: 2100, 13: 1700, 19: 1300 },
   },
   bot2: {
     iconIndex: 101,
-    ratingByBoardSize: { 9: 2300, 13: 2300, 19: 1900 },
+    ratingByBoardSize: { 9: 2300, 13: 2100, 19: 1900 },
   },
   bot3: {
     iconIndex: 102,

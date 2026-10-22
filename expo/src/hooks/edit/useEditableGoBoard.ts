@@ -13,45 +13,37 @@
 // ──────────────────────────────────────────────────
 
 import { RecordType } from "@/src/types/record";
-import { useEditableMoves } from "./useEditableMoves";
-
-import { ShowMode } from "@/packages/go-components/src";
+import { ShowMode } from "go-components";
 import { Grid } from "go-core";
 import { useKVStorage } from "kv-store";
 import { useEditAnalysisCache } from "./useEditAnalysisCache";
+import { useEditableMoves } from "./useEditableMoves";
 
 export const useEditableGoBoard = (record: RecordType) => {
-  // ローカル
-
-  const { value: doubleTap9 } = useKVStorage<boolean>(
-    "global.doubleTap9",
-    false,
-  );
-  const { value: doubleTap13 } = useKVStorage<boolean>(
-    "global.doubleTap13",
-    true,
-  );
-  const { value: doubleTap19 } = useKVStorage<boolean>(
-    "global.doubleTap19",
-    true,
-  );
-  const { value: isSoundEnabled } = useKVStorage<boolean>(
-    "global.sound",
-    false,
+  const moves = useEditableMoves(record);
+  const analysis = useEditAnalysisCache(
+    record.analysis,
+    record.match_type,
+    moves.boardSize,
+    moves.processed.moves.length,
+    moves.branchIndex,
   );
 
-  const { value: showOwnershipTerritoryBoard } = useKVStorage<boolean>(
-    "BoardEditScreen.showOwnershipTerritoryBoard",
-    false, // これだけはfalse。初心者くらいにしか要らないと思う
+  // ローカル設定
+  // 🌟 ダブルタップは、今の盤サイズ用の設定だけを読む(5路でも効く)
+  const { value: doubleTap } = useKVStorage<boolean>(
+    `global.doubleTap${moves.boardSize}`,
+    false,
+  );
+  const { value: isSoundEnabled } = useKVStorage<boolean>("global.sound", true);
+
+  const { value: showOwnership } = useKVStorage<boolean>(
+    "BoardEditScreen.showOwnership",
+    true,
   );
 
   const { value: showWinRateBar } = useKVStorage<boolean>(
     "BoardEditScreen.showWinRateBar",
-    true,
-  );
-
-  const { value: showCandidatesPoints } = useKVStorage<boolean>(
-    "BoardEditScreen.showCandidatesPoints",
     true,
   );
 
@@ -60,23 +52,9 @@ export const useEditableGoBoard = (record: RecordType) => {
     "both",
   );
 
-  const { value: showMoveEvaluationPoint } = useKVStorage<boolean>(
-    "BoardEditScreen.showMoveEvaluationPoint",
+  const { value: showMoveEvaluation } = useKVStorage<boolean>(
+    "BoardEditScreen.showMoveEvaluation",
     true,
-  );
-
-  const { value: showTerritoryResultBadge } = useKVStorage<boolean>(
-    "BoardEditScreen.showTerritoryResultBadge",
-    true,
-  );
-
-  const moves = useEditableMoves(record);
-  const analysis = useEditAnalysisCache(
-    record.analysis,
-    record.match_type,
-    moves.boardSize,
-    moves.processed.moves.length,
-    moves.branchIndex,
   );
 
   const toggleEditMode = () => {
@@ -129,15 +107,11 @@ export const useEditableGoBoard = (record: RecordType) => {
     runAndStoreAnalysis: analysis.runAndStoreAnalysis,
     combinedAnalysis: analysis.combinedAnalysis,
     isAnalyzing: analysis.isAnalyzing,
-    doubleTap9,
-    doubleTap13,
-    doubleTap19,
+    doubleTap,
     isSoundEnabled,
-    showOwnershipTerritoryBoard,
+    showOwnership,
     showWinRateBar,
-    showCandidatesPoints,
     showMode,
-    showMoveEvaluationPoint,
-    showTerritoryResultBadge,
+    showMoveEvaluation,
   };
 };

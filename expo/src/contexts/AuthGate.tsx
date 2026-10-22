@@ -16,8 +16,9 @@ import { useRouter, useSegments } from "expo-router";
 import * as Updates from "expo-updates";
 import { ReactNode, useEffect, useRef } from "react";
 import { TurnstileHandle, TurnstileWidget } from "turnstile-widget";
+import { loginRevenueCat } from "../services/revenuecat";
 import { useApp } from "./AppContexts";
-import { useProfile } from "./ProfileContexts";
+import { initialProfile, useProfile } from "./ProfileContexts";
 
 export const AuthGate = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
@@ -40,12 +41,11 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   const { data: session, isPending, refetch } = authClient.useSession();
   const userId = session?.user.id ?? null;
 
-  // 調査用: セッションの変化を、すべて記録する(あとで消す)
+  // RevenueCatに「この人です」と教える。userId が変わるたびに(ゲストでもGoogleでも)実行される
   useEffect(() => {
-    console.log("🔐 session変化", {
-      isPending,
-      userId,
-      isAnonymous: session?.user?.isAnonymous ?? null,
+    if (isPending || !userId) return;
+    loginRevenueCat(userId).catch((err) => {
+      console.warn("RevenueCatのログインに失敗:", err);
     });
   }, [isPending, userId]);
 
@@ -67,36 +67,15 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   const guestFailedRef = useRef(false);
 
   const clearUserState = () => {
-    updateProfile({
-      uid: null,
-      email: null,
-      username: null,
-      iconIndex: 0,
-      // 9
-      wins9: 0,
-      losses9: 0,
-      draws9: 0,
-      rating9: 0,
-      giantKillingStreak9: 0,
-      // 13
-      wins13: 0,
-      losses13: 0,
-      draws13: 0,
-      rating13: 0,
-      giantKillingStreak13: 0,
-      // 19
-      wins19: 0,
-      losses19: 0,
-      draws19: 0,
-      rating19: 0,
-      giantKillingStreak19: 0,
-      // others
-      allowBotMatch9: true,
-      allowBotMatch13: true,
-      allowBotMatch19: true,
-      isAnonymous: true,
-      country: null,
-    });
+    updateProfile(initialProfile);
+  };
+
+  // ゲストログイン失敗時の後始末。以後は自動でやり直さない
+  const failGuest = (message: string, err?: unknown) => {
+    console.error(message, err);
+    guestFailedRef.current = true;
+    clearUserState();
+    setIsInitializing(false);
   };
 
   // Turnstileトークンを取得する。失敗したら例外を投げる(厳格モード:
@@ -135,7 +114,6 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   // ③ログイン状態の見張り。
   //  ・ログインしていなければ、(本当にログアウトか確かめてから)ゲストログインする
   //  ・userId が変わったら、プロフィールを取って、ホームに行く(Googleログインのあとも、ここで拾う)
-
   useEffect(() => {
     // サーバーに確認している途中は、何もしない
     if (isPending) return;
@@ -157,10 +135,13 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
             query: { disableCookieCache: true },
           });
           if (current?.user) {
-            console.log("🛟 一瞬nullに見えただけ。サーバーにはセッションがある", {
-              userId: current.user.id,
-              isAnonymous: current.user.isAnonymous ?? null,
-            });
+            console.log(
+              "🛟 一瞬nullに見えただけ。サーバーにはセッションがある",
+              {
+                userId: current.user.id,
+                isAnonymous: current.user.isAnonymous ?? null,
+              },
+            );
             // 画面側の状態を、正しい内容に直す(直ると userId が変わり、このeffectがもう一度動く)
             void refetch();
             return;
@@ -172,16 +153,8 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
             clearUserState();
           }
 
-          let captchaToken: string;
-          try {
-            captchaToken = await getCaptchaToken();
-          } catch (err) {
-            console.error("ゲストログイン失敗(CAPTCHA)だよ:", err);
-            guestFailedRef.current = true;
-            clearUserState();
-            setIsInitializing(false);
-            return;
-          }
+          // 失敗したら例外 → 下の catch で後始末される
+          const captchaToken = await getCaptchaToken();
 
           // 前の人のデータが残ってたりするので、起動時だけ消しとく
           // (ログインのあとに消すと、新しいログインの情報まで消えるかもしれないので、先に消す)
@@ -191,19 +164,12 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
             fetchOptions: { headers: { "x-captcha-response": captchaToken } },
           });
           if (error || !data) {
-            console.error("ゲストログイン失敗:", error);
-            guestFailedRef.current = true;
-            clearUserState();
-            setIsInitializing(false);
-            return;
+            failGuest("ゲストログイン失敗:", error);
           }
           // ログインできると、useSessionが更新されて、このeffectが、もう一度動く(下へ)
         } catch (err) {
-          // 通信できないときなどは、signIn が例外を投げることがある
-          console.error("ゲストログイン失敗(通信エラー)だよ:", err);
-          guestFailedRef.current = true;
-          clearUserState();
-          setIsInitializing(false);
+          // CAPTCHAの失敗や、通信できないときなどに来る
+          failGuest("ゲストログイン失敗(CAPTCHA・通信エラー):", err);
         } finally {
           signingInRef.current = false;
         }
@@ -222,33 +188,33 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     isFirstRef.current = false;
 
     const afterSignedIn = async () => {
-      const profile = await syncProfile();
-      if (!profile) {
+      try {
+        const profile = await syncProfile();
+        if (!profile) {
+          clearUserState();
+          return;
+        }
+
+        // 起動時は、すでにタブや開発用の画面にいれば、移動しない。
+        // ログアウトやGoogleログインのあとは、必ずホームへ。
+        const isInTabs = segmentsRef.current[0] === "(tabs)";
+        const isDebug = segmentsRef.current[0] === "(debug)";
+        if (!wasFirst || (!isInTabs && !isDebug)) {
+          setTimeout(() => {
+            router.replace({ pathname: "/HomeScreen" });
+          }, 0);
+        }
+      } catch (err) {
+        console.error("プロフィール同期に失敗:", err);
         clearUserState();
+      } finally {
+        // 何があっても「準備中」のままで固まらないようにする
         setIsInitializing(false);
-        return;
       }
-
-      // 起動時は、すでにタブや開発用の画面にいれば、移動しない。
-      // ログアウトやGoogleログインのあとは、必ずホームへ。
-      const isInTabs = segmentsRef.current[0] === "(tabs)";
-      const isDebug = segmentsRef.current[0] === "(debug)";
-      if (!wasFirst || (!isInTabs && !isDebug)) {
-        setTimeout(() => {
-          router.replace({
-            pathname: "/HomeScreen",
-          });
-        }, 0);
-      }
-
-      setIsInitializing(false);
     };
 
     void afterSignedIn();
   }, [isPending, userId]);
-
-
-
 
   return (
     // ここは<View>にしてはいけない

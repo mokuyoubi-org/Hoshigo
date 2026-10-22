@@ -56,7 +56,7 @@
  *                                         長さ: boardSize*boardSize + 1（最後がパス）
  *                                         着手不可の点は -1。
  *
- *   moves           MoveInfo[]    候補手リスト（訪問数の多い順）🌟
+ *   moves           MoveObject[]    候補手リスト（訪問数の多い順）🌟
  *     x, y          number        座標（0-indexed）。パスは x:-1, y:-1
  *     winRate       number        この手を打ったときの黒の勝率
  *     winRateLost   number        最善手との勝率差（正=悪手）
@@ -85,10 +85,10 @@ import {
 import { ungzip } from "pako";
 import {
   AnalyzeBoardArgs,
-  AnalyzeResult,
+  AnalyzeResultFields,
+  AnalyzeResultFor,
   ModelDownloadProgress,
   ModelLoadStage,
-  MoveInfo,
 } from "../types/types";
 import { MctsSearch } from "../web-katrain/src/engine/katago/analyzeMcts";
 import {
@@ -164,10 +164,9 @@ export const loadModel = async (
 // ================================================================
 // 盤面解析メイン処理
 // ================================================================
-
-export const analyzeBoard = async (
-  args: AnalyzeBoardArgs,
-): Promise<AnalyzeResult> => {
+export const analyzeBoard = async <const F extends AnalyzeResultFields>(
+  args: AnalyzeBoardArgs & { fields: F },
+): Promise<AnalyzeResultFor<F>> => {
   const batchSize = 1;
 
   const {
@@ -176,8 +175,8 @@ export const analyzeBoard = async (
     currentPlayer,
     komi = 6.5,
     rules = "japanese",
-    visits = 200, // デフォルト: 200
-    maxTimeMs = 800, // デフォルト: 800
+    visits = 200,
+    maxTimeMs = 800,
     topK = 10,
     pvLen = 10,
     wideRootNoise = 0.04,
@@ -185,16 +184,6 @@ export const analyzeBoard = async (
     regionOfInterest,
     fields,
   } = args;
-
-  // 出力フィールドの取捨選択。省略時(undefined)は元のweb-katrainと同じフル出力。
-  const {
-    scoreSelfplay: includeScoreSelfplay = true,
-    scoreStdev: includeScoreStdev = true,
-    visits: includeVisits = true,
-    ownershipStdev: includeOwnershipStdev = true,
-    policy: includePolicy = true,
-    moveDetails: includeMoveDetails = true,
-  } = fields ?? {};
 
   setBoardSize(args.boardSize);
 
@@ -216,16 +205,13 @@ export const analyzeBoard = async (
         )
       : undefined;
 
-  // ① Color型(数字) から Player型('black' | 'white') への変換関数（ヘルパー）
   const colorToPlayer = (c: Color): Player => (c === BLACK ? "black" : "white");
 
-  // ② currentPlayer を Player 型に変換
   const currentPlayerConverted: Player =
     typeof currentPlayer === "string"
       ? currentPlayer
       : colorToPlayer(currentPlayer);
 
-  // ③ moveHistory 用に zeroBasedMoves の各 move.player を Player 型に変換
   const moveHistoryConverted = zeroBasedMoves.map((m) => ({
     ...m,
     player: typeof m.player === "string" ? m.player : colorToPlayer(m.player),
@@ -238,24 +224,24 @@ export const analyzeBoard = async (
     board: padBoardState(board2DtoBoardState(board)),
     previousBoard: padBoardState(previousBoard),
     previousPreviousBoard: padBoardState(previousPreviousBoard),
-    currentPlayer: currentPlayerConverted, // ← 変換したものを渡す
-    moveHistory: moveHistoryConverted, // ← 変換したものを渡す
+    currentPlayer: currentPlayerConverted,
+    moveHistory: moveHistoryConverted,
     komi,
     rules,
     nnRandomize,
-    conservativePass: false, // ← 新規必須。まずは既定挙動に寄せる
-    maxChildren: 50, // ← 新規必須。以前のtopKと混同しないよう別値に
-    ownershipMode: "root", // ← 新規必須。ownershipを返してるので"root"か"tree"
+    conservativePass: false,
+    maxChildren: 50,
+    ownershipMode: "root",
     wideRootNoise,
     regionOfInterest: regionOfInterest ?? null,
-    useGraphSearch: false, // まずこれを疑う
-    rootSymmetryPruning: false, // 効果薄なら次点で疑う
+    useGraphSearch: false,
+    rootSymmetryPruning: false,
   });
 
   await search.run({
     visits,
     maxTimeMs,
-    batchSize: batchSize, // ← 16とか64だと重すぎる、1とか4だと速い
+    batchSize: batchSize,
   });
 
   const output = search.getAnalysis({
@@ -263,44 +249,59 @@ export const analyzeBoard = async (
     analysisPvLen: pvLen,
   });
 
-  const moves_: MoveInfo[] = denormalizeMovesToOneBased(output.moves).map(
-    (m) => {
-      const base: MoveInfo = {
-        x: m.x,
-        y: m.y,
-        winRate: m.winRate,
-        scoreLead: m.scoreLead,
-      };
-      if (!includeMoveDetails) return base;
-      return {
-        ...base,
-        winRateLost: m.winRateLost,
-        scoreLead: m.scoreLead,
-        scoreSelfplay: m.scoreSelfplay,
-        scoreStdev: m.scoreStdev,
-        visits: m.visits,
-        pointsLost: m.pointsLost,
-        relativePointsLost: m.relativePointsLost,
-        order: m.order,
-        prior: m.prior,
-        pv: m.pv,
-      };
-    },
-  );
+  // ── 注文されたものだけを、結果に入れる ──────────────
+  // 左: 注文書のキー / 右: KataGoの出力側の名前
+  const rootKeys = {
+    winRate: "rootWinRate",
+    scoreLead: "rootScoreLead",
+    scoreSelfplay: "rootScoreSelfplay",
+    scoreStdev: "rootScoreStdev",
+    visits: "rootVisits",
+    ownership: "ownership",
+    ownershipStdev: "ownershipStdev",
+    policy: "policy",
+  } as const;
 
-  return {
-    winRate: output.rootWinRate,
-    scoreLead: output.rootScoreLead,
-    ...(includeScoreSelfplay
-      ? { scoreSelfplay: output.rootScoreSelfplay }
-      : {}),
-    ...(includeScoreStdev ? { scoreStdev: output.rootScoreStdev } : {}),
-    ...(includeVisits ? { visits: output.rootVisits } : {}),
-    ownership: output.ownership,
-    ...(includeOwnershipStdev ? { ownershipStdev: output.ownershipStdev } : {}),
-    ...(includePolicy ? { policy: output.policy } : {}),
-    moves: moves_,
-  };
+  const moveKeys = [
+    "winRate",
+    "winRateLost",
+    "scoreLead",
+    "scoreSelfplay",
+    "scoreStdev",
+    "visits",
+    "pointsLost",
+    "relativePointsLost",
+    "order",
+    "prior",
+    "pv",
+  ] as const;
+
+  const rawOutput = output as unknown as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+
+  for (const key of Object.keys(rootKeys) as (keyof typeof rootKeys)[]) {
+    if (fields[key]) result[key] = rawOutput[rootKeys[key]];
+  }
+
+  const moveFields = fields.moves;
+  if (moveFields) {
+    result.moves = output.moves.map((raw) => {
+      const m = raw as unknown as Record<string, unknown>;
+      const x = m.x as number;
+      const y = m.y as number;
+      // x, y は「その手の住所」なので常に入れる(0始まり→1始まりに戻す)
+      const move: Record<string, unknown> = {
+        x: x === -1 ? -1 : x + 1,
+        y: y === -1 ? -1 : y + 1,
+      };
+      for (const key of moveKeys) {
+        if (moveFields[key]) move[key] = m[key];
+      }
+      return move;
+    });
+  }
+
+  return result as AnalyzeResultFor<F>;
 };
 
 // 2026/09/17: 修正
@@ -352,14 +353,6 @@ export const normalizeMovesToZeroBased = (moves: MoveObject[]) => {
     ...m,
     x: m.x === -1 ? -1 : m.x - 1,
     y: m.y === -1 ? -1 : m.y - 1,
-  }));
-};
-
-export const denormalizeMovesToOneBased = (moves: MoveInfo[]) => {
-  return moves.map((m) => ({
-    ...m,
-    x: m.x === -1 ? -1 : m.x + 1,
-    y: m.y === -1 ? -1 : m.y + 1,
   }));
 };
 

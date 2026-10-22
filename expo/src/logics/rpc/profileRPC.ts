@@ -1,35 +1,11 @@
 // profileRPC.ts
 
+import type { Profile } from "@/src/contexts/ProfileContexts";
 import { api } from "@/src/services/api/api";
 import { authClient } from "@/src/services/auth/auth-client";
 
-type ProfileData = {
-  username: string;
-  iconIndex: number;
-  // 9
-  wins9: number;
-  losses9: number;
-  draws9: number;
-  rating9: number;
-  giantKillingStreak9: number;
-  // 13
-  wins13: number;
-  losses13: number;
-  draws13: number;
-  rating13: number;
-  giantKillingStreak13: number;
-  // 19
-  wins19: number;
-  losses19: number;
-  draws19: number;
-  rating19: number;
-  giantKillingStreak19: number;
-  // other
-  allowBotMatch9: boolean;
-  allowBotMatch13: boolean;
-  allowBotMatch19: boolean;
-  country: string | null;
-};
+// Profile(お手本)から、sessionUser側で返す3つを除いたもの
+type ProfileData = Omit<Profile, "uid" | "email" | "isAnonymous">;
 
 type SessionUserData = {
   id: string;
@@ -41,7 +17,6 @@ type FetchProfileResult = {
   sessionUser: SessionUserData | null;
   profile: ProfileData | null;
 };
-
 export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
   const { data: sessionData } = await authClient.getSession();
   const user = sessionData?.user;
@@ -92,7 +67,8 @@ export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
         allowBotMatch9: rawProfile.allow_bot_match_9 ?? true,
         allowBotMatch13: rawProfile.allow_bot_match_13 ?? true,
         allowBotMatch19: rawProfile.allow_bot_match_19 ?? true,
-        country: rawProfile.country ?? null,
+        premiumUntil: rawProfile.premium_until ?? null, // ⚠️numberであることに注意
+        isPremium: rawProfile.is_premium ?? null,
       }
     : null;
 

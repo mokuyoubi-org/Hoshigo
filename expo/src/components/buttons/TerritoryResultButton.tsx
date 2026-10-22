@@ -8,7 +8,6 @@
  * - 結果なし → 何も表示しない
  */
 
-import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { FontAwesome5 } from "@expo/vector-icons";
 import {
@@ -20,15 +19,11 @@ import {
 
 type Props = {
   isCalculating: boolean;
-  result: { text: string } | null;
-  isShown: boolean; // 結果と盤面の地を表示中かどうか
   onPress: () => void;
 };
 
 export const TerritoryResultButton = ({
   isCalculating,
-  result,
-  isShown,
   onPress,
 }: Props) => {
   const colors = useColors();
@@ -49,25 +44,18 @@ export const TerritoryResultButton = ({
     );
   }
 
-  if (!result) return null;
-
   return (
     <TouchableOpacity
       style={[
         styles.badge,
         {
-          backgroundColor: isShown ? colors.primaryStrong : colors.primary,
+          backgroundColor: colors.primary,
         },
       ]}
       activeOpacity={0.7}
       onPress={onPress}
     >
       <FontAwesome5 name="calculator" size={24} color={colors.foreground} />
-      {isShown && (
-        <MyText style={[styles.text, { color: colors.foreground }]}>
-          {result.text}
-        </MyText>
-      )}
     </TouchableOpacity>
   );
 };

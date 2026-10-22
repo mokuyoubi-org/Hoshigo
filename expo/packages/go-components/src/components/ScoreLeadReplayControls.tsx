@@ -70,12 +70,6 @@ const createSmoothPath = (
   return d;
 };
 
-const scoreLeadToResult = (scoreLead: number): string => {
-  const rounded = Math.round(Math.abs(scoreLead) * 2) / 2; // 0.5刻みに丸める。
-  // 具体的にやってることは、2倍して、普通に四捨五入して、もう一度2で割っている。
-  return String(rounded);
-};
-
 export const ScoreLeadReplayControls = ({
   showMode = "both",
   analysis,
@@ -114,8 +108,8 @@ export const ScoreLeadReplayControls = ({
   const isSliderDisabled = totalMoves === 0;
 
   // 分析データが存在するか判定
-  const scoreLeads = analysis?.perMove
-    ? analysis.perMove.map((entry) => entry?.scoreLead ?? null)
+  const scoreLeads = analysis?.pos
+    ? analysis.pos.map((entry) => entry?.scoreLead ?? null)
     : [];
   const analyzedValues = scoreLeads.filter((v): v is number => v != null);
   const hasAnalysis = analyzedValues.length > 0;
@@ -172,8 +166,7 @@ export const ScoreLeadReplayControls = ({
     (showMode === "both" || showMode === "graph") && hasAnalysis;
 
   // ===== 吹き出し（現在のscoreLead）の計算 =====
-  const bubbleText =
-    currentScore != null ? scoreLeadToResult(currentScore) : null;
+  const bubbleText = currentScore;
   const showBubble = scoreleadMode && bubbleText != null && containerWidth > 0;
 
   // 吹き出しの色：プラスなら塗りつぶし、マイナスなら枠だけ（Bubbleは色のルールを知らない）
@@ -355,6 +348,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
+    zIndex: 1, // ⚠️大事！！replaycontrolのbubbleを、botplaystopボタンの手前に表示させる
   },
   row: {
     flexDirection: "row",

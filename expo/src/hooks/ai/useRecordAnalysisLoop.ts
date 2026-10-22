@@ -8,7 +8,7 @@
 // 中断の挙動: 実行中の1手ぶんの推論そのものは止めない。
 // 「次の手への予約」だけキャンセルする(ループの先頭でstopRequestedRefを見る)。
 //
-// 2026/09/07: perMove[i]は「i手目を打つ前の局面」の解析結果なので、
+// 2026/09/07: pos[i]は「i手目を打つ前の局面」の解析結果なので、
 // 最後の1手の効果を測るには「全手打ち終わった後の最終局面」もperMove
 // [totalMoves]として持っておく必要がある。手ごとのループが全部終わった
 // 後、追加で1回だけ最終局面を解析してこれを埋める。
@@ -51,48 +51,21 @@ export const useRecordAnalysisLoop = (record: RecordType) => {
 
   const analyzedCount = getAnalyzedCount(analysis, totalMoves);
 
-  // moveIndex(0-indexed、その手が打たれた直後の局面)を1手分析してエントリを返す
+  // moveIndex手分が打たれた局面(=moveIndex番目の手を打つ前の局面)を分析して
+  // エントリを返す。moveIndex = totalMoves なら、全手打ち終わった後の最終局面。
   const analyzeOneMove = async (moveIndex: number) => {
-    // その手を打つ【前】の盤面と、その手を打つ【前】までの履歴
     const board = boardHistoryRef.current[moveIndex];
     const movesSoFar = (record.moves ?? []).slice(0, moveIndex);
 
-    const result = await kataGoTask.run({
+    const result = await kataGoTask.run(
       board,
       movesSoFar,
-      boardSize: record.board_size,
-      matchType: record.match_type,
-    });
+      record.board_size,
+      record.match_type,
+    );
 
     if (!result) return null;
-    return buildMoveAnalysisEntry(result, {
-      boardSize: record.board_size,
-      matchType: record.match_type,
-      movesSoFar,
-    });
-  };
-
-  // 全手打ち終わった後の最終局面を分析してエントリを返す。
-  // (analyzeOneMoveと構造は同じだが、moveIndex=totalMovesとして
-  //  「最後の手を打った後」を評価する点だけが違う)
-  // 手の並びが連続パスで終わっていれば、ここで確定した局面として仕上げられる。
-  const analyzeFinalPosition = async () => {
-    const board = boardHistoryRef.current[totalMoves];
-    const movesSoFar = record.moves ?? [];
-
-    const result = await kataGoTask.run({
-      board,
-      movesSoFar,
-      boardSize: record.board_size,
-      matchType: record.match_type,
-    });
-
-    if (!result) return null;
-    return buildMoveAnalysisEntry(result, {
-      boardSize: record.board_size,
-      matchType: record.match_type,
-      movesSoFar,
-    });
+    return buildMoveAnalysisEntry(result);
   };
 
   const startLoop = async () => {
@@ -109,7 +82,7 @@ export const useRecordAnalysisLoop = (record: RecordType) => {
       //   (練習の途中再開などで、前のほうや途中に穴が空いていても、
       //    空いている手だけを分析する)
       for (let i = 0; i < totalMoves; i++) {
-        if (current.perMove[i] != null) continue;
+        if (current.pos[i] != null) continue;
 
         if (stopRequestedRef.current) {
           completedAllMoves = false;
@@ -127,10 +100,10 @@ export const useRecordAnalysisLoop = (record: RecordType) => {
 
         // 🌟 配列が短い時(後ろが未記録の時)でも、i番目に入れられるようにそろえる。
         //   (mapだけだと、配列の長さより後ろの手は入らずに消えてしまう)
-        const perMove = [...current.perMove];
-        while (perMove.length <= i) perMove.push(null);
-        perMove[i] = entry;
-        current = { perMove };
+        const pos = [...current.pos];
+        while (pos.length <= i) pos.push(null);
+        pos[i] = entry;
+        current = { pos };
         analysisRef.current = current;
         setAnalysis(current);
       }
@@ -138,11 +111,11 @@ export const useRecordAnalysisLoop = (record: RecordType) => {
       // 🐱 手ごとのループが最後まで完走した(中断も失敗もなかった)場合だけ、
       //    最終局面(最後の1手の効果を測るためのperMove[totalMoves])を埋める。
       //    既に埋まっていれば(前回のセッションで完了済みなら)スキップ。
-      if (completedAllMoves && current.perMove[totalMoves] == null) {
-        const finalEntry = await analyzeFinalPosition();
+      if (completedAllMoves && current.pos[totalMoves] == null) {
+        const finalEntry = await analyzeOneMove(totalMoves);
         if (finalEntry) {
           current = {
-            perMove: [...current.perMove.slice(0, totalMoves), finalEntry],
+            pos: [...current.pos.slice(0, totalMoves), finalEntry],
           };
           analysisRef.current = current;
           setAnalysis(current);

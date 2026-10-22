@@ -1,34 +1,37 @@
-// useMatchSession.ts
+// expo/src/hooks/match/useMatchSession.ts
 // 対局のUIの責任者がGameScreen
 // 対局のロジックの責任者がuseMatchSession
 
 import { BotUsername } from "@/src/constants/botProfiles";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useBotMove } from "@/src/hooks/ai/useBotMove";
-import { useFinalPositionAnalysis } from "@/src/hooks/ai/useFinalPositionAnalysis";
 import { useLiveAnalysis } from "@/src/hooks/ai/useLiveAnalysis";
 import { useGameChannel } from "@/src/hooks/match/useGameChannel";
 import { useMatchClock } from "@/src/hooks/match/useMatchClock";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { resultToSubjectiveComment } from "@/src/logics/format/textFormatter";
-import { toServerAnalysis } from "@/src/logics/game/analysis";
-import { endsWithDoublePass } from "@/src/logics/game/endsWithDoublePass";
+import {
+  resultToSubjectiveComment,
+  scoreLeadToResult,
+} from "@/src/logics/format/textFormatter";
 import {
   computeMatchResultUpdate,
   MatchResultUpdate,
 } from "@/src/logics/game/resultLogics";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
+import { submitAnalysis } from "@/src/logics/rpc/recordsRPC";
 import { useGoGame } from "go-components";
 import {
   BLACK,
   BoardSize,
   Color,
-  getFinalResult,
+  endsWithDoublePass,
   getOppositeColor,
   Grid,
+  hasKoPoint,
   MatchType,
+  Ownership,
+  PASS_GRID,
   RecordAnalysis,
-  TerritoryBoard,
   WHITE,
 } from "go-core";
 import { useKVStorage } from "kv-store";
@@ -64,31 +67,12 @@ export const useMatchSession = ({
   const toColor = (turn: unknown): Color =>
     turn === "black" || turn === BLACK ? BLACK : WHITE;
 
-  const { value: doubleTap9 } = useKVStorage<boolean>(
-    "global.doubleTap9",
+  const { value: doubleTap } = useKVStorage<boolean>(
+    `global.doubleTap${boardSize}`,
     false,
   );
-  const { value: doubleTap13 } = useKVStorage<boolean>(
-    "global.doubleTap13",
-    true,
-  );
-  const { value: doubleTap19 } = useKVStorage<boolean>(
-    "global.doubleTap19",
-    true,
-  );
-  const { value: isSoundEnabled } = useKVStorage<boolean>(
-    "global.sound",
-    false,
-  );
+  const { value: isSoundEnabled } = useKVStorage<boolean>("global.sound", true);
 
-  const doubleTap =
-    boardSize === 9
-      ? doubleTap9
-      : boardSize === 13
-        ? doubleTap13
-        : boardSize === 19
-          ? doubleTap19
-          : false;
   // =========================================================================================
   // 🌟 ===================================== state =====================================
   // =========================================================================================
@@ -100,30 +84,25 @@ export const useMatchSession = ({
     boardSize,
     oppUsername as BotUsername,
   );
-  const endgame = useFinalPositionAnalysis();
-    const liveAnalysis = useLiveAnalysis({
+  const liveAnalysis = useLiveAnalysis({
     matchType,
     boardSize,
-    // 🌟分析が1局面ぶん記録されるたびに、サーバーへも送る(漏れ防止のため、両方の対局者が送る。
-    //    先に届いた方だけが保存される)。つながっていなければ、送れないだけで、対局は止まらない。
-    onRecorded: (pos, entry, result) => {
-      send({
-        type: "analysis",
-        pos,
-        ...toServerAnalysis(entry, result.winRate),
-      });
-    },
   });
+
   const { rating9, rating13, rating19, updateProfile } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
   const isGameEndedRef = useRef(false);
   const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 🌟 サーバーから最初の盤面(state)が届いたか。届くまでは、ボットを打たせない。
+  //    (つながる前にボットが考え始めて、送信に失敗して捨てるのを防ぐ)
+  const [isSynced, setIsSynced] = useState(false);
   // 🐱 対局終了直後、RecordType組み立てに必要だけど今まで捨てていたデータたち
   const [resultRaw, setResultRaw] = useState<string | null>(null);
   // 🐱 対局終了時にそのままrecordへ乗せる、裏で溜め続けた分析結果
   const [liveAnalysisResult, setLiveAnalysisResult] = useState<RecordAnalysis>({
-    perMove: [],
+    pos: [],
   });
   const [matchResult, setMatchResult] = useState<
     Omit<MatchResultUpdate, "profilePatch">
@@ -148,9 +127,12 @@ export const useMatchSession = ({
   const endHandledRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const isBotThinkingRef = useRef(false);
+  // 🌟 ボットが「この手数の局面」で、もう手を送ったか。サーバーから手が届くまでの間、
+  //    3秒タイマーが同じ局面でもう一度送ってしまうのを防ぐ。
+  const botSentCountRef = useRef(-1);
   // 🌟終局の地の盤面。ダブルパス処理で、仕上げ済みのエントリから作っておく。
   //   サーバーが結果を確定した時(rating_updated)に、盤面へ表示する。
-  const finalTerritoryBoardRef = useRef<TerritoryBoard | null>(null);
+  const finalOwnershipRef = useRef<Ownership | null>(null);
 
   // =========================================================================================
   // 🌟 ===================================== 関数 =====================================
@@ -174,7 +156,6 @@ export const useMatchSession = ({
       );
       turn = goBoard.loadMoves(moves);
       // 🐱 moves差し替えに合わせて分析データも整合させる。
-      //    「直近の局面の付箋」も、truncateの中で一緒に破棄される。
       liveAnalysis.truncate(moves.length);
     }
     clock.unfreeze(turn);
@@ -199,6 +180,8 @@ export const useMatchSession = ({
     // 🐱 botの手がこの後何手目として記録されるか。送る前(まだ
     //    ローカルに反映されていない)時点のmovesRef長がそのままインデックス。
     const botMoveIndex = movesRef.current.length;
+    // 🌟 この局面では、もう送った(サーバーからの手待ち)なら、何もしない
+    if (botSentCountRef.current === botMoveIndex) return;
     // 🐱 分析した局面までの手の並び。
     const movesSoFar = movesRef.current;
 
@@ -215,8 +198,9 @@ export const useMatchSession = ({
           console.error("ボットの着手送信失敗: 接続が切れている");
           return;
         }
+        // 🌟 この局面では送った、という目印
+        botSentCountRef.current = botMoveIndex;
 
-        // 🌟recordは「直近の局面の付箋」の更新も兼ねる。
         liveAnalysis.record(botMoveIndex, analysis, movesSoFar);
       },
     );
@@ -224,7 +208,9 @@ export const useMatchSession = ({
 
   // 🌟人間が手を打った時の処理
   const handlePutStone = async (grid: Grid) => {
-    if (!clock.isMyTurn || isGameEnded || isSubmittingRef.current) return;
+    // 🌟 つながる前(isSyncedがfalse)は打てない
+    if (!isSynced || !clock.isMyTurn || isGameEnded || isSubmittingRef.current)
+      return;
 
     isSubmittingRef.current = true;
     clock.freeze(); // 🥶 タップした瞬間から結果が確定するまで、誰の番でもない
@@ -260,7 +246,8 @@ export const useMatchSession = ({
 
   // 🌟人間が投了した時の処理
   const handleResign = async () => {
-    if (!clock.isMyTurn || isGameEnded) return;
+    // 🌟 つながる前は投了できない
+    if (!isSynced || !clock.isMyTurn || isGameEnded) return;
 
     clock.freeze(); // 🥶 投了確定までボットの自動着手・自分のタップを止める
 
@@ -277,11 +264,22 @@ export const useMatchSession = ({
   //   今の局面が、分析のownershipから「未終局」と判定された時だけtrue。
   //   分析がまだ届いていない/取れなかった時は、判定できないのでfalse
   //   (=確認なしでパスできる。操作をじゃましない)。
-  const shouldConfirmPass = (): boolean =>
-    liveAnalysis.isPositionUnfinished(
-      goBoard.boardRef.current,
-      goBoard.movesRef.current,
-    ) === true;
+  const shouldConfirmPass = (): boolean => {
+    const moves = movesRef.current;
+    const lastMove = moves.length > 0 ? moves[moves.length - 1] : null;
+    const lastBoard = goBoard.boardHistoryRef.current[moves.length - 1];
+
+    return (
+      liveAnalysis.isPositionUnfinished(
+        goBoard.boardRef.current,
+        goBoard.movesRef.current,
+      ) === true && // && コウがない
+      !(
+        lastBoard &&
+        hasKoPoint(boardSize, myColor, lastMove, boardRef.current, lastBoard)
+      )
+    );
+  };
 
   // =========================================================================================
   // 🌟 ===================================== チャンネル系 =====================================
@@ -313,6 +311,8 @@ export const useMatchSession = ({
     if (msg.status === "pending") return;
 
     handleServerSync(serverMoves, serverTurn);
+    // 🌟 つながって、盤面も合わせ終わった。ここからボットを打たせてよい。
+    setIsSynced(true);
   };
 
   // 手が届いたとき
@@ -359,37 +359,32 @@ export const useMatchSession = ({
     setLoading(true);
 
     try {
-      // 🌟直前の付箋が、ちょうど「このダブルパス直前の局面」を指していれば、
-      //   使い回し候補として渡す。ズレていればundefinedになり、新規に推論される。
-      const precomputedAnalysis = liveAnalysis.getCachedAnalysis(
-        goBoard.movesRef.current.length - 1,
-      );
+      // 🐱 「最後の1手を打った後の局面」を分析して記録する。手の並びは連続パスで
+      //    終わっているので、確定した局面として仕上げられ、仕上げ済みのエントリが返ってくる。
+      const entry = await liveAnalysis.analyzeAndRecord({
+        moveIndex: goBoard.movesRef.current.length,
+        board: goBoard.boardRef.current,
+        movesSoFar: goBoard.movesRef.current,
+      });
 
-      const analysis = await endgame.analyzeFinalPosition(
-        goBoard.boardRef.current,
-        goBoard.movesRef.current,
-        matchType,
-        boardSize,
-        precomputedAnalysis,
-      );
-
-      // 🐱 これが「最後の1手を打った後の局面」の解析結果そのもの。
-      const entry = liveAnalysis.record(
-        goBoard.movesRef.current.length,
-        analysis,
-        goBoard.movesRef.current,
-      );
+      // 分析が取れなかった時は、結果を作れないので提出しない(固まらないよう解除する)。
+      if (!entry) {
+        console.error("終局の分析が取れなかったので、resultを提出できない");
+        setLoading(false);
+        return;
+      }
 
       // 🌟結果の文字列と地の盤面は、仕上げ済みのエントリから作る。
-      const { result, territoryBoard } = getFinalResult(
-        boardSize,
-        matchType,
-        goBoard.movesRef.current,
-        entry,
-      );
-      finalTerritoryBoardRef.current = territoryBoard;
+      const result = scoreLeadToResult(entry.scoreLead);
+      finalOwnershipRef.current = entry.ownership;
 
-      const sent = send({ type: "submit_result", result });
+      // 🌟地(ownership)は、結果と一緒に提出する。
+      //    サーバーは、結果と同じく「後から届いた方」をセットで採用する。
+      const sent = send({
+        type: "submit_result",
+        result,
+        ownership: entry.ownership,
+      });
       if (!sent) {
         console.error("result提出失敗: 接続が切れている");
         setLoading(false); // 🥶 固まらないよう解除
@@ -433,8 +428,8 @@ export const useMatchSession = ({
 
       // 🐱 終局の地の盤面は、ダブルパス処理で仕上げ済みのエントリから作ってある。
       //    (投了など、ダブルパス処理を通っていない終局では、地は出さない)
-      if (finalTerritoryBoardRef.current) {
-        goBoard.setTerritoryBoard(finalTerritoryBoardRef.current);
+      if (finalOwnershipRef.current) {
+        goBoard.setOwnership(finalOwnershipRef.current);
       }
 
       setResultRaw(data.result);
@@ -445,7 +440,16 @@ export const useMatchSession = ({
 
       // 🐱 裏で溜め続けた分析結果を、この時点で確定させてstateに移す。
       await liveAnalysis.waitForPending();
-      setLiveAnalysisResult(liveAnalysis.getRecordAnalysis());
+      const recordAnalysis = liveAnalysis.getRecordAnalysis();
+      setLiveAnalysisResult(recordAnalysis);
+
+      // 🌟 溜めた分析を、サーバーへまとめて出す(2人とも出す。先に届いた方だけが保存される)。
+      //    待たずに投げっぱなしでよい。局面の数 = 手数 + 1
+      submitAnalysis(
+        matchId,
+        recordAnalysis,
+        goBoard.movesRef.current.length + 1,
+      );
 
       console.log("🏁 対局中の全処理が終了！");
       setIsGameEnded(true);
@@ -478,6 +482,17 @@ export const useMatchSession = ({
     !isGameEnded,
   );
 
+  // 🌟最新のhandlePutStoneを指すref。強制パスは、分析を待った後に呼ぶので、
+  //   古い関数(古い時計の状態を握っている)ではなく、常に最新の関数を使うため。
+  //   ⚠️useGameChannel(send)より後ろに置いている。前に置くと、sendが宣言より前に
+  //   使われるとlintに怒られる。最初は空の関数を入れておき、effectで本物に差し替える。
+  const handlePutStoneRef = useRef<(grid: Grid) => Promise<void>>(
+    async () => {},
+  );
+  useEffect(() => {
+    handlePutStoneRef.current = handlePutStone;
+  });
+
   // =========================================================================================
   // 🌟 ===================================== トリガー =====================================
   // =========================================================================================
@@ -490,6 +505,7 @@ export const useMatchSession = ({
       // 🛡️ガード
       if (
         !botMatch ||
+        !isSynced || // 🌟 つながる前は打たせない
         !isBotTurn ||
         isGameEndedRef.current ||
         isBotThinkingRef.current
@@ -519,7 +535,7 @@ export const useMatchSession = ({
     return () => {
       clearInterval(intervalId);
     };
-  }, [clock.turnState]);
+  }, [clock.turnState, isSynced]);
 
   // 🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧
   // 🌟ボットの番じゃない時は自動で分析を開始するトリガー。
@@ -549,16 +565,35 @@ export const useMatchSession = ({
 
     // 2026/09/23
     // 投げっぱなしでよい(記録・付箋の更新・件数管理は中でやってくれる)。
-    liveAnalysis.analyzeAndRecord({
-      moveIndex: nextMoveIndex,
-      board,
-      movesSoFar: moves,
-    });
+    // 2026/10/19
+    // 自分の番で、相手がパスした局面は、終局の2段階確認をして、
+    // 確定したら自動でパスする。
+    liveAnalysis
+      .analyzeForTurn({
+        moveIndex: nextMoveIndex,
+        board,
+        movesSoFar: moves,
+        checkAutoPass: currentPlayer === myColor,
+      })
+      .then((shouldPass) => {
+        if (!shouldPass) return;
+        // 待っている間に、終局した/局面が進んだ時は、何もしない
+        if (isGameEndedRef.current) return;
+        if (movesRef.current.length !== nextMoveIndex) return;
+        console.log("🏳️ 終局が確定したので、自動でパスします");
+        // パスを決めた瞬間に、画面側にモーダルを出してもらう(出す・消すは画面の仕事)
+        // setHasAutoPassed(true);
+        handlePutStoneRef.current(PASS_GRID);
+      });
   }, [clock.turnState]);
 
   // =========================================================================================
   // 🌟 ===================================== return =====================================
   // =========================================================================================
+  // 🌟 今の局面の「パスしていいか」の判断が終わったか。
+  //   終わるまでは、画面のパスボタンを押せないようにする。
+  const isPassReady = liveAnalysis.isPositionJudged(goBoard.moves.length);
+
   return {
     boardHistory: goBoard.boardHistory,
     boardHistoryRef: goBoard.boardHistoryRef,
@@ -566,7 +601,7 @@ export const useMatchSession = ({
     moves: goBoard.moves,
     movesRef: goBoard.movesRef,
     currentIndex: goBoard.currentIndex,
-    territoryBoard: goBoard.territoryBoard,
+    ownership: goBoard.ownership,
     goToLatest: goBoard.goToLatest,
     // 時間・手番
     isMyTurn: clock.isMyTurn,
@@ -587,5 +622,6 @@ export const useMatchSession = ({
     doubleTap,
     isSoundEnabled,
     shouldConfirmPass,
+    isPassReady,
   };
 };

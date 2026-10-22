@@ -1,13 +1,7 @@
 // useBoardEditActions.ts
 
-import { getOwnershipTerritoryBoard } from "@/src/logics/game/ownershipTerritory";
-import {
-  BoardSize,
-  PASS_GRID,
-  endsWithDoublePass,
-  makeGrid,
-  scoreLeadToResult,
-} from "go-core";
+import { scoreLeadToResult } from "@/src/logics/format/textFormatter";
+import { BoardSize, endsWithDoublePass, getDisplayOwnership } from "go-core";
 import { useMemo, useState } from "react";
 import { useEditableGoBoard } from "./useEditableGoBoard";
 
@@ -21,10 +15,9 @@ export const useBoardEditActions = (
   boardSize: BoardSize,
 ) => {
   // 🐱 バッジをタップした時点の「局面 + モード」を覚えておく(未タップなら null)
-  const [shownTerritoryKey, setShownTerritoryKey] = useState<{
-    index: number;
-    isEditMode: typeof board.isEditMode;
-  } | null>(null);
+  const [shownTerritoryKey, setShownTerritoryKey] = useState<number | null>(
+    null,
+  );
 
   // 🐱 今どちらの処理が動いているかを保持する
   const [activeProcessing, setActiveProcessing] =
@@ -33,9 +26,7 @@ export const useBoardEditActions = (
   // 🐱 バッジをタップして「盤面に地を表示中」かどうか。
   //    覚えている局面・モードと今が違えば、自動的に false(= 局面やモードが変わったら消える)
   const isTerritoryShown =
-    shownTerritoryKey !== null &&
-    shownTerritoryKey.index === board.currentIndex &&
-    shownTerritoryKey.isEditMode === board.isEditMode;
+    shownTerritoryKey !== null && shownTerritoryKey === board.currentIndex;
 
   // 🐱 地計算の結果（編集モードでも棋譜モードでも出す）。
   //    分析キャッシュの ownership / scoreLead を読むだけ。KataGoは回さない。
@@ -44,17 +35,17 @@ export const useBoardEditActions = (
   //    分析がまだ/無いなら null（= 何も表示しない）。
   //    isFinal: 手の並びが連続パスで終わっているか(バッジの確定/暫定の色分け用)
   const territory = useMemo(() => {
-    const entry = board.combinedAnalysis.perMove[board.currentIndex];
-    const territoryBoard = getOwnershipTerritoryBoard(
+    const entry = board.combinedAnalysis.pos[board.currentIndex];
+    const ownership = getDisplayOwnership(
       boardSize,
       board.processed.boardHistory[board.currentIndex],
       board.combinedAnalysis,
       board.currentIndex,
     );
-    if (!entry || !territoryBoard) return null;
+    if (!entry || !ownership) return null;
 
     return {
-      territoryBoard,
+      ownership,
       text: scoreLeadToResult(entry.scoreLead),
       isFinal: endsWithDoublePass(
         board.processed.moves.slice(0, board.currentIndex),
@@ -67,7 +58,6 @@ export const useBoardEditActions = (
     board.processed.moves,
     boardSize,
   ]);
-
   const handleBotSuggest = async () => {
     // 🛡️ガード
     if (board.isAnalyzing || activeProcessing !== null) return;
@@ -75,7 +65,7 @@ export const useBoardEditActions = (
     setActiveProcessing("bot"); // 🤖 ボット計算開始
     try {
       // 🐱 この局面の分析が既にキャッシュにあるなら、KataGoを叩き直さず使い回す
-      const cached = board.combinedAnalysis.perMove[board.currentIndex];
+      const cached = board.combinedAnalysis.pos[board.currentIndex];
       const entry =
         cached && cached.candidates.length > 0
           ? cached
@@ -86,12 +76,7 @@ export const useBoardEditActions = (
             );
       const best = entry?.candidates[0];
       if (!best) return;
-      board.handleEditStone(
-        best.x === -1 || best.y === -1
-          ? PASS_GRID
-          : makeGrid(best.y, best.x, boardSize),
-        "bot",
-      );
+      board.handleEditStone(best, "bot");
     } finally {
       setActiveProcessing(null); // 終わったらリセット！
     }
@@ -101,14 +86,16 @@ export const useBoardEditActions = (
     // 🐱 バッジ用（文字 + 確定かどうか）
     territoryResult: territory,
     // 🐱 盤面に出す地。バッジをタップしている間だけ入る（前の manualTerritory と同じ使い方）
-    manualTerritory: isTerritoryShown ? territory : null,
+    manualTerritory: isTerritoryShown ? territory : null, // 必要くさい。すぐ下のhandleShowTerritoryと関連してるくさい
     handleShowTerritory: () =>
-      setShownTerritoryKey({
-        index: board.currentIndex,
-        isEditMode: board.isEditMode,
-      }),
+      setShownTerritoryKey(
+        isTerritoryShown
+          ? null // 🐱 すでに表示中なら、押したら消す
+          : board.currentIndex,
+      ),
     handleBotSuggest,
     isBotSuggesting: activeProcessing === "bot",
     isAnyProcessing: activeProcessing !== null || board.isAnalyzing,
+    setShownTerritoryKey
   };
 };

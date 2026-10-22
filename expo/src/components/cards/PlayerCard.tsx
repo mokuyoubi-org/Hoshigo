@@ -1,17 +1,16 @@
 // PlayerCard.tsx
 
+import { AvatarWithPass } from "@/src/components/avatar/AvatarWithPass";
 import { MixedText } from "@/src/components/common/MixedText";
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { isBot } from "@/src/logics/bot/botLogics";
-import { nameFormatter } from "@/src/logics/bot/botNameLogics";
+import { isBot, nameFormatter } from "@/src/logics/format/nameFormatter";
 import { secondsToMinutes } from "@/src/logics/format/timeFormatter";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons"; // アイコンのインポートを追加
 import { Color } from "go-core";
 import { View } from "react-native";
-import { AvatarWithPass } from "../avatar/AvatarWithPass";
 
 type Props = {
   username: string;

@@ -41,7 +41,7 @@ export const useMatchClock = ({
   const isGameEndedRef = useRef(isGameEnded);
   const { value: isSoundEnabled } = useKVStorage<boolean>(
     "global.sound",
-    false,
+    true,
   );
 
   useEffect(() => {

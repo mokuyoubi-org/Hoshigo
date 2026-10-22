@@ -15,7 +15,7 @@ import { StatusBar } from "expo-status-bar";
 import { BLACK, WHITE } from "go-core";
 import { FlatList, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ScreenHeader, SegmentedControl } from "ui-atoms";
+import { MyHeader, SegmentedControl } from "ui-atoms";
 import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
 import { boardSizeOptions } from "../logics/format/boardSizeToText";
 import { resultToSubjectiveComment } from "../logics/format/textFormatter";
@@ -65,7 +65,7 @@ export default function RecordsScreen() {
         boardSize={boardSizeRef.current}
         record={item}
         board={processed.finalBoard}
-        territoryBoard={processed.territoryBoard}
+        ownership={processed.ownership}
         matchType={processed.matchType}
         cardHeight={CARD_HEIGHT}
         playerWin={playerWin}
@@ -114,7 +114,7 @@ export default function RecordsScreen() {
       {/* コンテナ */}
       <View className="flex-1 w-full max-w-160 px-4 p-2">
         {/* ヘッダ部分 */}
-        <ScreenHeader
+        <MyHeader
           left={
             <TouchableOpacity
               onPress={() => {

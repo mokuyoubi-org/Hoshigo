@@ -1,3 +1,5 @@
+// SettingsRow.tsx
+
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { Feather } from "@expo/vector-icons";

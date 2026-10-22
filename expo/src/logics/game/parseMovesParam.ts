@@ -45,8 +45,8 @@ export const parseAnalysisParam = (
   if (!raw) return undefined;
   try {
     const parsed = JSON.parse(raw) as RecordAnalysis;
-    if (!Array.isArray(parsed?.perMove)) return undefined;
-    return { perMove: parsed.perMove.slice(0, movesLength + 1) };
+    if (!Array.isArray(parsed?.pos)) return undefined;
+    return { pos: parsed.pos.slice(0, movesLength + 1) };
   } catch (e) {
     console.warn("[parseAnalysisParam] 分析結果が読めませんでした", e);
     return undefined;

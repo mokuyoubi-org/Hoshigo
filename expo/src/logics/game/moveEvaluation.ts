@@ -5,7 +5,7 @@
 // 主軸にしているのは、両端で圧縮されるという弱点はあるものの、
 // 「勝敗にどれだけ影響したか」という本質に一番近い指標だから。
 //
-// perMove[i]は「i手目を打つ【前】の局面」の解析結果。なのでi手目の効果はperMove[i+1](打った後)
+// pos[i]は「i手目を打つ【前】の局面」の解析結果。なのでi手目の効果はperMove[i+1](打った後)
 // とperMove[i](打つ前)の差で測れる。
 //
 // 良手:
@@ -21,9 +21,9 @@ import {
   BoardSize,
   Grid,
   MatchType,
+  PASS_GRID,
   RecordAnalysis,
   isNoOkiishi,
-  makeGrid,
 } from "go-core";
 
 type MoveEvaluation = "good" | "bad" | undefined;
@@ -72,8 +72,8 @@ export const computeMoveEvaluations = (
   const result: MoveEvaluation[] = [];
 
   for (let i = 0; i < totalMoves; i++) {
-    const before = analysis?.perMove[i];
-    const after = analysis?.perMove[i + 1];
+    const before = analysis?.pos[i];
+    const after = analysis?.pos[i + 1];
 
     if (!before || !after) {
       result.push(undefined);
@@ -94,15 +94,12 @@ export const computeMoveEvaluations = (
 
     // // index 0の候補が存在し、かつパス（x/yが-1）でない場合のみチェックする
     const wasTopCandidate =
-      topCandidate !== undefined &&
-      makeGrid(topCandidate.y, topCandidate.x, boardSize) === playedGrid;
+      topCandidate !== undefined && topCandidate === playedGrid;
 
     // 悪手判定で代替候補として提示できる手が存在するか
     // （candidateGridsForMoveの「候補なし/パス」判定と揃える）
     const hasReplacementCandidate =
-      topCandidate !== undefined &&
-      topCandidate.x !== -1 &&
-      topCandidate.y !== -1;
+      topCandidate !== undefined && topCandidate !== PASS_GRID;
 
     // 良手判定が先
     if (
@@ -136,17 +133,17 @@ export const candidateGridsForMove = (
   moveIndex: number,
   boardSize: BoardSize,
 ): Grid[] => {
-  const entry = analysis?.perMove[moveIndex];
+  const entry = analysis?.pos[moveIndex];
   if (!entry) return [];
 
   // 先頭（index 0）の候補を取得
   const topCandidate = entry.candidates[0];
 
   // 候補が存在しない、またはパス（x/yが-1）の場合は空配列を返す
-  if (!topCandidate || topCandidate.x === -1 || topCandidate.y === -1) {
+  if (!topCandidate || topCandidate === PASS_GRID) {
     return [];
   }
 
   // 1番上の手だけを盤面グリッドに変換して返す（要素数1の配列）
-  return [makeGrid(topCandidate.y, topCandidate.x, boardSize)];
+  return [topCandidate];
 };

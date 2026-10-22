@@ -1,3 +1,5 @@
+// SettingsSection.tsx
+
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { Children, Fragment, ReactNode } from "react";

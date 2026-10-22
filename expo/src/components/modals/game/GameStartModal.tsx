@@ -6,8 +6,7 @@ import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useGameSounds } from "@/src/hooks/common/useGameSounds";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { isBot } from "@/src/logics/bot/botLogics";
-import { nameFormatter } from "@/src/logics/bot/botNameLogics";
+import { isBot, nameFormatter } from "@/src/logics/format/nameFormatter";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BLACK, Color, MatchType, WHITE } from "go-core";
@@ -39,10 +38,7 @@ export const GameStartModal = ({
 }: Props) => {
   const colors = useColors();
   const { username } = useProfile();
-  const { value: isSoundEnabled } = useKVStorage<boolean>(
-    "global.sound",
-    false,
-  );
+  const { value: isSoundEnabled } = useKVStorage<boolean>("global.sound", true);
   const t = useTranslation();
   const { playSound } = useGameSounds();
 
@@ -86,7 +82,7 @@ export const GameStartModal = ({
       backgroundColor={colors.background}
       overlayColor={colors.overlay}
       borderColor={colors.backgroundStrong}
-      size="sm"
+      size="md"
       onClose={onClose}
     >
       <MyText className="text-2xl text-primary tracking-widest mb-4 text-center">

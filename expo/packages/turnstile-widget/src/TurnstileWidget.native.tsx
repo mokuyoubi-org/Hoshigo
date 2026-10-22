@@ -1,15 +1,11 @@
 // TurnstileWidget.native.tsx
 // ネイティブ(iOS/Android)版のTurnstile実装。
-// ✅2026/09/09 hoshigo.app上の静的ページ(turnstile-bridge.html)を
-//   WebView経由で読み込む方式から、隠れたWebViewの分岐を撤廃し、
-//   最初から expo-web-browser(Custom Tabs / SFSafariViewController、
-//   本物のブラウザエンジン)を開く方式に変更した。
-//   理由: このコンポーネントが呼ばれるのは anonymous_signinのみで、
-//   その場限りの真っ新なリクエスト」であり、既存セッションのCookieに乗っかるような
-//   ケースが無いため、隠れたWebViewが静かに合格する見込みが
-//   実質無かった(=毎回ブラウザに飛んでいた)。
-// 本物のブラウザでTurnstileチャレンジを実行し、
-// カスタムスキームへのリダイレクトでトークンを受け取る。
+// hoshigo.app上の静的ページ(turnstile-bridge.html)を、
+// expo-web-browser(Custom Tabs / SFSafariViewController、本物のブラウザエンジン)で開く。
+// ブラウザでTurnstileチャレンジを実行し、
+// カスタムスキーム(hoshigo://turnstile-callback)へのリダイレクトでトークンを受け取る。
+// (このコンポーネントが呼ばれるのは匿名ログインのときだけで、隠れたWebViewでは
+//  静かに合格できる見込みが無かったため、最初から本物のブラウザを開く)
 
 import * as WebBrowser from "expo-web-browser";
 import { forwardRef, useImperativeHandle, useRef } from "react";
@@ -29,6 +25,10 @@ type Props = {
 
 const BRIDGE_URL = "https://hoshigo.app/turnstile-bridge.html";
 const REDIRECT_URL = "hoshigo://turnstile-callback";
+const BROWSER_TIMEOUT_MS = 60000;
+
+// "#RRGGBB" → "RRGGBB"(URLに載せるため)
+const stripHash = (color: string) => color.replace("#", "");
 
 export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
   (
@@ -39,54 +39,50 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
     // 無反応(ハング)にならないよう、直列化する。ブラウザを二重に開かせない保険。
     const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-    const getTokenInternal = (): Promise<string> => {
-      return new Promise<string>(async (resolve, reject) => {
-        const searchParams = new URLSearchParams({
-          sitekey,
-          lang,
-          bgColor: bgColor.replace("#", ""),
-          textColor: textColor.replace("#", ""),
-          spinnerColor: spinnerColor.replace("#", ""),
-          spinnerTrackColor: spinnerTrackColor.replace("#", ""),
-        });
-
-        const bridgeUrl = `${BRIDGE_URL}?${searchParams.toString()}`;
-
-        try {
-
-          const result = await Promise.race([
-            WebBrowser.openAuthSessionAsync(bridgeUrl, REDIRECT_URL),
-            new Promise<never>((_, reject) =>
-              setTimeout(
-                () => reject(new Error("Turnstile browser flow timed out")),
-                60000,
-              ),
-            ),
-          ]);
-
-          if (result.type === "success" && result.url) {
-            const match = result.url.match(/[?&]token=([^&]+)/);
-            const token = match ? decodeURIComponent(match[1]) : null;
-            if (token) {
-              resolve(token);
-            } else {
-              reject(new Error("Turnstile: redirect did not contain a token"));
-            }
-          } else {
-            reject(new Error("Turnstile challenge cancelled"));
-          }
-        } catch (e) {
-          reject(
-            e instanceof Error ? e : new Error("Turnstile browser flow failed"),
-          );
-        }
+    const getTokenInternal = async (): Promise<string> => {
+      const searchParams = new URLSearchParams({
+        sitekey,
+        lang,
+        bgColor: stripHash(bgColor),
+        textColor: stripHash(textColor),
+        spinnerColor: stripHash(spinnerColor),
+        spinnerTrackColor: stripHash(spinnerTrackColor),
       });
+
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("Turnstile browser flow timed out")),
+          BROWSER_TIMEOUT_MS,
+        );
+      });
+
+      try {
+        const result = await Promise.race([
+          WebBrowser.openAuthSessionAsync(
+            `${BRIDGE_URL}?${searchParams.toString()}`,
+            REDIRECT_URL,
+          ),
+          timeout,
+        ]);
+
+        if (result.type !== "success") {
+          throw new Error("Turnstile challenge cancelled");
+        }
+
+        const match = result.url.match(/[?&]token=([^&]+)/);
+        if (!match) {
+          throw new Error("Turnstile: redirect did not contain a token");
+        }
+        return decodeURIComponent(match[1]);
+      } finally {
+        // 終わったら、タイムアウトのタイマーを止める
+        clearTimeout(timer);
+      }
     };
 
     useImperativeHandle(ref, () => ({
       getToken: () => {
-        console.log("🔍⓪ getToken()が呼ばれた");
-
         const run = queueRef.current
           .catch(() => {
             // 前の呼び出しが失敗していても、キューは止めない
@@ -95,7 +91,7 @@ export const TurnstileWidget = forwardRef<TurnstileHandle, Props>(
 
         // 次の呼び出しは、これが終わってから(成功/失敗問わず)始まる
         queueRef.current = run.catch(() => {});
-        return run as Promise<string>;
+        return run;
       },
     }));
 

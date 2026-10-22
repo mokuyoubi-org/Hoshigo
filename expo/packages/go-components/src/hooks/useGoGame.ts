@@ -37,8 +37,8 @@ import {
   isLegalMove,
   MatchType,
   movesToBoardHistory,
+  Ownership,
   PASS_GRID,
-  TerritoryBoard,
 } from "go-core";
 import { useRef, useState } from "react";
 
@@ -103,9 +103,8 @@ export const useGoGame = ({ boardSize, matchType, movesInt }: Args) => {
     initialState.moves.length,
   );
 
-  const [territoryBoard, setTerritoryBoard] = useState<TerritoryBoard>(
-    Array.from({ length: boardSize }, () => Array(boardSize).fill(0)),
-  );
+  // 🐱 終局時などに外から渡してもらう、地の見込み(黒="B" / 白="W" / どちらでもない=".")。「ない」は null。
+  const [ownership, setOwnership] = useState<Ownership | null>(null);
 
   // ── 内部共通処理: 盤面/アゲハマ/手を1手分進める ──────────────
   const pushBoard = (board: Board) => {
@@ -239,8 +238,8 @@ export const useGoGame = ({ boardSize, matchType, movesInt }: Args) => {
     lastMove,
     currentIndex,
     setCurrentIndex,
-    territoryBoard,
-    setTerritoryBoard,
+    ownership,
+    setOwnership,
     applyLegalMove,
     applyTrustedMove,
     goToLatest,

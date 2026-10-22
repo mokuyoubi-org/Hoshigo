@@ -1,14 +1,6 @@
 // IntersectionContainer.tsx
 
-import {
-  BLACK,
-  Color,
-  getOppositeColor,
-  GoString,
-  Grid,
-  MatchType,
-  PASS_GRID,
-} from "go-core";
+import { BLACK, Color, GoString, Grid, PASS_GRID } from "go-core";
 import { memo } from "react";
 import { ColorValue, Pressable, StyleSheet, View } from "react-native";
 import { DoubleTapStone } from "./DoubleTapStone";
@@ -21,7 +13,8 @@ type Props = {
   cellSize: number;
   stoneSize: number;
   goString: GoString | null;
-  territoryValue?: number;
+  ownership?: string; // この点の地の見込み(黒="B" / 白="W" / どちらでもない=".")
+
   isPending: boolean;
   isCurrentMove: boolean;
   showTerritory: boolean;
@@ -34,15 +27,14 @@ type Props = {
   playerColor: Color;
   disabled: boolean;
   onPressGrid: (grid: Grid, goString: GoString | null) => void;
-  currentTurn: Color;
-  lastMove: Grid;
+  lastMoverColor: Color; // 直前の手を打った側の色
+  lastMove: Grid | undefined; // 直前の手(0手目なら undefined)
   blackStoneColor: ColorValue;
   whiteStoneColor: ColorValue;
   humanMoveColor: ColorValue;
   botMoveColor: ColorValue;
   goodMoveColor: ColorValue;
   badMoveColor: ColorValue;
-  matchType: MatchType;
   practiceMatchStatus: string;
 };
 
@@ -53,7 +45,7 @@ export const IntersectionContainer = memo(
     cellSize,
     stoneSize,
     goString,
-    territoryValue,
+    ownership,
     isPending,
     isCurrentMove,
     showTerritory,
@@ -65,7 +57,7 @@ export const IntersectionContainer = memo(
     playerColor,
     disabled,
     onPressGrid,
-    currentTurn,
+    lastMoverColor,
     lastMove,
     blackStoneColor,
     whiteStoneColor,
@@ -73,12 +65,17 @@ export const IntersectionContainer = memo(
     botMoveColor,
     goodMoveColor,
     badMoveColor,
-    matchType,
     practiceMatchStatus,
   }: Props) => {
     const row = Math.floor(grid / boardSize);
     const col = grid % boardSize;
-    const isDead = territoryValue === 3; // 1は黒の陣地、2は白の陣地、3は死に石
+    // 死に石 = 石の色と、地の見込み(ownership)の符号が逆の石
+    // (黒石なのに白地の見込み="W"、白石なのに黒地の見込み="B")
+    const isDead =
+      goString !== null &&
+      ownership !== undefined &&
+      ownership !== "." &&
+      ownership !== (goString.color === BLACK ? "B" : "W");
 
     // 対局モード別に「この石に評価マーク(○/❌)を出してよいか」を判定
     // - human_human: 双方に見せる
@@ -102,13 +99,13 @@ export const IntersectionContainer = memo(
       !isEvaluationMarkVisible;
 
     // 候補手（薄い石＋薄い○マーク）を出すか
-    // (currentTurn !== playerColor)がめっちゃ大事！これがないと、白の手番になぜか黒の候補手が出てくる
-    // あと、パスの時に候補手出されるのも嫌なのでそれも防止する
+    // 候補手は「直前に打たれた手の代わりの手」なので、
+    // 直前に打ったのが自分の色の時だけ出す(相手の手の代わりは出さない)。
+    // あと、直前がパスの時に候補手を出されるのも嫌なので、それも防止する。
     const isCandidateMoveVisible =
       (practiceMatchStatus === "human_human" ||
         (practiceMatchStatus !== "bot_bot" &&
-          ((matchType <= 1 && currentTurn !== playerColor) ||
-            (matchType >= 2 && currentTurn === playerColor)))) &&
+          lastMoverColor === playerColor)) &&
       !goString &&
       isCandidate &&
       lastMove !== PASS_GRID;
@@ -177,10 +174,16 @@ export const IntersectionContainer = memo(
         )}
 
         {/* 陣地 */}
-        {!goString && showTerritory && territoryValue !== 0 && (
+        {!goString && showTerritory && !!ownership && (
           <Marker
             size={stoneSize / 2}
-            color={territoryValue === 1 ? blackStoneColor : whiteStoneColor}
+            color={
+              ownership === "B"
+                ? blackStoneColor
+                : ownership === "W"
+                  ? whiteStoneColor
+                  : "transparent"
+            }
             shape="square"
             opacity={0.32}
             zIndex={1}
@@ -212,11 +215,9 @@ export const IntersectionContainer = memo(
         {/* 候補手 */}
         {isCandidateMoveVisible && (
           <View style={styles.candidateContainer}>
-            {/* 薄い石 */}
+            {/* 薄い石(直前の手を打った側の色) */}
             <Stone
-              color={
-                matchType <= 1 ? getOppositeColor(currentTurn) : currentTurn
-              } // ⚠️大事
+              color={lastMoverColor}
               stoneSize={stoneSize}
               opacity={0.6}
               blackStoneColor={blackStoneColor}

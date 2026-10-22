@@ -23,7 +23,7 @@ const TabIcon = ({ icon, focused }: { icon: ReactNode; focused: boolean }) => {
 export default function TabsLayout() {
   const t = useTranslation();
   const colors = useColors();
-  // 🔤 いまの言語に合うフォント(タブの文字に使う)
+  // いまの言語に合うフォント(タブの文字に使う)
   const fontFamily = useAppFont();
 
   useEffect(() => {

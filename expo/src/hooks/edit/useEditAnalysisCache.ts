@@ -13,8 +13,8 @@
 // ──────────────────────────────────────────────────
 
 import { useKataGoTask } from "@/src/hooks/ai/useKataGoTask";
-import { EMPTY_ENTRY, mergeAnalysis } from "@/src/logics/game/analysisMerge";
 import { buildMoveAnalysisEntry } from "@/src/logics/game/analysis";
+import { mergeAnalysis } from "@/src/logics/game/analysisMerge";
 import {
   Board,
   BoardSize,
@@ -23,7 +23,8 @@ import {
   MoveAnalysisEntry,
   RecordAnalysis,
 } from "go-core";
-import { useId, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { clearKataGoQueue } from "../ai/kataGoQueue";
 
 export const useEditAnalysisCache = (
   recordAnalysis: RecordAnalysis | null | undefined,
@@ -38,22 +39,14 @@ export const useEditAnalysisCache = (
   >([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // 🐱 このhookインスタンス自身を一意に識別するID(requestIdの衝突防止用)。
-  //    useIdはReactが発行する、再描画しても変わらないインスタンス固有のID。
-  const instanceId = useId();
-
-  // 🐱 「今の分岐/編集セッション」を表す世代番号。同じ世代の間に発行された
-  //    複数の解析リクエストは全部同じrequestId(gen-N)を共有し、まとめて
-  //    キャンセル対象にできる。分岐が起きた時・編集モードを抜けた時だけ
-  //    この番号を進める(=古い世代の解析はもう無関係になる)。
+  // 🐱 「今の分岐/編集セッション」を表す世代番号。分岐が起きた時・編集モードを
+  //    抜けた時だけこの番号を進める(=古い世代の解析はもう無関係になる)。
+  //    世代が違う結果は、あとから届いても保存しない。
   const generationRef = useRef(0);
 
   // 🐱 連打で複数件が同時に(直列だが)進行しうるので、真偽値ではなく
   //    「今何件走ってるか」で数える。0に戻った時だけisAnalyzingをfalseにする。
   const inFlightCountRef = useRef(0);
-
-  const currentRequestId = () =>
-    `edit-${instanceId}-gen-${generationRef.current}`;
 
   const storeEditableAnalysis = (
     moveIndex: number,
@@ -87,23 +80,18 @@ export const useEditAnalysisCache = (
       // 🌟runExact(フォールバック無し)を使用。ここでキャッシュされる結果は
       //   地表示(combinedAnalysis経由)などにも使われるため、モデルが未準備でも
       //   待ってでも必ずANALYSIS_MODEL_IDの結果を使う。
-      const result = await kataGoTask.runExact(
-        {
-          board,
-          movesSoFar,
-          matchType,
-          boardSize,
-        },
-        currentRequestId(),
+      const result = await kataGoTask.run(
+        board,
+        movesSoFar,
+        boardSize,
+        matchType,
       );
 
       // 実行中/キュー中に分岐や編集モード終了が起きて世代が進んでいたら、
       // この結果はもう関係ない局面のものなので捨てる。
       if (myGeneration !== generationRef.current) return null;
 
-      const entry = result
-        ? buildMoveAnalysisEntry(result, { boardSize, matchType, movesSoFar })
-        : null;
+      const entry = result ? buildMoveAnalysisEntry(result) : null;
       storeEditableAnalysis(moveIndex, entry);
       return entry;
     } finally {
@@ -115,12 +103,11 @@ export const useEditAnalysisCache = (
     }
   };
 
-  // 🐱 「今の世代」のうち、まだ実行されていない(キューに積まれてるだけの)
-  //    解析依頼を全部取り消し、世代を1つ進める。分岐が起きた時・編集モードを
-  //    抜けた時に呼ぶ。実行中の1件だけはキャンセルできないが、その結果は
+  // 🐱 順番待ちの列を全部空にして、世代を1つ進める。分岐が起きた時・編集モードを
+  //    抜けた時に呼ぶ。実行中の1件だけは止められないが、その結果は
   //    runAndStoreAnalysis内の世代チェックによってどのみち捨てられる。
   const cancelPendingAnalysis = () => {
-    kataGoTask.cancelQueuedAnalysis(currentRequestId());
+    clearKataGoQueue();
     generationRef.current++;
   };
 
@@ -135,11 +122,6 @@ export const useEditAnalysisCache = (
     setEditableAnalysis((prev) => prev.slice(0, fromIndex));
   };
 
-  // 🐱 自動分析がoffの時に呼ぶ。KataGoを叩かず既定値(winRate:50, scoreLead:0)を書き込むだけ
-  const storeDefaultEntry = (moveIndex: number) => {
-    storeEditableAnalysis(moveIndex, EMPTY_ENTRY);
-  };
-
   return {
     combinedAnalysis,
     isAnalyzing,
@@ -147,6 +129,5 @@ export const useEditAnalysisCache = (
     truncateFrom,
     reset,
     cancelPendingAnalysis,
-    storeDefaultEntry,
   };
 };

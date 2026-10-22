@@ -2,8 +2,7 @@ import { MixedText } from "@/src/components/common/MixedText";
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { useLang, useTranslation } from "@/src/i18n/LangProvider";
-import { isBot } from "@/src/logics/bot/botLogics";
-import { nameFormatter } from "@/src/logics/bot/botNameLogics";
+import { isBot, nameFormatter } from "@/src/logics/format/nameFormatter";
 import {
   matchTypeToText,
   resultToCommentSimple,

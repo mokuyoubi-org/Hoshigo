@@ -2,8 +2,8 @@
 
 import { MainButton } from "@/src/components/buttons/MainButton";
 import { MainTitle } from "@/src/components/mainTitle/MainTitle";
-import RankingsModal from "@/src/components/modals/home/RankingsModal";
-import { RuleModal } from "@/src/components/modals/home/RuleModal";
+import RankingsModal from "@/src/components/modals/homeScreen/RankingsModal";
+import { RuleModal } from "@/src/components/modals/homeScreen/RuleModal/RuleModal";
 import { useMatching } from "@/src/contexts/MatchingContext";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useAppFont } from "@/src/hooks/common/useAppFont";
@@ -18,7 +18,7 @@ import { BoardSize } from "go-core";
 import { useKVStorage } from "kv-store";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconButton, ScreenHeader, SegmentedControl } from "ui-atoms";
+import { IconButton, MyHeader, SegmentedControl } from "ui-atoms";
 
 export default function HomeScreen() {
   const fontFamily = useAppFont();
@@ -42,7 +42,7 @@ export default function HomeScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" />
       <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
-        <ScreenHeader
+        <MyHeader
           left={
             <View style={{ pointerEvents: isMatching ? "none" : "auto" }}>
               <SegmentedControl
@@ -76,7 +76,7 @@ export default function HomeScreen() {
             borderColor={colors.backgroundStrong}
             onPress={() => show(<RuleModal visible={true} onClose={hide} />)}
           />
-        </ScreenHeader>
+        </MyHeader>
 
         {/* 🌟 メインコンテンツエリア（ロゴタイトル ＋ ボタン） */}
         <View className="flex-1 items-center py-4">

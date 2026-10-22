@@ -1,12 +1,11 @@
 // BoardEditScreen.tsx
 
-import { TerritoryResultButton } from "@/src/components/buttons/TerritoryResultButton";
 import {
   BoardEditScreenHeader,
   HeaderPlayerInfo,
 } from "@/src/components/headers/BoardEditScreenHeader";
-import { BoardEditScreenSettingsModal } from "@/src/components/modals/boardEdit/BoardEditScreenSettingsModal";
-import { GameResultModal } from "@/src/components/modals/result/GameResultModal";
+import { GameResultModal } from "@/src/components/modals/game/result/GameResultModal";
+import { BoardEditScreenSettingsModal } from "@/src/components/modals/game/settings/BoardEditScreenSettingsModal";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useRecordAnalysisLoop } from "@/src/hooks/ai/useRecordAnalysisLoop";
@@ -21,7 +20,6 @@ import {
   FontAwesome6,
   MaterialCommunityIcons,
   MaterialIcons,
-  Octicons,
 } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -30,8 +28,8 @@ import {
   ReplayTapOverlay,
   ScoreLeadReplayControls,
 } from "go-components";
-import { BLACK, RecordAnalysis, TerritoryBoard, WHITE } from "go-core";
-import { useEffect, useMemo, useState } from "react";
+import { BLACK, RecordAnalysis, WHITE } from "go-core";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   TouchableOpacity,
@@ -39,25 +37,33 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconButton, ScreenHeader, SegmentedIconControl } from "ui-atoms";
+import {
+  DotAnimation,
+  IconButton,
+  MyHeader,
+  SegmentedIconControl,
+} from "ui-atoms";
+import { MyText } from "../components/common/MyText";
 import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
-import { fetchRecordAnalysis } from "../logics/rpc/recordsRPC";
+import { useTranslation } from "../i18n/LangProvider";
+import { fetchRecordAnalysis, submitAnalysis } from "../logics/rpc/recordsRPC";
 import { FromType } from "../types/from";
 
 // ─── レイアウト定数 ───
 const LAYOUT_CONFIG = {
   // 余白の比率（flex）を設定する
   // A: ヘッダーとカードの間
-  // B: カードと碁盤の間
-  // C: 碁盤とリプレイコントロールの間
-  // D: リプレイコントロールの下
+  // B: 碁盤とリプレイコントロールの間
+  // C: リプレイコントロールの下
   FLEX_A: 1,
   FLEX_B: 1,
   FLEX_C: 1,
-  FLEX_D: 1,
 };
 
 export default function BoardEditScreen() {
+  const colors = useColors();
+  const t = useTranslation();
+
   // 🐱 matchId と initialRecord の両方を受け取れるようにする
   const {
     recordParam,
@@ -110,7 +116,13 @@ export default function BoardEditScreen() {
   useEffect(() => {
     if (!recordId || !needsFetch) return;
     let cancelled = false;
-    fetchRecordAnalysis(recordId).then((analysis) => {
+    fetchRecordAnalysis(
+      recordId,
+      record.moves,
+      record.board_size,
+      record.match_type,
+      record.result,
+    ).then((analysis) => {
       if (!cancelled) setFetched({ id: recordId, analysis });
     });
     return () => {
@@ -127,11 +139,32 @@ export default function BoardEditScreen() {
 
   useBlurActiveElement();
 
-  // 棋譜がない、または、分析の取得待ちの間は、空っぽの画面
+  // 棋譜がない、または、分析の取得待ちの間は、ローディング画面
   const waiting = needsFetch && fetched?.id !== recordId;
   if (!recordWithAnalysis || waiting) {
     return (
-      <SafeAreaView className="flex-1 bg-background justify-center items-center" />
+      <SafeAreaView className="flex-1 bg-background justify-center items-center">
+        <ActivityIndicator size="small" color={colors.primary} />
+        <MyText className="mt-4 text-textSub">
+          <DotAnimation text={t("common.loading")} />
+        </MyText>
+      </SafeAreaView>
+    );
+  }
+
+  // 一覧から開いたのに、サーバーに分析が無かった(まれ)。
+  // アプリで最後まで分析して、サーバーへ出してから、開く。
+  if (
+    record &&
+    needsFetch &&
+    fetched?.analysis === null &&
+    (record.moves?.length ?? 0) > 0
+  ) {
+    return (
+      <AnalysisFiller
+        record={record}
+        onDone={(analysis) => setFetched({ id: record.id, analysis })}
+      />
     );
   }
 
@@ -186,14 +219,8 @@ const BoardEditScreenContent = ({
 
   const { uid } = useProfile();
 
-  // 🐱 棋譜モード専用：手ごとのKataGo解析を進める・止める・DBに永続化する
+  // 🐱 棋譜モード専用：手ごとのKataGo解析を進める・止める
   const analysisLoop = useRecordAnalysisLoop(record);
-
-  // 🐱 「完全に分析済みか」は手ごとの解析(analyzedCount)に加えて、最後の1手の
-  //    効果を測るための最終局面(perMove[totalMoves])まで埋まっているかも見る
-  const isFullyAnalyzed =
-    analysisLoop.analyzedCount >= analysisLoop.totalMoves &&
-    analysisLoop.analysis.perMove[analysisLoop.totalMoves] != null;
 
   // 🐱 botAnalysisが進めた解析結果を反映させたrecord。編集モードの分析キャッシュも
   //    リプレイモードの好手/悪手判定も、どちらもこちらを見るようにする
@@ -209,10 +236,11 @@ const BoardEditScreenContent = ({
   const {
     territoryResult,
     manualTerritory,
-    handleShowTerritory,
+    // handleShowTerritory,
     handleBotSuggest,
     isBotSuggesting,
     isAnyProcessing,
+    // setShownTerritoryKey,
   } = useBoardEditActions(board, board.boardSize);
   // 🐱 リプレイモードでの好手・悪手判定と代替候補手
   const { lastMoveEvaluation, lastMoveGrid, candidatePoints } =
@@ -230,33 +258,19 @@ const BoardEditScreenContent = ({
     [record, board.combinedAnalysis],
   );
 
-  // 🐱 地の盤面は、useBoardEditActionsのterritoryResult(分析の ownership が元)だけを
+  // 🐱 地の見込みは、useBoardEditActionsのterritoryResult(分析の ownership が元)だけを
   //    見る。確定した最終局面でも、それ以外の局面でも、同じ窓口から取る。
-  const currentTerritoryBoard = territoryResult?.territoryBoard ?? null;
+  const currentOwnership = territoryResult?.ownership ?? null;
 
-  // 🐱 地を出さない時に渡す、全部0の盤面(territoryBoardの必須の値を埋めるだけ)
-  const emptyTerritoryBoard: TerritoryBoard = useMemo(
-    () =>
-      Array.from({ length: board.boardSize }, () =>
-        Array(board.boardSize).fill(0),
-      ),
-    [board.boardSize],
-  );
-
-  // 🐱 棋譜モードで、一番最後の手の局面を見ていて、その手の並びが連続パスで
-  //    終わっている時は「確定した終局局面」として、地を常に表示する。
-  const isAtConfirmedFinalPosition =
-    !board.isEditMode &&
-    board.currentIndex === board.maxIdx &&
-    !!territoryResult?.isFinal;
-
-  // 🐱 盤面に出す地。確定した終局局面では常に、それ以外ではバッジをタップした時か、
-  //    設定(showOwnershipTerritoryBoard)がonの時だけ出す。
-  const territoryBoardToShow =
-    isAtConfirmedFinalPosition ||
-    !!manualTerritory ||
-    board.showOwnershipTerritoryBoard
-      ? currentTerritoryBoard
+  // 🐱 棋譜モードで、一番最後の局面を見ている時。
+  //    連続パスで終わっているかどうかは問わない。
+  const isAtLastPosition =
+    !board.isEditMode && board.currentIndex === board.maxIdx;
+  // 🐱 盤面に出す地。最後の局面では問答無用で常に、それ以外ではバッジをタップした時か、
+  //    設定(showOwnership)がonの時だけ出す。
+  const ownershipToShow =
+    isAtLastPosition || !!manualTerritory || board.showOwnership
+      ? currentOwnership
       : null;
 
   const isUserBlack = record.black_uid === uid;
@@ -355,31 +369,9 @@ const BoardEditScreenContent = ({
 
       <View className="flex-1 w-full max-w-160 mx-auto px-4 pt-2">
         {/* ヘッダー */}
-        <ScreenHeader
+        <MyHeader
           left={
             <View className="flex-row items-center gap-4">
-              {/* 戻るボタン */}
-              {/* {from === "RecordScreen" && (
-                <TouchableOpacity
-                  onPress={() => {
-                    // 🐱 分析ループが裏で走ったままナビゲーションするのを防ぐ
-                    if (analysisLoop.isAnalyzing) analysisLoop.requestStop();
-                    if (router.canGoBack()) {
-                      router.back();
-                    } else {
-                      router.replace({ pathname: "/HomeScreen" });
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Feather
-                    name="chevron-left"
-                    size={36}
-                    color={colors.textSub}
-                  />
-                </TouchableOpacity>
-              )} */}
-
               {/* メニューボタン */}
               {
                 <TouchableOpacity
@@ -394,7 +386,7 @@ const BoardEditScreenContent = ({
                       board.currentIndex,
                     );
                     const analysisUpToCurrent = {
-                      perMove: board.combinedAnalysis.perMove.slice(
+                      pos: board.combinedAnalysis.pos.slice(
                         0,
                         board.currentIndex + 1,
                       ),
@@ -429,28 +421,6 @@ const BoardEditScreenContent = ({
           }
           right={
             <View className="flex-row items-center gap-2">
-              {/* 分析📈ボタン */}
-              {!board.isEditMode &&
-                !isFullyAnalyzed &&
-                board.processed.moves.length >= 1 && (
-                  <IconButton
-                    icon={
-                      analysisLoop.isAnalyzing ? (
-                        <ActivityIndicator
-                          size="small"
-                          color={colors.primary}
-                        />
-                      ) : (
-                        <Octicons name="graph" />
-                      )
-                    }
-                    iconColor={colors.primary}
-                    backgroundColor={colors.foreground}
-                    borderColor={colors.backgroundStrong}
-                    onPress={analysisLoop.toggleAnalysis}
-                  />
-                )}
-
               {/* ボット🤖ボタン */}
               {board.isEditMode && (
                 <IconButton
@@ -472,19 +442,23 @@ const BoardEditScreenContent = ({
                 />
               )}
 
-              {/* 地計算🧮ボタン。計算中はくるくる、結果なしなら何も出ない。
-                普段は電卓マークだけ。タップすると、結果テキストと盤面の地を表示する */}
-              {board.showTerritoryResultBadge && (
-                <TerritoryResultButton
-                  isCalculating={
-                    !territoryResult &&
-                    (board.isAnalyzing || analysisLoop.isAnalyzing)
+              {/* 地計算🧮ボタン */}
+              {/* {!board.showOwnership && (
+                <IconButton
+                  icon={
+                    board.isAnalyzing || analysisLoop.isAnalyzing ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <FontAwesome6 name="border-all" />
+                    )
                   }
-                  result={territoryResult}
-                  isShown={!!manualTerritory}
+                  iconColor={colors.primary}
+                  backgroundColor={colors.foreground}
+                  borderColor={colors.backgroundStrong}
                   onPress={handleShowTerritory}
+                  disabled={board.isAnalyzing || analysisLoop.isAnalyzing}
                 />
-              )}
+              )} */}
 
               {/* 🔄 モード切り替えスイッチ */}
               <SegmentedIconControl
@@ -536,16 +510,21 @@ const BoardEditScreenContent = ({
           {/* ─── 余白 a ─── */}
           <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_A }} />
 
-          <BoardEditScreenHeader
-            analysis={board.combinedAnalysis}
-            leftPlayer={leftPlayer}
-            rightPlayer={rightPlayer}
-            currentIndex={board.currentIndex}
-            showWinRateBar={board.showWinRateBar}
-          />
-
-          {/* ─── 余白 B ─── */}
-          <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_B * widthRatio }} />
+          <View className="w-full items-center pb-2">
+            <View
+              style={{
+                width: boardWidth,
+              }}
+            >
+              <BoardEditScreenHeader
+                analysis={board.combinedAnalysis}
+                leftPlayer={leftPlayer}
+                rightPlayer={rightPlayer}
+                currentIndex={board.currentIndex}
+                showWinRateBar={board.showWinRateBar}
+              />
+            </View>
+          </View>
 
           {/* 碁盤エリア */}
           <View className="justify-center items-center">
@@ -568,17 +547,14 @@ const BoardEditScreenContent = ({
                   // プレイヤの色: 1
                   playerColor={isMyBlack ? BLACK : WHITE}
                   // 現在の盤面、インデックス、テリトリーボード: 3
-                  // 現在の盤面、インデックス、テリトリーボード: 3
                   board={
                     board.processed.boardHistory[board.currentIndex] ??
                     board.processed.boardHistory[0] ??
                     {}
                   }
                   currentIndex={board.currentIndex}
-                  territoryBoard={territoryBoardToShow ?? emptyTerritoryBoard}
-                  forceShowTerritory={
-                    !isAtConfirmedFinalPosition && !!territoryBoardToShow
-                  }
+                  ownership={ownershipToShow}
+                  forceShowTerritory={!!ownershipToShow}
                   // history系: 3
                   moveHistory={board.processed.moves.slice(
                     0,
@@ -594,23 +570,14 @@ const BoardEditScreenContent = ({
                   //  推論中でも連打で次の手を打てる)。
                   disabled={!board.isEditMode}
                   isGameEnded={!board.isEditMode}
-                  doubleTap={
-                    board.boardSize === 9
-                      ? board.doubleTap9
-                      : board.boardSize === 13
-                        ? board.doubleTap13
-                        : board.boardSize === 19
-                          ? board.doubleTap19
-                          : false
-                  }
+                  doubleTap={board.doubleTap}
                   // その他情報: 5
-                  // forceShowTerritory={!!manualTerritory}
                   editMarkers={board.editMarkers}
                   candidatePoints={
-                    board.showCandidatesPoints ? candidatePoints : []
+                    board.showMoveEvaluation ? candidatePoints : []
                   } // 2026/09/21⚠️⚠️⚠️⚠️大事: ここで👁️のon offでの盤面表示を制御している
                   moveEvaluationPoint={
-                    board.showMoveEvaluationPoint ? lastMoveGrid : null
+                    board.showMoveEvaluation ? lastMoveGrid : null
                   } // 2026/09/21⚠️⚠️⚠️⚠️大事: ここで👁️のon offでの盤面表示を制御している
                   moveEvaluation={lastMoveEvaluation}
                   // 物理サイズ: 1
@@ -642,26 +609,88 @@ const BoardEditScreenContent = ({
           </View>
 
           {/* ─── 余白 C ─── */}
-          <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_C * widthRatio }} />
+          <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_B * widthRatio }} />
 
           {/* 📈 リプレイコントロール＆グラフ（一体型） */}
 
-          <ScoreLeadReplayControls
-            showMode={board.showMode}
-            analysis={board.combinedAnalysis}
-            currentIndex={board.currentIndex}
-            totalMoves={board.processed.moves.length}
-            onCurrentIndexChange={board.setCurrentIndex}
-            backgroundStrong={colors.backgroundStrong}
-            foreground={colors.foreground}
-            primaryStrong={colors.primaryStrong}
-            fontFamily={fontFamily}
-          />
+          {/* コントロールエリア */}
+          <View className="w-full items-center">
+            <View
+              style={{
+                width: boardWidth,
+              }}
+            >
+              <ScoreLeadReplayControls
+                showMode={board.showMode}
+                analysis={board.combinedAnalysis}
+                currentIndex={board.currentIndex}
+                totalMoves={board.processed.moves.length}
+                onCurrentIndexChange={board.setCurrentIndex}
+                backgroundStrong={colors.backgroundStrong}
+                foreground={colors.foreground}
+                primaryStrong={colors.primaryStrong}
+                fontFamily={fontFamily}
+              />
+            </View>
+          </View>
 
-          {/* ─── 余白 D ─── */}
-          <View style={{ flexGrow: LAYOUT_CONFIG.FLEX_D * heightRatio }} />
+          {/* ─── 余白 D ─── ⚠️minHeghtはReplayControlのBubbleのため。*/}
+          <View
+            style={{
+              flexGrow: LAYOUT_CONFIG.FLEX_C * heightRatio,
+              minHeight: 8,
+            }}
+          />
         </View>
       </View>
+    </SafeAreaView>
+  );
+};
+
+// 一覧から開いたのに、サーバーに分析が無かったとき(まれ)の、分析中の画面。
+// 最後まで分析できたら、サーバーへ出して、開く。途中で止まったら、あるぶんだけで開く。
+const AnalysisFiller = ({
+  record,
+  onDone,
+}: {
+  record: RecordType;
+  onDone: (analysis: RecordAnalysis) => void;
+}) => {
+  const t = useTranslation();
+
+  const colors = useColors();
+  const loop = useRecordAnalysisLoop(record);
+  const startedRef = useRef(false);
+  const sawRunningRef = useRef(false);
+  const doneRef = useRef(false);
+
+  // エンジンの準備ができたら、自動で分析を始める
+  useEffect(() => {
+    if (!loop.engineReady || startedRef.current) return;
+    startedRef.current = true;
+    loop.toggleAnalysis();
+  }, [loop.engineReady]);
+
+  // 分析が止まったら(全部そろった / 途中で失敗した)、いまある分析を渡して、開く。
+  // そろっていれば、submitAnalysis がサーバーへ出してくれる(そろっていなければ、何もしない)。
+  useEffect(() => {
+    if (loop.isAnalyzing) {
+      sawRunningRef.current = true;
+      return;
+    }
+    if (!sawRunningRef.current || doneRef.current) return;
+    doneRef.current = true;
+    submitAnalysis(record.id, loop.analysis, loop.totalMoves + 1);
+    onDone(loop.analysis);
+  }, [loop.isAnalyzing]);
+
+  return (
+    <SafeAreaView className="flex-1 bg-background justify-center items-center">
+      <ActivityIndicator size="small" color={colors.primary} />
+      <MyText className="mt-4 text-textSub">
+        <DotAnimation text={t("common.analyzing")} />
+        {` ${loop.analyzedCount} / ${loop.totalMoves}`}
+      </MyText>
     </SafeAreaView>
   );
 };

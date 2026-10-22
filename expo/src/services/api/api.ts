@@ -110,21 +110,63 @@ const callOnce = async <T>(
   }
 };
 
+// api.ts (callOnce の下に追加する部分 + api 全体)
+
+// 1回分のGET呼び出し(callOnce のGET版)
+const callGetOnce = async <T>(path: string): Promise<ApiResult<T>> => {
+  try {
+    const cookie = Platform.OS === "web" ? "" : await authClient.getCookie();
+
+    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL!}/rpc/${path}`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "x-app-version": appVersion,
+        "x-ota-version": OTA_VERSION,
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
+    });
+
+    const body = await res.json().catch(() => null);
+    if (res.ok) return { data: body as T, error: null };
+
+    const e = body?.error;
+    return {
+      data: null,
+      error: {
+        code: e?.code,
+        message: e?.message ?? `HTTP ${res.status}`,
+        status: res.status,
+      },
+    };
+  } catch (e) {
+    return { data: null, error: { message: String(e) } };
+  }
+};
+
+// 再送の共通部分(rpc と get で使い回す)
+const withRetry = async <T>(
+  run: () => Promise<ApiResult<T>>,
+): Promise<ApiResult<T>> => {
+  let result: ApiResult<T> = { data: null, error: { message: "unknown" } };
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    result = await run();
+    if (!result.error || !isRetryableError(result.error)) break;
+    if (attempt < MAX_RETRIES) {
+      await sleep(RETRY_BASE_DELAY_MS * 2 ** attempt);
+    }
+  }
+  if (result.error) notifyIfSpecialError(result.error);
+  return result;
+};
+
 export const api = {
-  // ここをアロー関数に変える
   rpc: async <T = any>(
     name: string,
     args: Record<string, unknown> = {},
-  ): Promise<ApiResult<T>> => {
-    let result: ApiResult<T> = { data: null, error: { message: "unknown" } };
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      result = await callOnce<T>(name, args);
-      if (!result.error || !isRetryableError(result.error)) break;
-      if (attempt < MAX_RETRIES) {
-        await sleep(RETRY_BASE_DELAY_MS * 2 ** attempt);
-      }
-    }
-    if (result.error) notifyIfSpecialError(result.error);
-    return result;
-  },
+  ): Promise<ApiResult<T>> => withRetry(() => callOnce<T>(name, args)),
+
+  // 見るだけの読み取り(GET)。path は "analysis/abc123" のような形
+  get: async <T = any>(path: string): Promise<ApiResult<T>> =>
+    withRetry(() => callGetOnce<T>(path)),
 };

@@ -53,7 +53,10 @@ export async function ensureProfile(db: Db, uid: string) {
     }
   }
 
-  const [created] = await db.select().from(profiles).where(eq(profiles.uid, uid));
+  const [created] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.uid, uid));
   if (!created) throw new Error("failed_to_generate_unique_username");
   return created;
 }
@@ -84,8 +87,11 @@ profileRoutes.post("/get_my_profile", async (c) => {
     uid: row.uid,
     username: row.username,
     icon_index: row.iconIndex,
-    country: row.country,
   };
+
+  profile.premium_until = row.premiumUntil ? row.premiumUntil.getTime() : null;
+  profile.is_premium =
+    !!row.premiumUntil && row.premiumUntil.getTime() > Date.now();
 
   // 盤面(9・13・19)ごとの、成績と設定
   for (const size of BOARD_SIZES) {

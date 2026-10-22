@@ -1,4 +1,4 @@
-// GoBoard.tsx
+// expo/packages/go-components/src/components/goBoard/GoBoard.tsx
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColorValue, Pressable, StyleSheet, View } from "react-native";
@@ -9,42 +9,47 @@ import {
   Board,
   BoardSize,
   Color,
+  getColorToMove,
+  getOppositeColor,
   GoString,
   Grid,
   MatchType,
+  Ownership,
   PASS_GRID,
-  WHITE,
 } from "go-core";
 import { useGoSounds } from "../../hooks/useGoSounds";
 import { IntersectionContainer } from "../stones/IntersectionContainer";
 import { BoardLines } from "./BoardLines";
+
+// 省略された時に使う空っぽの値。毎回新しく作らないよう、ここで1つだけ作っておく
 const EMPTY_EDIT_MARKERS = new Map<Grid, "human" | "bot">();
+const EMPTY_GRIDS: Grid[] = [];
 
 type Props = {
   // 盤面サイズ、マッチタイプ、プレイヤの色: 3
   boardSize: BoardSize;
   matchType: MatchType;
-  playerColor: Color;
-  // 現在の盤面、インデックス、テリトリーボード: 3
+  playerColor?: Color; // 省略時は黒
+  // 現在の盤面、インデックス、地の見込み(ownership): 3
   board: Board;
   currentIndex: number;
-  territoryBoard: number[][];
+  ownership?: Ownership | null; // 各マスの地の見込み(黒="B" / 白="W" / どちらでもない=".")。地を出さないときは null か省略
   // history系: 3
-  moveHistory: Grid[];
+  moveHistory?: Grid[]; // currentIndex 手目までの手。それより先の手が入っていてもよい
   boardHistory: Board[];
-  agehamaHistory: AgehamaCount[];
+  agehamaHistory?: AgehamaCount[]; // 今は使っていない(全ての呼び出し元から外せたら、ここも消せる)
   // タッチした時の処理: 1
   onPutStone: (grid: Grid, boardSize: BoardSize) => void;
-  // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3
-  disabled: boolean;
-  doubleTap: boolean;
-  isGameEnded: boolean;
+  // 触れるか否か、ダブルタップの可否、終局しているかどうか: 3(省略時はすべて false)
+  disabled?: boolean;
+  doubleTap?: boolean;
+  isGameEnded?: boolean;
   // その他情報: 5
-  editMarkers: Map<Grid, "human" | "bot">;
-  candidatePoints: Grid[]; // 直近の手が悪手だった場合に見せる、代替候補の位置一覧
+  editMarkers?: Map<Grid, "human" | "bot">;
+  candidatePoints?: Grid[]; // 直近の手が悪手だった場合に見せる、代替候補の位置一覧
   moveEvaluationPoint?: Grid | null; // 良手・悪手マークを付ける対象のマス(=直近に打たれた手) // 🔥これ多分要らない
-  moveEvaluation: "good" | "bad" | undefined; // その手の評価 // 🔥というかここら辺もmapとか配列にするべきだろう
-  forceShowTerritory: boolean; // isGameEndedに関わらず地計算結果を強制表示するフラグ
+  moveEvaluation?: "good" | "bad"; // その手の評価 // 🔥というかここら辺もmapとか配列にするべきだろう
+  forceShowTerritory?: boolean; // isGameEndedに関わらず地計算結果を強制表示するフラグ
   // 物理サイズ: 1
   boardWidth: number;
   // 色: 10
@@ -56,7 +61,8 @@ type Props = {
   botMoveColor: ColorValue;
   goodMoveColor: ColorValue;
   badMoveColor: ColorValue;
-  sound: boolean;
+  //
+  sound?: boolean; // 省略時は false
   practiceMatchStatus: string;
 };
 
@@ -64,15 +70,15 @@ export const GoBoard = ({
   boardSize,
   board,
   onPutStone,
-  moveHistory = [],
-  territoryBoard,
+  moveHistory = EMPTY_GRIDS,
+  ownership,
   disabled = false,
-  isGameEnded,
+  isGameEnded = false,
   boardHistory,
   currentIndex,
   boardWidth,
   editMarkers = EMPTY_EDIT_MARKERS, // 🐱 誰がその地点を打ったか(人間/ボット)を表すMap
-  candidatePoints = [],
+  candidatePoints = EMPTY_GRIDS,
   moveEvaluationPoint = null,
   moveEvaluation,
   forceShowTerritory = false,
@@ -87,7 +93,7 @@ export const GoBoard = ({
   goodMoveColor,
   badMoveColor,
   matchType,
-  sound,
+  sound = false,
   practiceMatchStatus,
 }: Props) => {
   const [pendingGrid, setPendingGrid] = useState<Grid | null>(null);
@@ -95,13 +101,21 @@ export const GoBoard = ({
   // レンダー中のState調整（React公式推奨パターン）
   const [prevIndex, setPrevIndex] = useState(currentIndex);
   const [prevBoard, setPrevBoard] = useState(board);
-  const currentTurn: Color = currentIndex % 2 === 0 ? BLACK : WHITE;
 
   if (prevIndex !== currentIndex || prevBoard !== board) {
     setPrevIndex(currentIndex);
     setPrevBoard(board);
     setPendingGrid(null);
   }
+
+  // 🌟 今見ている局面は「currentIndex 手打った後」の局面。
+  //   だから直前の手は moveHistory[currentIndex - 1](0手目なら undefined)。
+  //   moveHistory にそれより先の手が入っていても、ずれない。
+  const lastMove: Grid | undefined = moveHistory[currentIndex - 1];
+  // その手を打った側の色。置き碁(白から打ち始める)でも、getColorToMove が正しく数えてくれる。
+  const lastMoverColor = getOppositeColor(
+    getColorToMove(matchType, currentIndex),
+  );
 
   const {
     innerWidth,
@@ -171,15 +185,12 @@ export const GoBoard = ({
     [disabled, doubleTap, pendingGrid, onPutStone, boardSize],
   );
 
-  const handlePressBackground = useCallback(() => {
-    setPendingGrid((prev) => (prev !== null ? null : null));
-  }, []);
+  // 盤の背景をタップしたら、ダブルタップの「仮置き」を取り消す
+  const handlePressBackground = () => setPendingGrid(null);
 
-  const currentMoveGrid = useMemo(() => {
-    if (currentIndex === 0 || moveHistory.length === 0) return null;
-    const move = moveHistory[currentIndex - 1];
-    return move === PASS_GRID ? null : move;
-  }, [currentIndex, moveHistory]);
+  // 直前の手の位置(パスなら出さない)
+  const currentMoveGrid =
+    lastMove === undefined || lastMove === PASS_GRID ? null : lastMove;
 
   // 🐱 forceShowTerritoryがtrueなら、isGameEndedに関わらず地計算結果を表示する
   const showTerritory =
@@ -221,48 +232,39 @@ export const GoBoard = ({
           />
 
           {/* ② 各マス目 */}
-          {board.map((goString, grid) => {
-            const r = Math.floor(grid / boardSize);
-            const c = grid % boardSize;
-
-            return (
-              <IntersectionContainer
-                key={grid}
-                grid={grid}
-                boardSize={boardSize}
-                cellSize={cellSize}
-                stoneSize={stoneSize}
-                goString={goString}
-                territoryValue={territoryBoard?.[r]?.[c]}
-                isPending={pendingGrid === grid}
-                isCurrentMove={grid === currentMoveGrid}
-                showTerritory={showTerritory}
-                isEdited={editMarkers.get(grid) === "human"}
-                isBotMove={editMarkers.get(grid) === "bot"}
-                isCandidate={candidateSet.has(grid)}
-                moveEvaluation={
-                  grid === moveEvaluationPoint ? moveEvaluation : undefined
-                }
-                doubleTap={doubleTap}
-                playerColor={playerColor}
-                disabled={disabled}
-                onPressGrid={handlePressGrid}
-                currentTurn={currentTurn}
-                lastMove={
-                  moveHistory[moveHistory.length - 2]
-                  // ⚠️ここがなんでlength-2なのかはよくわからんが、ともかくそうしたらうまくいった。
-                }
-                blackStoneColor={blackStoneColor}
-                whiteStoneColor={whiteStoneColor}
-                humanMoveColor={humanMoveColor}
-                botMoveColor={botMoveColor}
-                goodMoveColor={goodMoveColor}
-                badMoveColor={badMoveColor}
-                matchType={matchType}
-                practiceMatchStatus={practiceMatchStatus}
-              />
-            );
-          })}
+          {board.map((goString, grid) => (
+            <IntersectionContainer
+              key={grid}
+              grid={grid}
+              boardSize={boardSize}
+              cellSize={cellSize}
+              stoneSize={stoneSize}
+              goString={goString}
+              ownership={ownership?.[grid]}
+              isPending={pendingGrid === grid}
+              isCurrentMove={grid === currentMoveGrid}
+              showTerritory={showTerritory}
+              isEdited={editMarkers.get(grid) === "human"}
+              isBotMove={editMarkers.get(grid) === "bot"}
+              isCandidate={candidateSet.has(grid)}
+              moveEvaluation={
+                grid === moveEvaluationPoint ? moveEvaluation : undefined
+              }
+              doubleTap={doubleTap}
+              playerColor={playerColor}
+              disabled={disabled}
+              onPressGrid={handlePressGrid}
+              lastMoverColor={lastMoverColor}
+              lastMove={lastMove}
+              blackStoneColor={blackStoneColor}
+              whiteStoneColor={whiteStoneColor}
+              humanMoveColor={humanMoveColor}
+              botMoveColor={botMoveColor}
+              goodMoveColor={goodMoveColor}
+              badMoveColor={badMoveColor}
+              practiceMatchStatus={practiceMatchStatus}
+            />
+          ))}
         </View>
       </Pressable>
     </View>

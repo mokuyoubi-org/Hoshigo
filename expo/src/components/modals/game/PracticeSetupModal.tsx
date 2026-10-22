@@ -4,9 +4,9 @@
 import { MyText } from "@/src/components/common/MyText";
 import { useBlurActiveElement } from "@/src/hooks/common/useBlurActiveElement";
 import { useColors } from "@/src/hooks/common/useTheme";
-import { usePracticeSetup } from "@/src/hooks/practice/usePracticeSetup";
+import { usePracticeSetupModal } from "@/src/hooks/modals/usePracticeSetupModal";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { nameFormatter } from "@/src/logics/bot/botNameLogics";
+import { nameFormatter } from "@/src/logics/format/nameFormatter";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { PlayerType } from "@/src/types/player";
 import { Feather } from "@expo/vector-icons";
@@ -62,7 +62,7 @@ export const PracticeSetupModal = ({
     selectPreviousHandicap,
     selectNextHandicap,
     playerOptions,
-  } = usePracticeSetup({
+  } = usePracticeSetupModal({
     boardSize,
     setBoardSize,
     matchType,

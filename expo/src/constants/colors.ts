@@ -14,7 +14,7 @@ const LIGHT_THEME = {
   primary: colord(colors.sky[500])
     .mix(colors.white, 0.5)
     .desaturate(0.3)
-    .toHex(),
+    .toHex(), // #b4d0e6
   primaryStrong: colord(colors.sky[900]).mix(colors.white, 0.4).toHex(),
   primaryDark: colord(colors.sky[900]).mix(colors.white, 0.4).toHex(),
 

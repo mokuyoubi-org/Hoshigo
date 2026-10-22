@@ -21,8 +21,8 @@ dotenv.config({
 const config: ExpoConfig = {
   name: "Hoshigo",
   slug: "Hoshigo",
-  // 2026/10/02: 1.0.4 ▶︎ 1.0.5
-  version: "1.0.5", // アプリのバージョン。必ずruntimeVersionと揃える。なお、Webでは-cでstartし直す必要あり
+  // 2026/10/22: 1.0.5 ▶︎ 1.0.6
+  version: "1.0.6", // アプリのバージョン。必ずruntimeVersionと揃える。なお、Webでは-cでstartし直す必要あり
   orientation: "portrait",
   icon: "./assets/icons/icon.png", // 使われない
   scheme: "hoshigo",
@@ -124,8 +124,7 @@ const config: ExpoConfig = {
       projectId: "0c034fcf-9b3f-4ae4-be56-052d71e47d52",
     },
   },
-  // 2026/10/02: 1.0.4 ▶︎ 1.0,5
-  runtimeVersion: "1.0.5", // 誰に対してOTAを配信するか。必ずversionと揃える。なお、Webでは-cでstartし直す必要あり
+  runtimeVersion: "1.0.6", // 誰に対してOTAを配信するか。必ずversionと揃える。なお、Webでは-cでstartし直す必要あり
 };
 
 export default config;
