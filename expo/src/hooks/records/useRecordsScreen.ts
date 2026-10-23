@@ -132,10 +132,8 @@ export const useRecordsScreen = () => {
         if (typeof rawOwnership === "string") {
           ownership = rawOwnership as Ownership;
         } else {
-          // 分析が無い棋譜は、ぜんぶ空点(".")の文字列にするよ
-          ownership = ".".repeat(
-            targetBoardSize * targetBoardSize,
-          ) as Ownership;
+          // 分析が無い棋譜
+          ownership = "" as Ownership;
         }
 
         merged[record.id] = {

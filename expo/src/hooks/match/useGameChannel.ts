@@ -165,7 +165,7 @@ export const useGameChannel = (
   const send = useCallback((msg: object): boolean => {
     const conn = connectionRef.current;
     if (!conn) return false;
-    conn.send(msg);
+    conn.send(msg); // 🌟WSで送ってるところ
     return true;
   }, []);
 

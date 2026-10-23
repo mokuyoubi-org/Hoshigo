@@ -14,7 +14,7 @@ import { PlayerType } from "@/src/types/player";
 import { BoardSize, MatchType } from "go-core";
 import { useEffect } from "react";
 
-const ALL_MATCH_TYPES: MatchType[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 16, 25];
+const ALL_MATCH_TYPES: MatchType[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 25];
 
 export const getMaxHandicap = (size: BoardSize): number => {
   switch (size) {

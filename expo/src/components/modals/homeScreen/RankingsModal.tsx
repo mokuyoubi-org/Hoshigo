@@ -50,7 +50,7 @@ export default function RankingsModal({ visible, onClose }: Props) {
     const fetchTopProfiles = async () => {
       setLoading(true);
 
-      const { data } = await api.rpc("get_rankings");
+      const { data } = await api.get("get_rankings");
       setAllProfiles(data ?? []);
       setLoading(false);
     };

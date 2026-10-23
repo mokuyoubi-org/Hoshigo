@@ -240,7 +240,7 @@ export const GoBoard = ({
               cellSize={cellSize}
               stoneSize={stoneSize}
               goString={goString}
-              ownership={ownership?.[grid]}
+              ownership={ownership?.[grid]} // 🌟
               isPending={pendingGrid === grid}
               isCurrentMove={grid === currentMoveGrid}
               showTerritory={showTerritory}

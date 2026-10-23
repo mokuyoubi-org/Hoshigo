@@ -12,7 +12,7 @@ export type Board = (GoString | null)[];
 export type MoveObject = { x: number; y: number; player: Color };
 export type AgehamaCount = { black: number; white: number };
 export type BoardSize = 5 | 9 | 13 | 19;
-export type MatchType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 13 |16| 25;
+export type MatchType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 16 | 25;
 
 // 定数
 export const PASS_GRID: Grid = -1;

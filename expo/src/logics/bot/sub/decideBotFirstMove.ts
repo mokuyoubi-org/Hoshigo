@@ -618,7 +618,7 @@ export const decideBotFirstMove = (
         { candidates: KAKARI, weight: 20 },
       ];
     } else if (matchType === 9) {
-            /*
+      /*
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,
  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,
  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,
@@ -639,16 +639,6 @@ export const decideBotFirstMove = (
 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341,
 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360
    */
-      const TSUKE = [41, 59, 53, 73, 287, 307, 301, 319];
-      const SANSANIRI = [40, 54, 306, 320];
-      const KAKARI = [51, 111, 249, 309, 263, 317, 43, 97];
-
-      choices = [
-        { candidates: TSUKE, weight: 40 },
-        { candidates: SANSANIRI, weight: 40 },
-        { candidates: KAKARI, weight: 20 },
-      ];
-    } else if (matchType === 13) {
       const TSUKE = [41, 59, 53, 73, 287, 307, 301, 319];
       const SANSANIRI = [40, 54, 306, 320];
       const KAKARI = [51, 111, 249, 309, 263, 317, 43, 97];

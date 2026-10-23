@@ -1,15 +1,42 @@
 // game-room.ts
+//
+// 1局ぶんの対局を、まるごと見守る「審判さん」の仕事場(Durable Object)。
+// 1局につき1つの部屋があり、部屋の名前は gameId。
+// 待機列の部屋(queue-room.ts)が、組み合わせが決まったときに init() で作る。
+//
+// やること:
+//  1. 覚える: 手・手番・残り時間・結果を、DO storage の1つの行(GameState)に保存する
+//  2. 聞く:   アプリから届く "move"(手)・"resign"(投了)・"submit_result"(結果)を受け取る
+//  3. 確かめる: 手番か、時間切れでないか、などを確認して、おかしいものは error を返す
+//  4. 伝える: 手が打たれたら、2人に一斉に "move" を送る(broadcast)
+//             つながった直後には、最新の盤面 "state" を送る(つなぎ直しても、盤面が合う)
+//  5. 見張る: アラームで、時間切れ・切断30秒・2分間誰も来ない・結果の放置を判定する
+//  6. 後片づけ: 終局したら、成績の更新(D1)→ 棋譜の保存(D1)→ "rating_updated" を送る。
+//               済んだら、部屋の中身をきれいに消す(保管料金を増やさないため)
+//
+// 部屋から送るメッセージ: state / move / double_pass / finished / rating_updated / error
+// アプリから送るメッセージ: move / resign / submit_result
+// (アプリ側の受け口は useGameChannel.ts)
+//
+// ボット戦: ボットの手は、アプリ側(KataGo)が bot:true をつけて送ってくる。
+//           時間切れ・切断の判定は、ボットには、かけない。
+//
+// 注意:
+//  - WebSocketは Hibernation API(acceptWebSocket)で受ける。眠っていても料金がかからない
+//  - 時間の管理は setTimeout ではなく、アラーム(ctx.storage.setAlarm)を使う
+//  - 生きているかの確認(ping → pong)は、眠ったまま自動で返す
+//  - 終局後は、全員の接続を閉じて、保存データも全部消す(部屋の名前の「住所」は残るが、中身は空)
+// 時間がたつと自然消滅するらしい。(メモリから)
 
 import { DurableObject } from "cloudflare:workers";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { drizzle, DrizzleD1Database } from "drizzle-orm/d1";
+import { and, eq, inArray, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
 import * as appSchema from "./db/app-schema";
 import type { AppEnv } from "./env";
 import { isValidOwnership } from "./logic/analysis";
 import { calculateDrawDelta, calculateMatchDelta } from "./logic/rating";
-import { user } from "./db/auth-schema";
 
-const { userStats, recordCards, activeGames } = appSchema;
+const { userStats, records, activeGames } = appSchema;
 
 // 対局に参加する人の情報(「マッチしたよ」で、相手の情報として、アプリに送る)
 export type PlayerInfo = {
@@ -549,111 +576,38 @@ export class GameRoom extends DurableObject<AppEnv> {
     return update;
   }
 
-  // 棋譜の本体(手・最終局面の地)も、貸出カードに入れて、D1に書く。
-  // そのあと、保存数の上限を超えた古いカードを消す。
+  // 棋譜を、D1に1行書く(手・最終局面の地も、この行の中にある)。
   // 最後に、「対局中」の目印を消す。
   private async saveRecord(state: GameState) {
-    const { gameId, blackUid, whiteUid, boardSize, matchType, botColor } =
-      state.init;
+    const { gameId, blackUid, whiteUid, boardSize, matchType } = state.init;
     const old = state.oldRatings ?? { black: 0, white: 0 };
     const result = state.result ?? "VOID";
-    const createdAt = new Date(state.createdAt);
-
-    // 最終局面の地(無ければ null)。
-    // (デプロイ前に作られた対局は ownership を持っていないので、?? null で守る)
-    const finalOwnership = state.ownership ?? null;
 
     const db = drizzle(this.env.DB, { schema: appSchema });
 
-    // 貸出カード(ボットには作らない)
-    const cards: (typeof recordCards.$inferInsert)[] = [];
-    if (botColor !== "black") {
-      cards.push({
-        uid: blackUid,
+    // 1局につき1行。
+    // やり直しで、同じ棋譜を2回書いても、エラーにならないように
+    await db
+      .insert(records)
+      .values({
         gameId,
+        blackUid,
+        whiteUid,
         boardSize,
-        createdAt,
-        color: "black",
-        oppUid: whiteUid,
+        createdAt: new Date(state.createdAt),
         result,
-        rating: old.black,
-        oppRating: old.white,
+        blackRating: old.black,
+        whiteRating: old.white,
         matchType,
         moves: state.moves,
-        finalOwnership,
-      });
-    }
-    if (botColor !== "white") {
-      cards.push({
-        uid: whiteUid,
-        gameId,
-        boardSize,
-        createdAt,
-        color: "white",
-        oppUid: blackUid,
-        result,
-        rating: old.white,
-        oppRating: old.black,
-        matchType,
-        moves: state.moves,
-        finalOwnership,
-      });
-    }
-    if (cards.length > 0) {
-      // やり直しで、同じカードを2回書いても、エラーにならないように
-      await db.insert(recordCards).values(cards).onConflictDoNothing();
-
-      // 保存数の上限を超えた分の、古いカードを消す(2人それぞれ)
-      for (const card of cards) {
-        await this.trimRecords(db, card.uid, boardSize);
-      }
-    }
+        // 最終局面の地(無ければ null)。
+        // (デプロイ前に作られた対局は ownership を持っていないので、?? null で守る)
+        finalOwnership: state.ownership ?? null,
+      })
+      .onConflictDoNothing();
 
     // 「対局中」の目印を消す(これで、2人とも、また待機列に入れる)
     await db.delete(activeGames).where(eq(activeGames.gameId, gameId));
-  }
-
-  // 棋譜の保存数の上限(盤面ごと)を超えていたら、古いカードから消す。
-  // Premium(期限内)は無制限。ゲスト(匿名)は10件、Start(ログイン済みの無料)は100件まで。
-  private async trimRecords(
-    db: DrizzleD1Database<typeof appSchema>,
-    uid: string,
-    boardSize: number,
-  ) {
-    const [row] = await db
-      .select({
-        premiumUntil: appSchema.profiles.premiumUntil,
-        isAnonymous: user.isAnonymous,
-      })
-      .from(appSchema.profiles)
-      .innerJoin(user, eq(user.id, appSchema.profiles.uid))
-      .where(eq(appSchema.profiles.uid, uid));
-    if (!row) return;
-
-    // Premium(期限内)は、無制限
-    if (row.premiumUntil && row.premiumUntil.getTime() > Date.now()) return;
-
-    const limit = row.isAnonymous ? 10 : 100;
-
-    // 新しい順に並べて、上限より後ろにあるカード(=あふれた分)を探す
-    const excess = await db
-      .select({ gameId: recordCards.gameId })
-      .from(recordCards)
-      .where(and(eq(recordCards.uid, uid), eq(recordCards.boardSize, boardSize)))
-      .orderBy(desc(recordCards.createdAt), desc(recordCards.gameId))
-      .limit(100)
-      .offset(limit);
-    if (excess.length === 0) return;
-
-    await db.delete(recordCards).where(
-      and(
-        eq(recordCards.uid, uid),
-        inArray(
-          recordCards.gameId,
-          excess.map((e) => e.gameId),
-        ),
-      ),
-    );
   }
   // レーティングなどを計算して、D1に書く(いまの archive_matches の翻訳)
   private async computeAndApplyStats(state: GameState): Promise<RatingUpdate> {

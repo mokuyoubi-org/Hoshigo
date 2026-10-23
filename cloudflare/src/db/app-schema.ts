@@ -80,23 +80,20 @@ export const appStatus = sqliteTable("app_status", {
   otaVersion: text("ota_version"),
 });
 
-// 棋譜の「貸出カード」(持ち主ごとの、棋譜の一覧)。
-// 棋譜の本体は、R2の records/{gameId}.json にある。ボットには作らない。
-// プロフィールが消えたら、いっしょに消える。
-export const recordCards = sqliteTable(
-  "record_cards",
+// 棋譜(1局につき1行)。黒の人も白の人も、同じ行を見る。
+// 棋譜の一覧は、見られる人の上限(Guest/Start/Premium)の分だけ取ってくる。
+// 退会した人がいても、相手の棋譜は残したいので、外部キーは付けない。
+export const records = sqliteTable(
+  "records",
   {
-    uid: text("uid")
-      .notNull()
-      .references(() => profiles.uid, { onDelete: "cascade" }),
-    gameId: text("game_id").notNull(),
-    oppUid: text("opp_uid").notNull(), // 相手(相手が退会しても、そのまま残る)
+    gameId: text("game_id").primaryKey(),
+    blackUid: text("black_uid").notNull(),
+    whiteUid: text("white_uid").notNull(),
     boardSize: integer("board_size").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    color: text("color").notNull(), // 自分の色: "black" か "white"
     result: text("result").notNull(),
-    rating: integer("rating").notNull(), // 対局前の、自分のレーティング
-    oppRating: integer("opp_rating").notNull(), // 対局前の、相手のレーティング
+    blackRating: integer("black_rating").notNull(), // 対局前の、黒のレーティング
+    whiteRating: integer("white_rating").notNull(), // 対局前の、白のレーティング
     matchType: integer("match_type").notNull(),
     // 手(例: [72, 40, ...])。JSONの文字として入れる
     moves: text("moves", { mode: "json" })
@@ -107,15 +104,18 @@ export const recordCards = sqliteTable(
     finalOwnership: text("final_ownership"),
   },
   (table) => [
-    primaryKey({ columns: [table.uid, table.gameId] }),
-    // 一覧(自分の、この盤面の、新しい順)を、速く引くための索引
-    index("record_cards_list_idx").on(
-      table.uid,
+    // 黒の人の一覧(この盤面の、新しい順)を速く引く索引
+    index("records_black_idx").on(
+      table.blackUid,
       table.boardSize,
       table.createdAt,
     ),
-    // 1局(gameId)から、カードを速く引くための索引
-    index("record_cards_game_idx").on(table.gameId),
+    // 白の人の一覧を速く引く索引
+    index("records_white_idx").on(
+      table.whiteUid,
+      table.boardSize,
+      table.createdAt,
+    ),
   ],
 );
 

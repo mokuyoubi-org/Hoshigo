@@ -144,7 +144,7 @@ export const useMatchingProvider = (
     if (conn) {
       // 🐱 サーバーに「やめます」と伝える。返事("canceled")が届いたら、finish() される。
       //    もし、ちょうど対局が決まっていたら、"matched" のほうが届いて、そのまま対局画面へ行く
-      conn.send({ type: "cancel" });
+      conn.send({ type: "cancel" }); // 🌟WSで送ってるところ
       return;
     }
 

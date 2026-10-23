@@ -6,6 +6,7 @@ import { Hono, type Context } from "hono";
 import { createAuth, type AuthEnv } from "../auth";
 import * as appSchema from "../db/app-schema";
 import { user } from "../db/auth-schema";
+import { cache } from "hono/cache";
 
 const { profiles, userSettings, userStats } = appSchema;
 
@@ -125,51 +126,56 @@ accountRoutes.post("/update_username", async (c) => {
 });
 
 // ランキング(盤面ごとに、ボットを除いた上位30人)。ログインしていなくても見られる。
-accountRoutes.post("/get_rankings", async (c) => {
-  const db = drizzle(c.env.DB, { schema: appSchema });
+// 全員同じ結果なので、1時間「作り置き」する。
+accountRoutes.get(
+  "/get_rankings",
+  cache({ cacheName: "hoshigo-rankings", cacheControl: "public, max-age=3600" }),
+  async (c) => {
+    const db = drizzle(c.env.DB, { schema: appSchema });
+console.log("DBに聞きに行った")
+    const result: {
+      username: string;
+      rating: number;
+      icon_index: number;
+      board_size: number;
+      is_authenticated: boolean;
+      is_premium: boolean;
+    }[] = [];
 
-  const result: {
-    username: string;
-    rating: number;
-    icon_index: number;
-    board_size: number;
-    is_authenticated: boolean;
-    is_premium: boolean;
-  }[] = [];
+    // 盤面の小さい順(9 → 13 → 19)、各盤面の中は、レーティングの高い順
+    for (const boardSize of BOARD_SIZES) {
+      const rows = await db
+        .select({
+          username: profiles.username,
+          rating: userStats.rating,
+          iconIndex: profiles.iconIndex,
+          isAnonymous: user.isAnonymous,
+          premiumUntil: profiles.premiumUntil,
+        })
+        .from(userStats)
+        .innerJoin(profiles, eq(profiles.uid, userStats.uid))
+        .innerJoin(user, eq(user.id, profiles.uid))
+        .where(and(eq(userStats.boardSize, boardSize), eq(profiles.isBot, false)))
+        .orderBy(desc(userStats.rating))
+        .limit(30); // 🌟
 
-  // 盤面の小さい順(9 → 13 → 19)、各盤面の中は、レーティングの高い順
-  for (const boardSize of BOARD_SIZES) {
-    const rows = await db
-      .select({
-        username: profiles.username,
-        rating: userStats.rating,
-        iconIndex: profiles.iconIndex,
-        isAnonymous: user.isAnonymous,
-        premiumUntil: profiles.premiumUntil,
-      })
-      .from(userStats)
-      .innerJoin(profiles, eq(profiles.uid, userStats.uid))
-      .innerJoin(user, eq(user.id, profiles.uid))
-      .where(and(eq(userStats.boardSize, boardSize), eq(profiles.isBot, false)))
-      .orderBy(desc(userStats.rating))
-      .limit(100);
-
-    for (const r of rows) {
-      result.push({
-        username: r.username,
-        rating: r.rating,
-        icon_index: r.iconIndex,
-        board_size: boardSize,
-        // メールで登録している人は true(ゲストは false)
-        is_authenticated: !r.isAnonymous,
-        // 期限が今より先ならプレミアム(期限なし=null は false)
-        is_premium: !!r.premiumUntil && r.premiumUntil.getTime() > Date.now(),
-      });
+      for (const r of rows) {
+        result.push({
+          username: r.username,
+          rating: r.rating,
+          icon_index: r.iconIndex,
+          board_size: boardSize,
+          // メールで登録している人は true(ゲストは false)
+          is_authenticated: !r.isAnonymous,
+          // 期限が今より先ならプレミアム(期限なし=null は false)
+          is_premium: !!r.premiumUntil && r.premiumUntil.getTime() > Date.now(),
+        });
+      }
     }
-  }
 
-  return c.json(result);
-});
+    return c.json(result);
+  },
+);
 
 // アカウント削除。userを消すと、プロフィール・設定・成績・セッションも、芋づる式に消える。
 accountRoutes.post("/delete_user_account", async (c) => {
