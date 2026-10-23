@@ -1,4 +1,5 @@
 // auth-schema.ts
+// better-authが内部で使う。触らない。
 
 import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";

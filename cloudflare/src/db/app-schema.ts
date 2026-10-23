@@ -1,4 +1,5 @@
 // app-schema.ts
+// DBのテーブルをここで定義している。
 
 import { sql } from "drizzle-orm";
 import {

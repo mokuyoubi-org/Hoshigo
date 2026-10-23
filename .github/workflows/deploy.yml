@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - preflight # このブランチ名にpushすると、準備(リハーサル)だけが走る
+  workflow_dispatch: # 手動で「全部やり直し」したいとき用
 
 # 続けてpushしても、順番に1つずつ処理する(途中で止めない)
 concurrency:
@@ -12,9 +13,35 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ================= 仕分け(どこが変わったかを見る) =================
+  changes:
+    name: "仕分け: どこが変わったか確認"
+    runs-on: ubuntu-latest
+    # mainへのpush以外(preflight・手動)は、全部「変わった」扱いにして全部回す
+    outputs:
+      api: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' || steps.filter.outputs.api == 'true' }}
+      app: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' || steps.filter.outputs.app == 'true' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Check changed folders
+        id: filter
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'cloudflare/**'
+              - '.github/workflows/**'
+            app:
+              - 'expo/**'
+              - '.github/workflows/**'
+
   # ================= 準備フェーズ(本番には何も触らない) =================
   build-web:
     name: "準備: Webをビルド"
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -54,9 +81,10 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
 
-          
   check-cloudflare:
     name: "準備: Cloudflareの鍵・権限・Workerを確認"
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -89,6 +117,8 @@ jobs:
 
   check-native:
     name: "準備: アプリのバンドルとEASの鍵を確認"
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -120,10 +150,11 @@ jobs:
         run: npx expo export --platform ios --platform android --output-dir dist-native-check
 
   # ================= 出すフェーズ(mainのときだけ。ここから本番) =================
+  # 準備のjobが「飛ばされた」だけなら進む。「失敗した」ときは止まる。
   release-api:
     name: "出す①: D1の棚の工事 → Workerのdeploy"
-    if: github.ref == 'refs/heads/main'
-    needs: [build-web, check-cloudflare, check-native]
+    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' && needs.changes.outputs.api == 'true' }}
+    needs: [changes, build-web, check-cloudflare, check-native]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -159,7 +190,8 @@ jobs:
 
   release-web:
     name: "出す②: Workersにdeploy"
-    needs: release-api
+    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' && needs.changes.outputs.app == 'true' }}
+    needs: [changes, build-web, check-native, release-api]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -184,7 +216,8 @@ jobs:
 
   release-ota:
     name: "出す③: EAS OTA"
-    needs: release-web
+    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' && needs.changes.outputs.app == 'true' }}
+    needs: [changes, release-web]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -241,7 +274,7 @@ jobs:
         if: ${{ needs.release-ota.result == 'failure' }}
         working-directory: expo
         run: npx --yes wrangler@4 rollback --message "auto rollback after failed release ${{ github.sha }}" --yes
-      # ②か③が失敗したとき: ①(Worker)を前に戻す(Webの結果にかかわらず実行)
+      # ①(Worker)が今回成功していたときだけ: 前に戻す(今回触っていないWorkerは戻さない)
       - name: Roll back Worker
-        if: ${{ always() }}
+        if: ${{ always() && needs.release-api.result == 'success' }}
         run: npx wrangler rollback --message "auto rollback after failed release ${{ github.sha }}" --yes

@@ -19,8 +19,13 @@ const app = new Hono<{ Bindings: AppEnv }>();
 
 // 許可するアドレス:Web版の本番(hoshigo.app)と、手元のExpo(localhost:8081)。
 // api.hoshigo.app(玄関)には誰でも入れるけど、その先に進めるのは以下のurlからのアクセスのみ。
-const ALLOWED_ORIGINS = ["https://hoshigo.app", "http://localhost:8081"];
-
+// api.hoshigo.app 自身も入れておく:本番のAndroidアプリは、つなぐ先のアドレスを
+// そのまま Origin として付けてくるので、これが無いと、本番のAndroidだけ403になる。
+const ALLOWED_ORIGINS = [
+  "https://hoshigo.app",
+  "https://api.hoshigo.app", // ⚠️必要!!!!!!!!!!!!!!!!!
+  "http://localhost:8081",
+];
 // api.hoshigo.appにアクセスしたときに表示される文章。
 app.get("/", (c) => c.text("Hoshigo API Server is running"));
 
