@@ -129,7 +129,7 @@ accountRoutes.post("/update_username", async (c) => {
 // 全員同じ結果なので、1時間「作り置き」する。
 accountRoutes.get(
   "/get_rankings",
-  cache({ cacheName: "hoshigo-rankings", cacheControl: "public, max-age=3600" }),
+  cache({ cacheName: "hoshigo-rankings", cacheControl: "public, max-age=0" }),
   async (c) => {
     const db = drizzle(c.env.DB, { schema: appSchema });
 console.log("DBに聞きに行った")

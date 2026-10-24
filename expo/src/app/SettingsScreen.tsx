@@ -27,11 +27,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Purchases from "react-native-purchases";
 import RevenueCatUI from "react-native-purchases-ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MyHeader, ToggleSwitch } from "ui-atoms";
 import { openWebPurchase } from "../services/revenuecat";
-import Purchases from "react-native-purchases";
 
 export default function SettingsScreen() {
   const t = useTranslation();
@@ -93,37 +93,38 @@ export default function SettingsScreen() {
               }
             />
 
+            <SettingsRow
+              label={t("common.plan")}
+              onPress={async () => {
+                if (Platform.OS === "web") {
+                  if (!uid) return;
+                  if (isPremium) {
+                    // Webのプレミアム会員は購読管理ページへ
+                    const info = await Purchases.getCustomerInfo();
+                    if (info.managementURL)
+                      await Linking.openURL(info.managementURL);
+                    return;
+                  }
+                  await openWebPurchase(uid);
+                  return;
+                }
 
-<SettingsRow
-  label={t("common.plan")}
-  onPress={async () => {
-    if (Platform.OS === "web") {
-      if (!uid) return;
-      if (isPremium) {
-        // Webのプレミアム会員は購読管理ページへ
-        const info = await Purchases.getCustomerInfo();
-        if (info.managementURL) await Linking.openURL(info.managementURL);
-        return;
-      }
-      await openWebPurchase(uid);
-      return;
-    }
-
-    if (isPremium) {
-      // プレミアム会員はカスタマーセンター（プラン確認・解約・復元）
-      await RevenueCatUI.presentCustomerCenter();
-    } else {
-      // 未購入の人はペイウォール
-      await RevenueCatUI.presentPaywall();
-    }
-  }}
-  rightElement={
-    <MyText className="text-lg text-textSub tracking-wide">
-      {isPremium ? t("premium.premiumPlan") :t("premium.startPlan")}
-    </MyText>
-  }
-/>
-
+                if (isPremium) {
+                  // プレミアム会員はカスタマーセンター（プラン確認・解約・復元）
+                  await RevenueCatUI.presentCustomerCenter();
+                } else {
+                  // 未購入の人はペイウォール
+                  await RevenueCatUI.presentPaywall();
+                }
+              }}
+              rightElement={
+                <MyText className="text-lg text-textSub tracking-wide">
+                  {isPremium
+                    ? t("premium.premiumPlan")
+                    : t("premium.startPlan")}
+                </MyText>
+              }
+            />
           </SettingsSection>
           {/* 対局セクション */}
           <SettingsSection title={t("Settings.matchSettings")}>
@@ -186,6 +187,10 @@ export default function SettingsScreen() {
             <SettingsRow
               label={t("Settings.termsOfService")}
               onPress={() => Linking.openURL("https://mokuyoubi.org/terms")}
+            />
+            <SettingsRow
+              label={t("Settings.licenses")}
+              onPress={() => Linking.openURL("https://mokuyoubi.org/licenses")}
             />
             <SettingsRow
               label={t("common.version")}

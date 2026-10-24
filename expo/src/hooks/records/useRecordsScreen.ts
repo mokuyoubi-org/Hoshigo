@@ -125,7 +125,7 @@ export const useRecordsScreen = () => {
         );
 
         // 🌟地は、最終局面の ownership から出す。
-        //    型安全に、any を経由して配列でも文字列でも受け取れるようにするよ♪
+        //    型安全に、any を経由して配列でも文字列でも受け取れるようにする
         const rawOwnership = record.final_ownership as unknown;
         let ownership: Ownership;
 

@@ -16,6 +16,9 @@ export type AuthEnv = {
   GOOGLE_CLIENT_SECRET: string;
 };
 
+// iOSアプリのBundle ID。Appleのトークンの「宛先」と照らし合わせる
+const IOS_BUNDLE_ID = "com.mokuyoubi.hoshigo";
+
 // 本番・手元の開発で使う、認証の本体。リクエストのたびに作る。
 export function createAuth(env: AuthEnv) {
   const db = drizzle(env.DB, { schema });
@@ -34,6 +37,7 @@ export function createAuth(env: AuthEnv) {
       "https://hoshigo.app",
       "https://api.hoshigo.app",
       "http://localhost:8081",
+      "https://appleid.apple.com",
     ],
     advanced: {
       defaultCookieAttributes: isDevTunnel
@@ -44,6 +48,12 @@ export function createAuth(env: AuthEnv) {
       google: {
         clientId: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
+      },
+      // iPhone標準の「Appleでサインイン」(IDトークン方式)専用
+      apple: {
+        clientId: IOS_BUNDLE_ID,
+        clientSecret: "native-only-not-used",
+        appBundleIdentifier: IOS_BUNDLE_ID,
       },
     },
     plugins: [

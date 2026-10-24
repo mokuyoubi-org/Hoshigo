@@ -31,6 +31,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.mokuyoubi.hoshigo",
+    usesAppleSignIn: true,
     icon: "./assets/icons/Hoshigo.icon", // iosのアイコンとして使う
     associatedDomains: ["applinks:hoshigo.app"],
     infoPlist: {
@@ -69,7 +70,6 @@ const config: ExpoConfig = {
     favicon: "./assets/icons/favicon.png", // Webのアイコンとして使う
     bundler: "metro",
   },
-
   plugins: [
     ["expo-router", { origin: "https://hoshigo.app" }],
     [
@@ -96,6 +96,7 @@ const config: ExpoConfig = {
     "expo-web-browser",
     "expo-image",
     "expo-sharing",
+    "expo-apple-authentication",
     [
       "expo-build-properties",
       {

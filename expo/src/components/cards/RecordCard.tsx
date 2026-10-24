@@ -67,7 +67,7 @@ export const RecordCard = ({
     setHeaderHeight((prev) => (prev === height ? prev : height));
   };
 
-  if (isSkeletonCard(record) || !ownership || !board) {
+  if (isSkeletonCard(record) || !board) {
     return <SkeletonCard height={cardHeight} />;
   }
 

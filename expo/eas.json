@@ -30,9 +30,9 @@
         "track": "production"
       },
       "ios": {
-        "appleId": "your@apple.com", // あとで
-        "ascAppId": "123456789", // あとで
-        "appleTeamId": "XXXXXXXXXX" // あとで
+        "appleId": "mokuyoubi.co.jp@gmail.com",
+        "ascAppId": "6777338181",
+        "appleTeamId": "Q36WX4944V"
       }
     }
   },

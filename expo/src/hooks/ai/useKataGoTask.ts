@@ -66,6 +66,26 @@ export const useKataGoTask = () => {
     );
     if (!result) return null;
 
+    // 🌟 地が、ちゃんと返ってこなかった分析は、偽物を作らずに失敗(null)にする
+    //    (長さが合わない / 全部ちょうど0 = 本物のKataGoでは、まず起きない)
+    const rawOwnership = result.ownership
+      ? Array.from(result.ownership as ArrayLike<number>)
+      : [];
+    if (
+      rawOwnership.length !== boardSize * boardSize ||
+      rawOwnership.every((v) => v === 0)
+    ) {
+      console.warn(
+        "[useKataGoTask] 地が空だったので、失敗にします",
+        movesSoFar.length,
+        "手目 / 勝率:",
+        result.winRate,
+        "/ 地の長さ:",
+        rawOwnership.length,
+      );
+      return null;
+    }
+
     // x, y 形式から grid 形式へ変換する
     const candidateMoves = rawMovesToCandidates(result.moves ?? [], boardSize);
 
@@ -75,10 +95,17 @@ export const useKataGoTask = () => {
         boardSize,
         matchType,
         movesSoFar,
-        result.ownership as ArrayLike<number>,
+        rawOwnership,
         toPercent(result.winRate ?? 0.5),
         candidateMoves,
       );
+
+    // 🌟 終局ではないのに、KataGoが勝率を返さなかった分析は、偽の50を使わずに失敗にする
+    //    (終局なら、勝率はgoscorerの結果で決まるので、なくてもよい)
+    if (!isFinal && result.winRate == null) {
+      console.warn("[useKataGoTask] 勝率が返ってこなかったので、失敗にします");
+      return null;
+    }
 
     return { winRate, candidates, ownership, scoreLead, isFinal, dames };
   };
