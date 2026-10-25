@@ -48,6 +48,21 @@ export const LoginModal = ({ visible, onClose }: Props) => {
         ) : null}
 
         <View className="gap-3 mt-2">
+          {/* Appleでサインインボタン(iOSだけ。Appleの公式ボタン) */}
+          {Platform.OS === "ios" ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={
+                AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+              }
+              buttonStyle={
+                AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              }
+              cornerRadius={8}
+              style={{ width: "100%", height: 48 }}
+              onPress={onSignInWithApple}
+            />
+          ) : null}
+
           {/* Googleでログインボタン(Google公式の見た目: 白い背景 + カラーのG) */}
           <TouchableOpacity
             className="h-14 rounded-xl flex-row justify-center items-center"
@@ -76,21 +91,6 @@ export const LoginModal = ({ visible, onClose }: Props) => {
               </>
             )}
           </TouchableOpacity>
-
-          {/* Appleでサインインボタン(iOSだけ。Appleの公式ボタン) */}
-          {Platform.OS === "ios" ? (
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={
-                AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
-              }
-              buttonStyle={
-                AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-              }
-              cornerRadius={12}
-              style={{ width: "100%", height: 40 }}
-              onPress={onSignInWithApple}
-            />
-          ) : null}
 
           <TouchableOpacity
             className="h-14 rounded-xl justify-center items-center bg-backgroundStrong"

@@ -96,6 +96,13 @@ export default function SettingsScreen() {
             <SettingsRow
               label={t("common.plan")}
               onPress={async () => {
+                // ゲストは、課金できない(ログイン後に別のIDになると、購入が引き継がれないため)
+                // まずログインしてもらう
+                if (isAnonymous) {
+                  show(<LoginModal visible={true} onClose={hide} />);
+                  return;
+                }
+
                 if (Platform.OS === "web") {
                   if (!uid) return;
                   if (isPremium) {
