@@ -41,8 +41,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts",
-    "nativewind-env.d.ts"
-, "fix-node-modules-path.mjs"  ]
+    ".expo/types/**/*.ts", // 隠しファイルは明示する必要があるみたい
+    "expo-env.d.ts", // d.tsはtsに含まれてるけど、一応明記しておくのが安心みたい
+    "nativewind-env.d.ts" // 同上
+  ]
 }

@@ -66,7 +66,7 @@ const config: ExpoConfig = {
   },
 
   web: {
-    output: "static",
+    output: "static", // singleならindex.html一枚のみ。staticなら一枚一枚のページにつきhtmlが作られる
     favicon: "./assets/icons/favicon.png", // Webのアイコンとして使う
     bundler: "metro",
   },

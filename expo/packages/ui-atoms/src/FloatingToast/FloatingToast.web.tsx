@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { FloatingToastProps } from "./shared";
-import { useIsHydrated } from "./useIsHydrated";
+import { useIsHydrated } from "../hooks/useIsHydrated";
 
 export const FloatingToast = ({
   visible,

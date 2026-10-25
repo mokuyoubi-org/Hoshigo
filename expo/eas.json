@@ -3,6 +3,7 @@
 // 具体的にはビルドおよび提出についての指示。
 
 {
+  // ビルドの時の指示
   "build": {
     "development": {
       "developmentClient": true,
@@ -24,6 +25,7 @@
       "channel": "default"
     }
   },
+  // 提出の時の指示
   "submit": {
     "production": {
       "android": {

@@ -106,7 +106,7 @@ jobs:
       - name: Check the API URL is the production one
         run: grep -Eq '^EXPO_PUBLIC_API_URL="?https://api\.hoshigo\.app"?$' .env.local
       - name: Build web
-        run: npx expo export -p web && node fix-node-modules-path.mjs
+        run: npx expo export -p web
       - name: Dry run web Worker deploy
         run: npx --yes wrangler@4 deploy --dry-run
       - name: Save web build

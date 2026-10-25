@@ -1,21 +1,13 @@
 // ModalShell.web.tsx
 
-import { useSyncExternalStore } from "react";
 import ReactDOM from "react-dom";
 import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { useIsHydrated } from "../hooks/useIsHydrated";
 import {
   computeModalBox,
   DEFAULT_CONTENT_PADDING,
   ModalShellProps,
 } from "./common";
-
-const emptySubscribe = () => () => {};
-const useIsHydrated = () =>
-  useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
 
 export const ModalShell = ({
   children,
