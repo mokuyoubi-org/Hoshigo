@@ -750,20 +750,20 @@ export const dictionary = {
   },
   premium: {
     en: {
-      startPlan: "Start Plan",
-      premiumPlan: "Premium Plan",
+      startPlan: "Start",
+      premiumPlan: "Premium",
     },
     ja: {
-      startPlan: "スタートプラン",
-      premiumPlan: "プレミアムプラン",
+      startPlan: "スタート",
+      premiumPlan: "プレミアム",
     },
     zh: {
-      startPlan: "Start Plan",
+      startPlan: "入门版",
       premiumPlan: "高级版",
     },
     ko: {
-      startPlan: "Start Plan",
-      premiumPlan: "프리미엄 플랜",
+      startPlan: "스타트",
+      premiumPlan: "프리미엄",
     },
   },
   BotName: {

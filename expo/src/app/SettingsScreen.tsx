@@ -119,9 +119,11 @@ export default function SettingsScreen() {
               }}
               rightElement={
                 <MyText className="text-lg text-textSub tracking-wide">
-                  {isPremium
-                    ? t("premium.premiumPlan")
-                    : t("premium.startPlan")}
+                  {isAnonymous
+                    ? t("common.guest")
+                    : isPremium
+                      ? t("premium.premiumPlan")
+                      : t("premium.startPlan")}
                 </MyText>
               }
             />

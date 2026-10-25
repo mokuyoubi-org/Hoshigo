@@ -87,7 +87,7 @@ export const LoginModal = ({ visible, onClose }: Props) => {
                 AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
               }
               cornerRadius={12}
-              style={{ width: "100%", height: 56 }}
+              style={{ width: "100%", height: 40 }}
               onPress={onSignInWithApple}
             />
           ) : null}
