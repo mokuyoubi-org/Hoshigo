@@ -3,8 +3,9 @@
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous } from "better-auth/plugins";
+import { anonymous, captcha } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
+import { createLocalJWKSet, jwtVerify } from "jose";
 import * as schema from "./db/auth-schema";
 import { carryOverGuestProfile } from "./guest-link";
 
@@ -14,8 +15,11 @@ export type AuthEnv = {
   BETTER_AUTH_URL: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+  // Turnstileのシークレットキー(サイトキーとは別)。ゲスト作成の検証に使う
+  TURNSTILE_SECRET: string;
+  // devだけ: Appleの公開鍵(JSON)。本番では設定しない
+  APPLE_JWKS_DEV?: string;
 };
-
 // iOSアプリのBundle ID。Appleのトークンの「宛先」と照らし合わせる
 const IOS_BUNDLE_ID = "com.mokuyoubi.hoshigo";
 
@@ -43,22 +47,71 @@ export function createAuth(env: AuthEnv) {
       defaultCookieAttributes: isDevTunnel
         ? { sameSite: "none", secure: true }
         : {},
+      // Cloudflare経由なので、本当のIPは cf-connecting-ip ヘッダーに入っている
+      ipAddress: {
+        ipAddressHeaders: ["cf-connecting-ip"],
+      },
+    },
+    // ゲスト(匿名)の作りすぎを防ぐ。
+    // Workerはリクエストごとに作り直されるので、回数はメモリではなくD1に保存する
+    rateLimit: {
+      enabled: !isDevTunnel, // devは、動作確認のたびに止まらないよう、無効にしている
+      storage: "database",
+      customRules: {
+        // 同じIPから、24時間で5人まで
+        "/sign-in/anonymous": { window: 60 * 60 * 24, max: 5 },
+        // 何度も呼ばれるので数えない(D1の書き込みを節約)
+        "/get-session": false,
+      },
     },
     socialProviders: {
       google: {
         clientId: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
       },
+
+      // iPhone標準の「Appleでサインイン」(IDトークン方式)専用
+      // auth.ts の createAuth 内: socialProviders.apple ブロック
+
       // iPhone標準の「Appleでサインイン」(IDトークン方式)専用
       apple: {
         clientId: IOS_BUNDLE_ID,
         clientSecret: "native-only-not-used",
         appBundleIdentifier: IOS_BUNDLE_ID,
+        // devだけ: wrangler dev からだと、Appleの鍵の窓口が403になるので、
+        // 手元に保存した鍵(.dev.vars の APPLE_JWKS_DEV)で、署名を確かめる。
+        // 本番は APPLE_JWKS_DEV が無いので、Better Auth標準の確認が、そのまま働く
+        ...(env.APPLE_JWKS_DEV
+          ? {
+              verifyIdToken: async (token: string) => {
+                try {
+                  const keys = createLocalJWKSet(
+                    JSON.parse(env.APPLE_JWKS_DEV!),
+                  );
+                  await jwtVerify(token, keys, {
+                    issuer: "https://appleid.apple.com",
+                    audience: IOS_BUNDLE_ID,
+                  });
+                  return true;
+                } catch (e) {
+                  console.error("Apple IDトークンの確認に失敗(dev):", e);
+                  return false;
+                }
+              },
+            }
+          : {}),
       },
     },
     plugins: [
       // Expoアプリとのやりとりを助ける
       expo(),
+      // ゲスト作成のときだけ、Turnstileのトークンをサーバー側で確かめる
+      // (トークンが無い・偽物なら、ゲストは作られない)
+      captcha({
+        provider: "cloudflare-turnstile",
+        secretKey: env.TURNSTILE_SECRET,
+        endpoints: ["/sign-in/anonymous"],
+      }),
       // ゲスト(匿名)ログイン
       anonymous({
         onLinkAccount: async ({ anonymousUser, newUser }) => {
@@ -85,4 +138,5 @@ export const auth = createAuth({
   BETTER_AUTH_URL: "http://localhost:8787",
   GOOGLE_CLIENT_ID: "cli-only",
   GOOGLE_CLIENT_SECRET: "cli-only",
+  TURNSTILE_SECRET: "cli-only",
 });
