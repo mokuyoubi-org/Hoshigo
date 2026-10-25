@@ -442,24 +442,6 @@ const BoardEditScreenContent = ({
                 />
               )}
 
-              {/* 地計算🧮ボタン */}
-              {/* {!board.showOwnership && (
-                <IconButton
-                  icon={
-                    board.isAnalyzing || analysisLoop.isAnalyzing ? (
-                      <ActivityIndicator size="small" color={colors.primary} />
-                    ) : (
-                      <FontAwesome6 name="border-all" />
-                    )
-                  }
-                  iconColor={colors.primary}
-                  backgroundColor={colors.foreground}
-                  borderColor={colors.backgroundStrong}
-                  onPress={handleShowTerritory}
-                  disabled={board.isAnalyzing || analysisLoop.isAnalyzing}
-                />
-              )} */}
-
               {/* 🔄 モード切り替えスイッチ */}
               <SegmentedIconControl
                 trackBackgroundColor={colors.backgroundStrong}
@@ -638,7 +620,7 @@ const BoardEditScreenContent = ({
           <View
             style={{
               flexGrow: LAYOUT_CONFIG.FLEX_C * heightRatio,
-              minHeight: 8,
+              minHeight: 20,
             }}
           />
         </View>
