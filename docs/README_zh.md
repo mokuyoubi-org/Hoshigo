@@ -13,7 +13,7 @@
 
 - WEB版: https://hoshigo.app
 - Android版: https://play.google.com/store/apps/details?id=com.mokuyoubi.Hoshigo
-- Mokuyoubi: https://mokuyoubi.org
+- Mokuyoubi（开发商）: https://mokuyoubi.org
 
 <table>
   <tr>

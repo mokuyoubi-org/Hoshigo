@@ -13,7 +13,7 @@ Whether you're brand new to Go or ready to test your skills, come play a game on
 
 - Web: https://hoshigo.app
 - Android: https://play.google.com/store/apps/details?id=com.mokuyoubi.Hoshigo
-- Mokuyoubi: https://mokuyoubi.org
+- Mokuyoubi (Developer): https://mokuyoubi.org
 
 <table>
   <tr>
