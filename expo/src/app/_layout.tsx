@@ -11,11 +11,15 @@ import { SplashScreen } from "expo-router";
 import { kvStore } from "kv-store";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { LogBox, View } from "react-native";
 import { initRevenueCat } from "../services/revenuecat";
 
 // 準備ができるまで、スプラッシュ画面を出したままにする
 SplashScreen.preventAutoHideAsync();
+// nativewind系の、うるさいログ黙らせる
+LogBox.ignoreLogs([
+  "Can't perform a React state update on a component that hasn't mounted yet",
+]);
 
 // 今までの Layout の中身。名前だけ LayoutContent に変わった
 const LayoutContent = () => {
