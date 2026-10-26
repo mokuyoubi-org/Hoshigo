@@ -94,13 +94,16 @@ export const fetchRecordAnalysis = async (
   boardSize: BoardSize,
   matchType: MatchType,
   result: string | null,
-): Promise<RecordAnalysis | null> => {
+): Promise<RecordAnalysis | null | "not_found"> => {
   try {
-    const { data, error } = await api.get<{ analysis: ServerAnalysis | null }>(
-      `analysis/${encodeURIComponent(gameId)}`,
-    );
-    const a = data?.analysis;
-    if (error || !a) return null;
+    const { data, error } = await api.get<{
+      analysis: ServerAnalysis | null;
+      record_exists?: boolean; // 分析が無いときだけ入る。false なら、対局そのものが無い
+    }>(`analysis/${encodeURIComponent(gameId)}`);
+    if (error || !data) return null;
+    if (data.record_exists === false) return "not_found";
+    const a = data.analysis;
+    if (!a) return null;
     const pos = a.ownership.map((own, i) => {
       const win = a.win_rate[i];
       const ownership = own;

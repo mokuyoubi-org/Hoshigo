@@ -66,6 +66,18 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
     }, 0);
   };
 
+  // 起動した時に、ホームへ連れ戻したい画面か?
+  // ・undefined: アプリを開いた直後の入口(index.tsx。ここで止まらないように、ホームへ送る)
+  // ・GameScreen: matchIdがないとおかしい画面
+  // それ以外(タブ、デバッグ、練習画面など)は、そのままにする
+  const isPageToSendHome = () => {
+    const first = segmentsRef.current[0];
+    return (
+      first === undefined ||
+      first === "GameScreen"
+    );
+  };
+
   // ①ビルド情報のログ + ②メンテナンス/バージョン不足の仕込み(最初の1回だけ)。
   useEffect(() => {
     console.log("🔎 実行中のビルド情報:", {
@@ -101,12 +113,10 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
       syncedUserIdRef.current = null;
 
       // 起動時: 何も作らず、通信もしない。
-      // すでにタブや開発用の画面にいれば、移動しない。
+      // 連れ戻したい画面にいるときだけ、ホームへ移動する。
       if (isFirstRef.current) {
         clearUserState();
-        const isInTabs = segmentsRef.current[0] === "(tabs)";
-        const isDebug = segmentsRef.current[0] === "(debug)";
-        if (!isInTabs && !isDebug) goHome();
+        if (isPageToSendHome()) goHome();
         setIsInitializing(false);
         return;
       }
@@ -154,11 +164,9 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
           return;
         }
 
-        // 起動時は、すでにタブや開発用の画面にいれば、移動しない。
+        // 起動時は、連れ戻したい画面にいるときだけ、ホームへ移動する。
         // ログアウトやGoogleログインのあとは、必ずホームへ。
-        const isInTabs = segmentsRef.current[0] === "(tabs)";
-        const isDebug = segmentsRef.current[0] === "(debug)";
-        if (!wasFirst || (!isInTabs && !isDebug)) goHome();
+        if (!wasFirst || isPageToSendHome()) goHome();
       } catch (err) {
         console.error("プロフィール同期に失敗:", err);
         clearUserState();
@@ -170,7 +178,6 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
 
     void afterSignedIn();
   }, [isPending, userId]);
-
   // ここは<View>にしてはいけない
   return <>{children}</>;
 };

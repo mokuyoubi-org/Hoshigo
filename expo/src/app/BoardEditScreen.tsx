@@ -21,7 +21,7 @@ import {
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
   GoBoard,
@@ -112,6 +112,8 @@ export default function BoardEditScreen() {
     id: string;
     analysis: RecordAnalysis | null;
   } | null>(null);
+  // サーバーに、この対局そのものが無かったとき true(→ホームへ戻す)
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!recordId || !needsFetch) return;
@@ -122,9 +124,20 @@ export default function BoardEditScreen() {
       record.board_size,
       record.match_type,
       record.result,
-    ).then((analysis) => {
-      if (!cancelled) setFetched({ id: recordId, analysis });
-    });
+    )
+      .then((result) => {
+        if (cancelled) return;
+        if (result === "not_found") {
+          setNotFound(true);
+          return;
+        }
+        setFetched({ id: recordId, analysis: result });
+      })
+      .catch((e) => {
+        // 取れなかった場合も「分析なし」として扱い、アプリ内で分析する流れに進める
+        console.error("Failed to fetch record analysis:", e);
+        if (!cancelled) setFetched({ id: recordId, analysis: null });
+      });
     return () => {
       cancelled = true;
     };
@@ -139,7 +152,12 @@ export default function BoardEditScreen() {
 
   useBlurActiveElement();
 
-  // 棋譜がない、または、分析の取得待ちの間は、ローディング画面
+  // 棋譜がない(パラメータがない / 途中で切れている)、または、サーバーに対局が無いときは、ホームへ戻す
+  if (!record || notFound) {
+    return <Redirect href="/HomeScreen" />;
+  }
+
+  // 分析の取得待ちの間は、ローディング画面
   const waiting = needsFetch && fetched?.id !== recordId;
   if (!recordWithAnalysis || waiting) {
     return (

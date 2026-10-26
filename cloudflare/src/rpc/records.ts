@@ -166,6 +166,7 @@ recordsRoutes.get(
 // ログインしていなくても見られる。
 // 終局後の分析は変わらないので、棚にも端末にも1年使い回してもらう(Cache-Control)。
 // 分析がまだ無いとき(null)は、後で届くかもしれないので、棚の既定の60秒だけにする。
+// 分析が無いときだけ、対局そのものがあるかをD1で確かめて、record_exists で知らせる。
 recordsRoutes.get(
   "/analysis/:gameId",
   cache({
@@ -177,7 +178,14 @@ recordsRoutes.get(
     const gameId = c.req.param("gameId");
 
     const object = await c.env.RECORDS.get(`analysis/${gameId}.json.gz`);
-    if (!object) return c.json({ analysis: null });
+    if (!object) {
+      const db = drizzle(c.env.DB, { schema: appSchema });
+      const [card] = await db
+        .select({ gameId: records.gameId })
+        .from(records)
+        .where(eq(records.gameId, gameId));
+      return c.json({ analysis: null, record_exists: !!card });
+    }
 
     const file = await readGzipJson<{ analysis?: unknown }>(object);
     // 🏷️ 誰が見ても同じなので、棚にも端末にも、1年使い回してOK
