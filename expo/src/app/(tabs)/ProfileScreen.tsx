@@ -158,11 +158,11 @@ export default function ProfileScreen() {
                 <MixedText className="text-3xl text-text tracking-wide">
                   {profileData.username ?? t("common.guest")}
                 </MixedText>
-                {profileData.isLoggedIn && (
+                {profileData.isPremium && (
                   <MaterialCommunityIcons
                     name="check-decagram"
                     size={22}
-                    color={profileData.isPremium ? colors.gold : colors.primary} // ブランドカラー（青など）で統一
+                    color={colors.gold} // プレミアム
                   />
                 )}
                 {/* ペンアイコン(ただの飾り) */}

@@ -3,7 +3,6 @@
 // 「入力データの正しさチェック（バリデーション）」の機能を提供する
 
 import { JA_HAN, SC_HAN } from "@/src/constants/hanSets";
-import { MEASURED_WIDTHS } from "@/src/constants/measuredWidths";
 import { UsernameValidationError } from "../../types/validation";
 
 export const isValidEmail = (email: string) => {
@@ -11,59 +10,61 @@ export const isValidEmail = (email: string) => {
 };
 
 /**
- * ユーザー名の「表示幅」の上限。実際のフォントで測った幅で数える。(混在OK)
- * 基準は「a の幅 = 1」。m・W・大文字・ひらがななどは1より大きく、i や l は1に切り上げる。
- * ⚠️ 幅は必ず1以上にすること。そうすると「幅12まで」=「最大12文字」になり、
- *    サーバ側 update_username の「12文字まで」と話が合う。(幅1未満の文字を足すとサーバの上限が破れる)
+ * ユーザー名の「表示幅」の上限。文字の種類ごとに、ざっくり決めた幅で数える。
+ *   数字 = 10 / 半角英字 = 15 / ひらがな・カタカナ・ハングル・漢字 = 20 / 絵文字 = 25
+ * ⚠️ 幅は必ず10以上にすること。そうすると「幅120まで」=「最大12文字」になり、
+ *    サーバ側 update_username の「12文字まで」と話が合う。
  */
-export const MAX_USERNAME_WIDTH = 12;
+const MAX_USERNAME_WIDTH = 120;
 
-// JSの小数の足し算はズレることがあるので、内部では10倍の整数で計算する。
-const WIDTH_SCALE = 10;
+type Range = readonly [number, number];
 
-// 測った幅の表(MEASURED_WIDTHS)を「文字 → 幅」の引き出しに組み替える。
-// 表に載っている文字だけOK。載っていない文字(記号など)は使えない。
-const MEASURED_WIDTH_MAP: ReadonlyMap<string, number> = new Map(
-  Object.entries(MEASURED_WIDTHS).flatMap(([width, chars]) =>
-    [...chars].map((ch) => [ch, Number(width)] as const),
-  ),
-);
+const inRanges = (cp: number, ranges: readonly Range[]): boolean =>
+  ranges.some(([start, end]) => cp >= start && cp <= end);
 
-// 漢字名簿: フォントが用意されている漢字だけOK。名簿にない漢字は使えない。
-const ALLOWED_HAN: ReadonlySet<string> = new Set([...JA_HAN, ...SC_HAN]);
-const HAN_WIDTH = 18; // 漢字は正方形(ひらがなと同じ幅)
+// 数字(0〜9)
+const DIGIT_WIDTH = 10;
+const DIGIT_RANGE: readonly Range[] = [[48, 57]];
 
-// 絵文字は測れないので、範囲で判定して固定の幅にする
-const EMOJI_RANGES: readonly (readonly [number, number])[] = [
-  [9728, 10175], //   その他の記号・Dingbats
-  [11008, 11263], //  ⭐など
-  [127462, 129791], // 国旗〜絵文字拡張A
+// 半角英字(a-z, A-Z)と - _
+const LATIN_WIDTH = 15;
+const LATIN_RANGES: readonly Range[] = [
+  [65, 90], //  A-Z
+  [97, 122], // a-z
+  [45, 45], //  -
+  [95, 95], //  _
 ];
-const EMOJI_WIDTH = 24; // 絵文字は24
 
-// ハングルは全部同じ幅なので、測らずに範囲で判定して固定の幅にする
-const HANGUL_RANGES: readonly (readonly [number, number])[] = [
+// ひらがな・カタカナ・ハングル(範囲で判定)
+const KANA_HANGUL_WIDTH = 20;
+const KANA_HANGUL_RANGES: readonly Range[] = [
+  [12353, 12447], // ひらがな
+  [12448, 12543], // カタカナ(・ー も入る)
   [12593, 12643], // ハングル字母(ㄱㅏなど)
   [44032, 55203], // ハングル音節
 ];
-const HANGUL_WIDTH = 16; // ハングルは16
 
-// 1文字の幅を返す。名簿に載っていなければ null
+// 漢字名簿: フォントが用意されている漢字だけOK。名簿にない漢字は使えない。
+const ALLOWED_HAN: ReadonlySet<string> = new Set([...JA_HAN, ...SC_HAN]);
+const HAN_WIDTH = 20;
+
+// 絵文字(範囲で判定)。国旗と、新しい拡張の絵文字は使えない。
+const EMOJI_WIDTH = 25;
+const EMOJI_RANGES: readonly Range[] = [
+  [9728, 10175], //   その他の記号・Dingbats
+  [11008, 11263], //  ⭐など
+  [127744, 129535], // 😀🍎🚗🦊など(国旗と拡張Aは含まない)
+];
+
+// 1文字の幅を返す。使えない文字なら null
 const getCharWidth = (ch: string): number | null => {
   const cp = ch.codePointAt(0)!;
 
-  for (const [start, end] of HANGUL_RANGES) {
-    if (cp >= start && cp <= end) return HANGUL_WIDTH;
-  }
-
-  const measured = MEASURED_WIDTH_MAP.get(ch);
-  if (measured !== undefined) return measured;
-
+  if (inRanges(cp, DIGIT_RANGE)) return DIGIT_WIDTH;
+  if (inRanges(cp, LATIN_RANGES)) return LATIN_WIDTH;
+  if (inRanges(cp, KANA_HANGUL_RANGES)) return KANA_HANGUL_WIDTH;
   if (ALLOWED_HAN.has(ch)) return HAN_WIDTH;
-
-  for (const [start, end] of EMOJI_RANGES) {
-    if (cp >= start && cp <= end) return EMOJI_WIDTH;
-  }
+  if (inRanges(cp, EMOJI_RANGES)) return EMOJI_WIDTH;
   return null;
 };
 
@@ -81,16 +82,16 @@ export const validateUsername = (text: string): UsernameValidationError => {
     return "required";
   }
 
-  let scaledWidth = 0;
+  let totalWidth = 0;
   for (const ch of normalizedText) {
     const width = getCharWidth(ch);
     if (width === null) {
-      return "invalidFormat"; // 名簿に載っていない文字
+      return "invalidFormat"; // 使えない文字
     }
-    scaledWidth += width;
+    totalWidth += width;
   }
 
-  if (scaledWidth > MAX_USERNAME_WIDTH * WIDTH_SCALE) {
+  if (totalWidth > MAX_USERNAME_WIDTH) {
     return "length";
   }
   return null;
@@ -101,7 +102,7 @@ export const validateUsername = (text: string): UsernameValidationError => {
 const normalizeForCompare = (text: string): string =>
   text.normalize("NFKC").toLowerCase();
 
-// ユーザーが使えないボットの名前を、辞書(BotName)から自動で集める
+// ユーザーが使えないボットの名前
 const RESERVED_NAMES: string[] = [
   "Mint",
   "Soda",
