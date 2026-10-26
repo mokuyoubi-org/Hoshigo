@@ -4,13 +4,12 @@ import type { Profile } from "@/src/contexts/ProfileContexts";
 import { api } from "@/src/services/api/api";
 import { authClient } from "@/src/services/auth/auth-client";
 
-// Profile(お手本)から、sessionUser側で返す3つを除いたもの
-type ProfileData = Omit<Profile, "uid" | "email" | "isAnonymous">;
+// Profile(お手本)から、sessionUser側で返す2つを除いたもの
+type ProfileData = Omit<Profile, "uid" | "email">;
 
 type SessionUserData = {
   id: string;
   email: string | null;
-  isAnonymous: boolean;
 };
 
 type FetchProfileResult = {
@@ -32,12 +31,9 @@ export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
     return null;
   }
 
-  const isAnonymous = user.isAnonymous === true;
   const sessionUser: SessionUserData = {
     id: user.id,
-    // ゲストのメールには、サーバー側で、ダミーのアドレスが入っているので、画面には出さない
-    email: isAnonymous ? null : (user.email ?? null),
-    isAnonymous,
+    email: user.email ?? null,
   };
 
   const rawProfile = data.profile;

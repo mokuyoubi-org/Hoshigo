@@ -16,7 +16,6 @@ export type RankingsProfile = {
   username: string;
   rating: number;
   icon_index: number;
-  is_authenticated?: boolean; // 🐱 認証済みフラグを追加！
   is_premium?: boolean;
 };
 
@@ -89,7 +88,7 @@ export const RankingCard = ({
 
           <View className="px-2" />
 
-          {/* 名前 + 認証バッジ */}
+          {/* 名前 + プレミアムバッジ */}
           <View className="flex-1 flex-row items-center gap-1">
             <MixedText
               className={`text-base color-text ${isTop3 ? "color-text" : ""}`}
@@ -98,12 +97,12 @@ export const RankingCard = ({
               {item.username}
             </MixedText>
 
-            {/* 🐱 認証済みユーザーなら公式バッジを表示する */}
-            {item.is_authenticated && (
+            {/* 🐱 プレミアムの人だけ、金色のバッジを表示する */}
+            {item.is_premium && (
               <MaterialCommunityIcons
                 name="check-decagram"
                 size={16}
-                color={item.is_premium ? colors.gold : colors.primary}
+                color={colors.gold}
               />
             )}
           </View>

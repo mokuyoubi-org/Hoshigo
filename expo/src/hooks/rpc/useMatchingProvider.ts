@@ -6,24 +6,22 @@
 // 流れ:待機列のトランシーバー(/ws/queue/:boardSize)をつなぐ
 //   → サーバーが組んでくれたら "matched" が届く → 対局画面へ
 //   → すでに対局中なら "resume" が届く → 対局画面へ復帰
-import { useProfile } from "@/src/contexts/ProfileContexts";
 import { formatPlayingParams } from "@/src/logics/rpc/matchingRPC";
 import { connectWs, WsConnection } from "@/src/services/api/ws";
+import { ensureSession } from "@/src/services/auth/ensureSession";
 import { router } from "expo-router";
 import { BoardSize } from "go-core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export const useMatchingProvider = (
-  // 匿名ユーザが、その盤面の1日の対局数の上限に達していて、
-  // サーバに待機列への追加を断られた瞬間に呼ばれる。
+  // ログインしていない人が、対局ボタンを押した瞬間に呼ばれる。
   // 「ログインしてください」モーダルなどのUI関心事は、呼び出し元の責務にする。
-  onDailyLimitReached: () => void,
+  onLoginRequired: () => void,
 ) => {
   const [isMatching, setIsMatching] = useState(false);
   const [matchingBoardSize, setMatchingBoardSize] = useState<BoardSize | null>(
     null,
   );
-  const { uid } = useProfile();
   const connectionRef = useRef<WsConnection | null>(null);
 
   // 「何回目の挑戦か」の番号札。つなぐ途中でキャンセルされたり、
@@ -55,10 +53,10 @@ export const useMatchingProvider = (
     };
   }, [closeConnection]);
 
-  // マッチング開始！
+  // マッチング開始!
   const startMatching = async (boardSize: BoardSize) => {
-    // 🛡️ガード
-    if (isMatching || !uid) return;
+    // 🛡️ガード(連打対策)
+    if (isMatching) return;
 
     // 🐱 連打対策も兼ねて、つなぐより先にフラグを立てておく
     setIsMatching(true);
@@ -67,9 +65,20 @@ export const useMatchingProvider = (
     closeConnection(); // 開始前に古い接続があれば切る
     const myAttempt = ++attemptRef.current;
 
-    console.log("🐱 マッチング開始！");
+    console.log("🐱 マッチング開始!");
 
     try {
+      // 🎫 ログインしていなければ(ビジター)、ここで「ログインしてください」を出す。
+      // サーバーの待機列は、ログインしている人しか入れないため
+      const ready = await ensureSession();
+      // 確認の途中でキャンセルされていたら、ここで終わり
+      if (attemptRef.current !== myAttempt) return;
+      if (!ready) {
+        finish();
+        onLoginRequired();
+        return;
+      }
+
       const conn = await connectWs(`/ws/queue/${boardSize}`, {
         onMessage: (msg) => {
           if (attemptRef.current !== myAttempt) return;
@@ -101,14 +110,8 @@ export const useMatchingProvider = (
 
             case "error":
               finish();
-              // 🎫 1日の対局数の上限に達していた場合は、エラーログではなくUIに知らせる
-              if (msg.error?.code === "DAILY_PLAY_LIMIT_REACHED") {
-                console.log("🐱 1日の対局数の上限に達している");
-                onDailyLimitReached();
-              } else {
-                // メンテナンス・バージョン不足は、ws.ts がもう知らせている
-                console.error("待機列のエラー:", msg.error);
-              }
+              // メンテナンス・バージョン不足は、ws.ts がもう知らせている
+              console.error("待機列のエラー:", msg.error);
               break;
           }
         },

@@ -3,7 +3,7 @@
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous, captcha } from "better-auth/plugins";
+import { anonymous } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import { createLocalJWKSet, jwtVerify } from "jose";
 import * as schema from "./db/auth-schema";
@@ -15,8 +15,6 @@ export type AuthEnv = {
   BETTER_AUTH_URL: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
-  // Turnstileのシークレットキー(サイトキーとは別)。ゲスト作成の検証に使う
-  TURNSTILE_SECRET: string;
   // devだけ: Appleの公開鍵(JSON)。本番では設定しない
   APPLE_JWKS_DEV?: string;
 };
@@ -50,18 +48,6 @@ export function createAuth(env: AuthEnv) {
       // Cloudflare経由なので、本当のIPは cf-connecting-ip ヘッダーに入っている
       ipAddress: {
         ipAddressHeaders: ["cf-connecting-ip"],
-      },
-    },
-    // ゲスト(匿名)の作りすぎを防ぐ。
-    // Workerはリクエストごとに作り直されるので、回数はメモリではなくD1に保存する
-    rateLimit: {
-      enabled: !isDevTunnel, // devは、動作確認のたびに止まらないよう、無効にしている
-      storage: "database",
-      customRules: {
-        // 同じIPから、24時間で5人まで
-        "/sign-in/anonymous": { window: 60 * 60 * 24, max: 5 },
-        // 何度も呼ばれるので数えない(D1の書き込みを節約)
-        "/get-session": false,
       },
     },
     socialProviders: {
@@ -105,28 +91,6 @@ export function createAuth(env: AuthEnv) {
     plugins: [
       // Expoアプリとのやりとりを助ける
       expo(),
-      // ゲスト作成のときだけ、Turnstileのトークンをサーバー側で確かめる
-      // (トークンが無い・偽物なら、ゲストは作られない)
-      captcha({
-        provider: "cloudflare-turnstile",
-        secretKey: env.TURNSTILE_SECRET,
-        endpoints: ["/sign-in/anonymous"],
-      }),
-      // ゲスト(匿名)ログイン
-      anonymous({
-        onLinkAccount: async ({ anonymousUser, newUser }) => {
-          try {
-            await carryOverGuestProfile(
-              env.DB,
-              anonymousUser.user.id,
-              newUser.user.id,
-            );
-          } catch (e) {
-            // 引き継ぎに失敗しても、ログイン自体は止めない
-            console.error("ゲストの引き継ぎに失敗:", e);
-          }
-        },
-      }),
     ],
   });
 }
@@ -138,5 +102,4 @@ export const auth = createAuth({
   BETTER_AUTH_URL: "http://localhost:8787",
   GOOGLE_CLIENT_ID: "cli-only",
   GOOGLE_CLIENT_SECRET: "cli-only",
-  TURNSTILE_SECRET: "cli-only",
 });

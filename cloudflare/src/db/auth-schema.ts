@@ -19,7 +19,6 @@ export const user = sqliteTable("user", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  isAnonymous: integer("is_anonymous", { mode: "boolean" }).default(false),
 });
 
 export const session = sqliteTable(
@@ -109,11 +108,3 @@ export const accountRelations = relations(account, ({ one }) => ({
     references: [user.id],
   }),
 }));
-
-// レート制限の「何回目か」を数えるための帳簿。Better Authが読み書きする
-export const rateLimit = sqliteTable("rate_limit", {
-  id: text("id").primaryKey(),
-  key: text("key").notNull().unique(),
-  count: integer("count").notNull(),
-  lastRequest: integer("last_request").notNull(),
-});

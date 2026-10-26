@@ -38,7 +38,7 @@ export default function SettingsScreen() {
   const colors = useColors();
   const { mode } = useThemeMode();
   const { show, hide } = useOverlay();
-  const { username, email, isAnonymous, uid, isPremium } = useProfile();
+  const { username, email, isLoggedIn, uid, isPremium } = useProfile();
   const {
     loading,
     isDisabled,
@@ -93,58 +93,65 @@ export default function SettingsScreen() {
               }
             />
 
-            <SettingsRow
-              label={t("common.plan")}
-              onPress={async () => {
-                // ゲストは、課金できない(ログイン後に別のIDになると、購入が引き継がれないため)
-                // まずログインしてもらう
-                if (isAnonymous) {
-                  show(<LoginModal visible={true} onClose={hide} />);
-                  return;
-                }
-
-                if (Platform.OS === "web") {
-                  if (!uid) return;
-                  if (isPremium) {
-                    // Webのプレミアム会員は購読管理ページへ
-                    const info = await Purchases.getCustomerInfo();
-                    if (info.managementURL)
-                      await Linking.openURL(info.managementURL);
+            {uid && (
+              <SettingsRow
+                label={t("common.plan")}
+                onPress={async () => {
+                  // ゲストは、課金できない(ログイン後に別のIDになると、購入が引き継がれないため)
+                  // まずログインしてもらう
+                  if (!isLoggedIn) {
+                    show(<LoginModal visible={true} onClose={hide} />);
                     return;
                   }
-                  await openWebPurchase(uid);
-                  return;
-                }
 
-                if (isPremium) {
-                  // プレミアム会員はカスタマーセンター（プラン確認・解約・復元）
-                  await RevenueCatUI.presentCustomerCenter();
-                } else {
-                  // 未購入の人はペイウォール
-                  await RevenueCatUI.presentPaywall();
+                  if (Platform.OS === "web") {
+                    if (!uid) return;
+                    if (isPremium) {
+                      // Webのプレミアム会員は購読管理ページへ
+                      const info = await Purchases.getCustomerInfo();
+                      if (info.managementURL)
+                        await Linking.openURL(info.managementURL);
+                      return;
+                    }
+                    await openWebPurchase(uid);
+                    return;
+                  }
+
+                  if (isPremium) {
+                    // プレミアム会員はカスタマーセンター（プラン確認・解約・復元）
+                    await RevenueCatUI.presentCustomerCenter();
+                  } else {
+                    // 未購入の人はペイウォール
+                    await RevenueCatUI.presentPaywall();
+                  }
+                }}
+                rightElement={
+                  <MyText className="text-lg text-textSub tracking-wide">
+                    {!isLoggedIn
+                      ? t("common.guest")
+                      : isPremium
+                        ? t("premium.premiumPlan")
+                        : t("premium.startPlan")}
+                  </MyText>
                 }
-              }}
-              rightElement={
-                <MyText className="text-lg text-textSub tracking-wide">
-                  {isAnonymous
-                    ? t("common.guest")
-                    : isPremium
-                      ? t("premium.premiumPlan")
-                      : t("premium.startPlan")}
-                </MyText>
-              }
-            />
+              />
+            )}
           </SettingsSection>
           {/* 対局セクション */}
           <SettingsSection title={t("Settings.matchSettings")}>
-            <SettingsRow
-              label={t("Settings.allowBotMatch")}
-              onPress={() =>
-                show(
-                  <AllowBotMatchModal isMatching={isMatching} onClose={hide} />,
-                )
-              }
-            />
+            {uid && (
+              <SettingsRow
+                label={t("Settings.allowBotMatch")}
+                onPress={() =>
+                  show(
+                    <AllowBotMatchModal
+                      isMatching={isMatching}
+                      onClose={hide}
+                    />,
+                  )
+                }
+              />
+            )}
             <SettingsRow
               label={t("Settings.doubleTap")}
               onPress={() => show(<DoubleTapModal onClose={hide} />)}
@@ -209,7 +216,7 @@ export default function SettingsScreen() {
           {/* ログアウト＆削除ボタン */}
           <View className="gap-3">
             {/* ログアウトボタン */}
-            {!isAnonymous && (
+            {isLoggedIn && (
               <TouchableOpacity
                 className={`h-14 w-full rounded-xl justify-center items-center bg-foreground ${
                   isDisabled
@@ -241,33 +248,35 @@ export default function SettingsScreen() {
             )}
 
             {/* 削除ボタン */}
-            <TouchableOpacity
-              className={`h-14 w-full rounded-xl justify-center items-center bg-foreground border-2 ${
-                isDisabled ? "border-failureLight" : "border-failure"
-              }`}
-              disabled={loading}
-              activeOpacity={0.8}
-              onPress={() => {
-                show(
-                  <DeleteModal
-                    username={username ?? ""}
-                    onConfirm={async () => {
-                      await handleConfirmDelete();
-                      hide();
-                    }}
-                    onCancel={hide}
-                  />,
-                );
-              }}
-            >
-              <MyText
-                className={`text-lg ${
-                  isDisabled ? "text-failureLight" : "text-failure"
-                } tracking-wide`}
+            {uid && (
+              <TouchableOpacity
+                className={`h-14 w-full rounded-xl justify-center items-center bg-foreground border-2 ${
+                  isDisabled ? "border-failureLight" : "border-failure"
+                }`}
+                disabled={loading}
+                activeOpacity={0.8}
+                onPress={() => {
+                  show(
+                    <DeleteModal
+                      username={username ?? ""}
+                      onConfirm={async () => {
+                        await handleConfirmDelete();
+                        hide();
+                      }}
+                      onCancel={hide}
+                    />,
+                  );
+                }}
               >
-                {t("Settings.deleteAccount")}
-              </MyText>
-            </TouchableOpacity>
+                <MyText
+                  className={`text-lg ${
+                    isDisabled ? "text-failureLight" : "text-failure"
+                  } tracking-wide`}
+                >
+                  {t("Settings.deleteAccount")}
+                </MyText>
+              </TouchableOpacity>
+            )}
 
             {/* 削除ボタンの下の隙間 */}
             <View className="h-8" />

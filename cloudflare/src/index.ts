@@ -3,7 +3,6 @@
 import { Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { createAuth } from "./auth";
-import { runScheduled } from "./cron";
 import type { AppEnv } from "./env";
 import { checkGate, guard } from "./middleware/guard";
 import { accountRoutes } from "./rpc/account";
@@ -83,7 +82,7 @@ function rejectWebSocket(code: string, message: string): Response {
 // Web版のWebSocketには、ヘッダーが付けられないので、バージョンは URL の ?v= と &ota= で受け取る。
 async function checkWebSocketEntry(
   c: Context<{ Bindings: AppEnv }>,
-): Promise<{ uid: string; isAnonymous: boolean } | { response: Response }> {
+): Promise<{ uid: string } | { response: Response }> {
   // 許可していないアドレスのWebページから、勝手につながれないように
   const origin = c.req.header("origin");
   if (origin && !ALLOWED_ORIGINS.includes(origin)) {
@@ -114,10 +113,7 @@ async function checkWebSocketEntry(
       response: rejectWebSocket("NOT_AUTHENTICATED", "Not authenticated"),
     };
   }
-  return {
-    uid: session.user.id,
-    isAnonymous: session.user.isAnonymous === true,
-  };
+  return { uid: session.user.id };
 }
 
 // 部屋につなぐ。誰のつながりかを、ヘッダーで部屋に伝える。
@@ -151,7 +147,6 @@ app.get("/ws/queue/:boardSize", async (c) => {
   );
   return forwardToRoom(stub, c, entry.uid, {
     "x-board-size": String(boardSize),
-    "x-user-anonymous": entry.isAnonymous ? "1" : "0",
   });
 });
 
@@ -169,12 +164,4 @@ app.get("/ws/game/:gameId", async (c) => {
 export default {
   // いつものリクエスト(ログイン、RPC、WebSocket)
   fetch: app.fetch,
-  // 時間割の時刻に、自動で呼ばれる(Cron Trigger)
-  async scheduled(
-    controller: ScheduledController,
-    env: AppEnv,
-    ctx: ExecutionContext,
-  ) {
-    ctx.waitUntil(runScheduled(controller.cron, env));
-  },
 };

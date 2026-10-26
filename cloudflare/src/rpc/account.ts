@@ -138,7 +138,6 @@ console.log("DBに聞きに行った")
       rating: number;
       icon_index: number;
       board_size: number;
-      is_authenticated: boolean;
       is_premium: boolean;
     }[] = [];
 
@@ -149,12 +148,10 @@ console.log("DBに聞きに行った")
           username: profiles.username,
           rating: userStats.rating,
           iconIndex: profiles.iconIndex,
-          isAnonymous: user.isAnonymous,
           premiumUntil: profiles.premiumUntil,
         })
         .from(userStats)
         .innerJoin(profiles, eq(profiles.uid, userStats.uid))
-        .innerJoin(user, eq(user.id, profiles.uid))
         .where(and(eq(userStats.boardSize, boardSize), eq(profiles.isBot, false)))
         .orderBy(desc(userStats.rating))
         .limit(30); // 🌟
@@ -165,8 +162,6 @@ console.log("DBに聞きに行った")
           rating: r.rating,
           icon_index: r.iconIndex,
           board_size: boardSize,
-          // メールで登録している人は true(ゲストは false)
-          is_authenticated: !r.isAnonymous,
           // 期限が今より先ならプレミアム(期限なし=null は false)
           is_premium: !!r.premiumUntil && r.premiumUntil.getTime() > Date.now(),
         });

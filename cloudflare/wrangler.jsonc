@@ -53,11 +53,4 @@
 			]
 		}
 	],
-	// 時間割(UTC)。cron.ts の CRON_DAILY_CLEANUP と CRON_DAILY_RESET と、同じ文字列にする。
-	"triggers": {
-		"crons": [
-			"0 0 * * *",
-			"0 5 * * *"
-		]
-	}
 }

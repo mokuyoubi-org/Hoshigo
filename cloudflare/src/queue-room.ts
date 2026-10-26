@@ -127,7 +127,6 @@ export class QueueRoom extends DurableObject<AppEnv> {
     if (![9, 13, 19].includes(boardSize)) {
       return new Response("Invalid board size", { status: 400 });
     }
-    const isAnonymous = request.headers.get("x-user-anonymous") === "1";
 
     // プロフィールと成績の行が、まだ無ければ作る(成績の更新が、空振りしないように)
     await ensureProfile(this.db, uid);
@@ -142,12 +141,9 @@ export class QueueRoom extends DurableObject<AppEnv> {
       );
     }
 
-    // この人の、この盤面でのレーティング・今日の対局数と、ボット対戦の許可を調べる
+    // この人の、この盤面でのレーティングと、ボット対戦の許可を調べる
     const [stats] = await this.db
-      .select({
-        rating: userStats.rating,
-        dailyPlayCount: userStats.dailyPlayCount,
-      })
+      .select({ rating: userStats.rating })
       .from(userStats)
       .where(and(eq(userStats.uid, uid), eq(userStats.boardSize, boardSize)));
     const [setting] = await this.db
@@ -156,21 +152,6 @@ export class QueueRoom extends DurableObject<AppEnv> {
       .where(
         and(eq(userSettings.uid, uid), eq(userSettings.boardSize, boardSize)),
       );
-
-    // ② ゲストは、その盤面の今日の対局数が上限なら、待機列に入れない
-    if (isAnonymous && (stats?.dailyPlayCount ?? 0) >= DAILY_LIMIT_FOR_GUESTS) {
-      return this.replyAndClose(
-        {
-          type: "error",
-          error: {
-            code: "DAILY_PLAY_LIMIT_REACHED",
-            message: "daily_play_limit_reached",
-          },
-        },
-        1008,
-        "DAILY_PLAY_LIMIT_REACHED",
-      );
-    }
 
     // 同じ人が、すでに待っていたら、古い方のつながりを閉じる(二重に待たないように)
     for (const ws of this.ctx.getWebSockets()) {
@@ -415,7 +396,7 @@ export class QueueRoom extends DurableObject<AppEnv> {
     return true;
   }
 
-  // 対局の部屋を作って、「対局中」の目印を書いて、2人の「今日の対局数」を+1する。
+  // 対局の部屋を作って、「対局中」の目印を書く。
   // humanUids は、人間だけ(ボットには、目印を作らない)。
   private async createGame(init: MatchInit, humanUids: string[]) {
     await this.env.GAME_ROOM.get(
@@ -438,17 +419,6 @@ export class QueueRoom extends DurableObject<AppEnv> {
         target: activeGames.uid,
         set: { gameId: init.gameId, boardSize: init.boardSize, createdAt: now },
       });
-
-    // 今日の対局数を+1(いまの notify_match と同じ。ボットの分も増える)
-    await this.db
-      .update(userStats)
-      .set({ dailyPlayCount: sql`${userStats.dailyPlayCount} + 1` })
-      .where(
-        and(
-          inArray(userStats.uid, [init.blackUid, init.whiteUid]),
-          eq(userStats.boardSize, init.boardSize),
-        ),
-      );
   }
 
   private async getProfiles(uids: string[]) {

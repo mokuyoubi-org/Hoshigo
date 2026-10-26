@@ -30,13 +30,14 @@ export type Profile = {
   allowBotMatch9: boolean | null;
   allowBotMatch13: boolean | null;
   allowBotMatch19: boolean | null;
-  isAnonymous: boolean | null;
   premiumUntil: number | null; // ⚠️numberであることに注意
   isPremium: boolean | null;
 };
 
 // Hookから返す全体の型
+// isLoggedIn: ログインしているか(ビジターは false)
 type ProfileContextValue = Profile & {
+  isLoggedIn: boolean;
   updateProfile: (partial: Partial<Profile>) => void;
 };
 
@@ -68,7 +69,6 @@ export const initialProfile: Profile = {
   allowBotMatch9: null,
   allowBotMatch13: null,
   allowBotMatch19: null,
-  isAnonymous: null,
   premiumUntil: null,
   isPremium: null,
 };
@@ -105,6 +105,8 @@ export const useProfile = (): ProfileContextValue => {
 
   return {
     ...profile,
+    // ログインしていれば、プロフィールの同期で uid が入る(ビジターは null のまま)
+    isLoggedIn: profile.uid !== null,
     updateProfile,
   };
 };

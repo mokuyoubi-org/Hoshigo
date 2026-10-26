@@ -51,19 +51,14 @@ recordsRoutes.get(
 
     // 持ち主のプランから、取ってこれる上限を決める(null = 無制限)
     const [owner] = await db
-      .select({
-        premiumUntil: profiles.premiumUntil,
-        isAnonymous: user.isAnonymous,
-      })
+      .select({ premiumUntil: profiles.premiumUntil })
       .from(profiles)
-      .innerJoin(user, eq(user.id, profiles.uid))
       .where(eq(profiles.uid, uid));
     // 退会した人の棋譜は、見られない
     if (!owner) return c.json([]);
     const isPremium =
       owner.premiumUntil !== null && owner.premiumUntil.getTime() > Date.now();
-    const cap = isPremium ? null : owner.isAnonymous ? 10 : 30; // 🌟
-
+    const cap = isPremium ? null : 30; // 🌟
     // この人が、黒でも白でも、この盤面の棋譜
     const mine = and(
       or(eq(records.blackUid, uid), eq(records.whiteUid, uid)),

@@ -64,7 +64,6 @@ export const userStats = sqliteTable(
     draws: integer("draws").notNull().default(0),
     highestRating: integer("highest_rating").notNull().default(0),
     winStreak: integer("win_streak").notNull().default(0),
-    dailyPlayCount: integer("daily_play_count").notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.uid, table.boardSize] })],
 );

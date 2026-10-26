@@ -1,7 +1,6 @@
 // ProfileScreen.tsx
 
 import { Avatar } from "@/src/components/avatar/Avatar";
-import { GuestNoticeCard } from "@/src/components/cards/GuestNoticeCard";
 import { RankCard } from "@/src/components/cards/RankCard";
 import { StatsBadges } from "@/src/components/cards/stats/StatsBadges";
 import { MixedText } from "@/src/components/common/MixedText";
@@ -61,7 +60,7 @@ export default function ProfileScreen() {
           }
         >
           {/* ログインボタン */}
-          {profileData.isAnonymous && (
+          {!profileData.isLoggedIn && (
             <TextButton
               text={t("common.login")}
               fontFamily={fontFamily}
@@ -93,7 +92,7 @@ export default function ProfileScreen() {
             <View className="justify-center items-center pt-4">
               {/* アイコン */}
               <TouchableOpacity
-                disabled={isMatching}
+                disabled={isMatching || !profileData.uid}
                 onPress={() =>
                   show(
                     <IconSelectModal
@@ -115,22 +114,24 @@ export default function ProfileScreen() {
                   iconIndex={profileData.iconIndex}
                   size={96}
                 />
-                <View
-                  className={`absolute bottom-1 right-1 w-7 h-7 rounded-full border-2 border-foreground justify-center items-center ${
-                    isMatching ? "bg-backgroundStrong" : "bg-primary"
-                  }`}
-                >
-                  <MaterialIcons
-                    name="edit"
-                    size={14}
-                    color={colors.foreground}
-                  />
-                </View>
+                {profileData.uid && (
+                  <View
+                    className={`absolute bottom-1 right-1 w-7 h-7 rounded-full border-2 border-foreground justify-center items-center ${
+                      isMatching ? "bg-backgroundStrong" : "bg-primary"
+                    }`}
+                  >
+                    <MaterialIcons
+                      name="edit"
+                      size={14}
+                      color={colors.foreground}
+                    />
+                  </View>
+                )}
               </TouchableOpacity>
 
-              {/* username */}
+              {/* ユーザ名 */}
               <TouchableOpacity
-                disabled={isMatching}
+                disabled={isMatching || !profileData.uid}
                 onPress={() =>
                   show(
                     <UsernameEditModal
@@ -155,25 +156,27 @@ export default function ProfileScreen() {
                 className="flex-row items-center gap-1 mb-2"
               >
                 <MixedText className="text-3xl text-text tracking-wide">
-                  {profileData.username}
+                  {profileData.username ?? t("common.guest")}
                 </MixedText>
-                {!profileData.isAnonymous && (
+                {profileData.isLoggedIn && (
                   <MaterialCommunityIcons
                     name="check-decagram"
                     size={22}
-                    color={profileData.isPremium?colors.gold: colors.primary} // ブランドカラー（青など）で統一
+                    color={profileData.isPremium ? colors.gold : colors.primary} // ブランドカラー（青など）で統一
                   />
                 )}
                 {/* ペンアイコン(ただの飾り) */}
-                <View className="p-1">
-                  <MaterialIcons
-                    name="edit"
-                    size={20}
-                    color={
-                      !isMatching ? colors.primary : colors.backgroundStrong
-                    }
-                  />
-                </View>
+                {profileData.uid && (
+                  <View className="p-1">
+                    <MaterialIcons
+                      name="edit"
+                      size={20}
+                      color={
+                        !isMatching ? colors.primary : colors.backgroundStrong
+                      }
+                    />
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -191,7 +194,7 @@ export default function ProfileScreen() {
               }
             />
 
-            {/* 戦績カード */}
+            {/* バッジ */}
             <StatsBadges boardSize={profileData.boardSize} />
 
             {/* 棋譜 */}
@@ -199,7 +202,11 @@ export default function ProfileScreen() {
               className="bg-foreground rounded-3xl border-2 border-backgroundStrong p-4 flex-row justify-between items-center"
               activeOpacity={0.7}
               onPress={() => {
-                router.push({ pathname: "/RecordsScreen" });
+                if (!profileData.uid) {
+                  show(<LoginModal visible={true} onClose={hide} />);
+                } else {
+                  router.push({ pathname: "/RecordsScreen" });
+                }
               }}
             >
               <View className="flex-row items-center gap-2">
@@ -212,15 +219,6 @@ export default function ProfileScreen() {
               </View>
               <Feather name="chevron-right" size={24} color={colors.primary} />
             </TouchableOpacity>
-
-            {profileData.isAnonymous && (
-              <GuestNoticeCard
-                description={t("Profile.guestNoticeDesc")}
-                onPress={() =>
-                  show(<LoginModal visible={true} onClose={hide} />)
-                }
-              />
-            )}
           </View>
         </ScrollView>
       </View>

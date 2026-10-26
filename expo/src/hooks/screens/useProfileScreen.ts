@@ -14,12 +14,13 @@ export const useProfileScreen = () => {
   const {
     username,
     iconIndex,
-    isAnonymous,
+    isLoggedIn,
+    uid,
     updateProfile,
     rating9,
     rating13,
     rating19,
-    isPremium
+    isPremium,
   } = useProfile();
   const [rank9, rank13, rank19] = [
     getRankInfo(rating9, t),
@@ -90,11 +91,12 @@ export const useProfileScreen = () => {
     profileData: {
       username,
       iconIndex: iconIndex ?? 0,
-      isAnonymous,
+      isLoggedIn,
+      uid,
       boardSize,
       rankInfo: currentRankInfo,
       loading,
-      isPremium
+      isPremium,
     },
     handlers: {
       setBoardSize,

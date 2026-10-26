@@ -12,7 +12,6 @@ export const useProfileSync = () => {
       updateProfile({
         uid: result.sessionUser.id,
         email: result.sessionUser.email,
-        isAnonymous: result.sessionUser.isAnonymous,
       });
     }
     if (result.profile) {

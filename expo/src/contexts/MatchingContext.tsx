@@ -4,7 +4,7 @@
 // AIDownloadModal自身がgetModelStatusを見て行うので、ここでは常に同じ
 // モーダルを出すだけでよい。
 
-import { DailyLimitModal } from "@/src/components/modals/game/DailyLimitModal";
+import { LoginModal } from "@/src/components/modals/settingsScreen/LoginModal";
 import { useMatchingProvider } from "@/src/hooks/rpc/useMatchingProvider";
 import { BoardSize } from "go-core";
 import { createContext, ReactNode, useContext } from "react";
@@ -20,8 +20,11 @@ type MatchingContextType = {
 export const MatchingContext = createContext<MatchingContextType | null>(null);
 
 export const MatchingProvider = ({ children }: { children: ReactNode }) => {
-  const { show } = useOverlay();
-  const value = useMatchingProvider(() => show(<DailyLimitModal />));
+  const { show, hide } = useOverlay();
+  // ログインしていない人が対局ボタンを押したら、ログイン画面を出す
+  const value = useMatchingProvider(() =>
+    show(<LoginModal visible={true} onClose={hide} />),
+  );
 
   return (
     <MatchingContext.Provider value={value}>

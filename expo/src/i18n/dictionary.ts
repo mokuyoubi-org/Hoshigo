@@ -327,54 +327,46 @@ export const dictionary = {
   LoginModal: {
     en: {
       titleEmail: "Register / Log In",
-      errorVerifyFailed: "Failed to verify code.",
+      errorVerifyFailed: "Failed to log in.",
       googleSignIn: "Sign in with Google",
     },
     ja: {
       titleEmail: "登録・ログイン",
-      errorVerifyFailed: "コードの認証に失敗しました。",
+      errorVerifyFailed: "ログインに失敗しました。",
       googleSignIn: "Googleでログイン",
     },
     zh: {
       titleEmail: "注册 / 登录",
-      errorVerifyFailed: "验证码验证失败。",
+      errorVerifyFailed: "登录失败。",
       googleSignIn: "使用 Google 登录",
     },
     ko: {
       titleEmail: "회원가입 / 로그인",
-      errorVerifyFailed: "코드 인증에 실패했습니다.",
+      errorVerifyFailed: "로그인에 실패했습니다.",
       googleSignIn: "Google로 로그인",
     },
   },
   Profile: {
     en: {
       youAre: "Your rank",
-      guestNoticeDesc:
-        "Guest accounts are automatically deleted after 14 days of inactivity. Log in to keep your account.",
       iconUpdateFailed: "Failed to update icon.",
       usernameTaken: "This username is already taken.",
       usernameUpdateFailed: "Failed to update username.",
     },
     ja: {
       youAre: "あなたの棋力",
-      guestNoticeDesc:
-        "ゲストアカウントは14日間ご利用がないと自動的に削除されます。アカウントを残すにはログインしてください。",
       iconUpdateFailed: "アイコンの更新に失敗しました。",
       usernameTaken: "このユーザー名は既に使用されています。",
       usernameUpdateFailed: "ユーザー名の更新に失敗しました。",
     },
     zh: {
       youAre: "当前棋力",
-      guestNoticeDesc:
-        "游客账号在连续14天未活动后将被自动删除。请登录以保留您的账号。",
       iconUpdateFailed: "图标更新失败。",
       usernameTaken: "该用户名已被使用。",
       usernameUpdateFailed: "用户名更新失败。",
     },
     ko: {
       youAre: "현재 기력",
-      guestNoticeDesc:
-        "게스트 계정은 14일 동안 활동이 없으면 자동으로 삭제됩니다. 계정을 유지하려면 로그인하세요.",
       iconUpdateFailed: "아이콘 업데이트에 실패했습니다.",
       usernameTaken: "이미 사용 중인 사용자 이름입니다.",
       usernameUpdateFailed: "사용자 이름 업데이트에 실패했습니다.",

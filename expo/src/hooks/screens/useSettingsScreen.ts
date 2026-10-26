@@ -5,18 +5,13 @@ import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useLang } from "@/src/i18n/LangProvider";
 import { api } from "@/src/services/api/api";
 import { authClient } from "@/src/services/auth/auth-client";
-import { useKVStorage } from "kv-store";
+import { kvStore, useKVStorage } from "kv-store";
 import { useState } from "react";
 
 export const useSettingsScreen = () => {
   const { isMatching } = useMatching();
-  const {
-    email,
-    allowBotMatch9,
-    allowBotMatch13,
-    allowBotMatch19,
-    isAnonymous,
-  } = useProfile();
+  const { email, allowBotMatch9, allowBotMatch13, allowBotMatch19 } =
+    useProfile();
 
   const { lang } = useLang();
 
@@ -29,6 +24,7 @@ export const useSettingsScreen = () => {
 
   const onLogout = async () => {
     setLoading(true);
+    await kvStore.clear();
     try {
       const { error } = await authClient.signOut();
       if (error) {
@@ -41,6 +37,7 @@ export const useSettingsScreen = () => {
 
   const handleConfirmDelete = async () => {
     setLoading(true);
+    await kvStore.clear();
 
     try {
       // サーバー側で user を消すと、プロフィール・成績・セッションも芋づる式に消える
@@ -68,7 +65,6 @@ export const useSettingsScreen = () => {
     allowBotMatch9,
     allowBotMatch13,
     allowBotMatch19,
-    isAnonymous,
     loading,
     isDisabled,
     isMatching,
