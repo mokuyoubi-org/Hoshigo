@@ -14,36 +14,20 @@ type Props = {
 
 export const StatsBadges = ({ boardSize }: Props) => {
   const {
-    wins9,
-    wins13,
-    wins19,
-    giantKillingStreak9,
-    giantKillingStreak13,
-    giantKillingStreak19,
+  stats
   } = useProfile();
 
   const t = useTranslation();
   const colors = useColors();
 
-  const getBoardStats = () => {
-    switch (boardSize) {
-      case 9:
-        return {
-          wins: wins9 ?? 0,
-          streak: giantKillingStreak9 ?? 0,
-        };
-      case 13:
-        return {
-          wins: wins13 ?? 0,
-          streak: giantKillingStreak13 ?? 0,
-        };
-      case 19:
-      default:
-        return {
-          wins: wins19 ?? 0,
-          streak: giantKillingStreak19 ?? 0,
-        };
-    }
+const getBoardStats = () => {
+    const key = (boardSize === 9 || boardSize === 13) ? boardSize : 19;
+    const target = stats[key];
+
+    return {
+      wins: target?.wins ?? 0,
+      streak: target?.giantKillingStreak ?? 0,
+    };
   };
 
   const board = getBoardStats();

@@ -7,7 +7,6 @@ import {
   HeaderPlayerInfo,
 } from "@/src/components/headers/BoardEditScreenHeader";
 import LoadingModal from "@/src/components/modals/common/LoadingModal";
-// import { AutoPassModal } from "@/src/components/modals/game/AutoPassModal";
 import { GameStartModal } from "@/src/components/modals/game/GameStartModal";
 import { PassConfirmModal } from "@/src/components/modals/game/PassConfirmModal";
 import { PracticeSetupModal } from "@/src/components/modals/game/PracticeSetupModal";
@@ -401,8 +400,7 @@ const PracticeGameScreenContent = ({
         rankIndexBefore={0}
         rankIndexAfter={0}
         from={"PracticeGameScreen"}
-        giantKillingStreak={0}
-        giantKillingBonus={false}
+        giantKillingStreak={null}
         playerWin={playerWin}
       />,
     );

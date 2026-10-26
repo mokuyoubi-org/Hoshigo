@@ -7,7 +7,6 @@ export * from "./types/go";
 // 4. 純粋計算・変換ロジック
 export * from "./logics/boardConverters";
 export * from "./logics/candidatesConverter";
-export * from "./logics/colorConverters";
 export * from "./logics/endgameLogics";
 export * from "./logics/getColorToMove";
 export * from "./logics/goLogics";

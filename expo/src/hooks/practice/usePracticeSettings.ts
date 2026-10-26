@@ -5,14 +5,13 @@
 // セットアップモーダルへの値渡しに使う。
 // 🌟実際の対局中の状態はここには含めない。
 
-import { useProfile } from "@/src/contexts/ProfileContexts";
-import { getMyRating } from "@/src/logics/rank/myRating";
+import { isOnlineBoardSize, useProfile } from "@/src/contexts/ProfileContexts";
 import { PlayerType } from "@/src/types/player";
 import { BoardSize, MatchType } from "go-core";
 import { useKVStorage } from "kv-store";
 
 export const usePracticeSettings = () => {
-  const { rating9, rating13, rating19, iconIndex, uid } = useProfile();
+  const { stats, iconIndex, uid } = useProfile();
 
   const { value: boardSize, setValue: setBoardSize } = useKVStorage<BoardSize>(
     "PracticeGameScreen.boardSize",
@@ -40,10 +39,10 @@ export const usePracticeSettings = () => {
       uid: "",
     });
 
-  const myRatingForBoardSize = getMyRating(
-    { rating9, rating13, rating19 },
-    boardSize,
-  );
+  // 5路はオンライン成績がないので 0。まだ読み込み前(null)のときも 0
+  const myRatingForBoardSize = isOnlineBoardSize(boardSize)
+    ? (stats[boardSize].rating ?? 0)
+    : 0;
   const myIconIndex = iconIndex ?? 0;
 
   return {

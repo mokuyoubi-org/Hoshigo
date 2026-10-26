@@ -36,11 +36,11 @@ export default function IconSelectModal({
   const { height: windowHeight } = useWindowDimensions();
   const iconSize: number = 96;
   const imageSize: number = iconSize * (5 / 6);
-  const { wins9, wins13, wins19 } = useProfile();
+  const { stats } = useProfile();
   const acquiredIcons = winsToAcquiredIcons(
-    wins9 ?? 0,
-    wins13 ?? 0,
-    wins19 ?? 0,
+    stats[9].wins ?? 0,
+    stats[13].wins ?? 0,
+    stats[19].wins ?? 0,
   );
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);

@@ -38,7 +38,7 @@ export default function SettingsScreen() {
   const colors = useColors();
   const { mode } = useThemeMode();
   const { show, hide } = useOverlay();
-  const { username, email, isLoggedIn, uid, isPremium } = useProfile();
+  const { username, email, uid, isPremium } = useProfile();
   const {
     loading,
     isDisabled,
@@ -99,7 +99,7 @@ export default function SettingsScreen() {
                 onPress={async () => {
                   // ゲストは、課金できない(ログイン後に別のIDになると、購入が引き継がれないため)
                   // まずログインしてもらう
-                  if (!isLoggedIn) {
+                  if (!uid) {
                     show(<LoginModal visible={true} onClose={hide} />);
                     return;
                   }
@@ -127,7 +127,7 @@ export default function SettingsScreen() {
                 }}
                 rightElement={
                   <MyText className="text-lg text-textSub tracking-wide">
-                    {!isLoggedIn
+                    {!uid
                       ? t("common.guest")
                       : isPremium
                         ? t("premium.premiumPlan")
@@ -216,7 +216,7 @@ export default function SettingsScreen() {
           {/* ログアウト＆削除ボタン */}
           <View className="gap-3">
             {/* ログアウトボタン */}
-            {isLoggedIn && (
+            {uid && (
               <TouchableOpacity
                 className={`h-14 w-full rounded-xl justify-center items-center bg-foreground ${
                   isDisabled

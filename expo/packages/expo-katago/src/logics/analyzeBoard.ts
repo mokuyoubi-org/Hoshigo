@@ -1,7 +1,11 @@
+// packages/expo-katago/src/logics/analyzeBoard.ts
+
 /**
  * analyzeBoard.ts
  *
  * web-katrain のエンジンコアを Expo から使うための薄いラッパー。
+ * 入力は web-katrain の型(BoardState / Move / Player)でそのまま受け取る。
+ * 座標も web-katrain と同じ0始まり。変換は呼ぶ側の責務。
  *
  * ================================================================
  * 【入力形式】AnalyzeBoardArgs
@@ -10,13 +14,12 @@
  * 必須:
  *   currentPlayer  'black' | 'white'  次の手番
  *
- *   board: number[][]
- *   0=空点, 1=黒石, 2=白石 の二次元配列。
- *   例: [[0,1,0],[2,0,1],[0,0,0]]
- *   ※ moves も同時に渡すと履歴情報も活用されより正確になる。
+ *   board: BoardState
+ *   'black' | 'white' | null の二次元配列。
+ *   例: [[null,'black',null],['white',null,'black'],[null,null,null]]
  *
- *   moves: MoveObject[]
- *   着手履歴の配列。board を省略するとここから盤面を再構築する。
+ *   moves: Move[]
+ *   着手履歴の配列。x, y は0始まり。
  *   例: [{x:3, y:3, player:'black'}, {x:15, y:15, player:'white'}]
  *   ※ パスは x:-1, y:-1 で表現。
  *
@@ -56,8 +59,8 @@
  *                                         長さ: boardSize*boardSize + 1（最後がパス）
  *                                         着手不可の点は -1。
  *
- *   moves           MoveObject[]    候補手リスト（訪問数の多い順）🌟
- *     x, y          number        座標（0-indexed）。パスは x:-1, y:-1
+ *   moves           候補手リスト（訪問数の多い順）🌟
+ *     x, y          number        座標（0始まり）。パスは x:-1, y:-1
  *     winRate       number        この手を打ったときの黒の勝率
  *     winRateLost   number        最善手との勝率差（正=悪手）
  *     scoreLead     number        この手を打ったときのスコアリード
@@ -73,15 +76,6 @@
  */
 
 import * as tf from "@tensorflow/tfjs";
-import {
-  BLACK,
-  Board2D,
-  BoardSize,
-  Color,
-  EMPTY,
-  MoveObject,
-  WHITE,
-} from "go-core";
 import { ungzip } from "pako";
 import {
   AnalyzeBoardArgs,
@@ -92,14 +86,17 @@ import {
 } from "../types/types";
 import { MctsSearch } from "../web-katrain/src/engine/katago/analyzeMcts";
 import {
+  BLACK,
+  EMPTY,
   SimPosition,
   StoneColor,
+  WHITE,
   playMove,
   setBoardSize,
 } from "../web-katrain/src/engine/katago/fastBoard";
 import { parseKataGoModelV8 } from "../web-katrain/src/engine/katago/loadModelV8";
 import { KataGoModelV8Tf } from "../web-katrain/src/engine/katago/modelV8";
-import { BoardState, Player } from "../web-katrain/src/types";
+import { BoardSize, BoardState, Move, Player } from "../web-katrain/src/types";
 import { readModelData } from "./modelManager";
 
 const playerToColor = (p: Player): StoneColor =>
@@ -187,45 +184,25 @@ export const analyzeBoard = async <const F extends AnalyzeResultFields>(
 
   setBoardSize(args.boardSize);
 
-  const zeroBasedMoves = normalizeMovesToZeroBased(moves ?? []);
-
   const previousBoard =
-    zeroBasedMoves.length >= 1
-      ? buildBoardFromMoves(
-          zeroBasedMoves.slice(0, -1),
-          board.length as BoardSize,
-        )
+    moves.length >= 1
+      ? buildBoardFromMoves(moves.slice(0, -1), board.length as BoardSize)
       : undefined;
 
   const previousPreviousBoard =
-    zeroBasedMoves.length >= 2
-      ? buildBoardFromMoves(
-          zeroBasedMoves.slice(0, -2),
-          board.length as BoardSize,
-        )
+    moves.length >= 2
+      ? buildBoardFromMoves(moves.slice(0, -2), board.length as BoardSize)
       : undefined;
-
-  const colorToPlayer = (c: Color): Player => (c === BLACK ? "black" : "white");
-
-  const currentPlayerConverted: Player =
-    typeof currentPlayer === "string"
-      ? currentPlayer
-      : colorToPlayer(currentPlayer);
-
-  const moveHistoryConverted = zeroBasedMoves.map((m) => ({
-    ...m,
-    player: typeof m.player === "string" ? m.player : colorToPlayer(m.player),
-  }));
 
   const model = await loadModel();
 
   const search = await MctsSearch.create({
     model,
-    board: padBoardState(board2DtoBoardState(board)),
+    board: padBoardState(board),
     previousBoard: padBoardState(previousBoard),
     previousPreviousBoard: padBoardState(previousPreviousBoard),
-    currentPlayer: currentPlayerConverted,
-    moveHistory: moveHistoryConverted,
+    currentPlayer,
+    moveHistory: moves,
     komi,
     rules,
     nnRandomize,
@@ -287,13 +264,8 @@ export const analyzeBoard = async <const F extends AnalyzeResultFields>(
   if (moveFields) {
     result.moves = output.moves.map((raw) => {
       const m = raw as unknown as Record<string, unknown>;
-      const x = m.x as number;
-      const y = m.y as number;
-      // x, y は「その手の住所」なので常に入れる(0始まり→1始まりに戻す)
-      const move: Record<string, unknown> = {
-        x: x === -1 ? -1 : x + 1,
-        y: y === -1 ? -1 : y + 1,
-      };
+      // x, y は「その手の住所」なので常に入れる(0始まりのまま)
+      const move: Record<string, unknown> = { x: m.x, y: m.y };
       for (const key of moveKeys) {
         if (moveFields[key]) move[key] = m[key];
       }
@@ -304,20 +276,15 @@ export const analyzeBoard = async <const F extends AnalyzeResultFields>(
   return result as AnalyzeResultFor<F>;
 };
 
-// 2026/09/17: 修正
-export const board2DtoBoardState = (board: Board2D) => {
-  return board.map((row) =>
-    row.map((cell) => {
-      if (cell === 1) return "black";
-      if (cell === 2) return "white";
-      return null;
-    }),
-  );
-};
 
-// 2026/09/17: 修正
-export const buildBoardFromMoves = (
-  moves: MoveObject[],
+// ================================================================
+// katago専用のヘルパー
+// ================================================================
+
+// katagoは一つ前、二つ前の盤面も要求するので、作っている。
+// usekatagoの引数として要求しても良かったが、面倒かなと思い、ここで用意。
+const buildBoardFromMoves = (
+  moves: Move[],
   boardSize: BoardSize,
 ): BoardState => {
   const stones = new Uint8Array(boardSize * boardSize).fill(EMPTY);
@@ -330,16 +297,12 @@ export const buildBoardFromMoves = (
       continue;
     }
     const move = m.y * boardSize + m.x;
-
-    // Color(数字)からPlayer(文字列)に変換して渡す
-    const player: Player = m.player === BLACK ? "black" : "white";
-    playMove(pos, move, playerToColor(player), captureStack);
+    playMove(pos, move, playerToColor(m.player), captureStack);
   }
 
   const board: BoardState = Array.from({ length: boardSize }, (_, y) =>
     Array.from({ length: boardSize }, (_, x) => {
       const s = stones[y * boardSize + x];
-      // BoardStateの型にあわせて文字列を返す
       if (s === BLACK) return "black";
       if (s === WHITE) return "white";
       return null;
@@ -348,15 +311,8 @@ export const buildBoardFromMoves = (
   return board;
 };
 
-export const normalizeMovesToZeroBased = (moves: MoveObject[]) => {
-  return moves.map((m) => ({
-    ...m,
-    x: m.x === -1 ? -1 : m.x - 1,
-    y: m.y === -1 ? -1 : m.y - 1,
-  }));
-};
-
-export const padBoardState = (board: BoardState | undefined) => {
+// katagoは9路盤を受け取っても、余った部分を埋めて19*19の盤面として渡す必要がある。それをやっている
+const padBoardState = (board: BoardState | undefined) => {
   const originalSize = board?.length ?? 0;
 
   const padded: BoardState = Array.from({ length: 19 }, () =>

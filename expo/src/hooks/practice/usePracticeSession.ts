@@ -11,7 +11,7 @@ import {
   BotUsername,
   getBotProfile,
 } from "@/src/constants/botProfiles";
-import { useProfile } from "@/src/contexts/ProfileContexts";
+import { isOnlineBoardSize, useProfile } from "@/src/contexts/ProfileContexts";
 import { useBotMove } from "@/src/hooks/ai/useBotMove";
 import { useLiveAnalysis } from "@/src/hooks/ai/useLiveAnalysis";
 import { useTranslation } from "@/src/i18n/LangProvider";
@@ -22,7 +22,6 @@ import {
   scoreLeadToResult,
 } from "@/src/logics/format/textFormatter";
 import { getPassState } from "@/src/logics/game/gameScreenLogics";
-import { getMyRating } from "@/src/logics/rank/myRating";
 import { PlayerCardView, PlayerType } from "@/src/types/player";
 import { ShowMode, useGoGame } from "go-components";
 import {
@@ -92,13 +91,14 @@ export const usePracticeSession = ({
     false,
   );
 
-  const { rating9, rating13, rating19, iconIndex } = useProfile();
+  const { stats, iconIndex } = useProfile();
   const t = useTranslation();
 
-  const myRatingForBoardSize = getMyRating(
-    { rating9, rating13, rating19 },
-    boardSize,
-  );
+  // 5路はオンライン成績がないので 0。まだ読み込み前(null)のときも 0
+  const myRatingForBoardSize = isOnlineBoardSize(boardSize)
+    ? (stats[boardSize].rating ?? 0)
+    : 0;
+    
   const myIconIndex = iconIndex ?? 0;
 
   const isBotBotMatch: boolean =

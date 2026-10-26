@@ -60,7 +60,7 @@ export default function ProfileScreen() {
           }
         >
           {/* ログインボタン */}
-          {!profileData.isLoggedIn && (
+          {!profileData.uid && (
             <TextButton
               text={t("common.login")}
               fontFamily={fontFamily}

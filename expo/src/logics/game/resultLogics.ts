@@ -1,16 +1,15 @@
 // resultLogics.ts
 
+import type { BoardStats } from "@/src/contexts/ProfileContexts";
 import { TFunction } from "@/src/i18n/types";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
-import { BoardSize } from "go-core";
 
 // UserPointResultの定義もこちらに引っ越し(stableがactiveの型に依存しないように)
 type MyData = {
   old_rating: number;
   new_rating: number;
   wins: number;
-  giant_killing_streak?: number;
-  giant_killing_bonus?: boolean;
+  giant_killing_streak?: number | null; // 変わらなかった時は null
 };
 
 export type MatchResultUpdate = {
@@ -18,20 +17,13 @@ export type MatchResultUpdate = {
   rankIndexBefore: number;
   ratingAfter: number;
   rankIndexAfter: number;
-  giantKillingBonus: boolean;
 
-  profilePatch: {
-    rating9?: number;
-    rating13?: number;
-    rating19?: number;
-    giantKillingStreak9?: number;
-    giantKillingStreak13?: number;
-    giantKillingStreak19?: number;
-  };
+  // この盤面の成績に反映する分(updateStats に渡す)
+  statsPatch: Partial<BoardStats>;
 };
 
+// オンライン対局の盤面サイズは 9 / 13 / 19 だけ
 export const computeMatchResultUpdate = (
-  boardSize: BoardSize,
   myData: MyData, // サーバから届いた
   t: TFunction,
 ): MatchResultUpdate | null => {
@@ -39,7 +31,7 @@ export const computeMatchResultUpdate = (
   console.log("maybeRating: ", maybeRating);
   if (isNaN(maybeRating)) return null;
 
-  // 🥶 beforeは「まだupdateProfileを呼ぶ前」の値を、この時点で確定させる
+  // 🥶 beforeは「まだupdateStatsを呼ぶ前」の値を、この時点で確定させる
   const oldRating = myData.old_rating;
   const oldRankIndex = getRankInfo(oldRating, t).index;
 
@@ -48,25 +40,13 @@ export const computeMatchResultUpdate = (
     rankIndexBefore: oldRankIndex,
     ratingAfter: maybeRating,
     rankIndexAfter: getRankInfo(maybeRating, t).index,
-    giantKillingBonus: myData.giant_killing_bonus ?? false,
-    profilePatch: {
-      ...(boardSize === 9
-        ? {
-            rating9: maybeRating,
-            giantKillingStreak9: myData.giant_killing_streak,
-            wins9: myData.wins,
-          }
-        : boardSize === 13
-          ? {
-              rating13: maybeRating,
-              giantKillingStreak13: myData.giant_killing_streak,
-              wins13: myData.wins,
-            }
-          : {
-              rating19: maybeRating,
-              giantKillingStreak19: myData.giant_killing_streak,
-              wins19: myData.wins,
-            }),
+    statsPatch: {
+      rating: maybeRating,
+      wins: myData.wins,
+      // 連勝が変わらなかった時(null)は、キーごと入れない = contextを更新しない
+      ...(myData.giant_killing_streak != null
+        ? { giantKillingStreak: myData.giant_killing_streak }
+        : {}),
     },
   };
 };

@@ -64,12 +64,11 @@ export default function GameScreen() {
     height * BOARD_HEIGHT_RATIO,
   );
   // 対局する人の情報
-  const { uid, iconIndex, username, rating9, rating13, rating19 } =
-    useProfile();
+  const { uid, iconIndex, username, stats } = useProfile();
   const [rank9, rank13, rank19] = [
-    getRankInfo(rating9, t),
-    getRankInfo(rating13, t),
-    getRankInfo(rating19, t),
+    getRankInfo(stats[9].rating, t),
+    getRankInfo(stats[13].rating, t),
+    getRankInfo(stats[19].rating, t),
   ];
   const params = useLocalSearchParams<GameScreenParams>();
   const {
@@ -92,7 +91,11 @@ export default function GameScreen() {
         ? rank13.index
         : rank19.index) ?? 0;
   const myRating =
-    (boardSize === 9 ? rating9 : boardSize === 13 ? rating13 : rating19) ?? 0;
+    (boardSize === 9
+      ? stats[9].rating
+      : boardSize === 13
+        ? stats[13].rating
+        : stats[19].rating) ?? 0;
 
   // 🌟useMatchSession呼び出し!
   const {
@@ -119,7 +122,6 @@ export default function GameScreen() {
     resultRaw,
     analysis,
     giantKillingStreak,
-    giantKillingBonus,
     doubleTap,
     isSoundEnabled,
   } = useMatchSession({
@@ -220,7 +222,6 @@ export default function GameScreen() {
         rankIndexAfter={rankIndexAfter}
         from={"GameScreen"}
         giantKillingStreak={giantKillingStreak}
-        giantKillingBonus={giantKillingBonus}
         playerWin={playerWin}
       />,
     );
@@ -315,10 +316,9 @@ export default function GameScreen() {
           rankIndexAfter: rankIndexAfter,
           ratingBefore: ratingBefore,
           ratingAfter: ratingAfter,
-          giantKillingStreak: giantKillingStreak,
-          // booleanはrouterのparamsを通ると文字列になり、"false"も真と判定されてしまう。
-          // なので、whiteRotationと同じく「あれば印の文字列、なければ空文字」で渡す。
-          giantKillingBonus: giantKillingBonus ? "giantKillingBonus" : "",
+          // nullはパラメータで渡せない(Number(null)が0になってしまう)ので、
+          // 「連勝が変わらなかった」ときは空文字で渡す。受け取り側でnullに戻す。
+          giantKillingStreak: giantKillingStreak ?? "",
           whiteRotation: isPlayerBlack ? "" : "whiteRotation",
         },
       });

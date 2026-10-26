@@ -22,8 +22,7 @@ type Props = {
   matchType: MatchType;
   moves: Grid[];
   from: FromType;
-  giantKillingStreak: number;
-  giantKillingBonus: boolean;
+  giantKillingStreak: number | null; // 連勝が変わらなかった時は null
   playerWin?: boolean;
 };
 

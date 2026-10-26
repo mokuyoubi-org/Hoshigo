@@ -17,14 +17,13 @@ type Props = {
 export const AllowBotMatchModal = ({ isMatching, onClose }: Props) => {
   const colors = useColors();
   const t = useTranslation();
-  const { allowBotMatch9, allowBotMatch13, allowBotMatch19, updateProfile } =
-    useProfile();
+  const { stats, updateProfile } = useProfile();
   const [loading, setLoading] = useState(false);
 
   // null のときは「入(true)」として扱う(サーバー側の COALESCE(..., true) と同じ決め方)
-  const botMatch9 = allowBotMatch9 ?? true;
-  const botMatch13 = allowBotMatch13 ?? true;
-  const botMatch19 = allowBotMatch19 ?? true;
+  const botMatch9 = stats[9].allowBotMatch ?? true;
+  const botMatch13 = stats[13].allowBotMatch ?? true;
+  const botMatch19 = stats[19].allowBotMatch ?? true;
 
   const handleToggleBotMatch = async (
     boardSize: 9 | 13 | 19,

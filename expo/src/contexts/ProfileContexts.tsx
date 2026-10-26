@@ -2,73 +2,57 @@
 
 import { createContext, ReactNode, useContext, useState } from "react";
 
+// 盤面サイズ。ループしたいときは BOARD_SIZES を使う
+export const BOARD_SIZES = [9, 13, 19] as const;
+export type OnlineBoardSize = (typeof BOARD_SIZES)[number];
+
+// 9・13・19のどれかかどうか(5は、オンライン成績の対象外)
+export const isOnlineBoardSize = (size: number): size is OnlineBoardSize =>
+  (BOARD_SIZES as readonly number[]).includes(size);
+
+// 1つの盤面サイズぶんの成績・設定
+export type BoardStats = {
+  wins: number | null;
+  losses: number | null;
+  draws: number | null;
+  rating: number | null;
+  giantKillingStreak: number | null;
+  allowBotMatch: boolean | null;
+};
+
 // 1. プロフィールの型（素のデータ）
 export type Profile = {
   uid: string | null;
   email: string | null;
   username: string | null;
   iconIndex: number | null;
-  // 9
-  wins9: number | null;
-  losses9: number | null;
-  draws9: number | null;
-  rating9: number | null;
-  giantKillingStreak9: number | null;
-  // 13
-  wins13: number | null;
-  losses13: number | null;
-  draws13: number | null;
-  rating13: number | null;
-  giantKillingStreak13: number | null;
-  // 19
-  wins19: number | null;
-  losses19: number | null;
-  draws19: number | null;
-  rating19: number | null;
-  giantKillingStreak19: number | null;
-  // others
-  allowBotMatch9: boolean | null;
-  allowBotMatch13: boolean | null;
-  allowBotMatch19: boolean | null;
+  stats: Record<OnlineBoardSize, BoardStats>;
   premiumUntil: number | null; // ⚠️numberであることに注意
   isPremium: boolean | null;
 };
 
 // Hookから返す全体の型
-// isLoggedIn: ログインしているか(ビジターは false)
 type ProfileContextValue = Profile & {
-  isLoggedIn: boolean;
   updateProfile: (partial: Partial<Profile>) => void;
+  updateStats: (size: OnlineBoardSize, partial: Partial<BoardStats>) => void;
 };
 
 // 2. 初期値
+const emptyStats: BoardStats = {
+  wins: null,
+  losses: null,
+  draws: null,
+  rating: null,
+  giantKillingStreak: null,
+  allowBotMatch: null,
+};
+
 export const initialProfile: Profile = {
   uid: null,
   email: null,
   username: null,
   iconIndex: null,
-  // 9
-  rating9: null,
-  wins9: null,
-  losses9: null,
-  draws9: null,
-  giantKillingStreak9: null,
-  // 13
-  rating13: null,
-  wins13: null,
-  losses13: null,
-  draws13: null,
-  giantKillingStreak13: null,
-  // 19
-  rating19: null,
-  wins19: null,
-  losses19: null,
-  draws19: null,
-  giantKillingStreak19: null,
-  // others
-  allowBotMatch9: null,
-  allowBotMatch13: null,
-  allowBotMatch19: null,
+  stats: { 9: emptyStats, 13: emptyStats, 19: emptyStats },
   premiumUntil: null,
   isPremium: null,
 };
@@ -76,6 +60,7 @@ export const initialProfile: Profile = {
 type ProfileContextType = {
   profile: Profile;
   updateProfile: (partial: Partial<Profile>) => void;
+  updateStats: (size: OnlineBoardSize, partial: Partial<BoardStats>) => void;
 };
 
 // 3. 🏢Context本体
@@ -89,8 +74,19 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
     setProfile((prev) => ({ ...prev, ...partial }));
   };
 
+  // 盤面サイズを1つ指定して、その盤面の成績だけ更新する
+  const updateStats = (size: OnlineBoardSize, partial: Partial<BoardStats>) => {
+    setProfile((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        [size]: { ...prev.stats[size], ...partial },
+      },
+    }));
+  };
+
   return (
-    <ProfileContext.Provider value={{ profile, updateProfile }}>
+    <ProfileContext.Provider value={{ profile, updateProfile, updateStats }}>
       {children}
     </ProfileContext.Provider>
   );
@@ -101,12 +97,11 @@ export const useProfile = (): ProfileContextValue => {
   const ctx = useContext(ProfileContext);
   if (!ctx) throw new Error("useProfile must be used within a ProfileProvider");
 
-  const { profile, updateProfile } = ctx;
+  const { profile, updateProfile, updateStats } = ctx;
 
   return {
     ...profile,
-    // ログインしていれば、プロフィールの同期で uid が入る(ビジターは null のまま)
-    isLoggedIn: profile.uid !== null,
     updateProfile,
+    updateStats,
   };
 };

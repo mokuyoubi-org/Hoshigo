@@ -3,7 +3,7 @@
 // 対局のロジックの責任者がuseMatchSession
 
 import { BotUsername } from "@/src/constants/botProfiles";
-import { useProfile } from "@/src/contexts/ProfileContexts";
+import { isOnlineBoardSize, useProfile } from "@/src/contexts/ProfileContexts";
 import { useBotMove } from "@/src/hooks/ai/useBotMove";
 import { useLiveAnalysis } from "@/src/hooks/ai/useLiveAnalysis";
 import { useGameChannel } from "@/src/hooks/match/useGameChannel";
@@ -89,7 +89,7 @@ export const useMatchSession = ({
     boardSize,
   });
 
-  const { rating9, rating13, rating19, updateProfile } = useProfile();
+  const { stats, updateStats } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
   const isGameEndedRef = useRef(false);
   const [resultComment, setResultComment] = useState("");
@@ -105,23 +105,27 @@ export const useMatchSession = ({
     pos: [],
   });
   const [matchResult, setMatchResult] = useState<
-    Omit<MatchResultUpdate, "profilePatch">
+    Omit<MatchResultUpdate, "statsPatch">
   >(() => {
     const initialRating =
-      (boardSize === 9 ? rating9 : boardSize === 13 ? rating13 : rating19) ?? 0;
+      (boardSize === 9
+        ? stats[9].rating
+        : boardSize === 13
+          ? stats[13].rating
+          : stats[19].rating) ?? 0;
     return {
       ratingBefore: initialRating,
       rankIndexBefore: getRankInfo(initialRating, t).index,
       ratingAfter: 0,
       rankIndexAfter: 0,
-      giantKillingBonus: false,
     };
   });
-  // 🐱 ジャイアントキリングの連勝数とボーナス。画面に出す値なので、refではなくstateで持つ。
-  const [giantKilling, setGiantKilling] = useState<{
-    streak: number;
-    bonus: boolean;
-  }>({ streak: 0, bonus: false });
+  // 🐱 今回の対局で連勝が変わった時の、新しい連勝数。変わらなかった時は null。
+  //    画面に出す値なので、refではなくstateで持つ。
+  //    (2以上なら、ジャイアントキリングのボーナス演出が出る)
+  const [giantKillingStreak, setGiantKillingStreak] = useState<number | null>(
+    null,
+  );
   // 🐱 終局の処理(結果表示など)を、1回だけにするための目印。
   //    rating_updated と、閉じるときの保険(onFinished)の、どちらが先に来ても、1回だけ動く
   const endHandledRef = useRef(false);
@@ -405,21 +409,17 @@ export const useMatchSession = ({
     const myData = myColor === BLACK ? data.black : data.white;
 
     // myDataが無くても、終局処理(下のdata.result)は続ける
-    if (myData) {
-      if (boardSize === 9) updateProfile({ wins9: myData.wins });
-      else if (boardSize === 13) updateProfile({ wins13: myData.wins });
-      else if (boardSize === 19) updateProfile({ wins19: myData.wins });
+    if (myData && isOnlineBoardSize(boardSize)) {
+      setGiantKillingStreak(myData.giant_killing_streak ?? null);
 
-      setGiantKilling({
-        streak: myData.giant_killing_streak,
-        bonus: myData.giant_killing_bonus ?? false,
-      });
-
-      const updated = computeMatchResultUpdate(boardSize, myData, t);
+      const updated = computeMatchResultUpdate(myData, t);
       if (updated) {
-        const { profilePatch, ...displayResult } = updated;
+        const { statsPatch, ...displayResult } = updated;
         setMatchResult(displayResult);
-        updateProfile(profilePatch);
+        updateStats(boardSize, statsPatch);
+      } else {
+        // new_rating が不正でも、勝ち数だけは反映する
+        updateStats(boardSize, { wins: myData.wins });
       }
     }
 
@@ -617,8 +617,7 @@ export const useMatchSession = ({
     resultRaw,
     analysis: liveAnalysisResult,
     ...matchResult,
-    giantKillingStreak: giantKilling.streak,
-    giantKillingBonus: giantKilling.bonus,
+    giantKillingStreak,
     doubleTap,
     isSoundEnabled,
     shouldConfirmPass,

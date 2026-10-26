@@ -12,7 +12,7 @@ import { Platform } from "react-native";
 export const configureAudioMode = async (): Promise<void> => {
   try {
     await setAudioModeAsync({
-      playsInSilentMode: Platform.OS === "android",
+      playsInSilentMode: Platform.OS === "android", // Androidではiphoneみたいに端末にカチッとやるボタンがないし、常にtrueでいい
       interruptionMode: "mixWithOthers",
       allowsRecording: false,
       shouldPlayInBackground: false,

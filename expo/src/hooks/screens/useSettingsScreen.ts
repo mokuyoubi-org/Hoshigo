@@ -10,7 +10,7 @@ import { useState } from "react";
 
 export const useSettingsScreen = () => {
   const { isMatching } = useMatching();
-  const { email, allowBotMatch9, allowBotMatch13, allowBotMatch19 } =
+  const { email, stats } =
     useProfile();
 
   const { lang } = useLang();
@@ -62,9 +62,7 @@ export const useSettingsScreen = () => {
 
   return {
     email,
-    allowBotMatch9,
-    allowBotMatch13,
-    allowBotMatch19,
+    stats,
     loading,
     isDisabled,
     isMatching,

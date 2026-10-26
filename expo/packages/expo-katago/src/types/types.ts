@@ -1,10 +1,12 @@
 // packages/expo-katago/src/types/types.ts
 
-import { Board2D, Color, MoveObject } from "go-core";
 import {
   BoardSize,
+  BoardState,
   FloatArray,
   GameRules,
+  Move,
+  Player,
   RegionOfInterest,
 } from "../web-katrain/src/types";
 
@@ -80,9 +82,9 @@ export type AnalyzeResultFor<F extends AnalyzeResultFields> = (F extends {
     : unknown);
 
 export type AnalyzeBoardArgs = {
-  currentPlayer: Color;
-  board: Board2D;
-  moves: MoveObject[];
+  currentPlayer: Player;
+  board: BoardState;
+  moves: Move[];
   boardSize: BoardSize;
   komi: number;
   rules?: GameRules;

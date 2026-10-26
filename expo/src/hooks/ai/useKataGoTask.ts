@@ -5,23 +5,29 @@
 //  - run: 局面を分析して、仕上げ済みの結果を返す。
 //  - isFinalAfterPass: 「パスした後の局面」を分析して、終局と判定されるかを返す。
 //    終局の2段階確認の2段階目。bot側も人間側もここを使う。
+//  - go-coreの形 → expo-katago(web-katrain)の形への変換も、ここでやる。
+//    (石の色: 数字→文字列 / 盤面: 数字→文字列とnull / 座標: 1始まり⇄0始まり)
 // ──────────────────────────────────────────────────
 
-// import { printCustomKataGoResult } from "@/src/logics/debug/debugLogics";
 // srcの世界では、
 // ownership: "BBBWWBB...W.BBBWB"みたいな、BとWと.のみからなる、長さboardSize*boardSizeのstring。
 import { useKataGo } from "expo-katago";
 import {
   Board,
   BoardSize,
+  colorToPlayer,
   finalizeAnalysis,
   getColorToMove,
   Grid,
+  KOMI,
   MatchType,
   movesToBoardHistory,
+  movesToMoveObjects,
   Ownership,
   PASS_GRID,
   rawMovesToCandidates,
+  toBoardState,
+  toOneBased,
   toPercent,
 } from "go-core";
 import { enqueueKataGo } from "./kataGoQueue";
@@ -51,16 +57,19 @@ export const useKataGoTask = () => {
     boardSize: BoardSize,
     matchType: MatchType,
   ): Promise<KataGoTaskResult | null> => {
-    const currentPlayer = getColorToMove(matchType, movesSoFar.length);
+    const currentPlayer = colorToPlayer(
+      getColorToMove(matchType, movesSoFar.length),
+    );
+    const moves = movesToMoveObjects(movesSoFar, boardSize, matchType);
 
     // 🌟 受付係を通す(前の分析が終わるまで、ここで順番待ちになる)
     const result = await enqueueKataGo(() =>
       kataGo.run({
-        board,
-        movesSoFar,
-        boardSize,
-        matchType,
+        board: toBoardState(board, boardSize),
+        moves,
         currentPlayer,
+        boardSize,
+        komi: matchType === 0 ? KOMI : 0, // ⚠️大事
         fields,
       }),
     );
@@ -86,8 +95,15 @@ export const useKataGoTask = () => {
       return null;
     }
 
-    // x, y 形式から grid 形式へ変換する
-    const candidateMoves = rawMovesToCandidates(result.moves ?? [], boardSize);
+    // x, y 形式から grid 形式へ変換する(0始まり → 1始まりに戻してから)
+    const candidateMoves = rawMovesToCandidates(
+      (result.moves ?? []).map((m) => ({
+        ...m,
+        x: toOneBased(m.x),
+        y: toOneBased(m.y),
+      })),
+      boardSize,
+    );
 
     const { ownership, scoreLead, winRate, candidates, isFinal, dames } =
       finalizeAnalysis(

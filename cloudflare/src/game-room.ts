@@ -121,8 +121,7 @@ type SideUpdate = {
   old_rating: number;
   new_rating: number;
   wins: number;
-  giant_killing_streak: number;
-  giant_killing_bonus: boolean;
+  giant_killing_streak: number | null; // 変わらなかった時は null
 };
 type RatingUpdate = { result: string; black: SideUpdate; white: SideUpdate };
 
@@ -691,11 +690,12 @@ export class GameRoom extends DurableObject<AppEnv> {
     const isBotBlack = botColor === "black";
     const isBotWhite = botColor === "white";
 
-    // 格上に勝った連勝は、ボットには関係ない(更新前に戻す)。ボーナスは、連勝が増えたときだけ。
+    // 格上に勝った連勝は、ボットには関係ない(更新前に戻す)。
     if (isBotBlack) bStreak = bStreakOld;
     if (isBotWhite) wStreak = wStreakOld;
-    const bBonus = !isBotBlack && bStreak > bStreakOld;
-    const wBonus = !isBotWhite && wStreak > wStreakOld;
+    // 結果画面に知らせる連勝。変わらなかったときは null(Expo側はcontextを更新しない)
+    const bStreakReport = bStreak !== bStreakOld ? bStreak : null;
+    const wStreakReport = wStreak !== wStreakOld ? wStreak : null;
 
     // 1人分の更新。ボットは、勝敗の数だけ。人間は、レーティングと連勝も。
     const updateFor = (
@@ -739,15 +739,13 @@ export class GameRoom extends DurableObject<AppEnv> {
         old_rating: bRating,
         new_rating: isBotBlack ? bRating : Math.max(0, bRating + bDelta),
         wins: bWins + bWin,
-        giant_killing_streak: bStreak,
-        giant_killing_bonus: bBonus,
+        giant_killing_streak: bStreakReport,
       },
       white: {
         old_rating: wRating,
         new_rating: isBotWhite ? wRating : Math.max(0, wRating + wDelta),
         wins: wWins + wWin,
-        giant_killing_streak: wStreak,
-        giant_killing_bonus: wBonus,
+        giant_killing_streak: wStreakReport,
       },
     };
   }

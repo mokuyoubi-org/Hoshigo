@@ -83,27 +83,29 @@ profileRoutes.post("/get_my_profile", async (c) => {
     .from(userStats)
     .where(eq(userStats.uid, row.uid));
 
+  // 盤面(9・13・19)ごとの、成績と設定を、盤面サイズをキーにした箱へ入れる
+  const boardStats: Record<number, Record<string, unknown>> = {};
+  for (const size of BOARD_SIZES) {
+    const s = stats.find((x) => x.boardSize === size);
+    const st = settings.find((x) => x.boardSize === size);
+    boardStats[size] = {
+      wins: s?.wins ?? 0,
+      losses: s?.losses ?? 0,
+      draws: s?.draws ?? 0,
+      rating: s?.rating ?? 0,
+      giant_killing_streak: s?.giantKillingStreak ?? 0,
+      allow_bot_match: st?.allowBotMatch ?? true,
+    };
+  }
+
   const profile: Record<string, unknown> = {
     uid: row.uid,
     username: row.username,
     icon_index: row.iconIndex,
+    premium_until: row.premiumUntil ? row.premiumUntil.getTime() : null,
+    is_premium: !!row.premiumUntil && row.premiumUntil.getTime() > Date.now(),
+    stats: boardStats,
   };
-
-  profile.premium_until = row.premiumUntil ? row.premiumUntil.getTime() : null;
-  profile.is_premium =
-    !!row.premiumUntil && row.premiumUntil.getTime() > Date.now();
-
-  // 盤面(9・13・19)ごとの、成績と設定
-  for (const size of BOARD_SIZES) {
-    const s = stats.find((x) => x.boardSize === size);
-    const st = settings.find((x) => x.boardSize === size);
-    profile[`wins_${size}`] = s?.wins ?? 0;
-    profile[`losses_${size}`] = s?.losses ?? 0;
-    profile[`draws_${size}`] = s?.draws ?? 0;
-    profile[`rating_${size}`] = s?.rating ?? 0;
-    profile[`giant_killing_streak_${size}`] = s?.giantKillingStreak ?? 0;
-    profile[`allow_bot_match_${size}`] = st?.allowBotMatch ?? true;
-  }
 
   return c.json({ profile });
 });

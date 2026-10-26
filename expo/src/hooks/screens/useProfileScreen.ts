@@ -11,21 +11,12 @@ import { useState } from "react";
 
 export const useProfileScreen = () => {
   const t = useTranslation();
-  const {
-    username,
-    iconIndex,
-    isLoggedIn,
-    uid,
-    updateProfile,
-    rating9,
-    rating13,
-    rating19,
-    isPremium,
-  } = useProfile();
+  const { username, iconIndex, uid, updateProfile, stats, isPremium } =
+    useProfile();
   const [rank9, rank13, rank19] = [
-    getRankInfo(rating9, t),
-    getRankInfo(rating13, t),
-    getRankInfo(rating19, t),
+    getRankInfo(stats[9].rating, t),
+    getRankInfo(stats[13].rating, t),
+    getRankInfo(stats[19].rating, t),
   ];
 
   // 選択中の盤面サイズ（9路 or 13路 or 19路）
@@ -91,7 +82,6 @@ export const useProfileScreen = () => {
     profileData: {
       username,
       iconIndex: iconIndex ?? 0,
-      isLoggedIn,
       uid,
       boardSize,
       rankInfo: currentRankInfo,

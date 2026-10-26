@@ -15,7 +15,7 @@ type Props = {
   textColor: ColorValue;
   trackColor: ColorValue;
   fillColor: ColorValue;
-  fontFamily: string; // 文字のフォント(省略時はシステムのフォント)
+  fontFamily: string;
 };
 
 const KataGoGateView = ({

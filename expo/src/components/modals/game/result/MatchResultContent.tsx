@@ -27,7 +27,6 @@ import {
 import { MyImage } from "../../../common/MyImage";
 import { MyText } from "../../../common/MyText";
 import { RankGauge } from "../../../rank/RankGauge";
-
 type Props = {
   onClose: () => void;
   analysis?: RecordAnalysis;
@@ -38,8 +37,7 @@ type Props = {
   boardSize: BoardSize;
   matchType: MatchType;
   moves: Grid[];
-  giantKillingStreak: number;
-  giantKillingBonus: boolean;
+  giantKillingStreak: number | null; // 連勝が変わらなかった時は null
 };
 
 // 🐱 「いま目指しているゴール」（次のランク名と、そのスタートのレート）
@@ -60,24 +58,26 @@ export const MatchResultContent = ({
   boardSize,
   matchType,
   moves,
-  giantKillingStreak,
-  giantKillingBonus,
+  giantKillingStreak: giantKillingStreakOrNull,
 }: Props) => {
   const colors = useColors();
   const { hide } = useOverlay();
   const { startMatching, isMatching } = useMatching();
   const t = useTranslation();
 
-  const { wins19, wins13, wins9, iconIndex: currentIconIndex } = useProfile();
+  // 連勝が変わらなかった(null)ときは、0と同じ扱い(コンボ演出なし)
+  const giantKillingStreak = giantKillingStreakOrNull ?? 0;
+
+  const { stats, iconIndex: currentIconIndex } = useProfile();
   const { updateIconIndex } = useIconUpdate();
 
   // アイコン変更の個別ローディング状態
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
   const newlyAcquiredIcon = winsToNewlyAcquiredIconIndex(
-    wins9 ?? 0,
-    wins13 ?? 0,
-    wins19 ?? 0,
+    stats[9].wins ?? 0,
+    stats[13].wins ?? 0,
+    stats[19].wins ?? 0,
   );
 
   const handleSelectIcon = async (iconId: number) => {
@@ -127,14 +127,12 @@ export const MatchResultContent = ({
     return () => ratingAnim.removeListener(id);
   }, [ratingAnim]);
 
-  // giant killing コンボ判定(ボーナス発生 & 2回以上 & 差分が割り切れる場合のみ段階アニメーション)
+  // giant killing コンボ判定(連勝が2以上 & 差分が割り切れる場合のみ段階アニメーション)
   const ratingDiff = ratingAfter - ratingBefore;
   const isCombo =
-    giantKillingBonus &&
     giantKillingStreak >= 2 &&
     ratingDiff !== 0 &&
     ratingDiff % giantKillingStreak === 0;
-
   const [bonusMultiplier, setBonusMultiplier] = useState<number | null>(null);
 
   useEffect(() => {
