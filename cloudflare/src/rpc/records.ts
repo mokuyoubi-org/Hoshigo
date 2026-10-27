@@ -6,7 +6,6 @@ import { Hono } from "hono";
 import { cache } from "hono/cache";
 import { createAuth } from "../auth";
 import * as appSchema from "../db/app-schema";
-import { user } from "../db/auth-schema";
 import type { AppEnv } from "../env";
 import { parseAnalysis } from "../logic/analysis";
 import { gzipText, readGzipJson } from "../logic/gzip";

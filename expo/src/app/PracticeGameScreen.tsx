@@ -400,7 +400,6 @@ const PracticeGameScreenContent = ({
         rankIndexBefore={0}
         rankIndexAfter={0}
         from={"PracticeGameScreen"}
-        giantKillingStreak={null}
         playerWin={playerWin}
       />,
     );

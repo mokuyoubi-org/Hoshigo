@@ -1,6 +1,7 @@
-// rating.ts
+// cloudflare/src/logic/rating.ts
 
 // ランクの境目(10k〜2k、1k〜8D)。レーティングがこの値以上なら、そのランクに入る。
+// 保存値は Elo の2倍(SCALE を参照)。
 const RANK_THRESHOLDS = [
   0,
   20,
@@ -22,90 +23,48 @@ const RANK_THRESHOLDS = [
   2500, // 1k ~ 8D
 ] as const;
 
+// K=10のSCALE=2の場合、勝っても0点しかもらえないようになる差は、1273以上。
+// 保存値は Elo の2倍
+const SCALE = 2;
+// Elo の式の「400」も、2倍にそろえる
+const ELO_DIVISOR = 400 * SCALE;
+// ふだんの K
+const K_NORMAL = 10;
+// 0局目の K。1局ごとに K_STEP ずつ下がる
+const K_NEWCOMER = 100;
+const K_STEP = 3;
+// この局数になると、K が K_NORMAL(100 - 3×30 = 10)に戻る
+const NEWCOMER_GAMES = 30;
+
 // レーティング → ランクの番号(0 = 10k)
-export function ratingToRankIndex(rating: number | null | undefined): number {
+export const ratingToRankIndex = (
+  rating: number | null | undefined,
+): number => {
   const r = rating ?? 0;
   const count = RANK_THRESHOLDS.filter((t) => t <= r).length;
   return Math.max(0, count - 1);
-}
+};
 
-// 引き分けのときの増減。
-// ボット戦は増減なし。ふつうの対局は、「勝った場合」と「負けた場合」のちょうど平均(-10〜+10)。
-export function calculateDrawDelta(params: {
-  isBotMatch: boolean;
-  blackRating: number | null | undefined;
-  whiteRating: number | null | undefined;
-}): { blackDelta: number; whiteDelta: number } {
-  if (params.isBotMatch) {
-    return { blackDelta: 0, whiteDelta: 0 };
-  }
+// 自分が勝つ確率(0〜1)
+const expectedScore = (rating: number, opponentRating: number): number =>
+  1 / (1 + 10 ** ((opponentRating - rating) / ELO_DIVISOR));
 
-  // 白のランク - 黒のランク(正なら、黒から見て、相手が格上)
-  const rankDiff =
-    ratingToRankIndex(params.whiteRating) -
-    ratingToRankIndex(params.blackRating);
-
-  const blackDelta = Math.max(-10, Math.min(10, rankDiff));
-  return { blackDelta, whiteDelta: 0 - blackDelta };
-}
-
-// 勝敗がついたときの増減と、格上に勝った連勝の数
-export function calculateMatchDelta(params: {
-  winner: "black" | "white";
-  blackRating: number | null | undefined;
-  whiteRating: number | null | undefined;
-  blackGiantKillingStreak: number | null | undefined;
-  whiteGiantKillingStreak: number | null | undefined;
-  blackGames: number | null | undefined;
-  whiteGames: number | null | undefined;
-  isBotMatch: boolean;
-}): {
-  winnerDelta: number;
-  loserDelta: number;
-  winnerGiantKillingStreak: number;
-  loserGiantKillingStreak: number;
-} {
-  const blackWon = params.winner === "black";
-
-  const winnerRank = ratingToRankIndex(
-    blackWon ? params.blackRating : params.whiteRating,
-  );
-  const loserRank = ratingToRankIndex(
-    blackWon ? params.whiteRating : params.blackRating,
-  );
-  const winnerStreak =
-    (blackWon
-      ? params.blackGiantKillingStreak
-      : params.whiteGiantKillingStreak) ?? 0;
-  const winnerGames = (blackWon ? params.blackGames : params.whiteGames) ?? 0;
-
-  // 負けた側のランク - 勝った側のランク(正なら、格上に勝った)
-  const rankDiff = loserRank - winnerRank;
-
-  // 格上に勝ったら、連勝が1つ増える(上限なし)
-  const winnerGiantKillingStreak = winnerStreak + (rankDiff > 0 ? 1 : 0);
-
-  // 勝ったときの基本の増減。ボット戦は固定で5、ふつうの対局はランク差で決まる(0〜20)
-  const winDelta = params.isBotMatch
-    ? 5
-    : Math.max(0, Math.min(20, 10 + rankDiff));
-
-  // 格上に勝ったときは、増減が連勝の数だけ増える(ボット戦も同じ)
-  const winnerDelta =
-    rankDiff > 0 ? winDelta * winnerGiantKillingStreak : winDelta;
-
-  // 負けた側の増減。ボット戦は固定で -5。
-  // ふつうの対局は、格上に30局以内の人が勝ったときだけ、負けた側は減らない
-  const loserDelta = params.isBotMatch
-    ? -5
-    : rankDiff > 0 && winnerGames <= 30
-      ? 0
-      : -winDelta;
-
-  return {
-    winnerDelta,
-    loserDelta,
-    winnerGiantKillingStreak,
-    loserGiantKillingStreak: 0,
-  };
-}
+// 1人分の増減(保存値)。score は 勝ち=1、引き分け=0.5、負け=0
+// opponentGames を省略すると「相手は十分に打っている」とみなす(ボット用)
+export const calculateEloDelta = (params: {
+  rating: number;
+  opponentRating: number;
+  games: number;
+  opponentGames?: number;
+  score: number;
+}): number => {
+  const isNewcomer = params.games < NEWCOMER_GAMES;
+  // 初心者:自分の対局数だけで決まる(相手は見ない)
+  // ベテラン:相手の対局数が少ないほど割引(0局で0、30局以上で満額)
+  const k = isNewcomer
+    ? K_NEWCOMER - K_STEP * params.games
+    : K_NORMAL *
+      Math.min(1, (params.opponentGames ?? NEWCOMER_GAMES) / NEWCOMER_GAMES);
+  const expected = expectedScore(params.rating, params.opponentRating);
+  return Math.round(k * SCALE * (params.score - expected));
+};

@@ -37,7 +37,6 @@ type Props = {
   boardSize: BoardSize;
   matchType: MatchType;
   moves: Grid[];
-  giantKillingStreak: number | null; // 連勝が変わらなかった時は null
 };
 
 // 🐱 「いま目指しているゴール」（次のランク名と、そのスタートのレート）
@@ -58,16 +57,11 @@ export const MatchResultContent = ({
   boardSize,
   matchType,
   moves,
-  giantKillingStreak: giantKillingStreakOrNull,
 }: Props) => {
   const colors = useColors();
   const { hide } = useOverlay();
   const { startMatching, isMatching } = useMatching();
   const t = useTranslation();
-
-  // 連勝が変わらなかった(null)ときは、0と同じ扱い(コンボ演出なし)
-  const giantKillingStreak = giantKillingStreakOrNull ?? 0;
-
   const { stats, iconIndex: currentIconIndex } = useProfile();
   const { updateIconIndex } = useIconUpdate();
 
@@ -127,14 +121,6 @@ export const MatchResultContent = ({
     return () => ratingAnim.removeListener(id);
   }, [ratingAnim]);
 
-  // giant killing コンボ判定(連勝が2以上 & 差分が割り切れる場合のみ段階アニメーション)
-  const ratingDiff = ratingAfter - ratingBefore;
-  const isCombo =
-    giantKillingStreak >= 2 &&
-    ratingDiff !== 0 &&
-    ratingDiff % giantKillingStreak === 0;
-  const [bonusMultiplier, setBonusMultiplier] = useState<number | null>(null);
-
   useEffect(() => {
     if (hasAnimated.current) return;
     hasAnimated.current = true;
@@ -166,96 +152,30 @@ export const MatchResultContent = ({
       direction > 0
         ? RANKS[info.index + 1].minRating
         : RANKS[info.index].minRating;
-
-    if (isCombo) {
-      // --- giant killing コンボ: chunkごとにゲージと数字を段階的に動かす ---
-      const signedChunk = ratingDiff / giantKillingStreak;
-      let prevInfo = beforeInfo;
-      let stepIndex = 0;
-
-      const animateToPercent = (
-        targetPercent: number,
-        targetRating: number,
-        boundaryRating: number,
-        nextTarget: NextTarget,
-        isTransition: boolean,
-        direction: number,
-        onDone: () => void,
-      ) => {
-        if (isTransition) {
-          run(direction > 0 ? 100 : 0, boundaryRating, 400, () => {
-            setIsRankNew(true);
-            // 🐱 ランクが切り替わる瞬間に、目指すゴールも新しいものに切り替える
-            setDisplayNext(nextTarget);
-            progressAnim.setValue(direction > 0 ? 0 : 100);
-            run(targetPercent, targetRating, 400, onDone);
-          });
-        } else {
-          run(targetPercent, targetRating, 500, onDone);
-        }
-      };
-
-      const runStep = () => {
-        stepIndex += 1;
-        const stepRating = ratingBefore + signedChunk * stepIndex;
-        const stepInfo = getRankInfo(stepRating, t);
-        const isTransition = stepInfo.name !== prevInfo.name;
-        // 🐱 ランクをまたぐなら、またぐ前のランク(prevInfo)を基準に境目を求める
-        const boundaryRating = isTransition
-          ? getBoundaryRating(prevInfo, signedChunk)
-          : stepRating;
-        prevInfo = stepInfo;
-
-        // 2回目以降のchunkはボーナス表示を出したまま、ゲージも同時に動かす
-        if (stepIndex > 1) {
-          setBonusMultiplier(stepIndex);
-        }
-
-        animateToPercent(
-          stepInfo.percent,
-          stepRating,
-          boundaryRating,
-          toNextTarget(stepInfo),
-          isTransition,
-          signedChunk,
-          () => {
-            if (stepIndex < giantKillingStreak) {
-              runStep();
-            }
-          },
-        );
-      };
-
+    const rankTransition = rankIndexAfter !== rankIndexBefore;
+    if (rankTransition) {
+      const direction = rankIndexAfter > rankIndexBefore ? 1 : -1;
       progressAnim.setValue(beforeInfo.percent);
-      runStep();
+
+      run(
+        direction > 0 ? 100 : 0,
+        getBoundaryRating(beforeInfo, direction),
+        600,
+        () => {
+          setIsRankNew(true);
+          // 🐱 ランクが切り替わる瞬間に、目指すゴールも新しいものに切り替える
+          setDisplayNext(toNextTarget(afterInfo));
+          progressAnim.setValue(direction > 0 ? 0 : 100);
+
+          setTimeout(() => {
+            run(afterInfo.percent, ratingAfter, 600);
+          }, 100);
+        },
+      );
     } else {
-      // --- 通常のアニメーション(コンボなし) ---
-      const rankTransition = rankIndexAfter !== rankIndexBefore;
+      progressAnim.setValue(beforeInfo.percent);
 
-      if (rankTransition) {
-        const direction = rankIndexAfter > rankIndexBefore ? 1 : -1;
-        progressAnim.setValue(beforeInfo.percent);
-
-        run(
-          direction > 0 ? 100 : 0,
-          getBoundaryRating(beforeInfo, direction),
-          600,
-          () => {
-            setIsRankNew(true);
-            // 🐱 ランクが切り替わる瞬間に、目指すゴールも新しいものに切り替える
-            setDisplayNext(toNextTarget(afterInfo));
-            progressAnim.setValue(direction > 0 ? 0 : 100);
-
-            setTimeout(() => {
-              run(afterInfo.percent, ratingAfter, 600);
-            }, 100);
-          },
-        );
-      } else {
-        progressAnim.setValue(beforeInfo.percent);
-
-        run(afterInfo.percent, ratingAfter, 1200);
-      }
+      run(afterInfo.percent, ratingAfter, 1200);
     }
   }, []);
 
@@ -331,18 +251,12 @@ export const MatchResultContent = ({
       )}
 
       {/* 🐱 ゲージ（吹き出し + ゲージ + あと◯）。動かすのはこの画面の仕事 */}
-      {/* 🐱 ゲージ（吹き出し + ゲージ + 左の説明 + あと◯）。動かすのはこの画面の仕事 */}
       <RankGauge
         progress={progressAnim}
         color={rankColor}
         height={32}
         bubbleText={displayRating}
         footerText={footerText}
-        footerLeftText={
-          bonusMultiplier !== null
-            ? `${t("ResultModal.giantKillingStreakBonus")} × ${bonusMultiplier}`
-            : null
-        }
         reserveFooterSpace
       />
 

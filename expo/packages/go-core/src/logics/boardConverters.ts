@@ -43,7 +43,7 @@ export const boardToBoard2D = (board: Board, boardSize: BoardSize): Board2D => {
   return stones;
 };
 
-// Grid[] (0~80の配列) ▶︎ Board[] & AgehamaCount[]
+// Grid[] ▶︎ Board[] & AgehamaCount[]
 export const movesToBoardHistory = (
   boardSize: BoardSize,
   matchType: MatchType,

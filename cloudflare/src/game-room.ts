@@ -34,7 +34,7 @@ import { drizzle } from "drizzle-orm/d1";
 import * as appSchema from "./db/app-schema";
 import type { AppEnv } from "./env";
 import { isValidOwnership } from "./logic/analysis";
-import { calculateDrawDelta, calculateMatchDelta } from "./logic/rating";
+import { calculateEloDelta } from "./logic/rating";
 
 const { userStats, records, activeGames } = appSchema;
 
@@ -121,7 +121,6 @@ type SideUpdate = {
   old_rating: number;
   new_rating: number;
   wins: number;
-  giant_killing_streak: number | null; // 変わらなかった時は null
 };
 type RatingUpdate = { result: string; black: SideUpdate; white: SideUpdate };
 
@@ -610,7 +609,7 @@ export class GameRoom extends DurableObject<AppEnv> {
   }
   // レーティングなどを計算して、D1に書く(いまの archive_matches の翻訳)
   private async computeAndApplyStats(state: GameState): Promise<RatingUpdate> {
-    const { blackUid, whiteUid, boardSize, botMatch, botColor } = state.init;
+    const { blackUid, whiteUid, boardSize, botColor } = state.init;
     const result = state.result ?? "VOID";
     const db = drizzle(this.env.DB, { schema: appSchema });
 
@@ -633,71 +632,50 @@ export class GameRoom extends DurableObject<AppEnv> {
     const wWins = white?.wins ?? 0;
     const bGames = bWins + (black?.losses ?? 0) + (black?.draws ?? 0);
     const wGames = wWins + (white?.losses ?? 0) + (white?.draws ?? 0);
-    const bStreakOld = black?.giantKillingStreak ?? 0;
-    const wStreakOld = white?.giantKillingStreak ?? 0;
-
-    let bDelta = 0;
-    let wDelta = 0;
-    let bStreak = bStreakOld;
-    let wStreak = wStreakOld;
-    let bWin = 0;
-    let bLoss = 0;
-    let bDraw = 0;
-    let wWin = 0;
-    let wLoss = 0;
-    let wDraw = 0;
-
-    if (result.startsWith("B+") || result.startsWith("W+")) {
-      const blackWon = result.startsWith("B+");
-      const r = calculateMatchDelta({
-        winner: blackWon ? "black" : "white",
-        blackRating: bRating,
-        whiteRating: wRating,
-        blackGiantKillingStreak: bStreakOld,
-        whiteGiantKillingStreak: wStreakOld,
-        blackGames: bGames,
-        whiteGames: wGames,
-        isBotMatch: botMatch,
-      });
-      if (blackWon) {
-        bWin = 1;
-        wLoss = 1;
-        bDelta = r.winnerDelta;
-        wDelta = r.loserDelta;
-        bStreak = r.winnerGiantKillingStreak;
-        wStreak = r.loserGiantKillingStreak;
-      } else {
-        wWin = 1;
-        bLoss = 1;
-        wDelta = r.winnerDelta;
-        bDelta = r.loserDelta;
-        wStreak = r.winnerGiantKillingStreak;
-        bStreak = r.loserGiantKillingStreak;
-      }
-    } else if (result === "DRAW") {
-      bDraw = 1;
-      wDraw = 1;
-      const r = calculateDrawDelta({
-        isBotMatch: botMatch,
-        blackRating: bRating,
-        whiteRating: wRating,
-      });
-      bDelta = r.blackDelta;
-      wDelta = r.whiteDelta;
-    }
-    // VOID(無効)などは、何も変えない
 
     const isBotBlack = botColor === "black";
     const isBotWhite = botColor === "white";
 
-    // 格上に勝った連勝は、ボットには関係ない(更新前に戻す)。
-    if (isBotBlack) bStreak = bStreakOld;
-    if (isBotWhite) wStreak = wStreakOld;
-    // 結果画面に知らせる連勝。変わらなかったときは null(Expo側はcontextを更新しない)
-    const bStreakReport = bStreak !== bStreakOld ? bStreak : null;
-    const wStreakReport = wStreak !== wStreakOld ? wStreak : null;
+    // ボットは置き石で互角になるので、「自分と同じレートの相手」とみなす。
+    // ただし、ボットの強さが上限(それより強い人には、格下として計算)
+    const bOpponent = isBotWhite ? Math.min(bRating, wRating) : wRating;
+    const wOpponent = isBotBlack ? Math.min(wRating, bRating) : bRating;
 
-    // 1人分の更新。ボットは、勝敗の数だけ。人間は、レーティングと連勝も。
+    // 黒から見た結果(勝ち=1、引き分け=0.5、負け=0)。VOID などは null で、何も変えない
+    let bScore: number | null = null;
+    if (result.startsWith("B+")) bScore = 1;
+    else if (result.startsWith("W+")) bScore = 0;
+    else if (result === "DRAW") bScore = 0.5;
+
+    const bWin = bScore === 1 ? 1 : 0;
+    const bLoss = bScore === 0 ? 1 : 0;
+    const bDraw = bScore === 0.5 ? 1 : 0;
+    const wWin = bLoss;
+    const wLoss = bWin;
+    const wDraw = bDraw;
+
+    const bDelta =
+      bScore === null
+        ? 0
+        : calculateEloDelta({
+            rating: bRating,
+            opponentRating: bOpponent,
+            games: bGames,
+            opponentGames: isBotWhite ? undefined : wGames,
+            score: bScore,
+          });
+    const wDelta =
+      bScore === null
+        ? 0
+        : calculateEloDelta({
+            rating: wRating,
+            opponentRating: wOpponent,
+            games: wGames,
+            opponentGames: isBotBlack ? undefined : bGames,
+            score: 1 - bScore,
+          });
+
+    // 1人分の更新。ボットは、勝敗の数だけ。人間は、レーティングも。
     const updateFor = (
       uid: string,
       isBot: boolean,
@@ -705,7 +683,6 @@ export class GameRoom extends DurableObject<AppEnv> {
       loss: number,
       draw: number,
       delta: number,
-      streak: number,
     ) =>
       db
         .update(userStats)
@@ -722,15 +699,14 @@ export class GameRoom extends DurableObject<AppEnv> {
                 draws: sql`${userStats.draws} + ${draw}`,
                 rating: sql`max(0, ${userStats.rating} + ${delta})`,
                 highestRating: sql`max(${userStats.highestRating}, max(0, ${userStats.rating} + ${delta}))`,
-                giantKillingStreak: streak,
               },
         )
         .where(and(eq(userStats.uid, uid), eq(userStats.boardSize, boardSize)));
 
     // 2人分を、1回のbatchで(両方成功するか、両方なかったことになる)
     await db.batch([
-      updateFor(blackUid, isBotBlack, bWin, bLoss, bDraw, bDelta, bStreak),
-      updateFor(whiteUid, isBotWhite, wWin, wLoss, wDraw, wDelta, wStreak),
+      updateFor(blackUid, isBotBlack, bWin, bLoss, bDraw, bDelta),
+      updateFor(whiteUid, isBotWhite, wWin, wLoss, wDraw, wDelta),
     ]);
 
     return {
@@ -739,13 +715,11 @@ export class GameRoom extends DurableObject<AppEnv> {
         old_rating: bRating,
         new_rating: isBotBlack ? bRating : Math.max(0, bRating + bDelta),
         wins: bWins + bWin,
-        giant_killing_streak: bStreakReport,
       },
       white: {
         old_rating: wRating,
         new_rating: isBotWhite ? wRating : Math.max(0, wRating + wDelta),
         wins: wWins + wWin,
-        giant_killing_streak: wStreakReport,
       },
     };
   }

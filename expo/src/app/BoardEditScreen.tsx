@@ -74,7 +74,6 @@ export default function BoardEditScreen() {
     ratingBefore,
     ratingAfter,
     practiceMatchStatus,
-    giantKillingStreak,
     whiteRotation,
   } = useLocalSearchParams<{
     recordParam?: string;
@@ -85,7 +84,6 @@ export default function BoardEditScreen() {
     ratingBefore?: string;
     ratingAfter?: string;
     practiceMatchStatus?: string;
-    giantKillingStreak?: string;
     whiteRotation?: string;
   }>();
 
@@ -194,10 +192,6 @@ export default function BoardEditScreen() {
       ratingBefore={Number(ratingBefore)}
       ratingAfter={Number(ratingAfter)}
       practiceMatchStatus={practiceMatchStatus ?? ""}
-      // 空文字・なし → null(連勝が変わらなかった)。"0" はちゃんと 0 になる
-      giantKillingStreak={
-        giantKillingStreak ? Number(giantKillingStreak) : null
-      }
       whiteRotation={whiteRotation}
     />
   );
@@ -212,7 +206,6 @@ const BoardEditScreenContent = ({
   ratingBefore,
   ratingAfter,
   practiceMatchStatus,
-  giantKillingStreak,
   whiteRotation,
 }: {
   record: RecordType;
@@ -223,7 +216,6 @@ const BoardEditScreenContent = ({
   ratingBefore: number;
   ratingAfter: number;
   practiceMatchStatus: string;
-  giantKillingStreak: number | null;
   whiteRotation: string | undefined;
 }) => {
   const fontFamily = useAppFont();
@@ -422,7 +414,6 @@ const BoardEditScreenContent = ({
                         rankIndexBefore={rankIndexBefore}
                         rankIndexAfter={rankIndexAfter}
                         from={from}
-                        giantKillingStreak={giantKillingStreak}
                         playerWin={playerWin}
                       />,
                     );

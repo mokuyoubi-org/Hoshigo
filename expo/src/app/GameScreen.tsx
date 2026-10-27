@@ -121,7 +121,6 @@ export default function GameScreen() {
     rankIndexAfter,
     resultRaw,
     analysis,
-    giantKillingStreak,
     doubleTap,
     isSoundEnabled,
   } = useMatchSession({
@@ -221,7 +220,6 @@ export default function GameScreen() {
         rankIndexBefore={rankIndexBefore}
         rankIndexAfter={rankIndexAfter}
         from={"GameScreen"}
-        giantKillingStreak={giantKillingStreak}
         playerWin={playerWin}
       />,
     );
@@ -316,9 +314,6 @@ export default function GameScreen() {
           rankIndexAfter: rankIndexAfter,
           ratingBefore: ratingBefore,
           ratingAfter: ratingAfter,
-          // nullはパラメータで渡せない(Number(null)が0になってしまう)ので、
-          // 「連勝が変わらなかった」ときは空文字で渡す。受け取り側でnullに戻す。
-          giantKillingStreak: giantKillingStreak ?? "",
           whiteRotation: isPlayerBlack ? "" : "whiteRotation",
         },
       });

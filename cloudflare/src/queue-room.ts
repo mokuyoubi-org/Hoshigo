@@ -33,7 +33,7 @@
 //  - 1組のマッチングに失敗しても、ほかの人のマッチングは止めない(try/catch)
 
 import { DurableObject } from "cloudflare:workers";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import * as appSchema from "./db/app-schema";
 import type { AppEnv } from "./env";

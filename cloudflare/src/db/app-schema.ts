@@ -58,7 +58,6 @@ export const userStats = sqliteTable(
       .references(() => profiles.uid, { onDelete: "cascade" }),
     boardSize: integer("board_size").notNull(),
     rating: integer("rating").notNull().default(0),
-    giantKillingStreak: integer("giant_killing_streak").notNull().default(0),
     wins: integer("wins").notNull().default(0),
     losses: integer("losses").notNull().default(0),
     draws: integer("draws").notNull().default(0),

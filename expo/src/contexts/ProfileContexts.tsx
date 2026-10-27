@@ -16,7 +16,6 @@ export type BoardStats = {
   losses: number | null;
   draws: number | null;
   rating: number | null;
-  giantKillingStreak: number | null;
   allowBotMatch: boolean | null;
 };
 
@@ -43,7 +42,6 @@ const emptyStats: BoardStats = {
   losses: null,
   draws: null,
   rating: null,
-  giantKillingStreak: null,
   allowBotMatch: null,
 };
 

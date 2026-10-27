@@ -1,0 +1,1 @@
+ALTER TABLE `user_stats` DROP COLUMN `giant_killing_streak`;

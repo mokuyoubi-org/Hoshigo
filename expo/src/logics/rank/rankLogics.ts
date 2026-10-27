@@ -3,20 +3,10 @@
 import { RANKS } from "@/src/constants/ranks";
 import { TFunction } from "@/src/i18n/types";
 
-const RATING_PER_WIN = 10;
-
 export const ratingToRankIndex = (rating: number): number => {
   const safeRating = Math.max(0, rating);
   const rankIndex = RANKS.findLastIndex((rank) => rank.minRating <= safeRating);
   return rankIndex !== -1 ? rankIndex : 0;
-};
-
-const ratingNeededToWinsNeeded = (
-  rating: number,
-  ratingPerWin: number = RATING_PER_WIN,
-): number => {
-  if (rating <= 0 || ratingPerWin <= 0) return 0;
-  return Math.ceil(rating / ratingPerWin);
 };
 
 export const getRankInfo = (rating: number | null, t: TFunction) => {
@@ -35,7 +25,6 @@ export const getRankInfo = (rating: number | null, t: TFunction) => {
       Math.floor((currentProgress / totalRange) * 100),
     );
     const ratingNeeded = Math.max(0, nextMin - safeRating);
-    const winsNeeded = ratingNeededToWinsNeeded(ratingNeeded, RATING_PER_WIN);
 
     return {
       index: rankIndex,
@@ -48,7 +37,6 @@ export const getRankInfo = (rating: number | null, t: TFunction) => {
         name: t(nextRank.nameKey),
         color: nextRank.color,
         ratingNeeded,
-        winsNeeded,
       },
     };
   }

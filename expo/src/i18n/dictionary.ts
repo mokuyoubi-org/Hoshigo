@@ -479,19 +479,15 @@ export const dictionary = {
   ResultModal: {
     en: {
       newIcons: "You got new icons!",
-      giantKillingStreakBonus: "Giant Killing Streak Bonus",
     },
     ja: {
       newIcons: "新しいアイコンを獲得！",
-      giantKillingStreakBonus: "格上連勝ボーナス",
     },
     zh: {
       newIcons: "获得新图标！",
-      giantKillingStreakBonus: "击败强者连胜奖励",
     },
     ko: {
       newIcons: "새로운 아이콘을 획득했어요!",
-      giantKillingStreakBonus: "강자 격파 연승 보너스",
     },
   },
   SimpleResult: {

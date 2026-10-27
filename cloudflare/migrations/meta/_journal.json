@@ -78,6 +78,13 @@
       "when": 1792990602311,
       "tag": "0010_remove_guest",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793067657655,
+      "tag": "0011_gorgeous_the_santerians",
+      "breakpoints": true
     }
   ]
 }

@@ -93,7 +93,6 @@ profileRoutes.post("/get_my_profile", async (c) => {
       losses: s?.losses ?? 0,
       draws: s?.draws ?? 0,
       rating: s?.rating ?? 0,
-      giant_killing_streak: s?.giantKillingStreak ?? 0,
       allow_bot_match: st?.allowBotMatch ?? true,
     };
   }

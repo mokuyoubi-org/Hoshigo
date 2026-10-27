@@ -1,56 +1,50 @@
 // wrangler.jsonc
 
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "hoshigo-api",
-	"main": "src/index.ts",
-	"compatibility_date": "2026-10-10",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"observability": {
-		"enabled": true
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "hoshigo-db",
-			"database_id": "50856c52-a430-4bd4-be06-62ea1093cb39"
-		}
-	],
-		// R2(棋譜・分析の倉庫)。手元の wrangler dev では、手元の仮のR2が使われる(本物には書かない)。
-	"r2_buckets": [
-		{
-			"binding": "RECORDS",
-			"bucket_name": "hoshigo-records"
-		}
-	],
-	// Durable Objects(リアルタイム対局の部屋)
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "QUEUE_ROOM",
-				"class_name": "QueueRoom"
-			},
-			{
-				"name": "GAME_ROOM",
-				"class_name": "GameRoom"
-			}
-		]
-	},
-	// 部屋のクラスの登録。SQLite版で作る(いまの標準)。
-	"migrations": [
-		{
-			"tag": "v1",
-			"new_sqlite_classes": [
-				"QueueRoom"
-			]
-		},
-		{
-			"tag": "v2",
-			"new_sqlite_classes": [
-				"GameRoom"
-			]
-		}
-	],
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hoshigo-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hoshigo-db",
+      "database_id": "50856c52-a430-4bd4-be06-62ea1093cb39",
+    },
+  ],
+  // R2(棋譜・分析の倉庫)。手元の wrangler dev では、手元の仮のR2が使われる(本物には書かない)。
+  "r2_buckets": [
+    {
+      "binding": "RECORDS",
+      "bucket_name": "hoshigo-records",
+    },
+  ],
+  // Durable Objects(リアルタイム対局の部屋)
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "QUEUE_ROOM",
+        "class_name": "QueueRoom",
+      },
+      {
+        "name": "GAME_ROOM",
+        "class_name": "GameRoom",
+      },
+    ],
+  },
+  // 部屋のクラスの登録。SQLite版で作る(いまの標準)。
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["QueueRoom"],
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["GameRoom"],
+    },
+  ],
 }

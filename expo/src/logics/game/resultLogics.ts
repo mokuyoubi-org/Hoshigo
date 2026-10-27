@@ -9,7 +9,6 @@ type MyData = {
   old_rating: number;
   new_rating: number;
   wins: number;
-  giant_killing_streak?: number | null; // 変わらなかった時は null
 };
 
 export type MatchResultUpdate = {
@@ -43,10 +42,6 @@ export const computeMatchResultUpdate = (
     statsPatch: {
       rating: maybeRating,
       wins: myData.wins,
-      // 連勝が変わらなかった時(null)は、キーごと入れない = contextを更新しない
-      ...(myData.giant_killing_streak != null
-        ? { giantKillingStreak: myData.giant_killing_streak }
-        : {}),
     },
   };
 };

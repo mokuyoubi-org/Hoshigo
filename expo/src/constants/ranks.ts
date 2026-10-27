@@ -35,7 +35,6 @@ type NextRankInfo = {
   name: string;
   color: string;
   ratingNeeded: number;
-  winsNeeded: number;
 };
 
 export type RankInfo = {

@@ -151,13 +151,5 @@ export const botSelectMove = async ({
     matchType,
   );
 
-  // 3. 終局と判定されていて、選んだ手がダメ(打っても結果に影響しない場所)なら、打たずにパスする。
-  // if (isFinal && dames.includes(selectedMove)) {
-  //   console.log(
-  //     `[bot] ${botUsername}: 終局と判定されていて、選んだ手がダメなので、代わりにパスする`,
-  //   );
-  //   return PASS_GRID;
-  // }
-
   return selectedMove;
 };

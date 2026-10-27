@@ -120,12 +120,7 @@ export const useMatchSession = ({
       rankIndexAfter: 0,
     };
   });
-  // 🐱 今回の対局で連勝が変わった時の、新しい連勝数。変わらなかった時は null。
-  //    画面に出す値なので、refではなくstateで持つ。
-  //    (2以上なら、ジャイアントキリングのボーナス演出が出る)
-  const [giantKillingStreak, setGiantKillingStreak] = useState<number | null>(
-    null,
-  );
+
   // 🐱 終局の処理(結果表示など)を、1回だけにするための目印。
   //    rating_updated と、閉じるときの保険(onFinished)の、どちらが先に来ても、1回だけ動く
   const endHandledRef = useRef(false);
@@ -410,7 +405,6 @@ export const useMatchSession = ({
 
     // myDataが無くても、終局処理(下のdata.result)は続ける
     if (myData && isOnlineBoardSize(boardSize)) {
-      setGiantKillingStreak(myData.giant_killing_streak ?? null);
 
       const updated = computeMatchResultUpdate(myData, t);
       if (updated) {
@@ -617,7 +611,6 @@ export const useMatchSession = ({
     resultRaw,
     analysis: liveAnalysisResult,
     ...matchResult,
-    giantKillingStreak,
     doubleTap,
     isSoundEnabled,
     shouldConfirmPass,

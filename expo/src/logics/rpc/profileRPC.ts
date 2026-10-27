@@ -23,7 +23,6 @@ const toBoardStats = (raw: any): BoardStats => ({
   losses: raw?.losses ?? 0,
   draws: raw?.draws ?? 0,
   rating: raw?.rating ?? 0,
-  giantKillingStreak: raw?.giant_killing_streak ?? 0,
   allowBotMatch: raw?.allow_bot_match ?? true,
 });
 
