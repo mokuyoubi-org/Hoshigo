@@ -32,11 +32,13 @@ import { DurableObject } from "cloudflare:workers";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import * as appSchema from "./db/app-schema";
+import * as recordsSchema from "./db/records/schema";
 import type { AppEnv } from "./env";
 import { isValidOwnership } from "./logic/analysis";
 import { calculateEloDelta } from "./logic/rating";
 
-const { userStats, records, activeGames } = appSchema;
+const { userStats, activeGames } = appSchema;
+const { records } = recordsSchema;
 
 // 対局に参加する人の情報(「マッチしたよ」で、相手の情報として、アプリに送る)
 export type PlayerInfo = {
@@ -574,18 +576,19 @@ export class GameRoom extends DurableObject<AppEnv> {
     return update;
   }
 
-  // 棋譜を、D1に1行書く(手・最終局面の地も、この行の中にある)。
-  // 最後に、「対局中」の目印を消す。
+  // 棋譜を、棋譜のDB(RECORDS_DB)に1行書く(手・最終局面の地も、この行の中にある)。
+  // 最後に、メインのDBの「対局中」の目印を消す。
   private async saveRecord(state: GameState) {
     const { gameId, blackUid, whiteUid, boardSize, matchType } = state.init;
     const old = state.oldRatings ?? { black: 0, white: 0 };
     const result = state.result ?? "VOID";
 
     const db = drizzle(this.env.DB, { schema: appSchema });
+    const recordsDb = drizzle(this.env.RECORDS_DB, { schema: recordsSchema });
 
     // 1局につき1行。
     // やり直しで、同じ棋譜を2回書いても、エラーにならないように
-    await db
+    await recordsDb
       .insert(records)
       .values({
         gameId,
@@ -607,6 +610,7 @@ export class GameRoom extends DurableObject<AppEnv> {
     // 「対局中」の目印を消す(これで、2人とも、また待機列に入れる)
     await db.delete(activeGames).where(eq(activeGames.gameId, gameId));
   }
+
   // レーティングなどを計算して、D1に書く(いまの archive_matches の翻訳)
   private async computeAndApplyStats(state: GameState): Promise<RatingUpdate> {
     const { blackUid, whiteUid, boardSize, botColor } = state.init;

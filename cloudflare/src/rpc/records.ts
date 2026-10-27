@@ -6,12 +6,14 @@ import { Hono } from "hono";
 import { cache } from "hono/cache";
 import { createAuth } from "../auth";
 import * as appSchema from "../db/app-schema";
+import * as recordsSchema from "../db/records/schema";
 import type { AppEnv } from "../env";
 import { parseAnalysis } from "../logic/analysis";
 import { gzipText, readGzipJson } from "../logic/gzip";
 import { ratingToRankIndex } from "../logic/rating";
 
-const { profiles, records } = appSchema;
+const { profiles } = appSchema;
+const { records } = recordsSchema;
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -22,6 +24,7 @@ export const recordsRoutes = new Hono<{ Bindings: AppEnv }>();
 // 引数: p_uid(誰の棋譜か)、p_board_size、p_limit、p_before_id(前のページの、最後の棋譜のid)
 // 取ってこれる数は、棋譜の持ち主(p_uid)のプランで決まる。
 // Premium(期限内)は無制限、ゲスト(匿名)は10件、Start(ログイン済みの無料)は 30 件まで(盤面ごと)。
+// 棋譜は別のDB(RECORDS_DB)、プロフィールはメインのDB(DB)から読む。
 // キャッシュ: 1ページ目などは、棚の既定で 60秒。続きのページだけ、下で 1年に上書きする。
 recordsRoutes.get(
   "/get_records_older",
@@ -47,6 +50,7 @@ recordsRoutes.get(
     const beforeId = c.req.query("p_before_id") ?? null;
 
     const db = drizzle(c.env.DB, { schema: appSchema });
+    const recordsDb = drizzle(c.env.RECORDS_DB, { schema: recordsSchema });
 
     // 持ち主のプランから、取ってこれる上限を決める(null = 無制限)
     const [owner] = await db
@@ -68,7 +72,7 @@ recordsRoutes.get(
     let cursor;
     let pageLimit = limit;
     if (beforeId) {
-      const [before] = await db
+      const [before] = await recordsDb
         .select({ createdAt: records.createdAt })
         .from(records)
         .where(and(mine, eq(records.gameId, beforeId)));
@@ -84,7 +88,7 @@ recordsRoutes.get(
 
       // 上限があるときは、「もう何枚渡したか」を数えて、残りの枚数までにする
       if (cap !== null) {
-        const [{ n }] = await db
+        const [{ n }] = await recordsDb
           .select({ n: count() })
           .from(records)
           .where(
@@ -107,7 +111,7 @@ recordsRoutes.get(
     }
 
     // 新しい順に、1ページ分(手と最終局面の地も、この行の中にある)
-    const rows = await db
+    const rows = await recordsDb
       .select()
       .from(records)
       .where(and(mine, cursor))
@@ -165,7 +169,7 @@ recordsRoutes.get(
 // ログインしていなくても見られる。
 // 終局後の分析は変わらないので、棚にも端末にも1年使い回してもらう(Cache-Control)。
 // 分析がまだ無いとき(null)は、後で届くかもしれないので、棚の既定の60秒だけにする。
-// 分析が無いときだけ、対局そのものがあるかをD1で確かめて、record_exists で知らせる。
+// 分析が無いときだけ、対局そのものがあるかを棋譜のDBで確かめて、record_exists で知らせる。
 recordsRoutes.get(
   "/analysis/:gameId",
   cache({
@@ -178,8 +182,8 @@ recordsRoutes.get(
 
     const object = await c.env.RECORDS.get(`analysis/${gameId}.json.gz`);
     if (!object) {
-      const db = drizzle(c.env.DB, { schema: appSchema });
-      const [card] = await db
+      const recordsDb = drizzle(c.env.RECORDS_DB, { schema: recordsSchema });
+      const [card] = await recordsDb
         .select({ gameId: records.gameId })
         .from(records)
         .where(eq(records.gameId, gameId));
@@ -222,8 +226,8 @@ recordsRoutes.post("/submit_analysis", async (c) => {
   if (await c.env.RECORDS.head(analysisKey)) return c.json({ ok: true });
 
   // 棋譜を読む(手数と盤面の大きさを調べるため)
-  const db = drizzle(c.env.DB, { schema: appSchema });
-  const [card] = await db
+  const recordsDb = drizzle(c.env.RECORDS_DB, { schema: recordsSchema });
+  const [card] = await recordsDb
     .select({ moves: records.moves, boardSize: records.boardSize })
     .from(records)
     .where(eq(records.gameId, gameId));

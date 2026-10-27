@@ -8,6 +8,7 @@ export type AppEnv = AuthEnv & {
   QUEUE_ROOM: DurableObjectNamespace;
   GAME_ROOM: DurableObjectNamespace<GameRoom>;
   RECORDS: R2Bucket;
-  // RevenueCatからの通知が、本物かを見分ける合言葉
-  REVENUECAT_WEBHOOK_AUTH: string;
+  REVENUECAT_WEBHOOK_AUTH: string; // RevenueCatからの通知が、本物かを見分ける合言葉
+  // メインのDB(DB)は、AuthEnv(auth.ts)の中にある
+  RECORDS_DB: D1Database; // 棋譜だけを入れる、別のDB
 };

@@ -3,11 +3,9 @@
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
 import { createLocalJWKSet, jwtVerify } from "jose";
 import * as schema from "./db/auth-schema";
-import { carryOverGuestProfile } from "./guest-link";
 
 export type AuthEnv = {
   DB: D1Database;
