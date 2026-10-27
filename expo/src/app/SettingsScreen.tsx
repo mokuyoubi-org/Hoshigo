@@ -2,7 +2,6 @@
 
 import { MyText } from "@/src/components/common/MyText";
 import { VersionModal } from "@/src/components/modals/common/VersionModal";
-import { AllowBotMatchModal } from "@/src/components/modals/settingsScreen/AllowBotMatchModal";
 import { DeleteModal } from "@/src/components/modals/settingsScreen/DeleteModal";
 import { DoubleTapModal } from "@/src/components/modals/settingsScreen/DoubleTapModal";
 import { LanguageModal } from "@/src/components/modals/settingsScreen/LanguageModal";
@@ -48,6 +47,8 @@ export default function SettingsScreen() {
     lang,
     isSoundEnabled,
     setIsSoundEnabled,
+    allowBotMatchToggle,
+    allowBotMatch,
   } = useSettingsScreen();
 
   useBlurActiveElement();
@@ -142,13 +143,15 @@ export default function SettingsScreen() {
             {uid && (
               <SettingsRow
                 label={t("Settings.allowBotMatch")}
-                onPress={() =>
-                  show(
-                    <AllowBotMatchModal
-                      isMatching={isMatching}
-                      onClose={hide}
-                    />,
-                  )
+                rightElement={
+                  <ToggleSwitch
+                    value={allowBotMatch ?? true} // nullならtrueとして扱う
+                    onToggle={allowBotMatchToggle}
+                    disabled={isMatching || loading}
+                    backgroundOnColor={colors.primary}
+                    backgroundOffColor={colors.backgroundStrong}
+                    toggleColor={colors.foreground}
+                  />
                 }
               />
             )}

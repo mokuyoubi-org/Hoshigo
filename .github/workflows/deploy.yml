@@ -146,10 +146,15 @@ jobs:
             | jq -e '.result.status == "active"'
       - name: Check D1 access (read only)
         run: npx wrangler d1 migrations list DB --remote
+      - name: Check records D1 access (read only)
+        run: npx wrangler d1 migrations list RECORDS_DB --remote
       - name: Rehearse all migrations on an empty local D1
         run: npx wrangler d1 migrations apply DB --local
+      - name: Rehearse all records migrations on an empty local D1
+        run: npx wrangler d1 migrations apply RECORDS_DB --local
       - name: Dry run Worker deploy
         run: npx wrangler deploy --dry-run
+
 
   check-native:
     name: "準備: アプリのバンドルとEASの鍵を確認"
@@ -218,9 +223,15 @@ jobs:
             echo '```'
             npx wrangler d1 time-travel info hoshigo-db
             echo '```'
+            echo "### Records D1 restore point (before migration)"
+            echo '```'
+            npx wrangler d1 time-travel info hoshigo-records-db
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Apply D1 migrations
         run: npx wrangler d1 migrations apply DB --remote
+      - name: Apply records D1 migrations
+        run: npx wrangler d1 migrations apply RECORDS_DB --remote
       - name: Deploy Worker
         run: npx wrangler deploy
 

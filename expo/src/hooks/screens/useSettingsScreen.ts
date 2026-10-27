@@ -10,8 +10,7 @@ import { useState } from "react";
 
 export const useSettingsScreen = () => {
   const { isMatching } = useMatching();
-  const { email, stats } =
-    useProfile();
+  const { email, stats, updateProfile, allowBotMatch } = useProfile();
 
   const { lang } = useLang();
 
@@ -33,6 +32,20 @@ export const useSettingsScreen = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const allowBotMatchToggle = async () => {
+    const newValue = !allowBotMatch;
+    setLoading(true);
+    const { error } = await api.rpc("update_allow_bot_match", {
+      new_allow_bot_match: newValue,
+    });
+    if (error) {
+      console.error(error);
+    } else {
+      updateProfile({ allowBotMatch: newValue });
+    }
+    setLoading(false);
   };
 
   const handleConfirmDelete = async () => {
@@ -71,5 +84,7 @@ export const useSettingsScreen = () => {
     lang,
     isSoundEnabled,
     setIsSoundEnabled,
+    allowBotMatchToggle,
+    allowBotMatch,
   };
 };
