@@ -21,6 +21,10 @@ export const profiles = sqliteTable("profiles", {
   username: text("username").notNull().unique(),
   iconIndex: integer("icon_index").notNull().default(0),
   isBot: integer("is_bot", { mode: "boolean" }).notNull().default(false),
+  // ボットとの対局を許可するか(盤面に関係なく、1つ)
+  allowBotMatch: integer("allow_bot_match", { mode: "boolean" })
+    .notNull()
+    .default(true),
   // プレミアムの期限。空(null)なら、プレミアムではない。
   // 期限が過ぎれば、自動でプレミアムが切れる(通知を取りこぼしても安心)
   premiumUntil: integer("premium_until", { mode: "timestamp_ms" }),
@@ -31,22 +35,6 @@ export const profiles = sqliteTable("profiles", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),
 });
-
-// 盤面(9・13・19)ごとの設定。いまは「ボットとの対局を許可するか」だけ。
-// プロフィールが消えたら、いっしょに消える。
-export const userSettings = sqliteTable(
-  "user_settings",
-  {
-    uid: text("uid")
-      .notNull()
-      .references(() => profiles.uid, { onDelete: "cascade" }),
-    boardSize: integer("board_size").notNull(),
-    allowBotMatch: integer("allow_bot_match", { mode: "boolean" })
-      .notNull()
-      .default(true),
-  },
-  (table) => [primaryKey({ columns: [table.uid, table.boardSize] })],
-);
 
 // 盤面ごとの成績(レーティング、勝敗、連勝、1日の対局数など)。
 // プロフィールが消えたら、いっしょに消える。

@@ -8,7 +8,7 @@ import * as appSchema from "../db/app-schema";
 import { user } from "../db/auth-schema";
 import { cache } from "hono/cache";
 
-const { profiles, userSettings, userStats } = appSchema;
+const { profiles, userStats } = appSchema;
 
 const BOARD_SIZES = [9, 13, 19] as const;
 
@@ -54,29 +54,22 @@ accountRoutes.post("/update_icon_index", async (c) => {
   return c.json({ ok: true });
 });
 
-// ボットとの対局を許可するかを、盤面ごとに変える
+// ボットとの対局を許可するかを変える
 accountRoutes.post("/update_allow_bot_match", async (c) => {
   const uid = await getUid(c);
   if (!uid) return rpcError(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
 
   const body = await c.req.json().catch(() => ({}));
-  const boardSize = body.p_board_size;
   const allow = body.new_allow_bot_match;
   if (typeof allow !== "boolean") {
     return rpcError(c, 400, "INVALID_ARGUMENT", "Invalid argument");
   }
 
   const db = drizzle(c.env.DB, { schema: appSchema });
-  const updated = await db
-    .update(userSettings)
+  await db
+    .update(profiles)
     .set({ allowBotMatch: allow })
-    .where(and(eq(userSettings.uid, uid), eq(userSettings.boardSize, boardSize)))
-    .returning();
-
-  // 行がなければ(変な盤面サイズなら)、黙って無視せずに、エラーにする
-  if (updated.length === 0) {
-    return rpcError(c, 400, "INVALID_BOARD_SIZE", "invalid board_size");
-  }
+    .where(eq(profiles.uid, uid));
   return c.json({ ok: true });
 });
 

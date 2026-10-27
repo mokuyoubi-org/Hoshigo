@@ -23,7 +23,6 @@ const toBoardStats = (raw: any): BoardStats => ({
   losses: raw?.losses ?? 0,
   draws: raw?.draws ?? 0,
   rating: raw?.rating ?? 0,
-  allowBotMatch: raw?.allow_bot_match ?? true,
 });
 
 export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
@@ -51,6 +50,7 @@ export const fetchProfileRPC = async (): Promise<FetchProfileResult | null> => {
     ? {
         username: rawProfile.username ?? "",
         iconIndex: rawProfile.icon_index ?? 0,
+        allowBotMatch: rawProfile.allow_bot_match ?? true,
         stats: {
           9: toBoardStats(rawProfile.stats?.[9]),
           13: toBoardStats(rawProfile.stats?.[13]),

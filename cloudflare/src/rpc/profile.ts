@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { createAuth, type AuthEnv } from "../auth";
 import * as appSchema from "../db/app-schema";
 
-const { profiles, userSettings, userStats } = appSchema;
+const { profiles, userStats } = appSchema;
 
 const BOARD_SIZES = [9, 13, 19] as const;
 
@@ -18,9 +18,9 @@ function randomUsername(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// プロフィールを取る。なければ、プロフィールと、設定・成績の6行を、まとめて作る。
+// プロフィールを取る。なければ、プロフィールと、成績の3行を、まとめて作る。
 // 名前がかぶったら、作り直す(最大10回)。同時に2回呼ばれて、先に作られていたら、それを使う。
-export async function ensureProfile(db: Db, uid: string) {
+export const ensureProfile = async (db: Db, uid: string) => {
   // すでにあれば、最終ログイン(lastSeen)を更新して、それを返す
   const [updated] = await db
     .update(profiles)
@@ -34,9 +34,6 @@ export async function ensureProfile(db: Db, uid: string) {
       // 1回のbatchは、全部成功するか、全部なかったことになる
       await db.batch([
         db.insert(profiles).values({ uid, username: randomUsername() }),
-        db
-          .insert(userSettings)
-          .values(BOARD_SIZES.map((boardSize) => ({ uid, boardSize }))),
         db
           .insert(userStats)
           .values(BOARD_SIZES.map((boardSize) => ({ uid, boardSize }))),
@@ -59,7 +56,7 @@ export async function ensureProfile(db: Db, uid: string) {
     .where(eq(profiles.uid, uid));
   if (!created) throw new Error("failed_to_generate_unique_username");
   return created;
-}
+};
 
 export const profileRoutes = new Hono<{ Bindings: AuthEnv }>();
 
@@ -74,26 +71,21 @@ profileRoutes.post("/get_my_profile", async (c) => {
   const db = drizzle(c.env.DB, { schema: appSchema });
   const row = await ensureProfile(db, session.user.id);
 
-  const settings = await db
-    .select()
-    .from(userSettings)
-    .where(eq(userSettings.uid, row.uid));
   const stats = await db
     .select()
     .from(userStats)
     .where(eq(userStats.uid, row.uid));
 
-  // 盤面(9・13・19)ごとの、成績と設定を、盤面サイズをキーにした箱へ入れる
+  // 盤面(9・13・19)ごとの成績を、盤面サイズをキーにした箱へ入れる
   const boardStats: Record<number, Record<string, unknown>> = {};
   for (const size of BOARD_SIZES) {
     const s = stats.find((x) => x.boardSize === size);
-    const st = settings.find((x) => x.boardSize === size);
     boardStats[size] = {
       wins: s?.wins ?? 0,
       losses: s?.losses ?? 0,
       draws: s?.draws ?? 0,
       rating: s?.rating ?? 0,
-      allow_bot_match: st?.allowBotMatch ?? true,
+      // giant_killing_streak: s?.giantKillingStreak ?? 0,
     };
   }
 
@@ -101,6 +93,7 @@ profileRoutes.post("/get_my_profile", async (c) => {
     uid: row.uid,
     username: row.username,
     icon_index: row.iconIndex,
+    allow_bot_match: row.allowBotMatch,
     premium_until: row.premiumUntil ? row.premiumUntil.getTime() : null,
     is_premium: !!row.premiumUntil && row.premiumUntil.getTime() > Date.now(),
     stats: boardStats,

@@ -45,7 +45,7 @@ import {
 import { pickBot } from "./logic/bots";
 import { ensureProfile } from "./rpc/profile";
 
-const { activeGames, profiles, userSettings, userStats } = appSchema;
+const { activeGames, profiles, userStats } = appSchema;
 
 const ALARM_INTERVAL_MS = 3000; // マッチングを試す間隔
 const BOT_AFTER_TRIES = 4; // この回数、待っても組めなかったら、ボット戦
@@ -129,7 +129,7 @@ export class QueueRoom extends DurableObject<AppEnv> {
     }
 
     // プロフィールと成績の行が、まだ無ければ作る(成績の更新が、空振りしないように)
-    await ensureProfile(this.db, uid);
+const profile = await ensureProfile(this.db, uid);
 
     // ① 対局の途中なら、続きから再開させる(待機列には入れない)
     const resume = await this.findResumableGame(uid);
@@ -141,17 +141,12 @@ export class QueueRoom extends DurableObject<AppEnv> {
       );
     }
 
-    // この人の、この盤面でのレーティングと、ボット対戦の許可を調べる
+    // この人の、この盤面でのレーティングを調べる
     const [stats] = await this.db
       .select({ rating: userStats.rating })
       .from(userStats)
       .where(and(eq(userStats.uid, uid), eq(userStats.boardSize, boardSize)));
-    const [setting] = await this.db
-      .select({ allowBotMatch: userSettings.allowBotMatch })
-      .from(userSettings)
-      .where(
-        and(eq(userSettings.uid, uid), eq(userSettings.boardSize, boardSize)),
-      );
+
 
     // 同じ人が、すでに待っていたら、古い方のつながりを閉じる(二重に待たないように)
     for (const ws of this.ctx.getWebSockets()) {
@@ -176,7 +171,7 @@ export class QueueRoom extends DurableObject<AppEnv> {
       uid,
       boardSize,
       rating: stats?.rating ?? 0,
-      allowBotMatch: setting?.allowBotMatch ?? true,
+      allowBotMatch: profile.allowBotMatch,
       joinedAt: Date.now(),
       tryCount: 1,
     };

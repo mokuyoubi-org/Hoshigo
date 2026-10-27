@@ -16,7 +16,6 @@ export type BoardStats = {
   losses: number | null;
   draws: number | null;
   rating: number | null;
-  allowBotMatch: boolean | null;
 };
 
 // 1. プロフィールの型（素のデータ）
@@ -28,6 +27,7 @@ export type Profile = {
   stats: Record<OnlineBoardSize, BoardStats>;
   premiumUntil: number | null; // ⚠️numberであることに注意
   isPremium: boolean | null;
+  allowBotMatch: boolean | null;
 };
 
 // Hookから返す全体の型
@@ -42,7 +42,6 @@ const emptyStats: BoardStats = {
   losses: null,
   draws: null,
   rating: null,
-  allowBotMatch: null,
 };
 
 export const initialProfile: Profile = {
@@ -53,6 +52,7 @@ export const initialProfile: Profile = {
   stats: { 9: emptyStats, 13: emptyStats, 19: emptyStats },
   premiumUntil: null,
   isPremium: null,
+  allowBotMatch: null,
 };
 
 type ProfileContextType = {
