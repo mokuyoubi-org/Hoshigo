@@ -1,3 +1,4 @@
+// Hoshigo
 // i18n/index.ts
 // 2026/10/11: 整理
 

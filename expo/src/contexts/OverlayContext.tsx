@@ -1,10 +1,11 @@
+// Hoshigo
 // OverlayContext.tsx
 //
 // オーバーレイ枠は一つ(showやhide関数を使ってるオーバーレイのこと)。今はどのモーダルがその枠を使ってるか？を定めるcontext。
 //
 // 「状態(content)を持つ場所」と「実際にcontentを描画する場所」を分けている。
 // show/hideを呼ぶ側(例:MatchingProvider)より、OverlayProviderは外側にいる必要がある一方、
-// contentとして表示されるモーダル(例:GameResultModal)が他のContext(例:useMatching)を
+// contentとして表示されるモーダルが他のContext(例:useMatching)を
 // 使えるためには、描画場所はそのProviderより内側にいる必要がある。この2つの要求が
 // 矛盾する場合、OverlayOutletを好きな場所(内側)に置くことで解決する。
 

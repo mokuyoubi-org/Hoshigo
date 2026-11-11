@@ -1,3 +1,4 @@
+// Hoshigo
 // RootProvider.tsx
 
 import { LangProvider } from "@/src/i18n/LangProvider";

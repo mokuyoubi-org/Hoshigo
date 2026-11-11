@@ -11,4 +11,7 @@ export type AppEnv = AuthEnv & {
   REVENUECAT_WEBHOOK_AUTH: string; // RevenueCatからの通知が、本物かを見分ける合言葉
   // メインのDB(DB)は、AuthEnv(auth.ts)の中にある
   RECORDS_DB: D1Database; // 棋譜だけを入れる、別のDB
+  TSUMEGO_DB: D1Database; // 詰碁だけを入れる、別のDB
+  // 管理者アプリ用の合言葉。手元(.dev.vars)にだけ置く。本番には置かない(=管理用の窓口は動かない)
+  ADMIN_SECRET?: string;
 };

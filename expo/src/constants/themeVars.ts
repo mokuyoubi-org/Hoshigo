@@ -1,3 +1,4 @@
+// Hoshigo
 // constants/themeVars.ts
 import { vars } from "nativewind";
 import { DARK_COLORS, LIGHT_COLORS, type Palette } from "./colors";

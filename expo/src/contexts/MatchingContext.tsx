@@ -1,3 +1,4 @@
+// Hoshigo
 // MatchingContext.tsx
 // Contextの定義と、Providerの箱だけ。中身のロジックは useMatchingProvider に集約されている。
 // フェーズによる出し分け(未DL/DL中/ウォームアップ中/自動クローズ)は

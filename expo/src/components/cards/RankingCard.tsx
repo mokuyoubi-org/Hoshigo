@@ -1,3 +1,4 @@
+// Hoshigo
 // RankingCard.tsx
 
 import { MixedText } from "@/src/components/common/MixedText";

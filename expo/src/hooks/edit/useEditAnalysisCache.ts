@@ -1,3 +1,4 @@
+// Hoshigo
 // useEditAnalysisCache.ts
 //
 // ─── このhookの責務 ───────────────────────────────────

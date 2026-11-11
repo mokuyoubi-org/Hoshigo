@@ -1,4 +1,5 @@
 /* global.css 
+_layout.tsxで、アプリ起動時に一度だけ読み込まれるファイル。
 Tailwindの道具箱を、ドロン！と、呼び出すためのファイル。 
 下の3行は「道具を出してね」という目印。ビルドのときに、実際のCSSに置き換わる。
 なお、後ろに書いたものが優先される。
@@ -7,9 +8,7 @@ Tailwindの道具箱を、ドロン！と、呼び出すためのファイル。
 /* 土台: 最初のリセット(余計な余白などを消して、まっさらにする) */
 @tailwind base;
 
-/* components: スタイルをまとめる */
-/*
-例:
+/* components: スタイルをまとめる。例:
 <Text className="px-4 py-2 bg-blue-500 text-white rounded-lg" />
 <Text className="px-4 py-2 bg-blue-500 text-white rounded-lg" />
 こうやって書くのが面倒な時に、

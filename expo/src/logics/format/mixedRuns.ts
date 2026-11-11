@@ -1,3 +1,4 @@
+// Hoshigo
 // mixedRuns.ts
 
 import { JA_HAN, SC_HAN } from "@/src/constants/hanSets";

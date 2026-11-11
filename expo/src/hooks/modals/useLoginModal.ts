@@ -1,3 +1,4 @@
+// Hoshigo
 // src/hooks/modals/useLoginModal.ts
 
 import { useTranslation } from "@/src/i18n/LangProvider";

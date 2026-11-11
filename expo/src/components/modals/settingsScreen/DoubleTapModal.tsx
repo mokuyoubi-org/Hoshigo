@@ -1,3 +1,4 @@
+// Hoshigo
 // DoubleTapModal.tsx
 
 import { MyText } from "@/src/components/common/MyText";
@@ -64,9 +65,7 @@ export const DoubleTapModal = ({ onClose }: Props) => {
       <View className="w-full bg-foreground rounded-xl border-2 border-backgroundStrong overflow-hidden">
         {BOARDS.map((board, index) => (
           <Fragment key={board.key}>
-            {index > 0 && (
-              <Divider backgroundColor={colors.backgroundStrong} />
-            )}
+            {index > 0 && <Divider backgroundColor={colors.backgroundStrong} />}
             <BoardRow keyName={board.key} labelKey={board.labelKey} />
           </Fragment>
         ))}

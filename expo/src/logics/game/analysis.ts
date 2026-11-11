@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/logics/game/analysis.ts
 
 import { KataGoTaskResult } from "@/src/hooks/ai/useKataGoTask";

@@ -1,3 +1,4 @@
+// Hoshigo
 // useGameChannel.ts
 // 2026/10/12: Cloudflare版。対局の部屋(/ws/game/:gameId)へ、つなぎっぱなしにする。
 // - メッセージの種類ごとに、呼び出し元の関数へ振り分ける

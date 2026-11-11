@@ -1,3 +1,4 @@
+// Hoshigo
 // components/MyImage.tsx
 
 import { Image, type ImageProps } from "expo-image";

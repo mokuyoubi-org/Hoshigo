@@ -1,3 +1,4 @@
+// Hoshigo
 // UpdateModal.tsx
 
 import { MyText } from "@/src/components/common/MyText";

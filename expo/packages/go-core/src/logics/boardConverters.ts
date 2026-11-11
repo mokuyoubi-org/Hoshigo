@@ -128,3 +128,21 @@ export const movesToFinalBoard = (
   // 最後に一番新しい盤面とアゲハマを返す
   return { board, agehama };
 };
+
+
+// 石の位置の一覧(黒・白)から、最初の局面の盤を作る。詰碁用。
+// 黒を先に全部置いてから、白を置く(こうすると、呼吸点が正しく数えられる)。
+export const stonesToBoard = (
+  boardSize: BoardSize,
+  blackStones: Grid[],
+  whiteStones: Grid[],
+): Board => {
+  let board: Board = initBoard(boardSize);
+  for (const grid of blackStones) {
+    board = applyMove(boardSize, grid, board, BLACK).board;
+  }
+  for (const grid of whiteStones) {
+    board = applyMove(boardSize, grid, board, WHITE).board;
+  }
+  return board;
+};

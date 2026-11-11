@@ -1,3 +1,4 @@
+// Hoshigo
 // src/components/layout/RoutedContent.tsx
 
 import { SearchingButton } from "@/src/components/buttons/SearchingButton";
@@ -39,8 +40,7 @@ export const RoutedContent = () => {
     // ここでStackを使うことによって、router.back()が機能する。つまりStackがないということは履歴がないということ
     // ここは<View>にしてはいけない
     <>
-      {/* 今表示中のオーバーレイ(モーダル)をここで実際に描画する。
-          MatchingProviderの内側にあるので、GameResultModal等はuseMatching()を使える */}
+      {/* 今表示中のオーバーレイ(モーダル)をここで実際に描画する */}
       <OverlayOutlet />
 
       {/* ToastはModalより手前に出したいので、Outletより後ろに置く(nativeは兄弟の描画順も効く) */}

@@ -1,3 +1,4 @@
+// Hoshigo
 // BotHandicapTable.tsx
 
 import { HANDICAP_DATA, HandicapType } from "@/src/constants/ranks";

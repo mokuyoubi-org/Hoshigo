@@ -1,4 +1,4 @@
-// packages/expo-goband/src/services/goscorer.d.ts
+// packages/go-core/src/services/goscorer.d.ts
 
 import { Color } from "../types/go";
 

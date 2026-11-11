@@ -2,9 +2,5 @@
   "name": "go-core",
   "version": "0.0.1",
   "main": "src/index.ts",
-  "types": "src/index.ts",
-  "peerDependencies": {
-    "expo-localization": "*",
-    "react": "*"
-  }
+  "types": "src/index.ts"
 }

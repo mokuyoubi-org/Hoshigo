@@ -1,3 +1,4 @@
+// Hoshigo
 import { MixedText } from "@/src/components/common/MixedText";
 import { MyText } from "@/src/components/common/MyText";
 import { useColors } from "@/src/hooks/common/useTheme";

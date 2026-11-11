@@ -1,3 +1,4 @@
+// Hoshigo
 // BoardEditScreen.tsx
 
 import {
@@ -28,7 +29,7 @@ import {
   ReplayTapOverlay,
   ScoreLeadReplayControls,
 } from "go-components";
-import { BLACK, RecordAnalysis, WHITE } from "go-core";
+import { BLACK, Color, getColorToMove, RecordAnalysis, WHITE } from "go-core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -44,6 +45,7 @@ import {
   SegmentedIconControl,
 } from "ui-atoms";
 import { MyText } from "../components/common/MyText";
+import { GUEST_UID } from "../constants/guest";
 import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
 import { useTranslation } from "../i18n/LangProvider";
 import { fetchRecordAnalysis, submitAnalysis } from "../logics/rpc/recordsRPC";
@@ -68,7 +70,6 @@ export default function BoardEditScreen() {
   const {
     recordParam,
     from,
-    resultComment,
     rankIndexBefore,
     rankIndexAfter,
     ratingBefore,
@@ -78,7 +79,6 @@ export default function BoardEditScreen() {
   } = useLocalSearchParams<{
     recordParam?: string;
     from: FromType;
-    resultComment?: string;
     rankIndexBefore?: string;
     rankIndexAfter?: string;
     ratingBefore?: string;
@@ -186,7 +186,6 @@ export default function BoardEditScreen() {
     <BoardEditScreenContent
       record={recordWithAnalysis}
       from={from}
-      resultComment={resultComment}
       rankIndexBefore={Number(rankIndexBefore)}
       rankIndexAfter={Number(rankIndexAfter)}
       ratingBefore={Number(ratingBefore)}
@@ -200,7 +199,6 @@ export default function BoardEditScreen() {
 const BoardEditScreenContent = ({
   record,
   from,
-  resultComment,
   rankIndexBefore,
   rankIndexAfter,
   ratingBefore,
@@ -210,7 +208,6 @@ const BoardEditScreenContent = ({
 }: {
   record: RecordType;
   from: FromType;
-  resultComment?: string;
   rankIndexBefore: number;
   rankIndexAfter: number;
   ratingBefore: number;
@@ -224,8 +221,8 @@ const BoardEditScreenContent = ({
   const { width, height } = useWindowDimensions();
   const heightRatio = height / width;
   const widthRatio = width / height;
-
-  const { uid } = useProfile();
+  const { uid: profileUid } = useProfile();
+  const uid = profileUid ?? GUEST_UID;
 
   // 🐱 棋譜モード専用：手ごとのKataGo解析を進める・止める
   const analysisLoop = useRecordAnalysisLoop(record);
@@ -285,21 +282,32 @@ const BoardEditScreenContent = ({
   const isUserWhite = record.white_uid === uid;
   const isUserParticipant = isUserBlack || isUserWhite; // 🔥自分が対局者として実在するか
   const isHumanHumanMatch = isUserBlack && isUserWhite;
-  const isBotBotMatch = !isUserBlack && !isUserWhite;
 
   const isMyBlack = isUserBlack; // 互換のため名称は維持(黒番かどうかの判定に使用)
-
-  const blackWins = record.result?.startsWith("B")
-    ? true
-    : record.result?.startsWith("W")
-      ? false
+  // 🌟 評価マーク(○/❌)は「自分のuidの人の手」だけに出す。
+  //   human vs human は双方。botbot は誰にも出さない。
+  const evaluatedColor: Color | undefined = isUserBlack
+    ? BLACK
+    : isUserWhite
+      ? WHITE
       : undefined;
-  const playerWin =
-    blackWins === undefined || isBotBotMatch || isHumanHumanMatch
-      ? undefined // botbotもしくはhumanhumanの場合、モーダルの文字は赤や緑にはならない、ということ
-      : isMyBlack
-        ? blackWins
-        : !blackWins;
+  const lastMoverColor = getColorToMove(
+    record.match_type,
+    board.currentIndex - 1,
+  );
+  const showEvaluation =
+    !board.isEditMode &&
+    (isHumanHumanMatch ||
+      (evaluatedColor !== undefined && lastMoverColor === evaluatedColor));
+
+  // 自分が対局者(人間 vs bot)のときだけ、「あなたの勝ち」の文と勝敗の色になる。
+  // botbot・humanhumanのときは undefined(=客観的な文で、色なし)
+  const resultPlayerColor: Color | undefined =
+    isUserParticipant && !isHumanHumanMatch
+      ? isMyBlack
+        ? BLACK
+        : WHITE
+      : undefined;
 
   const boardWidth = width > height - 210 ? height * 0.7 : width * 0.96;
 
@@ -407,14 +415,14 @@ const BoardEditScreenContent = ({
                         moves={movesUpToCurrent}
                         analysis={analysisUpToCurrent}
                         visible={true}
-                        resultComment={resultComment}
+                        result={record.result}
+                        playerColor={resultPlayerColor}
                         onClose={hide}
                         ratingBefore={ratingBefore}
                         ratingAfter={ratingAfter}
                         rankIndexBefore={rankIndexBefore}
                         rankIndexAfter={rankIndexAfter}
                         from={from}
-                        playerWin={playerWin}
                       />,
                     );
                   }}
@@ -561,12 +569,18 @@ const BoardEditScreenContent = ({
                   doubleTap={board.doubleTap}
                   // その他情報: 5
                   editMarkers={board.editMarkers}
+                  // ⚠️大事
                   candidatePoints={
-                    board.showMoveEvaluation ? candidatePoints : []
-                  } // 2026/09/21⚠️⚠️⚠️⚠️大事: ここで👁️のon offでの盤面表示を制御している
+                    board.showMoveEvaluation && showEvaluation
+                      ? candidatePoints
+                      : []
+                  }
+                  // ⚠️大事
                   moveEvaluationPoint={
-                    board.showMoveEvaluation ? lastMoveGrid : null
-                  } // 2026/09/21⚠️⚠️⚠️⚠️大事: ここで👁️のon offでの盤面表示を制御している
+                    board.showMoveEvaluation && showEvaluation
+                      ? lastMoveGrid
+                      : null
+                  }
                   moveEvaluation={lastMoveEvaluation}
                   // 物理サイズ: 1
                   boardWidth={boardWidth}

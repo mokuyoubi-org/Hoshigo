@@ -1,3 +1,4 @@
+// Hoshigo
 // useProfileSync.ts
 
 import { useProfile } from "@/src/contexts/ProfileContexts";

@@ -1,3 +1,4 @@
+// Hoshigo
 // textFormatter.ts
 
 import { TFunction } from "@/src/i18n/types";
@@ -130,4 +131,16 @@ export const scoreLeadToResult = (scoreLead: number): string => {
   const absScoreLead = Math.abs(scoreLead);
   if (scoreLead === 0) return "DRAW";
   return scoreLead > 0 ? `B+${absScoreLead}` : `W+${absScoreLead}`;
+};
+
+// "B+4.5" のような結果と、自分の色から、自分が勝ったかを返す。
+// 引き分け・無効・結果なしは undefined(=色をつけない)
+export const resultToPlayerWin = (
+  result: string | null | undefined,
+  playerColor: Color,
+): boolean | undefined => {
+  if (!result) return undefined;
+  if (result[0] === "B") return playerColor === BLACK;
+  if (result[0] === "W") return playerColor === WHITE;
+  return undefined;
 };

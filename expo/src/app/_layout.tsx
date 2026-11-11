@@ -1,3 +1,4 @@
+// Hoshigo
 // app/_layout.tsx
 
 import "@/global.css";

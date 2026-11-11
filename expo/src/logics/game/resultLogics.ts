@@ -1,3 +1,4 @@
+// Hoshigo
 // resultLogics.ts
 
 import type { BoardStats } from "@/src/contexts/ProfileContexts";

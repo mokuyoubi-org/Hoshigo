@@ -1,3 +1,4 @@
+// Hoshigo
 // SettingsScreen.tsx
 
 import { MyText } from "@/src/components/common/MyText";
@@ -16,7 +17,7 @@ import { useBlurActiveElement } from "@/src/hooks/common/useBlurActiveElement";
 import { useColors, useThemeMode } from "@/src/hooks/common/useTheme";
 import { useSettingsScreen } from "@/src/hooks/screens/useSettingsScreen";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { Feather } from "@expo/vector-icons";
+import { Octicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -69,7 +70,7 @@ export default function SettingsScreen() {
               }}
               activeOpacity={0.7}
             >
-              <Feather name="chevron-left" size={36} color={colors.textSub} />
+              <Octicons name="chevron-left" size={36} color={colors.textSub} />
             </TouchableOpacity>
           }
         />

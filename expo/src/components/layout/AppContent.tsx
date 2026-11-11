@@ -1,3 +1,4 @@
+// Hoshigo
 // src/components/layout/AppContent.tsx
 
 import { RoutedContent } from "@/src/components/layout/RoutedContent";

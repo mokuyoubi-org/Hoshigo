@@ -1,3 +1,4 @@
+// Hoshigo
 // StatsBadges.tsx
 
 import { BoardSize } from "@/packages/go-core/src";
@@ -28,7 +29,6 @@ export const StatsBadges = ({ boardSize }: Props) => {
   };
 
   const board = getBoardStats();
-  // const hasStreak = board.streak >= 2;
 
   return (
     <View className="flex-row flex-wrap gap-2">
@@ -39,14 +39,6 @@ export const StatsBadges = ({ boardSize }: Props) => {
         label={t("Stats.wins")}
       />
 
-      {/* 連勝ボーナス */}
-      {/* {hasStreak && (
-        <Badge
-          icon={<AntDesign name="fire" size={18} color={colors.rose} />}
-          value={`×${board.streak}`}
-          label={t("Stats.streakBonus")}
-        />
-      )} */}
     </View>
   );
 };

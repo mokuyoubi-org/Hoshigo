@@ -1,3 +1,4 @@
+// Hoshigo
 // useSettingsScreen.ts
 
 import { useMatching } from "@/src/contexts/MatchingContext";

@@ -1,3 +1,4 @@
+// Hoshigo
 import { BoardSize, Grid, MatchType } from "go-core";
 
 type CategoryChoice = {

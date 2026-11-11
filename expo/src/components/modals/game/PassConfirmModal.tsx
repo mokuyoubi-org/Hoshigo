@@ -1,3 +1,4 @@
+// Hoshigo
 // PassConfirmModal.tsx
 //
 // 終局していない局面で「パス」を押した時に出す確認モーダル。

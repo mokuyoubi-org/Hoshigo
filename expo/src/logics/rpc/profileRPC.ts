@@ -1,3 +1,4 @@
+// Hoshigo
 // profileRPC.ts
 
 import type { BoardStats, Profile } from "@/src/contexts/ProfileContexts";

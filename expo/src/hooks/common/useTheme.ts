@@ -1,3 +1,4 @@
+// Hoshigo
 // hooks/useTheme.ts
 import { DARK_COLORS, LIGHT_COLORS } from "@/src/constants/colors";
 import { useKVStorage } from "kv-store";

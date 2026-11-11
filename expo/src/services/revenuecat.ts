@@ -1,3 +1,4 @@
+// Hoshigo
 // services/revenuecat.ts
 
 import { Linking, Platform } from "react-native";

@@ -1,3 +1,4 @@
+// Hoshigo
 // src/services/auth/ensureSession.ts
 
 import { authClient } from "@/src/services/auth/auth-client";

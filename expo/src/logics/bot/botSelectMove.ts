@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/logics/bot/botSelectMove.ts
 //
 // ─── この関数の責務 ───────────────────────────────────

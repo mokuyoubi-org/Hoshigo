@@ -1,3 +1,4 @@
+// Hoshigo
 // RuleModal.tsx
 
 import { MyText } from "@/src/components/common/MyText";
@@ -5,8 +6,8 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { ScrollView, useWindowDimensions, View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { RuleItem } from "./RuleItem";
 import { BotHandicapTable } from "./BotHandicapTable";
+import { RuleItem } from "./RuleItem";
 
 type Props = {
   visible: boolean;
@@ -64,14 +65,6 @@ export const RuleModal = ({ visible, onClose }: Props) => {
             {
               subtitle: t("RuleModal.pvpRatingTitle"),
               description: t("RuleModal.pvpRatingDescription"),
-            },
-            {
-              subtitle: t("RuleModal.winStreakTitle"),
-              description: t("RuleModal.winStreakDescription"),
-            },
-            {
-              subtitle: t("RuleModal.botMatchTitle"),
-              description: t("RuleModal.botMatchDescription"),
             },
           ]}
         >

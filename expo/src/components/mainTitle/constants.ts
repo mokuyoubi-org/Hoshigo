@@ -1,3 +1,4 @@
+// Hoshigo
 // 🌟 弧を描く5つの星の配置データ
 export const STARS_CONFIG = [
   { size: 24, x: -78, y: 18, rotate: "-24deg" },

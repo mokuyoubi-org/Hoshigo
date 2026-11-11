@@ -1,3 +1,4 @@
+// Hoshigo
 // GameScreen.tsx
 
 // 2026/08/29
@@ -108,7 +109,6 @@ export default function GameScreen() {
     mySeconds,
     oppSeconds,
     isGameEnded,
-    resultComment,
     loading,
     handlePutStone,
     handleResign,
@@ -140,12 +140,6 @@ export default function GameScreen() {
   //   今の局面の判断(パスの確認が要るか)がまだ終わっていない時。
   const isPassDisabled = !isMyTurn || !isPassReady;
   const isPlayerBlack = myColor === BLACK;
-  const blackWins = resultRaw?.startsWith("B")
-    ? true
-    : resultRaw?.startsWith("W")
-      ? false
-      : undefined;
-  const playerWin = isPlayerBlack ? blackWins : !blackWins;
 
   // 対局自体の情報
   const moveHistory = moves?.slice(0, currentIndex + 1) ?? [];
@@ -213,17 +207,18 @@ export default function GameScreen() {
         matchType={matchType}
         moves={moves}
         visible={true}
-        resultComment={resultComment}
+        result={resultRaw}
+        playerColor={myColor}
         onClose={onClose}
         ratingBefore={ratingBefore}
         ratingAfter={ratingAfter}
         rankIndexBefore={rankIndexBefore}
         rankIndexAfter={rankIndexAfter}
         from={"GameScreen"}
-        playerWin={playerWin}
       />,
     );
   };
+
   // 🌟最新のhandlePutStoneを指すref。確認モーダルの「はい」から呼ぶ時に、
   //   モーダルを出した時点の古い関数(古いisGameEndedなどを握っている)ではなく、
   //   常に最新の関数を使うため。
@@ -309,7 +304,6 @@ export default function GameScreen() {
         params: {
           recordParam: JSON.stringify(record),
           from: "GameScreen",
-          resultComment: resultComment,
           rankIndexBefore: rankIndexBefore,
           rankIndexAfter: rankIndexAfter,
           ratingBefore: ratingBefore,

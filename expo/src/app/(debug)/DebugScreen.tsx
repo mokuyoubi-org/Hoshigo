@@ -1,3 +1,4 @@
+// Hoshigo
 // (debug)/DebugScreen.tsx
 // デバッグしたいコンポーネント用のページ。
 import { View } from "react-native";

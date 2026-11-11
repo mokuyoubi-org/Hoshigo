@@ -1,3 +1,4 @@
+// Hoshigo
 // src/services/auth/auth-client.ts
 
 import { expoClient } from "@better-auth/expo/client";

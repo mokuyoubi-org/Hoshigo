@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/logics/ai/kataGoQueue.ts
 //
 // ─── この係の責務 ─────────────────────────────────────

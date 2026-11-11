@@ -1,3 +1,4 @@
+// Hoshigo
 // constants/colors.ts
 import { colord, extend } from "colord";
 import mixPlugin from "colord/plugins/mix";

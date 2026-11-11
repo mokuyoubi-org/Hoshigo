@@ -1,3 +1,4 @@
+// Hoshigo
 // constants/images.ts
 //
 // プロフィールアイコンの一覧。アプリに同梱された画像(requireの結果)なので、

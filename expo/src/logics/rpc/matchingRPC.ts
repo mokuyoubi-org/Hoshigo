@@ -1,3 +1,4 @@
+// Hoshigo
 // matchingRPC.ts
 
 import { BoardSize } from "go-core";

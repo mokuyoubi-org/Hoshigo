@@ -1,6 +1,6 @@
 // ScoreLeadReplayControls.tsx
 
-import { Feather } from "@expo/vector-icons";
+import { Feather, Octicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { RecordAnalysis } from "go-core";
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
@@ -217,7 +217,7 @@ export const ScoreLeadReplayControls = ({
           disabled={isAtStart}
           activeOpacity={0.7}
         >
-          <Feather name="chevron-left" size={24} color={foreground} />
+          <Octicons name="chevron-left" size={24} color={foreground} />
         </TouchableOpacity>
 
         {/* 中央エリア（グラフ＋バー＋つまみを重ね合わせ） */}

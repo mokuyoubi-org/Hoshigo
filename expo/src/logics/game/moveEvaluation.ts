@@ -1,3 +1,4 @@
+// Hoshigo
 // moveEvaluation.ts
 //
 // 実際に打たれた手が良手だったか悪手だったかを、前後のroot winRateの

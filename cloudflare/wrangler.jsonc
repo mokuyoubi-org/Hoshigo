@@ -15,12 +15,19 @@
       "database_name": "hoshigo-db",
       "database_id": "50856c52-a430-4bd4-be06-62ea1093cb39",
     },
-    // 棋譜(records)だけを入れる、別のDB。大きくなるので分けている。
+    // 棋譜用DB
     {
       "binding": "RECORDS_DB",
       "database_name": "hoshigo-records-db",
       "database_id": "66d719e2-d1be-4d92-ac5d-af2e5c2000ac",
       "migrations_dir": "migrations-records",
+    },
+    // 詰碁用DB
+    {
+      "binding": "TSUMEGO_DB",
+      "database_name": "hoshigo-tsumego",
+      "database_id": "17616b56-d027-41cb-b0eb-214f5149a0a2",
+      "migrations_dir": "migrations-tsumego",
     },
   ],
   // R2(棋譜・分析の倉庫)。手元の wrangler dev では、手元の仮のR2が使われる(本物には書かない)。

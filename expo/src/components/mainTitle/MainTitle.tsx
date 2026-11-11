@@ -1,3 +1,4 @@
+// Hoshigo
 // MainTitle.tsx
 
 import { MyText } from "@/src/components/common/MyText";

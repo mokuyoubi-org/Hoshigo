@@ -1,3 +1,4 @@
+// Hoshigo
 // dictionary.ts
 // 2026/10/11: 整理
 
@@ -60,6 +61,7 @@ export const dictionary = {
         "The game might not be over yet. Do you really want to pass?",
       analyzing: "Analyzing",
       plan: "Plan",
+      tsumego: "Puzzle",
     },
     ja: {
       home: "ホーム",
@@ -117,6 +119,7 @@ export const dictionary = {
       passConfirm: "終局していない可能性があります。本当にパスしますか？",
       analyzing: "分析中",
       plan: "プラン",
+      tsumego: "詰碁",
     },
     zh: {
       home: "主页",
@@ -174,6 +177,7 @@ export const dictionary = {
       passConfirm: "对局可能尚未结束。确定要停一手吗？",
       analyzing: "分析中",
       plan: "套餐",
+      tsumego: "死活",
     },
     ko: {
       home: "홈",
@@ -232,6 +236,7 @@ export const dictionary = {
         "아직 대국이 끝나지 않았을 수 있습니다. 정말 패스하시겠습니까?",
       analyzing: "분석 중",
       plan: "요금제",
+      tsumego: "사활",
     },
   },
   Stats: {
@@ -815,12 +820,6 @@ export const dictionary = {
       pvpRatingTitle: "PvP Rating Calculation",
       pvpRatingDescription:
         "When matched with a person, rating changes against an opponent of the same rank are +10 for a win, -10 for a loss, and ±0 for a draw. For each rank higher the opponent is, the rating gained for a win increases by +1, and the rating lost for a loss decreases by -1 (losing less rating). The maximum rank difference for matching is 10 ranks. Note that if the opponent has not played a sufficient number of matches, losing will not decrease your rating.",
-      winStreakTitle: "Win Streak Bonus",
-      winStreakDescription:
-        "Winning consecutive matches against higher-ranked opponents grants a bonus, multiplying the rating gained by the number of consecutive wins. Losing breaks the streak regardless of whether the opponent was higher or lower ranked. Winning against a lower-ranked opponent or drawing against any opponent keeps the current streak unchanged. Note that win streak bonuses apply only to PvP matches, and losing to a bot does not break your streak.",
-      botMatchTitle: "Bot Match",
-      botMatchDescription:
-        "When matched with a bot, rating changes are uniformly +5 for a win, -5 for a loss, and ±0 for a draw. Which bot you match with is determined at random. The conditions for matching with each bot are listed in the table below.",
     },
     ja: {
       title: "ルール",
@@ -833,13 +832,7 @@ export const dictionary = {
       matchingTitle: "マッチング",
       pvpRatingTitle: "対人戦のレート計算",
       pvpRatingDescription:
-        "人とマッチした場合のレート増減は、同じランクの相手なら勝ち+10、負け-10、引き分け±0です。相手のランクが1つ上がるごとに、勝ったときにもらえるレートは+1、負けたときに失うレートは-1ずつ変わります。マッチする差は最大10ランク差です。なお、相手の対局数が十分な回数に達していない場合、負けてもレートは下がりません。",
-      winStreakTitle: "連勝ボーナス",
-      winStreakDescription:
-        "格上(自分よりランクが上の相手)に連勝するとボーナスがつき、もらえるレートが連勝した回数倍増えます。格上・格下に関わらず、負けた場合は記録は途切れます。格下に勝った場合もしくは格上・格下に引き分けた場合は、記録は据え置きとなります。なお、連勝ボーナスがつくのは対人戦のみで、ボットに負けても記録は途切れません。",
-      botMatchTitle: "ボット戦",
-      botMatchDescription:
-        "ボットとマッチした場合のレート増減は、一律で、勝ち+5、負け-5、引き分け±0です。どのボットとマッチするかはランダムに決まります。各ボットとマッチした場合の条件は下の表の通りです。",
+        "対局のレート増減は、基本的には勝ち+10、負け-10、引き分け±0ですが、格上に勝てば多くもらえます。また、十分な対局数がない相手",
     },
     zh: {
       title: "规则",
@@ -853,12 +846,6 @@ export const dictionary = {
       pvpRatingTitle: "玩家对战积分计算",
       pvpRatingDescription:
         "与真实玩家匹配时，与相同段位的对手对局，胜 +10、负 -10、平局 ±0。对手段位每高出1段，获胜时获得的积分 +1，失败时扣除的积分 -1（扣除减少）。最大可匹配相差10个段位的对手。此外，如果对手的对局次数未达到足够数量，即使失败也不会扣除积分。",
-      winStreakTitle: "连胜奖励",
-      winStreakDescription:
-        "连续战胜高段位对手（比自己段位高的对手）可获得连胜奖励，获得的积分将乘以连胜次数。无论对手段位高低，输掉比赛连胜记录都会中断。战胜低段位对手或与任何对手平局，连胜记录保持不变。注意，连胜奖励仅适用于玩家对战，输给机器人不会中断连胜记录。",
-      botMatchTitle: "机器人对战",
-      botMatchDescription:
-        "与机器人匹配时，积分变动一律为：胜 +5、负 -5、平局 ±0。匹配到的机器人是随机决定的。与各机器人匹配的条件如下表所示。",
     },
     ko: {
       title: "규칙",
@@ -872,12 +859,6 @@ export const dictionary = {
       pvpRatingTitle: "대인전 레이트 계산",
       pvpRatingDescription:
         "사람과 매칭되었을 때의 레이트 증감은 같은 랭크의 상대일 경우 승리 +10, 패배 -10, 무승부 ±0입니다. 상대의 랭크가 1단계 높을 때마다 승리 시 얻는 레이트는 +1, 패배 시 잃는 레이트는 -1씩 변합니다(감소량이 줄어듭니다). 매칭 가능한 최대 차이는 10랭크 차이입니다. 또한 상대의 대국 수가 충분한 횟수에 도달하지 않은 경우, 패배해도 레이트가 차감되지 않습니다.",
-      winStreakTitle: "연승 보너스",
-      winStreakDescription:
-        "상위 랭크(자신보다 랭크가 높은 상대)에게 연승하면 보너스가 부여되며, 얻는 레이트가 연승 횟수만큼 배로 증가합니다. 상위·하위 랭크에 관계없이 패배할 경우 기록은 중단됩니다. 하위 랭크에게 승리하거나 상위·하위 랭크와 무승부를 기록한 경우 기록은 유지됩니다. 단, 연승 보너스는 대인전에만 적용되며, 봇에게 패배해도 기록은 중단되지 않습니다.",
-      botMatchTitle: "봇 전",
-      botMatchDescription:
-        "봇과 매칭되었을 때의 레이트 증감은 일률적으로 승리 +5, 패배 -5, 무승부 ±0입니다. 어떤 봇과 매칭될지는 랜덤으로 결정됩니다. 각 봇과 매칭되었을 때의 조건은 아래 표와 같습니다.",
     },
   },
   MaintenanceModal: {

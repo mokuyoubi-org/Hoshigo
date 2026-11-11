@@ -1,3 +1,4 @@
+// Hoshigo
 // VersionModal.tsx
 
 import { OTA_VERSION } from "@/ota-version";

@@ -1,3 +1,4 @@
+// Hoshigo
 export type UsernameValidationError =
   | "required"
   | "length"

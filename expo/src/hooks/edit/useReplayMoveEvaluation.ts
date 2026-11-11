@@ -1,3 +1,4 @@
+// Hoshigo
 // useReplayMoveEvaluation.ts
 //
 // ─── このhookの責務 ───────────────────────────────────

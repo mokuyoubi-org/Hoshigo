@@ -1,3 +1,4 @@
+// Hoshigo
 // RecordCard.tsx
 
 import { useProfile } from "@/src/contexts/ProfileContexts";

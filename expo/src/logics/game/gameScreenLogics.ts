@@ -1,3 +1,4 @@
+// Hoshigo
 // gameScreenLogics.ts
 
 import {

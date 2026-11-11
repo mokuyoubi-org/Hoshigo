@@ -1,3 +1,4 @@
+// Hoshigo
 // recordCardLogics.ts
 
 import { Skeleton, SkeletonOr } from "@/src/types/record";

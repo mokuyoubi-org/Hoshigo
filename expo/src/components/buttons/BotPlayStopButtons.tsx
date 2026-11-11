@@ -1,3 +1,4 @@
+// Hoshigo
 // BotPlayStopButtons.tsx
 
 import { useColors } from "@/src/hooks/common/useTheme";

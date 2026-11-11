@@ -25,6 +25,7 @@ export const MyHeader = ({ left, right, children }: Props) => {
 
 const styles = StyleSheet.create({
   container: {
+    width: "100%", // ヘッダーなので。
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

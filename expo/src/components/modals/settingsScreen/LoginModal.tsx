@@ -1,3 +1,4 @@
+// Hoshigo
 // LoginModal.tsx
 
 import { MyText } from "@/src/components/common/MyText";

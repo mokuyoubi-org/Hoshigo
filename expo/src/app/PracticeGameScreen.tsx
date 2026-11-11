@@ -1,3 +1,4 @@
+// Hoshigo
 // PracticeGameScreen.tsx
 
 import { BotPlayStopButtons } from "@/src/components/buttons/BotPlayStopButtons";
@@ -12,13 +13,12 @@ import { PassConfirmModal } from "@/src/components/modals/game/PassConfirmModal"
 import { PracticeSetupModal } from "@/src/components/modals/game/PracticeSetupModal";
 import { GameResultModal } from "@/src/components/modals/game/result/GameResultModal";
 import { useOverlay } from "@/src/contexts/OverlayContext";
-import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useAppFont } from "@/src/hooks/common/useAppFont";
 import { useColors } from "@/src/hooks/common/useTheme";
 import { usePracticeSession } from "@/src/hooks/practice/usePracticeSession";
 import { usePracticeSettings } from "@/src/hooks/practice/usePracticeSettings";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import { Feather, FontAwesome6 } from "@expo/vector-icons";
+import { FontAwesome6, Octicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GoBoard, ScoreLeadReplayControls } from "go-components";
@@ -220,7 +220,6 @@ const PracticeGameScreenContent = ({
   const { show, hide } = useOverlay();
   const { width, height } = useWindowDimensions();
   const boardWidth = Math.min(width * 0.94, height * 0.6);
-  const { uid } = useProfile();
   const fontFamily = useAppFont();
 
   const {
@@ -244,13 +243,12 @@ const PracticeGameScreenContent = ({
     topPlayer,
     bottomPlayer,
     resultRaw,
-    resultComment,
+    myColor,
     liveAnalysisResult,
     practiceMatchStatus,
     getPlayerGameStartInfo,
     isDoublePass,
     isCalculating,
-    isHumanBotMatch,
     showOwnership,
     showWinRateBar,
     showMode,
@@ -313,18 +311,6 @@ const PracticeGameScreenContent = ({
     [showOwnership, boardSize, boardHistory, currentIndex, liveAnalysisResult],
   );
 
-  const isPlayerBlack = blackPlayer.uid === uid;
-  const blackWins = resultRaw?.startsWith("B")
-    ? true
-    : resultRaw?.startsWith("W")
-      ? false
-      : undefined;
-  const playerWin = !isHumanBotMatch
-    ? undefined
-    : isPlayerBlack
-      ? blackWins
-      : !blackWins;
-
   // 🐱 対局開始時の挨拶モーダル
   useEffect(() => {
     show(
@@ -379,7 +365,6 @@ const PracticeGameScreenContent = ({
       params: {
         recordParam: JSON.stringify(record),
         from: "PracticeGameScreen",
-        resultComment,
         practiceMatchStatus: practiceMatchStatus,
       },
     });
@@ -393,14 +378,14 @@ const PracticeGameScreenContent = ({
           pos: liveAnalysisResult.pos.slice(0, currentIndex + 1),
         }}
         visible={true}
-        resultComment={resultComment}
+        result={resultRaw}
+        playerColor={myColor} // 人間 vs bot のときだけ色が入っている
         onClose={hide}
         ratingBefore={0}
         ratingAfter={0}
         rankIndexBefore={0}
         rankIndexAfter={0}
         from={"PracticeGameScreen"}
-        playerWin={playerWin}
       />,
     );
   }, [isGameEnded]);
@@ -432,7 +417,7 @@ const PracticeGameScreenContent = ({
               }}
               activeOpacity={0.7}
             >
-              <Feather name="chevron-left" size={36} color={colors.textSub} />
+              <Octicons name="chevron-left" size={36} color={colors.textSub} />
             </TouchableOpacity>
           }
           right={

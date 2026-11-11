@@ -1,3 +1,4 @@
+// Hoshigo
 // recordBuilder.ts
 
 import { RecordType } from "@/src/types/record";

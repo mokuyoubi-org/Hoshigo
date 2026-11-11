@@ -1,3 +1,4 @@
+// Hoshigo
 // Badge.tsx
 
 import { useColors } from "@/src/hooks/common/useTheme";

@@ -1,3 +1,4 @@
+// Hoshigo
 // AvatarWithPass.tsx
 
 import { useAppFont } from "@/src/hooks/common/useAppFont";

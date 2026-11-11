@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/logics/rpc/recordsRPC.ts
 // サーバーの get_records_older を呼んで、アプリの RecordType に翻訳する
 

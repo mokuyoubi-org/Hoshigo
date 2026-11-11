@@ -1,3 +1,4 @@
+// Hoshigo
 // useAppFont.ts
 
 import { getAppFont } from "@/src/constants/fonts";

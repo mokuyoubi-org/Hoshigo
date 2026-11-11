@@ -1,3 +1,4 @@
+// Hoshigo
 // useRecordsScreen.ts
 
 import { useProfile } from "@/src/contexts/ProfileContexts";

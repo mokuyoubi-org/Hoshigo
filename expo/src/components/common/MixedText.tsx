@@ -1,3 +1,4 @@
+// Hoshigo
 // MixedText.tsx
 
 import { getAppFont } from "@/src/constants/fonts";

@@ -1,3 +1,4 @@
+// Hoshigo
 // useMatchingProvider.ts
 // 2026/10/12: Cloudflare版(WebSocketの待機列)へ付け替え
 // マッチングの状態管理と、開始/キャンセル処理のロジック本体。

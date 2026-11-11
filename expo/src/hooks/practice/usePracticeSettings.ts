@@ -1,3 +1,4 @@
+// Hoshigo
 // usePracticeSettings.ts
 //
 // 対局が始まる「前」の設定（盤サイズ・ハンデ・プレイヤー選択）を
@@ -5,6 +6,7 @@
 // セットアップモーダルへの値渡しに使う。
 // 🌟実際の対局中の状態はここには含めない。
 
+import { GUEST_UID } from "@/src/constants/guest";
 import { isOnlineBoardSize, useProfile } from "@/src/contexts/ProfileContexts";
 import { PlayerType } from "@/src/types/player";
 import { BoardSize, MatchType } from "go-core";
@@ -56,6 +58,6 @@ export const usePracticeSettings = () => {
     setWhitePlayer,
     myRatingForBoardSize,
     myIconIndex,
-    uid,
+ uid: uid ?? GUEST_UID,
   };
 };

@@ -1,3 +1,4 @@
+// Hoshigo
 // rankLogics.ts
 
 import { RANKS } from "@/src/constants/ranks";

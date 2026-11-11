@@ -1,3 +1,4 @@
+// Hoshigo
 // useRecordAnalysisLoop.ts
 //
 // ─── このhookの責務 ───────────────────────────────────

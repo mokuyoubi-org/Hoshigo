@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/hooks/match/useMatchSession.ts
 // 対局のUIの責任者がGameScreen
 // 対局のロジックの責任者がuseMatchSession
@@ -9,10 +10,7 @@ import { useLiveAnalysis } from "@/src/hooks/ai/useLiveAnalysis";
 import { useGameChannel } from "@/src/hooks/match/useGameChannel";
 import { useMatchClock } from "@/src/hooks/match/useMatchClock";
 import { useTranslation } from "@/src/i18n/LangProvider";
-import {
-  resultToSubjectiveComment,
-  scoreLeadToResult,
-} from "@/src/logics/format/textFormatter";
+import { scoreLeadToResult } from "@/src/logics/format/textFormatter";
 import {
   computeMatchResultUpdate,
   MatchResultUpdate,
@@ -92,7 +90,6 @@ export const useMatchSession = ({
   const { stats, updateStats } = useProfile();
   const [isGameEnded, setIsGameEnded] = useState(false);
   const isGameEndedRef = useRef(false);
-  const [resultComment, setResultComment] = useState("");
   const [loading, setLoading] = useState(false);
 
   // 🌟 サーバーから最初の盤面(state)が届いたか。届くまでは、ボットを打たせない。
@@ -405,7 +402,6 @@ export const useMatchSession = ({
 
     // myDataが無くても、終局処理(下のdata.result)は続ける
     if (myData && isOnlineBoardSize(boardSize)) {
-
       const updated = computeMatchResultUpdate(myData, t);
       if (updated) {
         const { statsPatch, ...displayResult } = updated;
@@ -427,10 +423,6 @@ export const useMatchSession = ({
       }
 
       setResultRaw(data.result);
-      setResultComment(
-        resultToSubjectiveComment(data.result, myColor, t) ??
-          t("common.matchComplete"),
-      );
 
       // 🐱 裏で溜め続けた分析結果を、この時点で確定させてstateに移す。
       await liveAnalysis.waitForPending();
@@ -603,7 +595,6 @@ export const useMatchSession = ({
     mySeconds: clock.mySeconds,
     oppSeconds: clock.oppSeconds,
     isGameEnded,
-    resultComment,
     loading,
     setLoading,
     handlePutStone,

@@ -1,3 +1,4 @@
+// Hoshigo
 // BoardEditScreenHeader.tsx
 
 import { MixedText } from "@/src/components/common/MixedText";

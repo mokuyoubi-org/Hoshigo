@@ -1,3 +1,4 @@
+// Hoshigo
 // PracticeResultContent.tsx
 
 import { useMatching } from "@/src/contexts/MatchingContext";

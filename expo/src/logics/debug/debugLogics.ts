@@ -1,3 +1,4 @@
+// Hoshigo
 // import { BLACK, Board, BoardSize, Color, Grid, WHITE } from "go-core";
 
 // export const printCustomKataGoResult = (

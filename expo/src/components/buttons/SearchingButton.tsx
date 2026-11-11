@@ -1,3 +1,4 @@
+// Hoshigo
 // SearchingButton.tsx
 
 import { useMatching } from "@/src/contexts/MatchingContext";

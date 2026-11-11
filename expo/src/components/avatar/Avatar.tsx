@@ -1,3 +1,4 @@
+// Hoshigo
 // Avatar.tsx
 
 import { Agehama } from "@/packages/go-components/src";

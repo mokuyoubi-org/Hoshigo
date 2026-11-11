@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/hooks/ai/useKataGoTask.ts
 //
 // ─── このhookの責務 ───────────────────────────────────

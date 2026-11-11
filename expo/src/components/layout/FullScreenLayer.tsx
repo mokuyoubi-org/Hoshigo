@@ -1,3 +1,4 @@
+// Hoshigo
 // src/components/layout/FullScreenLayer.tsx
 
 import type { ReactNode } from "react";

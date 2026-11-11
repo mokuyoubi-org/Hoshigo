@@ -1,3 +1,4 @@
+// Hoshigo
 // usePracticeSetupModal.ts
 //
 // PracticeSetupModal（対局前の設定画面）が必要とする「画面表示用に

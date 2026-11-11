@@ -1,3 +1,4 @@
+// Hoshigo
 // nameFormatter.ts
 
 import { TFunction } from "@/src/i18n/types";

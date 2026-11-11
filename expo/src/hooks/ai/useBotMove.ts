@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/hooks/ai/useBotMove.ts
 //
 // ─── このhookの責務 ───────────────────────────────────
@@ -30,6 +31,12 @@ import {
   MatchType,
 } from "go-core";
 import { useRef } from "react";
+
+// 端末の速さに関係なく、ボットが最低これだけ(ms)は「考えている」ようにする。
+const MIN_BOT_THINK_MS = 800;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export const useBotMove = (
   botColor: Color,
@@ -76,6 +83,8 @@ export const useBotMove = (
 
     isBotRunningRef.current = true;
     try {
+      const startedAt = Date.now();
+
       let result: KataGoTaskResult | null = null;
       try {
         result = await kataGoTask.run(board, movesSoFar, boardSize, matchType);
@@ -89,6 +98,12 @@ export const useBotMove = (
           movesCount: movesSoFar.length,
         });
         return false;
+      }
+
+      // 端末が速くても、最低 MIN_BOT_THINK_MS は待つ。
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_BOT_THINK_MS) {
+        await sleep(MIN_BOT_THINK_MS - elapsed);
       }
 
       // 次の手(パス含む)は、botSelectMove が決める。

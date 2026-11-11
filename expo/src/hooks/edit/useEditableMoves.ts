@@ -1,3 +1,4 @@
+// Hoshigo
 // useEditableMoves.ts
 //
 // ─── このhookの責務 ───────────────────────────────────

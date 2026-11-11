@@ -1,3 +1,4 @@
+// Hoshigo
 // @/src/app/(tabs)/_layout.tsx
 
 import { useAppFont } from "@/src/hooks/common/useAppFont";
@@ -83,6 +84,18 @@ export default function TabsLayout() {
             ),
           }}
         />
+        {/* <Tabs.Screen
+          name="TsumegoScreen"
+          options={{
+            title: t("common.tsumego"),
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                focused={focused}
+                icon={<FontAwesome6 name="bolt" color={color} size={20} />}
+              />
+            ),
+          }}
+        /> */}
 
         <Tabs.Screen
           name="ProfileScreen"

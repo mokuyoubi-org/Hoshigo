@@ -1,3 +1,4 @@
+// Hoshigo
 // constants/preload.ts
 //
 // アプリ起動時に、画像・音声を事前に読み込んでおくための関数。

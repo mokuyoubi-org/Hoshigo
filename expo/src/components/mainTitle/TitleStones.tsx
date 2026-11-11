@@ -1,3 +1,4 @@
+// Hoshigo
 import { useColors } from "@/src/hooks/common/useTheme";
 import { View } from "react-native";
 

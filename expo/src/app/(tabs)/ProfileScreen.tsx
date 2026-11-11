@@ -1,3 +1,4 @@
+// Hoshigo
 // ProfileScreen.tsx
 
 import { Avatar } from "@/src/components/avatar/Avatar";

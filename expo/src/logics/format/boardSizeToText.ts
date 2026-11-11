@@ -1,3 +1,4 @@
+// Hoshigo
 import { TFunction } from "@/src/i18n/types";
 import { BoardSize } from "go-core";
 

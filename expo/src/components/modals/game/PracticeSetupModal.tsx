@@ -1,4 +1,5 @@
-// PracticeSetupModal.tsx 最終形
+// Hoshigo
+// PracticeSetupModal.tsx
 // overlaycontextの枠は使っていない。
 
 import { MyText } from "@/src/components/common/MyText";
@@ -9,7 +10,7 @@ import { useTranslation } from "@/src/i18n/LangProvider";
 import { nameFormatter } from "@/src/logics/format/nameFormatter";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { PlayerType } from "@/src/types/player";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Octicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { BLACK, BoardSize, Color, MatchType, WHITE } from "go-core";
 import { TouchableOpacity, View } from "react-native";
@@ -185,7 +186,7 @@ export const PracticeSetupModal = ({
           }}
           activeOpacity={0.7}
         >
-          <Feather name="chevron-left" size={24} color={colors.textSub} />
+          <Octicons name="chevron-left" size={24} color={colors.textSub} />
         </TouchableOpacity>
       </View>
 

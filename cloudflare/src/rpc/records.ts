@@ -165,6 +165,7 @@ recordsRoutes.get(
     return c.json(result);
   },
 );
+
 // 1局ぶんの分析(R2の analysis/{gameId}.json.gz の中身の analysis 部分)を、GETで返す。
 // ログインしていなくても見られる。
 // 終局後の分析は変わらないので、棚にも端末にも1年使い回してもらう(Cache-Control)。

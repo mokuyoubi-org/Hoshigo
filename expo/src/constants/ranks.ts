@@ -1,3 +1,4 @@
+// Hoshigo
 // constants/ranks.ts
 
 import { TranslationKey } from "@/src/i18n/types";

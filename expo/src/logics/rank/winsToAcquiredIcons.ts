@@ -1,3 +1,4 @@
+// Hoshigo
 // winsToAcquiredIcons.ts
 
 export const winsToAcquiredIcons = (

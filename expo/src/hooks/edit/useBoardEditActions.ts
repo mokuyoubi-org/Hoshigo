@@ -1,3 +1,4 @@
+// Hoshigo
 // useBoardEditActions.ts
 
 import { scoreLeadToResult } from "@/src/logics/format/textFormatter";

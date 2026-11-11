@@ -1,3 +1,4 @@
+// Hoshigo
 // HomeScreen.tsx
 
 import { MainButton } from "@/src/components/buttons/MainButton";

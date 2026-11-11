@@ -1,3 +1,4 @@
+// Hoshigo
 // RecordsScreen.tsx
 
 import { RecordCard } from "@/src/components/cards/RecordCard";
@@ -9,7 +10,7 @@ import { useRecordsScreen } from "@/src/hooks/records/useRecordsScreen";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { isSkeletonCard } from "@/src/logics/record/recordCardLogics";
 import { RecordOrSkeleton } from "@/src/types/record";
-import { Feather } from "@expo/vector-icons";
+import { Octicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { BLACK, WHITE } from "go-core";
@@ -18,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MyHeader, SegmentedControl } from "ui-atoms";
 import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
 import { boardSizeOptions } from "../logics/format/boardSizeToText";
-import { resultToSubjectiveComment } from "../logics/format/textFormatter";
+import { resultToPlayerWin } from "../logics/format/textFormatter";
 
 export default function RecordsScreen() {
   const fontFamily = useAppFont();
@@ -52,12 +53,10 @@ export default function RecordsScreen() {
     }
 
     const isPlayerBlack = item.black_uid === uid;
-    const blackWins = item.result?.startsWith("B")
-      ? true
-      : item.result?.startsWith("W")
-        ? false
-        : undefined;
-    const playerWin = isPlayerBlack ? blackWins : !blackWins;
+    const playerWin = resultToPlayerWin(
+      item.result,
+      isPlayerBlack ? BLACK : WHITE,
+    );
 
     return (
       <RecordCard
@@ -77,12 +76,6 @@ export default function RecordsScreen() {
             params: {
               recordParam: JSON.stringify(item),
               from: "RecordScreen",
-              resultComment:
-                resultToSubjectiveComment(
-                  item.result ?? "",
-                  isPlayerBlack ? BLACK : WHITE,
-                  t,
-                ) ?? t("common.unknown"),
             },
           });
         }}
@@ -126,7 +119,7 @@ export default function RecordsScreen() {
               }}
               activeOpacity={0.7}
             >
-              <Feather name="chevron-left" size={36} color={colors.textSub} />
+              <Octicons name="chevron-left" size={36} color={colors.textSub} />
             </TouchableOpacity>
           }
           right={

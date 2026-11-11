@@ -1,3 +1,4 @@
+// Hoshigo
 // titleConfig.ts
 
 import { FontName } from "@/src/constants/fonts";

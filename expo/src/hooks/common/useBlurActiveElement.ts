@@ -1,3 +1,4 @@
+// Hoshigo
 // useBlurActiveElement.ts
 
 import { useEffect } from "react";

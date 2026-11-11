@@ -1,3 +1,4 @@
+// Hoshigo
 // BoardEditScreenSettingsModal.tsx
 
 import { ShowMode } from "@/packages/go-components/src";

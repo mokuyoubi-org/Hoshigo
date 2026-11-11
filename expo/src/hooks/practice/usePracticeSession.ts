@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/hooks/practice/usePracticeSession.ts
 //
 // 実際の対局（1局分）の状態とロジックを管理するフック。
@@ -16,11 +17,7 @@ import { useBotMove } from "@/src/hooks/ai/useBotMove";
 import { useLiveAnalysis } from "@/src/hooks/ai/useLiveAnalysis";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { isBot } from "@/src/logics/format/nameFormatter";
-import {
-  resultToObjectiveComment,
-  resultToSubjectiveComment,
-  scoreLeadToResult,
-} from "@/src/logics/format/textFormatter";
+import { scoreLeadToResult } from "@/src/logics/format/textFormatter";
 import { getPassState } from "@/src/logics/game/gameScreenLogics";
 import { PlayerCardView, PlayerType } from "@/src/types/player";
 import { ShowMode, useGoGame } from "go-components";
@@ -98,7 +95,7 @@ export const usePracticeSession = ({
   const myRatingForBoardSize = isOnlineBoardSize(boardSize)
     ? (stats[boardSize].rating ?? 0)
     : 0;
-    
+
   const myIconIndex = iconIndex ?? 0;
 
   const isBotBotMatch: boolean =
@@ -184,7 +181,6 @@ export const usePracticeSession = ({
   const isGameEndedRef = useRef(false);
   const [isBotThinking, setIsBotThinking] = useState(false);
   const isBotRunningRef = useRef(false);
-  const [resultComment, setResultComment] = useState("");
   const [resultRaw, setResultRaw] = useState<string | null>(null);
   // 🌟 最初は、引き継いだ分析結果で始まる(なければ空)
   const [liveAnalysisResult, setLiveAnalysisResult] = useState<RecordAnalysis>(
@@ -306,18 +302,12 @@ export const usePracticeSession = ({
         }
 
         setResultRaw(null);
-        setResultComment(t("common.matchComplete"));
       } else if (reason === "resign") {
         const currentColor = getCurrentColor();
         const winnerColor = currentColor === BLACK ? WHITE : BLACK;
         const result = `${winnerColor === BLACK ? "B" : "W"}+R`;
 
         setResultRaw(result);
-        setResultComment(
-          (isHumanBotMatch
-            ? resultToSubjectiveComment(result, myColor ?? BLACK, t)
-            : resultToObjectiveComment(result, t)) ?? t("common.matchComplete"),
-        );
 
         await liveAnalysis.waitForPending();
       } else {
@@ -335,14 +325,6 @@ export const usePracticeSession = ({
         const result = entry ? scoreLeadToResult(entry.scoreLead) : null;
         if (entry) goBoard.setOwnership(entry.ownership);
         setResultRaw(result);
-        setResultComment(
-          (result === null
-            ? null
-            : isHumanBotMatch
-              ? resultToSubjectiveComment(result, myColor ?? BLACK, t)
-              : resultToObjectiveComment(result, t)) ??
-            t("common.matchComplete"),
-        );
       }
     } catch (e) {
       // 🛡️ 途中で例外が出ても、画面(LoadingModal)が固まらないように、
@@ -352,7 +334,6 @@ export const usePracticeSession = ({
         e,
       );
       setResultRaw(null);
-      setResultComment(t("common.matchComplete"));
     }
 
     // どの終わり方でも共通の後始末
@@ -751,7 +732,6 @@ export const usePracticeSession = ({
     topPlayer,
     bottomPlayer,
     resultRaw,
-    resultComment,
     liveAnalysisResult,
     practiceMatchStatus,
     myColor,

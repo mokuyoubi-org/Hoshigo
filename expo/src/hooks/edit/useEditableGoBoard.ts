@@ -1,3 +1,4 @@
+// Hoshigo
 // useEditableGoBoard.ts
 //
 // ─── このhookの責務 ───────────────────────────────────

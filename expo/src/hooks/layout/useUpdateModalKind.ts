@@ -1,3 +1,4 @@
+// Hoshigo
 // src/hooks/common/useUpdateModalKind.ts
 
 import { useApp } from "@/src/contexts/AppContexts";

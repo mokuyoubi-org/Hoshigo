@@ -1,3 +1,4 @@
+// Hoshigo
 import { Color } from "go-core";
 
 export type PlayerType = {

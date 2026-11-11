@@ -1,3 +1,4 @@
+// Hoshigo
 // PlayerCard.tsx
 
 import { AvatarWithPass } from "@/src/components/avatar/AvatarWithPass";

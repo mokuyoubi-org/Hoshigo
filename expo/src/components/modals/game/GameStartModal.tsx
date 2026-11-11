@@ -1,3 +1,4 @@
+// Hoshigo
 // GameStartModal.tsx
 
 import { MixedText } from "@/src/components/common/MixedText";

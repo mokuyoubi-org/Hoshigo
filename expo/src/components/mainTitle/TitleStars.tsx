@@ -1,3 +1,4 @@
+// Hoshigo
 import { useColors } from "@/src/hooks/common/useTheme";
 import { AntDesign } from "@expo/vector-icons";
 import { View } from "react-native";

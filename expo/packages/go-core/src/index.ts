@@ -1,4 +1,4 @@
-// expo-goband/src/index.ts
+// go-core/src/index.ts
 
 // 1. 型定義＆定数（これ1行で型も値もぜんぶ export される）
 export * from "./types/analysis";

@@ -1,3 +1,4 @@
+// Hoshigo
 import { BoardSize, Grid, PASS_GRID, RecordAnalysis } from "go-core";
 
 /**

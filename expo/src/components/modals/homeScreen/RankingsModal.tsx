@@ -1,3 +1,4 @@
+// Hoshigo
 // RankingsModal.tsx
 
 import {

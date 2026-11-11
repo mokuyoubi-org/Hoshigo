@@ -1,3 +1,4 @@
+// Hoshigo
 // expo/src/hooks/ai/useLiveAnalysis.ts
 //
 // ─── このhookの責務 ───────────────────────────────────

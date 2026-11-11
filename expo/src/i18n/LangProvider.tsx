@@ -1,3 +1,4 @@
+// Hoshigo
 // LangProvider.tsx
 // 2026/10/11: 整理
 

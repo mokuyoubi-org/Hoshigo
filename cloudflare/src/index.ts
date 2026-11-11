@@ -6,6 +6,7 @@ import { createAuth } from "./auth";
 import type { AppEnv } from "./env";
 import { checkGate, guard } from "./middleware/guard";
 import { accountRoutes } from "./rpc/account";
+import { adminTsumegoRoutes } from "./rpc/admin-tsumego";
 import { profileRoutes } from "./rpc/profile";
 import { recordsRoutes } from "./rpc/records";
 import { revenuecatWebhookRoutes } from "./webhooks/revenuecat";
@@ -45,8 +46,20 @@ const corsMiddleware = cors({
   credentials: true,
   maxAge: 600,
 });
+// 管理者アプリ(ブラウザで動かすときの、localhost:8082)用の許可。
+// 管理用の窓口(/admin/*)にだけ効く。上の ALLOWED_ORIGINS には、足さない。
+// (本番では、窓口そのものが動かないので、ここを通っても何も起きない)
+const adminCorsMiddleware = cors({
+  origin: ["http://localhost:8082"],
+  allowHeaders: ["Content-Type", "x-admin-secret"],
+  allowMethods: ["GET", "POST", "OPTIONS"],
+  maxAge: 600,
+});
+
+
 app.use("/api/auth/*", corsMiddleware);
 app.use("/rpc/*", corsMiddleware);
+app.use("/admin/*", adminCorsMiddleware);
 
 // ログイン関係(Better Auth)は、/api/auth/ 以下を、全部おまかせする。
 app.on(["GET", "POST"], "/api/auth/*", (c) => {
@@ -56,11 +69,14 @@ app.on(["GET", "POST"], "/api/auth/*", (c) => {
 // RPCは、/rpc/ 以下に置く。
 // 入り口に、見張り番(バージョンとメンテナンスの確認)を立てる。
 app.use("/rpc/*", guard);
-
 // 本物のRPC。
 app.route("/rpc", profileRoutes);
 app.route("/rpc", accountRoutes);
 app.route("/rpc", recordsRoutes);
+
+// 管理者アプリ用の窓口。合言葉(ADMIN_SECRET)が合うときだけ動く(本番では動かない)。
+// /rpc/* の見張り番(guard)やログインは通らない。
+app.route("/admin", adminTsumegoRoutes);
 
 // RevenueCatからの通知。アプリやブラウザからではなく、RevenueCatのサーバーから届く。
 // (見張り番 guard は /rpc/* にだけ立っているので、ここには関係ない)

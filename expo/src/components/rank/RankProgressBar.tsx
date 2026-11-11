@@ -1,3 +1,4 @@
+// Hoshigo
 // RankProgressBar.tsx
 
 import { useColors } from "@/src/hooks/common/useTheme";

@@ -1,3 +1,4 @@
+// Hoshigo
 // ThemeModal.tsx
 
 import { MyText } from "@/src/components/common/MyText";

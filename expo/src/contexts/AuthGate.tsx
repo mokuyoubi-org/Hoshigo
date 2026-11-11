@@ -1,3 +1,4 @@
+// Hoshigo
 // AuthGate.tsx
 
 import { OTA_VERSION } from "@/ota-version";

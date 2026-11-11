@@ -1,3 +1,4 @@
+// Hoshigo
 // api.ts
 //
 // 自分たちのサーバー(Cloudflareの hoshigo-api)と、通信するための電話機☎️

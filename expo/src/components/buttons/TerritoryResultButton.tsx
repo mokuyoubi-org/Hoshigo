@@ -1,3 +1,4 @@
+// Hoshigo
 /**
  * TerritoryResultButton.tsx
  * 地計算ボタン

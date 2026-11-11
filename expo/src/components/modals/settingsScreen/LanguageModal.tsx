@@ -1,3 +1,4 @@
+// Hoshigo
 // LanguageModal.tsx
 
 import { MyText } from "@/src/components/common/MyText";

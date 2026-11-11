@@ -1,3 +1,4 @@
+// Hoshigo
 // src/hooks/useGameSounds.ts
 
 import { SOUNDS } from "@/src/constants/sounds";

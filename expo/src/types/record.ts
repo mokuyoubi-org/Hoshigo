@@ -1,3 +1,4 @@
+// Hoshigo
 // types/record.ts
 
 import { BoardSize, MatchType, RecordAnalysis } from "go-core";

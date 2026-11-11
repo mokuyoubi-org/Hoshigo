@@ -92,6 +92,13 @@
       "when": 1793135609199,
       "tag": "0012_crazy_iron_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1793240328639,
+      "tag": "0013_tan_chamber",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,4 @@
+// Hoshigo
 // constants/sounds.ts
 //
 // アプリに同梱する効果音の一覧。
