@@ -42,8 +42,9 @@ import {
   type MatchInit,
   type PlayerInfo,
 } from "./game-room";
-import { pickBot } from "./logic/bots";
 import { ensureProfile } from "./rpc/profile";
+import { pickMatchType } from "./logic/rating";
+import { BOT_NAMES, pickBotByRating } from "./logic/bots";
 
 const { activeGames, profiles, userStats } = appSchema;
 
@@ -323,34 +324,45 @@ const profile = await ensureProfile(this.db, uid);
   }
 
   // ボットとの対局を作る。ボットが見つからなければ false。
-  private async matchWithBot(human: Entry): Promise<boolean> {
+  private matchWithBot = async (human: Entry): Promise<boolean> => {
     const boardSize = human.waiter.boardSize;
-    const bot = pickBot(human.waiter.rating, boardSize);
-    if (!bot) return false;
 
-    // ボットは、名前(bot1 / bot2 / bot3)で、プロフィールを探す
-    const [botProfile] = await this.db
+    // ボット3人(bot1 / bot2 / bot3)のプロフィールを、まとめて探す
+    const botProfiles = await this.db
       .select({
         uid: profiles.uid,
         username: profiles.username,
         iconIndex: profiles.iconIndex,
       })
       .from(profiles)
-      .where(eq(profiles.username, bot.botName));
-    if (!botProfile) {
-      console.warn(`ボット ${bot.botName} のプロフィールが見つかりません`);
+      .where(inArray(profiles.username, [...BOT_NAMES]));
+    if (botProfiles.length === 0) {
+      console.warn("ボットのプロフィールが見つかりません");
       return false;
     }
 
-    const [botStats] = await this.db
-      .select({ rating: userStats.rating })
+    // この盤面での、ボットたちのレートも、まとめて調べる
+    const botStatsRows = await this.db
+      .select({ uid: userStats.uid, rating: userStats.rating })
       .from(userStats)
       .where(
         and(
-          eq(userStats.uid, botProfile.uid),
+          inArray(
+            userStats.uid,
+            botProfiles.map((p) => p.uid),
+          ),
           eq(userStats.boardSize, boardSize),
         ),
       );
+    const ratingOf = new Map(botStatsRows.map((r) => [r.uid, r.rating]));
+    const candidates = botProfiles.map((p) => ({
+      ...p,
+      rating: ratingOf.get(p.uid) ?? 0,
+    }));
+
+    // レートが近いボットほど当たりやすいくじ引き
+    const bot = pickBotByRating(candidates, human.waiter.rating);
+    const botRating = bot.rating;
 
     const humanProfile = (await this.getProfiles([human.waiter.uid])).get(
       human.waiter.uid,
@@ -362,25 +374,35 @@ const profile = await ensureProfile(this.db, uid);
       rating: human.waiter.rating,
     };
     const botPlayer: PlayerInfo = {
-      uid: botProfile.uid,
-      username: botProfile.username,
-      iconIndex: botProfile.iconIndex,
-      rating: botStats?.rating ?? 0,
+      uid: bot.uid,
+      username: bot.username,
+      iconIndex: bot.iconIndex,
+      rating: botRating,
     };
 
-    // match_type が1以上なら、人間が黒。0なら、ランダム。
-    const humanIsBlack = bot.matchType >= 1 ? true : Math.random() < 0.5;
+    // レート差から、置き石の数を決める(強い側が白、弱い側が黒)
+    const matchType = pickMatchType(
+      botRating - human.waiter.rating,
+      boardSize,
+    );
+
+    // 互先(0)なら、白黒ランダム。
+    // 1以上なら、弱い側が黒(ボットのほうが強ければ、人間が黒)
+    const humanIsBlack =
+      matchType === 0
+        ? Math.random() < 0.5
+        : human.waiter.rating <= botRating;
 
     const init: MatchInit = {
       gameId: crypto.randomUUID(),
       boardSize,
-      matchType: bot.matchType,
+      matchType,
       blackUid: humanIsBlack ? humanPlayer.uid : botPlayer.uid,
       whiteUid: humanIsBlack ? botPlayer.uid : humanPlayer.uid,
       black: humanIsBlack ? humanPlayer : botPlayer,
       white: humanIsBlack ? botPlayer : humanPlayer,
       // 置き石(2以上)があるなら白番スタート、互先・コミ落ち(0または1)なら黒番スタート
-      firstTurn: bot.matchType > 1 ? "white" : "black",
+      firstTurn: matchType > 1 ? "white" : "black",
       seconds: SECONDS_BY_BOARD[boardSize],
       botMatch: true,
       botColor: humanIsBlack ? "white" : "black",
@@ -389,7 +411,7 @@ const profile = await ensureProfile(this.db, uid);
 
     this.sendMatched(human, init, humanIsBlack ? "black" : "white");
     return true;
-  }
+  };
 
   // 対局の部屋を作って、「対局中」の目印を書く。
   // humanUids は、人間だけ(ボットには、目印を作らない)。

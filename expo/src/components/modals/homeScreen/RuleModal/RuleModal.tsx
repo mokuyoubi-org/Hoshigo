@@ -6,7 +6,6 @@ import { useColors } from "@/src/hooks/common/useTheme";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { ScrollView, useWindowDimensions, View } from "react-native";
 import { ModalShell } from "ui-atoms";
-import { BotHandicapTable } from "./BotHandicapTable";
 import { RuleItem } from "./RuleItem";
 
 type Props = {
@@ -57,19 +56,6 @@ export const RuleModal = ({ visible, onClose }: Props) => {
           title={t("RuleModal.timeLimitTitle")}
           description={t("RuleModal.timeLimitDescription")}
         />
-
-        {/* マッチング(対人) */}
-        <RuleItem
-          title={t("RuleModal.matchingTitle")}
-          sections={[
-            {
-              subtitle: t("RuleModal.pvpRatingTitle"),
-              description: t("RuleModal.pvpRatingDescription"),
-            },
-          ]}
-        >
-          <BotHandicapTable />
-        </RuleItem>
       </ScrollView>
     </ModalShell>
   );

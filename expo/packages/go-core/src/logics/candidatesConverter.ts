@@ -12,17 +12,13 @@ export type KataGoCandidate = {
   grid: Grid;
   winRate: number; // 0-100の整数、黒視点
 };
-// 勝率を *% 以上下げる手は一律禁止
-const WINRATE_CUTOFF = 10;
 
 // パス判定・端っこ判定。isValidCandidateから使う。
 const isPass = (grid: Grid) => grid === PASS_GRID;
 const isNearEdge = (grid: Grid, boardSize: BoardSize) =>
-  grid < boardSize * 2 ||
-  grid > boardSize * (boardSize - 2) ||
+  grid < boardSize ||
+  grid > boardSize * (boardSize - 1) ||
   grid % boardSize === 0 ||
-  grid % boardSize === 1 ||
-  grid % boardSize === boardSize - 2 ||
   grid % boardSize === boardSize - 1;
 
 // 候補手が抽選対象として有効かどうかを判定する。
@@ -72,8 +68,9 @@ export const slimCandidates = (
   return candidates
     .filter(
       (move) =>
-        isValidCandidate(move.grid, bestMove.grid, boardSize) && // パス・端っこ禁止
-        Math.abs(move.winRate - bestMove.winRate) <= WINRATE_CUTOFF, // 勝率を下げすぎる手を除外
+        isValidCandidate(move.grid, bestMove.grid, boardSize) 
+      // && // パス・端っこ禁止
+      //   Math.abs(move.winRate - bestMove.winRate) <= WINRATE_CUTOFF, // 勝率を下げすぎる手を除外
     )
     .map((move) => move.grid);
 };

@@ -815,12 +815,7 @@ export const dictionary = {
         "The player with the most territory wins. White receives 6.5 points as compensation for playing second.",
       timeLimitTitle: "Time Limit",
       timeLimitDescription:
-        "9x9: 3 minutes + 1 second per move. 13x13: 5 minutes + 3 seconds per move. 19x19: 10 minutes + 5 seconds per move. Running out of time results in a loss.",
-      matchingTitle: "Matching",
-      pvpRatingTitle: "PvP Rating Calculation",
-      pvpRatingDescription:
-        "When matched with a person, rating changes against an opponent of the same rank are +10 for a win, -10 for a loss, and ±0 for a draw. For each rank higher the opponent is, the rating gained for a win increases by +1, and the rating lost for a loss decreases by -1 (losing less rating). The maximum rank difference for matching is 10 ranks. Note that if the opponent has not played a sufficient number of matches, losing will not decrease your rating.",
-    },
+        "9x9: 3 minutes + 1 second per move. 13x13: 5 minutes + 3 seconds per move. 19x19: 10 minutes + 5 seconds per move. Running out of time results in a loss.",   },
     ja: {
       title: "ルール",
       ruleDescription: "日本ルール",
@@ -829,11 +824,7 @@ export const dictionary = {
       timeLimitTitle: "持ち時間",
       timeLimitDescription:
         "9路盤: 3分 + 1手ごとに1秒。13路盤: 5分 + 1手ごとに3秒。19路盤: 10分 + 1手ごとに5秒。時間切れは負けとなります。",
-      matchingTitle: "マッチング",
-      pvpRatingTitle: "対人戦のレート計算",
-      pvpRatingDescription:
-        "対局のレート増減は、基本的には勝ち+10、負け-10、引き分け±0ですが、格上に勝てば多くもらえます。また、十分な対局数がない相手",
-    },
+   },
     zh: {
       title: "规则",
       ruleDescription: "日本规则",
@@ -841,12 +832,7 @@ export const dictionary = {
         "围得地盘（地）较多的一方获胜。后手（白方）获得6.5目的贴目补偿。",
       timeLimitTitle: "用时限制",
       timeLimitDescription:
-        "9路: 3分钟 + 每手1秒。13路: 5分钟 + 每手3秒。19路: 10分钟 + 每手5秒。超时判定为负。",
-      matchingTitle: "匹配",
-      pvpRatingTitle: "玩家对战积分计算",
-      pvpRatingDescription:
-        "与真实玩家匹配时，与相同段位的对手对局，胜 +10、负 -10、平局 ±0。对手段位每高出1段，获胜时获得的积分 +1，失败时扣除的积分 -1（扣除减少）。最大可匹配相差10个段位的对手。此外，如果对手的对局次数未达到足够数量，即使失败也不会扣除积分。",
-    },
+        "9路: 3分钟 + 每手1秒。13路: 5分钟 + 每手3秒。19路: 10分钟 + 每手5秒。超时判定为负。",  },
     ko: {
       title: "규칙",
       ruleDescription: "일본 룰",
@@ -854,12 +840,7 @@ export const dictionary = {
         "더 많은 집(진지)을 확보한 플레이어가 승리합니다. 후공(백)에게는 6.5집의 덤이 주어집니다.",
       timeLimitTitle: "제한 시간",
       timeLimitDescription:
-        "9줄: 3분 + 1수당 1초. 13줄: 5분 + 1수당 3초. 19줄: 10분 + 1수당 5초. 시간 초과는 패배로 처리됩니다.",
-      matchingTitle: "매칭",
-      pvpRatingTitle: "대인전 레이트 계산",
-      pvpRatingDescription:
-        "사람과 매칭되었을 때의 레이트 증감은 같은 랭크의 상대일 경우 승리 +10, 패배 -10, 무승부 ±0입니다. 상대의 랭크가 1단계 높을 때마다 승리 시 얻는 레이트는 +1, 패배 시 잃는 레이트는 -1씩 변합니다(감소량이 줄어듭니다). 매칭 가능한 최대 차이는 10랭크 차이입니다. 또한 상대의 대국 수가 충분한 횟수에 도달하지 않은 경우, 패배해도 레이트가 차감되지 않습니다.",
-    },
+        "9줄: 3분 + 1수당 1초. 13줄: 5분 + 1수당 3초. 19줄: 10분 + 1수당 5초. 시간 초과는 패배로 처리됩니다.",  },
   },
   MaintenanceModal: {
     en: {

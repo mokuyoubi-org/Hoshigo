@@ -172,11 +172,11 @@ export const analyzeBoard = async <const F extends AnalyzeResultFields>(
     currentPlayer,
     komi = 6.5,
     rules = "japanese",
-    visits = 20, // 20に。(元は200)
-    maxTimeMs = 2000, // 2秒に。(元は800)
+    visits = 20, // default: 200 // 遅い端末に合わせる。
+    maxTimeMs = 2000, // default: 800 // 使われない想定。
     topK = 10,
-    pvLen = 10,
-    wideRootNoise = 0.04,
+    pvLen = 5, // default: 10
+    wideRootNoise = 0.2, // default: 0.04
     nnRandomize = true,
     regionOfInterest,
     fields,
@@ -207,7 +207,7 @@ export const analyzeBoard = async <const F extends AnalyzeResultFields>(
     rules,
     nnRandomize,
     conservativePass: false,
-    maxChildren: 20, // 20に。(元は50)
+    maxChildren: 20, // default: 50
     ownershipMode: "root",
     wideRootNoise,
     regionOfInterest: regionOfInterest ?? null,

@@ -33,7 +33,7 @@ import {
 import { useRef } from "react";
 
 // 端末の速さに関係なく、ボットが最低これだけ(ms)は「考えている」ようにする。
-const MIN_BOT_THINK_MS = 800;
+const MIN_BOT_THINK_MS = 1200;
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));

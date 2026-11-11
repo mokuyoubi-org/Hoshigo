@@ -68,3 +68,39 @@ export const calculateEloDelta = (params: {
   const expected = expectedScore(params.rating, params.opponentRating);
   return Math.round(k * SCALE * (params.score - expected));
 };
+
+// 置き石1子ぶんの重さ(盤面ごと。レート換算)
+// 盤が小さいほど、1子の影響が大きい
+const STONE_WEIGHT: Record<number, number> = {
+  9: 300,
+  13: 200,
+  19: 100,
+};
+
+// 盤面ごとに存在する matchType(0 = 互先、1 = 定先、2以上 = 置き石の数)
+const MATCH_TYPES: Record<number, readonly number[]> = {
+  9: [0, 1, 2, 3, 4, 5],
+  13: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  19: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 25],
+};
+
+// 実質レート:強い側(白)のレートから、置き石ぶんを引く。0より下にはしない
+export const effectiveRating = (
+  rating: number,
+  matchType: number,
+  boardSize: number,
+): number =>
+  Math.max(0, rating - matchType * (STONE_WEIGHT[boardSize] ?? 100));
+
+// レート差(強い側 − 弱い側)から、いちばん近い matchType を選ぶ
+// 例:9路で差1000 → 1000÷300 ≒ 3.3 → 3子
+export const pickMatchType = (
+  ratingDiff: number,
+  boardSize: number,
+): number => {
+  const ideal = Math.abs(ratingDiff) / (STONE_WEIGHT[boardSize] ?? 100);
+  const options = MATCH_TYPES[boardSize] ?? [0];
+  return options.reduce((best, n) =>
+    Math.abs(n - ideal) < Math.abs(best - ideal) ? n : best,
+  );
+};

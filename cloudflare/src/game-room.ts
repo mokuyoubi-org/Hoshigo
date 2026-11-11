@@ -35,7 +35,7 @@ import * as appSchema from "./db/app-schema";
 import * as recordsSchema from "./db/records/schema";
 import type { AppEnv } from "./env";
 import { isValidOwnership } from "./logic/analysis";
-import { calculateEloDelta } from "./logic/rating";
+import { calculateEloDelta, effectiveRating } from "./logic/rating";
 
 const { userStats, activeGames } = appSchema;
 const { records } = recordsSchema;
@@ -613,7 +613,9 @@ export class GameRoom extends DurableObject<AppEnv> {
 
   // レーティングなどを計算して、D1に書く(いまの archive_matches の翻訳)
   private async computeAndApplyStats(state: GameState): Promise<RatingUpdate> {
-    const { blackUid, whiteUid, boardSize, botColor } = state.init;
+    const { blackUid, whiteUid, boardSize } = state.init;
+    // 置き石の数(0 = 互先、1 = 定先、2以上 = 置き石)。人間どうしは 0
+    const matchType = state.init.matchType ?? 0;
     const result = state.result ?? "VOID";
     const db = drizzle(this.env.DB, { schema: appSchema });
 
@@ -637,13 +639,12 @@ export class GameRoom extends DurableObject<AppEnv> {
     const bGames = bWins + (black?.losses ?? 0) + (black?.draws ?? 0);
     const wGames = wWins + (white?.losses ?? 0) + (white?.draws ?? 0);
 
-    const isBotBlack = botColor === "black";
-    const isBotWhite = botColor === "white";
+    const isBotBlack = state.init.botColor === "black";
+    const isBotWhite = state.init.botColor === "white";
 
-    // ボットは置き石で互角になるので、「自分と同じレートの相手」とみなす。
-    // ただし、ボットの強さが上限(それより強い人には、格下として計算)
-    const bOpponent = isBotWhite ? Math.min(bRating, wRating) : wRating;
-    const wOpponent = isBotBlack ? Math.min(wRating, bRating) : bRating;
+    // 置き石を置くのは黒(弱い側)なので、重りを背負うのは白。
+    // 白の「実質レート」で勝負したことにする(互先なら、そのまま)
+    const wEffective = effectiveRating(wRating, matchType, boardSize);
 
     // 黒から見た結果(勝ち=1、引き分け=0.5、負け=0)。VOID などは null で、何も変えない
     let bScore: number | null = null;
@@ -658,12 +659,14 @@ export class GameRoom extends DurableObject<AppEnv> {
     const wLoss = bWin;
     const wDraw = bDraw;
 
+    // ボットも人間と同じように変動する。
+    // 人間から見たボットは「十分に打っている相手」(opponentGames を省略)
     const bDelta =
       bScore === null
         ? 0
         : calculateEloDelta({
             rating: bRating,
-            opponentRating: bOpponent,
+            opponentRating: wEffective,
             games: bGames,
             opponentGames: isBotWhite ? undefined : wGames,
             score: bScore,
@@ -672,17 +675,16 @@ export class GameRoom extends DurableObject<AppEnv> {
       bScore === null
         ? 0
         : calculateEloDelta({
-            rating: wRating,
-            opponentRating: wOpponent,
+            rating: wEffective,
+            opponentRating: bRating,
             games: wGames,
             opponentGames: isBotBlack ? undefined : bGames,
             score: 1 - bScore,
           });
 
-    // 1人分の更新。ボットは、勝敗の数だけ。人間は、レーティングも。
+    // 1人分の更新。ボットも人間も、同じ
     const updateFor = (
       uid: string,
-      isBot: boolean,
       win: number,
       loss: number,
       draw: number,
@@ -690,39 +692,31 @@ export class GameRoom extends DurableObject<AppEnv> {
     ) =>
       db
         .update(userStats)
-        .set(
-          isBot
-            ? {
-                wins: sql`${userStats.wins} + ${win}`,
-                losses: sql`${userStats.losses} + ${loss}`,
-                draws: sql`${userStats.draws} + ${draw}`,
-              }
-            : {
-                wins: sql`${userStats.wins} + ${win}`,
-                losses: sql`${userStats.losses} + ${loss}`,
-                draws: sql`${userStats.draws} + ${draw}`,
-                rating: sql`max(0, ${userStats.rating} + ${delta})`,
-                highestRating: sql`max(${userStats.highestRating}, max(0, ${userStats.rating} + ${delta}))`,
-              },
-        )
+        .set({
+          wins: sql`${userStats.wins} + ${win}`,
+          losses: sql`${userStats.losses} + ${loss}`,
+          draws: sql`${userStats.draws} + ${draw}`,
+          rating: sql`max(0, ${userStats.rating} + ${delta})`,
+          highestRating: sql`max(${userStats.highestRating}, max(0, ${userStats.rating} + ${delta}))`,
+        })
         .where(and(eq(userStats.uid, uid), eq(userStats.boardSize, boardSize)));
 
     // 2人分を、1回のbatchで(両方成功するか、両方なかったことになる)
     await db.batch([
-      updateFor(blackUid, isBotBlack, bWin, bLoss, bDraw, bDelta),
-      updateFor(whiteUid, isBotWhite, wWin, wLoss, wDraw, wDelta),
+      updateFor(blackUid, bWin, bLoss, bDraw, bDelta),
+      updateFor(whiteUid, wWin, wLoss, wDraw, wDelta),
     ]);
 
     return {
       result,
       black: {
         old_rating: bRating,
-        new_rating: isBotBlack ? bRating : Math.max(0, bRating + bDelta),
+        new_rating: Math.max(0, bRating + bDelta),
         wins: bWins + bWin,
       },
       white: {
         old_rating: wRating,
-        new_rating: isBotWhite ? wRating : Math.max(0, wRating + wDelta),
+        new_rating: Math.max(0, wRating + wDelta),
         wins: wWins + wWin,
       },
     };
