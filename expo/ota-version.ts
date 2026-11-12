@@ -1,4 +1,4 @@
 // ota-version.ts
 // 配信するotaのバージョン。
 
-export const OTA_VERSION = "261022.0";
+export const OTA_VERSION = "261112.0";

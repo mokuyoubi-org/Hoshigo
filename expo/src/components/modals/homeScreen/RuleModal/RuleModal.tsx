@@ -56,6 +56,12 @@ export const RuleModal = ({ visible, onClose }: Props) => {
           title={t("RuleModal.timeLimitTitle")}
           description={t("RuleModal.timeLimitDescription")}
         />
+
+        {/* レーティング */}
+        <RuleItem
+          title={t("RuleModal.ratingTitle")}
+          description={t("RuleModal.ratingDescription")}
+        />
       </ScrollView>
     </ModalShell>
   );

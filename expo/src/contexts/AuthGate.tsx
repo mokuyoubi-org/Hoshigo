@@ -2,7 +2,7 @@
 // AuthGate.tsx
 
 import { OTA_VERSION } from "@/ota-version";
-import { useProfileSync } from "@/src/hooks/rpc/useProfileSync";
+import { useProfileSync } from "@/src/hooks/profile/useProfileSync";
 import {
   setMaintenanceHandler,
   setUpdateNeededHandler,
@@ -13,7 +13,7 @@ import Constants from "expo-constants";
 import { useRouter, useSegments } from "expo-router";
 import * as Updates from "expo-updates";
 import { ReactNode, useEffect, useRef } from "react";
-import { loginRevenueCat } from "../services/revenuecat";
+import { loginRevenueCat } from "../services/revenuecat/revenuecat";
 import { useApp } from "./AppContexts";
 import { initialProfile, useProfile } from "./ProfileContexts";
 
@@ -73,10 +73,7 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   // それ以外(タブ、デバッグ、練習画面など)は、そのままにする
   const isPageToSendHome = () => {
     const first = segmentsRef.current[0];
-    return (
-      first === undefined ||
-      first === "GameScreen"
-    );
+    return first === undefined || first === "GameScreen";
   };
 
   // ①ビルド情報のログ + ②メンテナンス/バージョン不足の仕込み(最初の1回だけ)。
@@ -88,15 +85,17 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
       otaVersion: OTA_VERSION,
     });
 
-    // RPCを呼んだ時にメンテ中だった時にメッセージを表示できる設定を、あらかじめ仕込んでおく
-    // 詳細はapi.tsを参照
+    // サーバーと通信した時(api.ts / ws.ts)に、メンテ中だったら
+    // メッセージを表示できるよう、あらかじめ仕込んでおく
+    // 詳細は api.ts を参照
     setMaintenanceHandler((message) => {
       setMaintenance(true);
       setMaintenanceMessage(message);
     });
 
-    // RPCを呼んだ時にバージョン不足だった時にモーダルを出せる設定を、あらかじめ仕込んでおく
-    // 詳細はapi.tsを参照(メンテナンスと全く同じ仕組み)
+    // サーバーと通信した時(api.ts / ws.ts)に、バージョン不足だったら
+    // モーダルを出せるよう、あらかじめ仕込んでおく
+    // 詳細は api.ts を参照(メンテナンスと全く同じ仕組み)
     setUpdateNeededHandler((reason) => {
       setUpdateReason(reason);
     });

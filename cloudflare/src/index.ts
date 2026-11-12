@@ -2,20 +2,19 @@
 
 import { Context, Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAuth } from "./auth";
-import type { AppEnv } from "./env";
-import { checkGate, guard } from "./middleware/guard";
-import { accountRoutes } from "./rpc/account";
-import { adminTsumegoRoutes } from "./rpc/admin-tsumego";
-import { profileRoutes } from "./rpc/profile";
-import { recordsRoutes } from "./rpc/records";
-import { revenuecatWebhookRoutes } from "./webhooks/revenuecat";
+import { createAuth } from "./helper/auth/auth";
+import { checkGate, guard } from "./helper/middleware/guard";
+import { accountRoutes } from "./routes/account";
+import { adminTsumegoRoutes } from "./routes/admin-tsumego";
+import { profileRoutes } from "./routes/profile";
+import { recordsRoutes } from "./routes/records";
+import { revenuecatWebhookRoutes } from "./routes/webhooks/revenuecat";
 
 // Durable Objectsの部屋のクラスは、ここから export する(Cloudflareが見つけるため)
-export { GameRoom } from "./game-room";
-export { QueueRoom } from "./queue-room";
+export { GameRoom } from "./durable-objects/game-room";
+export { QueueRoom } from "./durable-objects/queue-room";
 
-const app = new Hono<{ Bindings: AppEnv }>();
+const app = new Hono<{ Bindings: Env }>();
 
 // 許可するアドレス:Web版の本番(hoshigo.app)と、手元のExpo(localhost:8081)。
 // api.hoshigo.app(玄関)には誰でも入れるけど、その先に進めるのは以下のurlからのアクセスのみ。
@@ -56,9 +55,8 @@ const adminCorsMiddleware = cors({
   maxAge: 600,
 });
 
-
 app.use("/api/auth/*", corsMiddleware);
-app.use("/rpc/*", corsMiddleware);
+app.use("/app/*", corsMiddleware);
 app.use("/admin/*", adminCorsMiddleware);
 
 // ログイン関係(Better Auth)は、/api/auth/ 以下を、全部おまかせする。
@@ -66,20 +64,18 @@ app.on(["GET", "POST"], "/api/auth/*", (c) => {
   return createAuth(c.env).handler(c.req.raw);
 });
 
-// RPCは、/rpc/ 以下に置く。
 // 入り口に、見張り番(バージョンとメンテナンスの確認)を立てる。
-app.use("/rpc/*", guard);
-// 本物のRPC。
-app.route("/rpc", profileRoutes);
-app.route("/rpc", accountRoutes);
-app.route("/rpc", recordsRoutes);
+app.use("/app/*", guard);
+app.route("/app", profileRoutes);
+app.route("/app", accountRoutes);
+app.route("/app", recordsRoutes);
 
 // 管理者アプリ用の窓口。合言葉(ADMIN_SECRET)が合うときだけ動く(本番では動かない)。
-// /rpc/* の見張り番(guard)やログインは通らない。
+// /app/* の見張り番(guard)やログインは通らない。
 app.route("/admin", adminTsumegoRoutes);
 
 // RevenueCatからの通知。アプリやブラウザからではなく、RevenueCatのサーバーから届く。
-// (見張り番 guard は /rpc/* にだけ立っているので、ここには関係ない)
+// (見張り番 guard は /app/* にだけ立っているので、ここには関係ない)
 app.route("/webhooks", revenuecatWebhookRoutes);
 
 // WebSocketで「エラーです」と伝えて、閉じる。
@@ -97,7 +93,7 @@ function rejectWebSocket(code: string, message: string): Response {
 // 通れたら、ログインしている人のidを返す。通れなければ、返すべき Response を返す。
 // Web版のWebSocketには、ヘッダーが付けられないので、バージョンは URL の ?v= と &ota= で受け取る。
 async function checkWebSocketEntry(
-  c: Context<{ Bindings: AppEnv }>,
+  c: Context<{ Bindings: Env }>,
 ): Promise<{ uid: string } | { response: Response }> {
   // 許可していないアドレスのWebページから、勝手につながれないように
   const origin = c.req.header("origin");
@@ -136,7 +132,7 @@ async function checkWebSocketEntry(
 // (アプリが送ってきた同名のヘッダーは、上書きされる)
 function forwardToRoom(
   stub: { fetch(request: Request): Promise<Response> },
-  c: Context<{ Bindings: AppEnv }>,
+  c: Context<{ Bindings: Env }>,
   uid: string,
   extra: Record<string, string> = {},
 ): Promise<Response> {
@@ -178,6 +174,6 @@ app.get("/ws/game/:gameId", async (c) => {
 });
 
 export default {
-  // いつものリクエスト(ログイン、RPC、WebSocket)
+  // いつものリクエスト(ログイン、アプリ用API、WebSocket)
   fetch: app.fetch,
 };

@@ -1,4 +1,9 @@
 // wrangler.jsonc
+/* ⚠️⚠️⚠️このファイルをいじった後は、必ず
+cd ~/Hoshigo/cloudflare
+npx wrangler types
+を実行すること⚠️⚠️⚠️
+*/
 
 {
   "$schema": "node_modules/wrangler/config-schema.json",

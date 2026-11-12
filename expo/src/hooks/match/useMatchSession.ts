@@ -9,6 +9,7 @@ import { useBotMove } from "@/src/hooks/ai/useBotMove";
 import { useLiveAnalysis } from "@/src/hooks/ai/useLiveAnalysis";
 import { useGameChannel } from "@/src/hooks/match/useGameChannel";
 import { useMatchClock } from "@/src/hooks/match/useMatchClock";
+import { submitAnalysis } from "@/src/hooks/records/records";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { scoreLeadToResult } from "@/src/logics/format/textFormatter";
 import {
@@ -16,7 +17,6 @@ import {
   MatchResultUpdate,
 } from "@/src/logics/game/resultLogics";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
-import { submitAnalysis } from "@/src/logics/rpc/recordsRPC";
 import { useGoGame } from "go-components";
 import {
   BLACK,

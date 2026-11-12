@@ -38,7 +38,7 @@ export const useSettingsScreen = () => {
   const allowBotMatchToggle = async () => {
     const newValue = !allowBotMatch;
     setLoading(true);
-    const { error } = await api.rpc("update_allow_bot_match", {
+    const { error } = await api.post("update_allow_bot_match", {
       new_allow_bot_match: newValue,
     });
     if (error) {
@@ -55,7 +55,7 @@ export const useSettingsScreen = () => {
 
     try {
       // サーバー側で user を消すと、プロフィール・成績・セッションも芋づる式に消える
-      const { error } = await api.rpc("delete_user_account");
+      const { error } = await api.post("delete_user_account");
       if (error) {
         console.error("アカウント削除失敗:", error);
         return;

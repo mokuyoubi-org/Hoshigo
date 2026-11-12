@@ -31,7 +31,7 @@ import Purchases from "react-native-purchases";
 import RevenueCatUI from "react-native-purchases-ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MyHeader, ToggleSwitch } from "ui-atoms";
-import { openWebPurchase } from "../services/revenuecat";
+import { openWebPurchase } from "../services/revenuecat/revenuecat";
 
 export default function SettingsScreen() {
   const t = useTranslation();

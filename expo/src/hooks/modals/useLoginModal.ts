@@ -6,7 +6,7 @@ import { authClient } from "@/src/services/auth/auth-client";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useState } from "react";
 import { Platform } from "react-native"; // ← プラットフォームを判定する道具
-import { useProfileSync } from "../rpc/useProfileSync";
+import { useProfileSync } from "../profile/useProfileSync";
 
 type Props = {
   onClose: () => void;

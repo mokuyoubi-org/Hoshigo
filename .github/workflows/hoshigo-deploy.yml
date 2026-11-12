@@ -1,0 +1,168 @@
+# ================================================================
+# hoshigo-deploy.yml
+#
+# 【発火条件】
+#   ・mainへpushしたら。
+#
+# 【流れ】
+#   ⓪ check-changes      : 作業開始前に、変更箇所の確認。
+#                           expoフォルダ🟩と、cloudflareフォルダ🟧を確認し、変更があった場合のみ、以下の該当する処理を実行する
+#   ① build-web          : 🟩Webをビルド
+#   ② release-cloudflare : 🟧D1工事▶︎Workerデプロイ
+#   ③ release-web        : 🟩Webをデプロイ
+#   ④ release-ota        : 🟩OTA配信
+#
+#   ・途中で1つでも失敗したら、その先は自動で止まる(needsの効果)
+#   ・🔥マークが、要は処理。その前は、道具を用意したり、どこに生成物を置いておくかとか、そういう準備段階
+#   ⚠️D1のテーブル・カラムは、残したまま開発し、完全に使われなくなってから削除する
+#   ⚠️同時にワークフロウを発火させないようにする。
+# ================================================================
+
+# このワークフローの名前。(自由に変えてOK)
+name: hoshigo-deploy
+
+on: # このワークフローが発火する条件:
+  push: # githubにpushされたとき、そして、
+    branches:
+      - main # mainブランチのとき。
+
+jobs:
+  # ################################################
+  # ##         ⓪作業開始前に、変更箇所の確認          ##
+  # ################################################
+  check-changes:
+    name: "⓪check-changes: 作業開始前に、変更箇所の確認"
+    runs-on: ubuntu-latest # GitHubが貸してくれるパソコン(Ubuntu)で動かす
+    # 他のjobに渡すoutput
+    outputs:
+      cloudflare: ${{ steps.filter.outputs.cloudflare }} # cloudflareフォルダが変わったかどうかのbool
+      expo: ${{ steps.filter.outputs.expo }} # expoフォルダが変わったかどうかのbool
+    steps:
+      - uses: actions/checkout@v4 # リポジトリのコードを、このパソコンに持ってくる
+      - id: filter # 上の outputs から、この名前で結果を取り出す
+        uses: dorny/paths-filter@v3 # 「どのフォルダが変わったか」を調べる道具
+        with:
+          # cloudflareフォルダおよびexpoフォルダの変更に気づく
+          filters: |
+            cloudflare:
+              - 'cloudflare/**'
+            expo:
+              - 'expo/**'
+
+  # ################################################
+  # ##                 ①Webをビルド                ##
+  # ################################################
+  build-web:
+    name: "①build-web: Webをビルド"
+    needs: check-changes # ⓪が終わってから動く
+    # expo/ が変わったときだけ動く
+    if: needs.check-changes.outputs.expo == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo # これ以降のコマンドは、expoフォルダの中で実行する
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_UPDATE_TOKEN }} # EASにログインするための鍵
+    steps:
+      - uses: actions/checkout@v4 # コードを持ってくる
+      - uses: actions/setup-node@v4 # Node.js(JavaScriptを動かす道具)を用意
+        with:
+          node-version: 22 # バージョンは22
+          cache: npm # npmでダウンロードした物を、次回のために保存しておく(速くなる)
+          cache-dependency-path: expo/package-lock.json # 「この表が変わったら、保存分は古い」の目印
+      - uses: expo/expo-github-action@v8 # EAS(Expoのビルド・配信サービス)の道具を用意
+        with:
+          eas-version: latest # 最新版を使う
+          token: ${{ secrets.EXPO_UPDATE_TOKEN }} # ログイン用の鍵
+          packager: npm # パッケージ管理はnpm
+      - run: npm ci # package-lock.json の通りに、部品をきっちりインストール
+      - run: npx eas-cli env:pull production --non-interactive # 本番用の環境変数を、EASから取ってくる(.env.localに入る)
+      - run: npx expo export -p web # 🔥Web用にビルド。結果は expo/dist フォルダに出る
+      - uses: actions/upload-artifact@v4 # ビルド結果を、一時的に預けておく(別のjobで使うため)
+        with:
+          name: web-dist # 預けるときの名前
+          path: expo/dist # 預ける物(ビルド結果のフォルダ)
+          include-hidden-files: true # .から始まる隠しファイルも預ける
+          if-no-files-found: error # 中身が空だったら、エラーにする
+
+  # ################################################
+  # ##           ②D1工事▶︎Workerデプロイ            ##
+  # ################################################
+  release-cloudflare:
+    name: "②release-cloudflare: D1工事▶︎Workerデプロイ"
+    needs: [check-changes, build-web] # ⓪①が終わってから動く
+    # 「飛ばされた」だけなら進む。「失敗した」なら止まる。
+    # (build-webは、expoが変わっていないと飛ばされるので、この書き方が必要)
+    if: ${{ !cancelled() && !failure() && needs.check-changes.outputs.cloudflare == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare # これ以降のコマンドは、cloudflareフォルダの中で実行する
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Cloudflareに入る鍵
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }} # Cloudflareのアカウント番号
+    steps:
+      - uses: actions/checkout@v4 # コードを持ってくる
+      - uses: actions/setup-node@v4 # Node.jsを用意
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+      - run: npm ci # 部品をインストール
+      - run: npx wrangler d1 migrations apply DB --remote # 🔥DBに工事を反映
+      - run: npx wrangler d1 migrations apply RECORDS_DB --remote # 🔥RECORDS_DBにも反映
+      - run: npx wrangler deploy # 🔥Workerを本番に出す
+
+  # ################################################
+  # ##                 ③Webをデプロイ              ##
+  # ################################################
+  release-web:
+    name: "③release-web: Webをデプロイ"
+    needs: [check-changes, build-web, release-cloudflare] # ⓪①②が終わってから動く
+    if: ${{ !cancelled() && !failure() && needs.check-changes.outputs.expo == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4 # wrangler.toml などの設定ファイルが必要なので、コードも持ってくる
+      - uses: actions/setup-node@v4 # Node.jsを用意(wranglerを動かすのに必要)
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4 # ①で預けておいたビルド結果を、受け取る
+        with:
+          name: web-dist # 預けたときと同じ名前
+          path: expo/dist # ここに広げる
+      - run: npx --yes wrangler@4 deploy # 🔥Webを本番に出す
+
+  # ################################################
+  # ##                  ④OTA配信                  ##
+  # ################################################
+  release-ota:
+    name: "④release-ota: OTA配信"
+    needs: [check-changes, build-web, release-cloudflare, release-web] # ⓪①②③が終わってから動く
+    if: ${{ !cancelled() && !failure() && needs.check-changes.outputs.expo == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expo
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_UPDATE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4 # コードを持ってくる
+      - uses: actions/setup-node@v4 # Node.jsを用意
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: expo/package-lock.json
+      - uses: expo/expo-github-action@v8 # EASの道具を用意
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_UPDATE_TOKEN }}
+          packager: npm
+      - run: npm ci # 部品をインストール
+      - run: npx eas-cli env:pull production --non-interactive # 本番用の環境変数を取ってくる
+      - run: npx eas-cli update --channel default --auto --non-interactive --clear-cache # 🔥アプリの中身を、OTAで配信

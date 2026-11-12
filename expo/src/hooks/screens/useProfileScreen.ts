@@ -34,7 +34,7 @@ export const useProfileScreen = () => {
   const handleSelectIcon = async (selectedIconIndex: number) => {
     setLoading(true);
     try {
-      const { error } = await api.rpc("update_icon_index", {
+      const { error } = await api.post("update_icon_index", {
         new_icon_index: selectedIconIndex,
       });
       if (error) {
@@ -57,7 +57,7 @@ export const useProfileScreen = () => {
 
     setLoading(true);
     try {
-      const { error } = await api.rpc("update_username", {
+      const { error } = await api.post("update_username", {
         new_username: newUsername,
       });
 

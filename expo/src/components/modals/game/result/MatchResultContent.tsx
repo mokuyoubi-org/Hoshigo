@@ -7,7 +7,7 @@ import { useMatching } from "@/src/contexts/MatchingContext";
 import { useOverlay } from "@/src/contexts/OverlayContext";
 import { useProfile } from "@/src/contexts/ProfileContexts";
 import { useColors } from "@/src/hooks/common/useTheme";
-import { useIconUpdate } from "@/src/hooks/rpc/useIconUpdate";
+import { useIconUpdate } from "@/src/hooks/profile/useIconUpdate";
 import { useTranslation } from "@/src/i18n/LangProvider";
 import { getRankInfo } from "@/src/logics/rank/rankLogics";
 import { winsToNewlyAcquiredIconIndex } from "@/src/logics/rank/winsToAcquiredIcons";

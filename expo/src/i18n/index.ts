@@ -1,6 +1,5 @@
 // Hoshigo
 // i18n/index.ts
-// 2026/10/11: 整理
 
 import { dictionary } from "@/src/i18n/dictionary";
 import { createI18n } from "i18n-kit";

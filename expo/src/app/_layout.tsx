@@ -13,7 +13,7 @@ import { kvStore } from "kv-store";
 import { useColorScheme } from "nativewind";
 import { useEffect, useState } from "react";
 import { LogBox, View } from "react-native";
-import { initRevenueCat } from "../services/revenuecat";
+import { initRevenueCat } from "../services/revenuecat/revenuecat";
 
 // 準備ができるまで、スプラッシュ画面を出したままにする
 SplashScreen.preventAutoHideAsync();

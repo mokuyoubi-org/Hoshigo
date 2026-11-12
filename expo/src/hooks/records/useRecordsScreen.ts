@@ -2,11 +2,11 @@
 // useRecordsScreen.ts
 
 import { useProfile } from "@/src/contexts/ProfileContexts";
+import { fetchRecordsPage } from "@/src/hooks/records/records";
 import {
   isSkeletonCard,
   makeSkeletonCard,
 } from "@/src/logics/record/recordCardLogics";
-import { fetchRecordsPage } from "@/src/logics/rpc/recordsRPC";
 import { RecordOrSkeleton, RecordType } from "@/src/types/record";
 import {
   AgehamaCount,

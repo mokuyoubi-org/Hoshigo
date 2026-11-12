@@ -6,7 +6,7 @@
 // モーダルを出すだけでよい。
 
 import { LoginModal } from "@/src/components/modals/settingsScreen/LoginModal";
-import { useMatchingProvider } from "@/src/hooks/rpc/useMatchingProvider";
+import { useMatchingProvider } from "@/src/hooks/match/useMatchingProvider";
 import { BoardSize } from "go-core";
 import { createContext, ReactNode, useContext } from "react";
 import { useOverlay } from "./OverlayContext";

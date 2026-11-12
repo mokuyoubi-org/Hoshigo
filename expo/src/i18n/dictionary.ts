@@ -1,6 +1,5 @@
 // Hoshigo
 // dictionary.ts
-// 2026/10/11: 整理
 
 export const dictionary = {
   common: {
@@ -815,16 +814,26 @@ export const dictionary = {
         "The player with the most territory wins. White receives 6.5 points as compensation for playing second.",
       timeLimitTitle: "Time Limit",
       timeLimitDescription:
-        "9x9: 3 minutes + 1 second per move. 13x13: 5 minutes + 3 seconds per move. 19x19: 10 minutes + 5 seconds per move. Running out of time results in a loss.",   },
+        "9x9: 3 minutes + 1 second per move. 13x13: 5 minutes + 3 seconds per move. 19x19: 10 minutes + 5 seconds per move. Running out of time results in a loss.",
+      ratingTitle: "Rating",
+      ratingDescription:
+        "You gain 10 points for a win and lose 10 points for a loss. Beating a stronger opponent earns you more points.",
+    },
     ja: {
       title: "ルール",
+      //
       ruleDescription: "日本ルール",
       objectiveDescription:
-        "より多くの地（陣地）を獲得したプレイヤーの勝ちです。後手（白）にはハンデとして6.5目が与えられます。",
+        "より多くの地（陣地）を獲得したプレイヤーの勝ちです。後手（白）には、先手（黒）が有利な分を補うため、コミとして6.5目が与えられます。",
+      //
       timeLimitTitle: "持ち時間",
       timeLimitDescription:
         "9路盤: 3分 + 1手ごとに1秒。13路盤: 5分 + 1手ごとに3秒。19路盤: 10分 + 1手ごとに5秒。時間切れは負けとなります。",
-   },
+      //
+      ratingTitle: "レーティング",
+      ratingDescription:
+        "勝つと10点もらえて、負けると10点減ります。強い相手に勝つと、もらえる点が増えます。",
+    },
     zh: {
       title: "规则",
       ruleDescription: "日本规则",
@@ -832,7 +841,11 @@ export const dictionary = {
         "围得地盘（地）较多的一方获胜。后手（白方）获得6.5目的贴目补偿。",
       timeLimitTitle: "用时限制",
       timeLimitDescription:
-        "9路: 3分钟 + 每手1秒。13路: 5分钟 + 每手3秒。19路: 10分钟 + 每手5秒。超时判定为负。",  },
+        "9路: 3分钟 + 每手1秒。13路: 5分钟 + 每手3秒。19路: 10分钟 + 每手5秒。超时判定为负。",
+      ratingTitle: "等级分",
+      ratingDescription:
+        "获胜得10分，失败扣10分。战胜实力更强的对手，可以获得更多分数。",
+    },
     ko: {
       title: "규칙",
       ruleDescription: "일본 룰",
@@ -840,7 +853,11 @@ export const dictionary = {
         "더 많은 집(진지)을 확보한 플레이어가 승리합니다. 후공(백)에게는 6.5집의 덤이 주어집니다.",
       timeLimitTitle: "제한 시간",
       timeLimitDescription:
-        "9줄: 3분 + 1수당 1초. 13줄: 5분 + 1수당 3초. 19줄: 10분 + 1수당 5초. 시간 초과는 패배로 처리됩니다.",  },
+        "9줄: 3분 + 1수당 1초. 13줄: 5분 + 1수당 3초. 19줄: 10분 + 1수당 5초. 시간 초과는 패배로 처리됩니다.",
+      ratingTitle: "레이팅",
+      ratingDescription:
+        "승리하면 10점을 얻고, 패배하면 10점을 잃습니다. 더 강한 상대를 이기면 더 많은 점수를 얻습니다.",
+    },
   },
   MaintenanceModal: {
     en: {

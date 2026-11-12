@@ -15,9 +15,9 @@
 // ──────────────────────────────────────────────────
 
 import { BotUsername } from "@/src/constants/botProfiles";
-import { getWeightRow } from "@/src/logics/bot/sub/botMoveWeights";
+import { getWeightRow } from "@/src/logics/bot/botMoveWeights";
 import { BoardSize, Grid, MatchType, PASS_GRID } from "go-core";
-import { decideBotFirstMove } from "./sub/decideBotFirstMove";
+import { decideBotFirstMove } from "./decideBotFirstMove";
 
 // 直前の相手の手がパスだったか
 const didOpponentPass = (movesSoFar: Grid[]): boolean =>

@@ -81,7 +81,7 @@ const callOnce = async <T>(
     // Webでは、ブラウザが自動で持ち歩く(credentials: "include")ので、不要。
     const cookie = Platform.OS === "web" ? "" : await authClient.getCookie();
 
-    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL!}/rpc/${name}`, {
+    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL!}/app/${name}`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -118,7 +118,7 @@ const callGetOnce = async <T>(path: string): Promise<ApiResult<T>> => {
   try {
     const cookie = Platform.OS === "web" ? "" : await authClient.getCookie();
 
-    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL!}/rpc/${path}`, {
+    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL!}/app/${path}`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -145,7 +145,7 @@ const callGetOnce = async <T>(path: string): Promise<ApiResult<T>> => {
   }
 };
 
-// 再送の共通部分(rpc と get で使い回す)
+// 再送の共通部分(post と get で使い回す)
 const withRetry = async <T>(
   run: () => Promise<ApiResult<T>>,
 ): Promise<ApiResult<T>> => {
@@ -162,7 +162,7 @@ const withRetry = async <T>(
 };
 
 export const api = {
-  rpc: async <T = any>(
+  post: async <T = any>(
     name: string,
     args: Record<string, unknown> = {},
   ): Promise<ApiResult<T>> => withRetry(() => callOnce<T>(name, args)),

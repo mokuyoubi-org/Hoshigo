@@ -21,21 +21,81 @@ type TitleTuning = {
 
 export const TITLE_TUNING: Record<PlatformKey, Record<string, TitleTuning>> = {
   ios: {
-    ja: { titleOffsetY: 16, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    en: { titleOffsetY: 16, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    zh: { titleOffsetY: 16, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    ko: { titleOffsetY: 16, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
+    ja: {
+      titleOffsetY: 16,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    en: {
+      titleOffsetY: 16,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    zh: {
+      titleOffsetY: 16,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    ko: {
+      titleOffsetY: 16,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
   },
   android: {
-    ja: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    en: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    zh: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    ko: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
+    ja: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    en: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    zh: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    ko: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
   },
   web: {
-    ja: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    en: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    zh: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
-    ko: { titleOffsetY: 0, fontSizeDelta: 0, letterSpacingDelta: 0, subtitleOffsetY: 0 },
+    ja: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    en: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    zh: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
+    ko: {
+      titleOffsetY: 0,
+      fontSizeDelta: 0,
+      letterSpacingDelta: 0,
+      subtitleOffsetY: 0,
+    },
   },
 };

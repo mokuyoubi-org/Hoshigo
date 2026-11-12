@@ -47,8 +47,8 @@ import {
 import { MyText } from "../components/common/MyText";
 import { GUEST_UID } from "../constants/guest";
 import { useBlurActiveElement } from "../hooks/common/useBlurActiveElement";
+import { fetchRecordAnalysis, submitAnalysis } from "../hooks/records/records";
 import { useTranslation } from "../i18n/LangProvider";
-import { fetchRecordAnalysis, submitAnalysis } from "../logics/rpc/recordsRPC";
 import { FromType } from "../types/from";
 
 // ─── レイアウト定数 ───
