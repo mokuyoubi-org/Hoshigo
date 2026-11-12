@@ -11,8 +11,9 @@ StarGo, a simple and cute Go app, is now available!
 
 Whether you're brand new to Go or ready to test your skills, come play a game on StarGo!
 
-- Web: https://hoshigo.app
+- iOS: https://apps.apple.com/jp/app/id6777338181
 - Android: https://play.google.com/store/apps/details?id=com.mokuyoubi.Hoshigo
+- Web: https://hoshigo.app
 - Mokuyoubi (Developer): https://mokuyoubi.org
 
 <table>

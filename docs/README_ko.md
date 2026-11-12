@@ -11,8 +11,9 @@
 
 바둑이 처음이신 분도, 실력을 시험해 보고 싶으신 분도 별바둑에서 한 판 두어 보세요!
 
-- 웹: https://hoshigo.app
+- iOS: https://apps.apple.com/jp/app/id6777338181
 - Android: https://play.google.com/store/apps/details?id=com.mokuyoubi.Hoshigo
+- 웹: https://hoshigo.app
 - Mokuyoubi (개발사): https://mokuyoubi.org
 
 <table>

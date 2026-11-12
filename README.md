@@ -11,8 +11,9 @@
 
 囲碁が初めての方も、腕試ししたい方も、ぜひ星碁で対局してみてください。
 
-- WEB版: https://hoshigo.app
+- iOS版: https://apps.apple.com/jp/app/id6777338181
 - Android版: https://play.google.com/store/apps/details?id=com.mokuyoubi.Hoshigo
+- WEB版: https://hoshigo.app
 - もくようび（開発元）: https://mokuyoubi.org
 
 <table>

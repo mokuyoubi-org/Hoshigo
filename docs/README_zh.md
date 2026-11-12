@@ -11,8 +11,9 @@
 
 无论是第一次接触围棋，还是想检验棋力，都欢迎来星围棋下一局！
 
-- WEB版: https://hoshigo.app
+- iOS版: https://apps.apple.com/jp/app/id6777338181
 - Android版: https://play.google.com/store/apps/details?id=com.mokuyoubi.Hoshigo
+- WEB版: https://hoshigo.app
 - Mokuyoubi（开发商）: https://mokuyoubi.org
 
 <table>
