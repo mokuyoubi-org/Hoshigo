@@ -1,8 +1,8 @@
-// queue-room.ts
+// queueRoom.ts
 //
 // 対戦相手を探す人が並ぶ「受付」の仕事場(Durable Object)。
 // 盤面ごとに1つの部屋があり、部屋の名前は 9 / 13 / 19。
-// 組み合わせが決まったら、対局の部屋(game-room.ts)を作って、2人に "matched" を送る。
+// 組み合わせが決まったら、対局の部屋(gameRoom.ts)を作って、2人に "matched" を送る。
 //
 // やること:
 //  1. 受け付ける: つながってきた人を、待機列に入れる(入れる前に、下の確認をする)
@@ -35,7 +35,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { and, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import * as appSchema from "../db-schema/app-schema";
+import * as appSchema from "../db/hoshigo/appSchema";
 import { BOT_NAMES, pickBotByRating } from "../helper/logic/bots";
 import { pickMatchType } from "../helper/logic/rating";
 import { ensureProfile } from "../helper/services/profile";
@@ -43,7 +43,7 @@ import {
   buildMatchedPayload,
   type MatchInit,
   type PlayerInfo,
-} from "./game-room";
+} from "./gameRoom";
 
 const { activeGames, profiles, userStats } = appSchema;
 

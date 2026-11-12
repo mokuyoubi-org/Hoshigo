@@ -264,24 +264,6 @@ export const dictionary = {
       streakBonus: "연승 보너스",
     },
   },
-  matching: {
-    en: {
-      daily_limit_reached:
-        "You've reached today's game limit for this board size. Log in to keep playing.",
-    },
-    ja: {
-      daily_limit_reached:
-        "この盤面の1日の対局数の上限に達しました。さらに遊ぶにはログインしてください。",
-    },
-    zh: {
-      daily_limit_reached:
-        "今天这个棋盘大小的对局次数已达上限。登录后即可继续对局。",
-    },
-    ko: {
-      daily_limit_reached:
-        "이 판 크기의 오늘 대국 한도에 도달했어요. 계속하려면 로그인해 주세요.",
-    },
-  },
   Settings: {
     en: {
       accountInfo: "Account",
@@ -539,7 +521,7 @@ export const dictionary = {
       yourDisconnectLoss: "You lose by disconnection",
       yourPointsWin: "You win by {{points}} points",
       yourPointsLoss: "You lose by {{points}} points",
-      // black-white
+      // black / white
       blackResignationWin: "Black wins by resignation",
       whiteResignationWin: "White wins by resignation",
       blackTimeoutWin: "Black wins by timeout",
@@ -562,7 +544,7 @@ export const dictionary = {
       yourDisconnectLoss: "あなたの接続切れ負け",
       yourPointsWin: "あなたの{{points}}目勝ち",
       yourPointsLoss: "あなたの{{points}}目負け",
-      // black-white
+      // black / white
       blackResignationWin: "黒の中押し勝ち",
       whiteResignationWin: "白の中押し勝ち",
       blackTimeoutWin: "黒の時間切れ勝ち",
@@ -585,7 +567,7 @@ export const dictionary = {
       yourDisconnectLoss: "你断线负",
       yourPointsWin: "你胜{{points}}目",
       yourPointsLoss: "你负{{points}}目",
-      // black-white
+      // black / white
       blackResignationWin: "黑中盘胜",
       whiteResignationWin: "白中盘胜",
       blackTimeoutWin: "黑超时胜",
@@ -608,7 +590,7 @@ export const dictionary = {
       yourDisconnectLoss: "내 접속 끊김패",
       yourPointsWin: "내 {{points}}집승",
       yourPointsLoss: "내 {{points}}집패",
-      // black-white
+      // black / white
       blackResignationWin: "흑 불계승",
       whiteResignationWin: "백 불계승",
       blackTimeoutWin: "흑 시간승",

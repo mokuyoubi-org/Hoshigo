@@ -5,14 +5,14 @@ import { cors } from "hono/cors";
 import { createAuth } from "./helper/auth/auth";
 import { checkGate, guard } from "./helper/middleware/guard";
 import { accountRoutes } from "./routes/account";
-import { adminTsumegoRoutes } from "./routes/admin-tsumego";
+import { adminTsumegoRoutes } from "./routes/adminTsumego";
 import { profileRoutes } from "./routes/profile";
 import { recordsRoutes } from "./routes/records";
 import { revenuecatWebhookRoutes } from "./routes/webhooks/revenuecat";
 
 // Durable Objectsの部屋のクラスは、ここから export する(Cloudflareが見つけるため)
-export { GameRoom } from "./durable-objects/game-room";
-export { QueueRoom } from "./durable-objects/queue-room";
+export { GameRoom } from "./durableObjects/gameRoom";
+export { QueueRoom } from "./durableObjects/queueRoom";
 
 const app = new Hono<{ Bindings: Env }>();
 

@@ -12,20 +12,6 @@ type Props = {
   onClose: () => void;
 };
 
-// 調査用(あとで消す): cookieの中身は出さず、「あるか」と「長さ」だけ見る
-// getCookie は Promise を返すので、await して中身を取り出す
-const logCookieState = async (label: string) => {
-  try {
-    const cookie = await authClient.getCookie();
-    console.log(`🔐 ${label}`, {
-      hasCookie: cookie.length > 0,
-      length: cookie.length,
-    });
-  } catch (err) {
-    console.log(`🔐 ${label}: cookieの取得に失敗`, err);
-  }
-};
-
 export const useLoginModal = ({ onClose }: Props) => {
   const t = useTranslation();
   const { syncProfile } = useProfileSync();
@@ -43,8 +29,6 @@ export const useLoginModal = ({ onClose }: Props) => {
       const callbackURL =
         Platform.OS === "web" ? window.location.origin + "/" : "hoshigo://"; // スマホアプリのカスタムスキーム
 
-      await logCookieState("Googleログイン前");
-
       const { error: signInError } = await authClient.signIn.social({
         provider: "google",
         callbackURL: callbackURL,
@@ -52,7 +36,6 @@ export const useLoginModal = ({ onClose }: Props) => {
 
       // ここに到達しなかった場合は、Promiseが消えている(アプリが作り直された)
       console.log("🔐 signIn.social が戻ってきた", { hasError: !!signInError });
-      await logCookieState("Googleログイン後");
 
       if (signInError) {
         console.error("Googleログイン失敗:", signInError);
@@ -77,8 +60,6 @@ export const useLoginModal = ({ onClose }: Props) => {
     setLoading(true);
 
     try {
-      await logCookieState("Appleログイン前");
-
       // ① iPhoneが、Appleから「身分証(IDトークン)」をもらってくる
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -98,8 +79,6 @@ export const useLoginModal = ({ onClose }: Props) => {
         provider: "apple",
         idToken: { token: credential.identityToken },
       });
-
-      await logCookieState("Appleログイン後");
 
       if (signInError) {
         console.error("Appleログイン失敗:", signInError);

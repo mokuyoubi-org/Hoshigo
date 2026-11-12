@@ -8,7 +8,7 @@
 //   → サーバーが組んでくれたら "matched" が届く → 対局画面へ
 //   → すでに対局中なら "resume" が届く → 対局画面へ復帰
 import { connectWs, WsConnection } from "@/src/services/api/ws";
-import { ensureSession } from "@/src/services/auth/ensureSession";
+import { authClient } from "@/src/services/auth/auth-client";
 import { router } from "expo-router";
 import { BoardSize } from "go-core";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -40,6 +40,20 @@ const formatPlayingParams = (data: any): Params => ({
   oppSeconds: data.opp_seconds ?? 0,
   botMatch: String(data.bot_match ?? false),
 });
+
+// ログイン確認用関数。
+// ログインしているなら true、してないならfalse を返す。
+export const ensureSession = async (): Promise<boolean> => {
+  // 🛟 一瞬だけ null に見えることがあるので、サーバーに「本当にセッションが無いか」を聞く
+  const { data: current, error } = await authClient.getSession({
+    query: { disableCookieCache: true },
+  });
+  if (error) {
+    console.error("セッションの確認に失敗:", error);
+    return false;
+  }
+  return !!current?.user;
+};
 
 export const useMatchingProvider = (
   // ログインしていない人が、対局ボタンを押した瞬間に呼ばれる。

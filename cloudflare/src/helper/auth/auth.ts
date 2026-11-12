@@ -5,7 +5,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
 import { createLocalJWKSet, jwtVerify } from "jose";
-import * as schema from "../../db-schema/auth-schema";
+import * as schema from "../../db/hoshigo/authSchema";
 
 // iOSアプリのBundle ID。Appleのトークンの「宛先」と照らし合わせる
 const IOS_BUNDLE_ID = "com.mokuyoubi.hoshigo";

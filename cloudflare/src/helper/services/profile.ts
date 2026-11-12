@@ -4,7 +4,7 @@
 
 import { eq } from "drizzle-orm";
 import type { drizzle } from "drizzle-orm/d1";
-import * as appSchema from "../../db-schema/app-schema";
+import * as appSchema from "../../db/hoshigo/appSchema";
 
 const { profiles, userStats } = appSchema;
 

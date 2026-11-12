@@ -1,3 +1,4 @@
+// expo-katago
 // KataGoGate.tsx
 
 import { ReactNode } from "react";

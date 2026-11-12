@@ -12,7 +12,7 @@
 
 // srcの世界では、
 // ownership: "BBBWWBB...W.BBBWB"みたいな、BとWと.のみからなる、長さboardSize*boardSizeのstring。
-import { useKataGo } from "expo-katago";
+import { useKataGoEngine } from "expo-katago";
 import {
   Board,
   BoardSize,
@@ -50,7 +50,7 @@ export interface KataGoTaskResult {
 }
 
 export const useKataGoTask = () => {
-  const kataGo = useKataGo();
+  const kataGo = useKataGoEngine();
 
   const run = async (
     board: Board,

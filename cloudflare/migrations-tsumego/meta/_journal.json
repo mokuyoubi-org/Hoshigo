@@ -43,6 +43,13 @@
       "when": 1793705218967,
       "tag": "0005_spicy_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794472054861,
+      "tag": "0006_ambitious_inhumans",
+      "breakpoints": true
     }
   ]
 }

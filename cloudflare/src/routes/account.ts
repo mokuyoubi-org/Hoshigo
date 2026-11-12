@@ -4,8 +4,8 @@ import { and, desc, eq, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono, type Context } from "hono";
 import { cache } from "hono/cache";
-import * as appSchema from "../db-schema/app-schema";
-import { user } from "../db-schema/auth-schema";
+import * as appSchema from "../db/hoshigo/appSchema";
+import { user } from "../db/hoshigo/authSchema";
 import { createAuth } from "../helper/auth/auth";
 
 const { profiles, userStats } = appSchema;
@@ -41,7 +41,8 @@ export const accountRoutes = new Hono<{ Bindings: Env }>();
 // アイコンを変える
 accountRoutes.post("/update_icon_index", async (c) => {
   const uid = await getUid(c);
-  if (!uid) return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
+  if (!uid)
+    return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
 
   const body = await c.req.json().catch(() => ({}));
   const iconIndex = body.new_icon_index;
@@ -57,7 +58,8 @@ accountRoutes.post("/update_icon_index", async (c) => {
 // ボットとの対局を許可するかを変える
 accountRoutes.post("/update_allow_bot_match", async (c) => {
   const uid = await getUid(c);
-  if (!uid) return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
+  if (!uid)
+    return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
 
   const body = await c.req.json().catch(() => ({}));
   const allow = body.new_allow_bot_match;
@@ -76,7 +78,8 @@ accountRoutes.post("/update_allow_bot_match", async (c) => {
 // 名前を変える
 accountRoutes.post("/update_username", async (c) => {
   const uid = await getUid(c);
-  if (!uid) return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
+  if (!uid)
+    return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
 
   const body = await c.req.json().catch(() => ({}));
   if (typeof body.new_username !== "string") {
@@ -227,7 +230,8 @@ accountRoutes.get(
 // アカウント削除。userを消すと、プロフィール・設定・成績・セッションも、芋づる式に消える。
 accountRoutes.post("/delete_user_account", async (c) => {
   const uid = await getUid(c);
-  if (!uid) return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
+  if (!uid)
+    return errorResponse(c, 401, "NOT_AUTHENTICATED", "Not authenticated");
 
   const db = drizzle(c.env.DB, { schema: appSchema });
   await db.delete(user).where(eq(user.id, uid));

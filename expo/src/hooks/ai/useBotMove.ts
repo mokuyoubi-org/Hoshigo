@@ -72,7 +72,7 @@ export const useBotMove = (
 
     // ⚠️直近2手が連続パス(終局)なら、ボットは考える必要が無い。
     // ※多重推論によるクラッシュ対策としては、今はKataGoEngineContext側の
-    //   runAnalysisが直列化で担保している。これは純粋にゲームロジック上の
+    //  runが直列化で担保している。これは純粋にゲームロジック上の
     //   ガード(終局後にボットに無駄な着手を送らせない)。
     if (endsWithDoublePass(movesSoFar)) {
       console.log(

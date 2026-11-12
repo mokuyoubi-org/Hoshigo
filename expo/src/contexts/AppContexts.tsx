@@ -1,18 +1,16 @@
 // Hoshigo
 // AppContexts.tsx
-// ここのコメントは消さない！！理解に役に立つから。
-// 【ファイル全体の責務】
-// コンテキストファイル。メンテナンスなどアプリ自体の情報を、アプリ全体で共有している。
+// app_statusの情報を、アプリ全体で共有している。
+// ⚠️理解に役立つので、このファイルのコメントは消さない。
 
 import { createContext, ReactNode, useContext, useState } from "react";
 
-// バージョン不足の種別。null = 不足なし。
-// "app" = ネイティブアプリのバージョンが足りない(ストア誘導)
-// "ota" = OTAバンドルのバージョンが足りない(再起動誘導)
+// null: 問題なし(全一致)
+// "app": app_versionの不一致
+// "ota": ota_versionの不一致
 export type UpdateReason = "app" | "ota" | null;
 
 // 型定義
-// バージョン情報など、将来的に増える可能性あり。
 type AppContextType = {
   maintenance: boolean;
   maintenanceMessage: string | null;
@@ -30,7 +28,6 @@ const AppContext = createContext<AppContextType | null>(null);
 
 // 📡Provider（データ配給係）
 // AppProviderはNHKの内側。実際に働く人々。放送する仕事を受け持つ
-// バージョン情報など、将来的に増える可能性あり。
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   // state, setterは今放送中の番組内容。
   const [maintenance, setMaintenance] = useState<boolean>(false);
@@ -42,7 +39,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     // AppContext.Providerは、電波塔。
-    // childrenは、電波を届ける街。
     <AppContext.Provider
       value={{
         maintenance,
@@ -55,12 +51,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setUpdateReason,
       }}
     >
-      {children}
+      {
+        // childrenは、電波を届ける対象の街。
+        children
+      }
     </AppContext.Provider>
   );
 };
 
-// Hook（使う側の窓口）
 // useAppはmaintenance, maintenanceMessage, setMaintenance, setMaintenanceMessageを自由にお家から使えるリモコン。
 // const { maintenance, maintenanceMessage } = useApp();のように使う。
 export const useApp = () => {

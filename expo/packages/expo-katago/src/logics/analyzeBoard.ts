@@ -282,7 +282,6 @@ export const analyzeBoard = async <const F extends AnalyzeResultFields>(
 // ================================================================
 
 // katagoは一つ前、二つ前の盤面も要求するので、作っている。
-// usekatagoの引数として要求しても良かったが、面倒かなと思い、ここで用意。
 const buildBoardFromMoves = (
   moves: Move[],
   boardSize: BoardSize,

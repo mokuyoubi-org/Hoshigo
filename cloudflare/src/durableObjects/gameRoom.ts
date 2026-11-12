@@ -1,8 +1,8 @@
-// game-room.ts
+// gameRoom.ts
 //
 // 1局ぶんの対局を、まるごと見守る「審判さん」の仕事場(Durable Object)。
 // 1局につき1つの部屋があり、部屋の名前は gameId。
-// 待機列の部屋(queue-room.ts)が、組み合わせが決まったときに init() で作る。
+// 待機列の部屋(queueRoom.ts)が、組み合わせが決まったときに init() で作る。
 //
 // やること:
 //  1. 覚える: 手・手番・残り時間・結果を、DO storage の1つの行(GameState)に保存する
@@ -31,8 +31,8 @@
 import { DurableObject } from "cloudflare:workers";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import * as appSchema from "../db-schema/app-schema";
-import * as recordsSchema from "../db-schema/records/schema";
+import * as appSchema from "../db/hoshigo/appSchema";
+import * as recordsSchema from "../db/records/schema";
 import { isValidOwnership } from "../helper/logic/analysis";
 import { calculateEloDelta, effectiveRating } from "../helper/logic/rating";
 

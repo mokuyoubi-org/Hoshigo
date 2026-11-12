@@ -2,7 +2,7 @@
 
 import { drizzle } from "drizzle-orm/d1";
 import { createMiddleware } from "hono/factory";
-import * as appSchema from "../../db-schema/app-schema";
+import * as appSchema from "../../db/hoshigo/appSchema";
 
 type GateError = {
   status: 426 | 503;

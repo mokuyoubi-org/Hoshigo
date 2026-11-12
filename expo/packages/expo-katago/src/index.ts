@@ -3,7 +3,6 @@
 // 外で使いたい部品をexport
 export * from "./components/KataGoEngineContext";
 export * from "./components/KataGoGate";
-export * from "./hooks/useKataGo";
 export * from "./logics/analyzeBoard";
 export * from "./logics/modelManager";
 export * from "./types/types";

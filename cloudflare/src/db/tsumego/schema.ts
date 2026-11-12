@@ -1,9 +1,5 @@
 // tsumego/schema.ts
-// 詰碁だけを入れる、別のDB(TSUMEGO_DB)のテーブル。
-// ※ 別のDBなので、profilesなどへの外部キーは付けられない。
-//    ユーザーIDは、ただの文字として入れる。
-// ※ フォルダを分けているのは、メインの drizzle.config.ts の
-//    「*-schema.ts」に拾われないようにするため。
+// TSUMEGO_DB: 詰碁用DB。
 
 import { sql } from "drizzle-orm";
 import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -29,8 +25,8 @@ export type SourceType = (typeof SOURCE_TYPES)[number];
 
 export type StatusType = "published" | "draft";
 
-// 解いた結果。"correct" = 正解 / "wrong" = 不正解
-export type AttemptResult = "correct" | "wrong";
+// 解答の状態。"skipped" = 飛ばした / "correct" = 正解 / "wrong" = 不正解
+export type StatusOfUser = "skipped" | "correct" | "wrong";
 
 // 局面から出る、1本の線(手)。move は、石の位置を1つの数字にしたもの(棋譜のmovesと同じ形)。
 // to = 打ったあとの局面のid
@@ -88,13 +84,13 @@ export const tsumego = sqliteTable(
     solvedCount: integer("solved_count").notNull().default(0), // 累計解かれた回数
     correctCount: integer("correct_count").notNull().default(0), // 累計正解回数
   },
-  (table) => ({
+  (table) => [
     // 同じ出典の中で、同じ番号は1つだけ(出典や番号が空のものは、いくつあってもよい)
-    sourceNoUnique: uniqueIndex("tsumego_source_no_unique").on(
+    uniqueIndex("tsumego_source_no_unique").on(
       table.sourceId,
       table.sourceNo,
     ),
-  }),
+  ],
 );
 
 // ユーザー(1人につき1行)。詰碁での成績だけを持つ。これも必須
@@ -105,32 +101,18 @@ export const tsumegoUsers = sqliteTable("tsumego_users", {
   correctCount: integer("correct_count").notNull().default(0), // 累計正解回数
 });
 
-// 解答ログ。同じ人が同じ問題を解いても、1日1行まで。
-// 「今月その問題を解いたか」は、ここを見て判断する(レート変動は今月の最初の1回だけ)。
-export const tsumegoAttempts = sqliteTable(
-  "tsumego_attempts",
-  {
-    userId: text("user_id").notNull(),
-    tsumegoId: text("tsumego_id").notNull(),
-    solvedDate: text("solved_date").notNull(), // UTCの日付(例: "2026-11-01")
-    result: text("result").$type<AttemptResult>().notNull(),
-    solvedAt: integer("solved_at", { mode: "timestamp_ms" }).notNull(),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.userId, table.tsumegoId, table.solvedDate] }),
-  }),
-);
-
-// 1人1問の状態(1人1問につき1行まで)。「飛ばした」「いいね」だけを持つ。
+// 1人1問の状態(1人1問につき1行まで)。「解いた結果(飛ばした含む)」と「いいね」を持つ。
+// status が空 = まだ解いていない(いいねだけ押した状態)
 export const tsumegoUserStates = sqliteTable(
   "tsumego_user_states",
   {
     userId: text("user_id").notNull(),
     tsumegoId: text("tsumego_id").notNull(),
-    skipped: integer("skipped", { mode: "boolean" }).notNull().default(false), // 飛ばしたか
+    status: text("status").$type<StatusOfUser>(), // 最後に解いた時の結果(なければ空)
+    solvedAt: integer("solved_at", { mode: "timestamp_ms" }), // 最後に解いた日時(なければ空)
     liked: integer("liked", { mode: "boolean" }).notNull().default(false), // いいねしたか
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.userId, table.tsumegoId] }),
-  }),
+  (table) => [
+    primaryKey({ columns: [table.userId, table.tsumegoId] }),
+  ],
 );

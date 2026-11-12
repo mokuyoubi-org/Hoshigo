@@ -1,6 +1,6 @@
 // Hoshigo
 // api.ts
-//
+
 // 自分たちのサーバー(Cloudflareの hoshigo-api)と、通信するための電話機☎️
 //  1. エラーの code(MAINTENANCE_MODE など)を検知して、アプリに知らせる
 //  2. 通信自体の失敗(codeなし)だけ、自動で再送する(最大3回、指数バックオフ)

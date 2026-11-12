@@ -1,4 +1,5 @@
-// packages/expo-katago/src/components/KataGoEngine.tsx
+// expo-katago
+// KataGoEngine.tsx
 
 "use dom";
 

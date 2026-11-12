@@ -9,7 +9,7 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-import { user } from "./auth-schema";
+import { user } from "./authSchema";
 
 // プロフィール(ボットも含む)。Better Authのuserと、1対1でつながる。
 // userが消えたら、プロフィールもいっしょに消える。

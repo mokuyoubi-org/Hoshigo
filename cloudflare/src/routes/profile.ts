@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import * as appSchema from "../db-schema/app-schema";
+import * as appSchema from "../db/hoshigo/appSchema";
 import { createAuth } from "../helper/auth/auth";
 import { ensureProfile } from "../helper/services/profile";
 

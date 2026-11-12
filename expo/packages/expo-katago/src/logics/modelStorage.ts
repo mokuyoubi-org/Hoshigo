@@ -1,7 +1,7 @@
 // packages/expo-katago/src/logics/modelStorage.ts
 // IndexedDBの読み書きを担当するファイル
 
-import { KATAGO_MODEL } from "../constants/constants";
+import { KATAGO_MODEL } from "../constants/model";
 
 // ⚠️ DB_NAMEとSTORE_NAMEを変えると、既存ユーザーが保存済みのモデルを
 //    読めなくなり、全員がもう一度ダウンロードすることになる。
@@ -40,36 +40,7 @@ export const getModelFromIDB = async (): Promise<Uint8Array | null> => {
   }
 };
 
-// 🙏 「このデータは追い出さないで」のお願いを、アプリ起動中に1回だけ出すための札
-let persistRequested = false;
-
-// 🛡️ ブラウザに「容量が足りなくなっても、ここのデータは消さないで」とお願いする。
-//    通るかどうかはブラウザしだいで、通らなくても困らない(消えたら入れ直すだけ)。
-//    navigator.storage が無い環境でも落ちないようにしてある。
-const requestPersistentStorage = (): void => {
-  if (persistRequested) return;
-  persistRequested = true;
-
-  try {
-    if (typeof navigator === "undefined" || !navigator.storage?.persist) {
-      return;
-    }
-    navigator.storage
-      .persist()
-      .then((granted) => {
-        console.log("[IndexedDB] persist お願いの結果:", granted);
-      })
-      .catch((e) => {
-        console.warn("[IndexedDB] persist お願い失敗:", e);
-      });
-  } catch (e) {
-    console.warn("[IndexedDB] persist お願い失敗:", e);
-  }
-};
-
 export const saveModelToIDB = async (data: Uint8Array): Promise<void> => {
-  // 🙏 保存の前に、追い出さないでね、とお願いしておく(待たない)
-  requestPersistentStorage();
 
   try {
     const db = await openDB();

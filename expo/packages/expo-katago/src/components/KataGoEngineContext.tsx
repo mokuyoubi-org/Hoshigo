@@ -1,4 +1,5 @@
-// packages/expo-katago/src/components/KataGoEngineContext.tsx
+// expo-katago
+// KataGoEngineContext.tsx
 //
 // ─── このContextの責務 ───────────────────────────────
 // KataGo(WebView内)への解析リクエストの入口を提供する。
@@ -55,7 +56,7 @@ type KataGoEngineContextType = {
   // 今、推論中か(true=作業中 / false=暇)
   isAnalyzing: boolean;
   // 推論中に呼ぶと、何もせず null を返す(断る)。
-  runAnalysis: <const F extends AnalyzeResultFields>(
+  run: <const F extends AnalyzeResultFields>(
     args: AnalyzeBoardArgs & { fields: F },
   ) => Promise<AnalyzeResultFor<F> | null>;
 };
@@ -93,7 +94,7 @@ export const KataGoEngineProvider = ({ children }: { children: ReactNode }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // eslint-disable-next-line prefer-arrow-functions/prefer-arrow-functions
-  async function runAnalysis<const F extends AnalyzeResultFields>(
+  async function run<const F extends AnalyzeResultFields>(
     args: AnalyzeBoardArgs & { fields: F },
   ): Promise<AnalyzeResultFor<F> | null> {
     if (isProcessingRef.current) {
@@ -234,7 +235,7 @@ export const KataGoEngineProvider = ({ children }: { children: ReactNode }) => {
         setupError,
         loadProgress,
         isAnalyzing,
-        runAnalysis,
+        run,
       }}
     >
       <View

@@ -1,6 +1,6 @@
 // packages/expo-katago/src/logics/modelManager.ts
 
-import { KATAGO_MODEL } from "../constants/constants";
+import { KATAGO_MODEL } from "../constants/model";
 import { ModelDownloadProgress } from "../types/types";
 import { getModelFromIDB, saveModelToIDB } from "./modelStorage";
 

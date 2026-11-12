@@ -35,8 +35,8 @@ import type {
   StatusType,
   TsumegoGraph,
   TsumegoType,
-} from "../db-schema/tsumego/schema";
-import * as tsumegoSchema from "../db-schema/tsumego/schema";
+} from "../db/tsumego/schema";
+import * as tsumegoSchema from "../db/tsumego/schema";
 
 const { tsumego } = tsumegoSchema;
 
