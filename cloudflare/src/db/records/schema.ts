@@ -1,5 +1,12 @@
 // records/schema.ts
 // RECORDS_DB: 棋譜用DB。
+/*
+⚠️⚠️⚠️このページのスキーマを変更した時は
+cd ~/Hoshigo/cloudflare
+npx drizzle-kit generate --config=drizzle.records.config.ts
+npx wrangler d1 migrations apply hoshigo-records-db --local
+を必ず実行すること！⚠️⚠️⚠️
+*/
 
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";

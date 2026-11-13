@@ -1,5 +1,12 @@
 // auth-schema.ts
-// better-authが内部で使う。触らない。
+// better-authが内部で使う。触らない想定だが、
+/*
+⚠️⚠️⚠️このページのスキーマを変更した時は
+cd ~/Hoshigo/cloudflare
+npx drizzle-kit generate
+npx wrangler d1 migrations apply hoshigo-db --local
+を必ず実行すること！⚠️⚠️⚠️
+*/
 
 import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";

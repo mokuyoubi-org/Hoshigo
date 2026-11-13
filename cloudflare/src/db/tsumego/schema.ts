@@ -1,8 +1,21 @@
 // tsumego/schema.ts
 // TSUMEGO_DB: 詰碁用DB。
+/*
+⚠️⚠️⚠️このページのスキーマを変更した時は
+cd ~/Hoshigo/cloudflare
+npx drizzle-kit generate --config=drizzle.tsumego.config.ts
+npx wrangler d1 migrations apply hoshigo-tsumego --local
+を必ず実行すること！⚠️⚠️⚠️
+*/
 
 import { sql } from "drizzle-orm";
-import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 // 問題の種類。増やすときは、ここに1行足す。
 // "capture" = 石を取ってください / "alive" = 生きてください / "nextMove" = 次の一手は?
@@ -78,6 +91,7 @@ export const tsumego = sqliteTable(
     status: text("status").$type<StatusType>().notNull().default("draft"), // "published" | "draft"
     sourceId: text("source_id").$type<SourceType>(), // 出典(なければ空)
     sourceNo: integer("source_no"), // 出典内の番号(なければ空)
+    variationNo: integer("variation_no").notNull().default(0), // 改題番号(原題は0、改題は1,2,…)
     authorId: text("author_id"), // 作者id(なければ空)
     rating: integer("rating").notNull().default(0), // 詰碁レーティング
     publishedAt: integer("published_at", { mode: "timestamp_ms" }), // 公開日(下書きの間は空)
@@ -86,10 +100,7 @@ export const tsumego = sqliteTable(
   },
   (table) => [
     // 同じ出典の中で、同じ番号は1つだけ(出典や番号が空のものは、いくつあってもよい)
-    uniqueIndex("tsumego_source_no_unique").on(
-      table.sourceId,
-      table.sourceNo,
-    ),
+    uniqueIndex("tsumego_source_no_unique").on(table.sourceId, table.sourceNo),
   ],
 );
 
@@ -112,7 +123,5 @@ export const tsumegoUserStates = sqliteTable(
     solvedAt: integer("solved_at", { mode: "timestamp_ms" }), // 最後に解いた日時(なければ空)
     liked: integer("liked", { mode: "boolean" }).notNull().default(false), // いいねしたか
   },
-  (table) => [
-    primaryKey({ columns: [table.userId, table.tsumegoId] }),
-  ],
+  (table) => [primaryKey({ columns: [table.userId, table.tsumegoId] })],
 );

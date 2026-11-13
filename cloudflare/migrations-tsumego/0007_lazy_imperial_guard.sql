@@ -1,0 +1,1 @@
+ALTER TABLE `tsumego` ADD `variation_no` integer DEFAULT 0 NOT NULL;
