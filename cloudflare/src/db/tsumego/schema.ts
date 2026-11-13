@@ -36,10 +36,10 @@ export const SOURCE_TYPES = [
 ] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
 
-export type StatusType = "published" | "draft";
+export type PublishStatus = "published" | "draft";
 
 // 解答の状態。"skipped" = 飛ばした / "correct" = 正解 / "wrong" = 不正解
-export type StatusOfUser = "skipped" | "correct" | "wrong";
+export type AnswerStatus = "skipped" | "correct" | "wrong";
 
 // 局面から出る、1本の線(手)。move は、石の位置を1つの数字にしたもの(棋譜のmovesと同じ形)。
 // to = 打ったあとの局面のid
@@ -88,7 +88,7 @@ export const tsumego = sqliteTable(
       .notNull()
       .default(sql`'{}'`),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    status: text("status").$type<StatusType>().notNull().default("draft"), // "published" | "draft"
+    status: text("status").$type<PublishStatus>().notNull().default("draft"), // "published" | "draft"
     sourceId: text("source_id").$type<SourceType>(), // 出典(なければ空)
     sourceNo: integer("source_no"), // 出典内の番号(なければ空)
     variationNo: integer("variation_no").notNull().default(0), // 改題番号(原題は0、改題は1,2,…)
@@ -119,7 +119,7 @@ export const tsumegoUserStates = sqliteTable(
   {
     userId: text("user_id").notNull(),
     tsumegoId: text("tsumego_id").notNull(),
-    status: text("status").$type<StatusOfUser>(), // 最後に解いた時の結果(なければ空)
+    status: text("status").$type<AnswerStatus>(), // 最後に解いた時の結果(なければ空)
     solvedAt: integer("solved_at", { mode: "timestamp_ms" }), // 最後に解いた日時(なければ空)
     liked: integer("liked", { mode: "boolean" }).notNull().default(false), // いいねしたか
   },

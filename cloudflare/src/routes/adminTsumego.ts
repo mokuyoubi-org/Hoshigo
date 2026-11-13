@@ -31,8 +31,8 @@ import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import type {
+  PublishStatus,
   SourceType,
-  StatusType,
   TsumegoGraph,
   TsumegoType,
 } from "../db/tsumego/schema";
@@ -57,7 +57,7 @@ type SaveBody = {
   type: TsumegoType;
   source: SourceType;
   source_no?: number; // 出典内の番号(なければ空)
-  status: StatusType;
+  status: PublishStatus;
   board_size: number;
   black_stones: number[];
   white_stones: number[];
